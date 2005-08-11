@@ -15,8 +15,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-# $HeadURL: file:///home/nv/sloppysvn/trunk/Sloppy/src/Sloppy/Importer/import_ascii.py $
-# $Id: import_ascii.py 427 2005-08-02 20:33:42Z nv $
+# $HeadURL$
+# $Id$
 
 
 

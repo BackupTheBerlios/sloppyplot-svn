@@ -1,6 +1,6 @@
 #
 # SimpleXMLWriter
-# $Id: SimpleXMLWriter.py 369 2005-06-23 09:15:13Z nv $
+# $Id$
 #
 # a simple XML writer
 #

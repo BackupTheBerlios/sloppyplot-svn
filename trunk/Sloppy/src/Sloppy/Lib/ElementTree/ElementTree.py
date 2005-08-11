@@ -1,6 +1,6 @@
 #
 # ElementTree
-# $Id: ElementTree.py 369 2005-06-23 09:15:13Z nv $
+# $Id$
 #
 # light-weight XML support for Python 1.5.2 and later.
 #

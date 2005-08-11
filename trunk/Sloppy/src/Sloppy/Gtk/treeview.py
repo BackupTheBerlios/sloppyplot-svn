@@ -15,8 +15,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-# $HeadURL: file:///home/nv/sloppysvn/trunk/Sloppy/src/Sloppy/Gtk/treeview.py $
-# $Id: treeview.py 401 2005-07-15 05:35:18Z nv $
+# $HeadURL$
+# $Id$
 
 
 import logging

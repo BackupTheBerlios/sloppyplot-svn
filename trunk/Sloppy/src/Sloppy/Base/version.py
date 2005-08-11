@@ -15,13 +15,13 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-# $HeadURL: file:///home/nv/sloppysvn/trunk/Sloppy/src/Sloppy/Base/const.py $
-# $Id: const.py 424 2005-07-27 18:24:21Z nv $
+# $HeadURL$
+# $Id$
 
 
 NAME = "SloppyPlot"
 COPYRIGHT = "(C)opyright 2004-2005 Niklas Volbers"
-VERSION = "SVN $Rev: 424 $".replace("$Rev: ","").replace("$","")
+VERSION = "SVN $Rev$".replace("$Rev: ","").replace("$","")
 DESCRIPTION = "A scientific plotting tool"
 AUTHORS = ["Niklas Volbers"]
 HOMEPAGE="sloppyplot.berlios.de"

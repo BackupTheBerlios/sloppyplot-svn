@@ -15,8 +15,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-# $HeadURL: file:///home/nv/sloppysvn/trunk/Sloppy/src/Sloppy/Gtk/gnuplot_export_dlg.py $
-# $Id: gnuplot_export_dlg.py 429 2005-08-03 06:04:10Z nv $
+# $HeadURL$
+# $Id$
 
 
 import logging

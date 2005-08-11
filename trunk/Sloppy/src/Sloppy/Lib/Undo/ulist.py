@@ -15,8 +15,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-# $HeadURL: file:///home/nv/sloppysvn/trunk/Sloppy/src/Sloppy/Lib/Undo/ulist.py $
-# $Id: ulist.py 393 2005-07-08 05:22:49Z nv $
+# $HeadURL$
+# $Id$
 
 
 """

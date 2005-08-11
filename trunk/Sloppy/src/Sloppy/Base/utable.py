@@ -15,8 +15,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-# $HeadURL: file:///home/nv/sloppysvn/trunk/Sloppy/src/Sloppy/Base/utable.py $
-# $Id: utable.py 384 2005-07-03 12:11:00Z nv $
+# $HeadURL$
+# $Id$
 
 
 """

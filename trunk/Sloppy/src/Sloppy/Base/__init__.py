@@ -15,8 +15,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-# $HeadURL: file:///home/nv/sloppysvn/trunk/Sloppy/src/Sloppy/Base/__init__.py $
-# $Id: __init__.py 381 2005-07-01 05:23:29Z nv $
+# $HeadURL$
+# $Id$
 
 
 __all__ = ['const', 'dataset', 'error', 'objects', 'project']

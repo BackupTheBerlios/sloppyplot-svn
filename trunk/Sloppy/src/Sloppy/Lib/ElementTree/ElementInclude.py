@@ -1,6 +1,6 @@
 #
 # ElementTree
-# $Id: ElementInclude.py 369 2005-06-23 09:15:13Z nv $
+# $Id$
 #
 # limited xinclude support for element trees
 #

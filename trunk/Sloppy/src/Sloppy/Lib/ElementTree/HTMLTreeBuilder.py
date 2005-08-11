@@ -1,6 +1,6 @@
 #
 # ElementTree
-# $Id: HTMLTreeBuilder.py 369 2005-06-23 09:15:13Z nv $
+# $Id$
 #
 # a simple tree builder, for HTML input
 #

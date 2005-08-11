@@ -1,6 +1,6 @@
 #
 # ElementTree
-# $Id: SimpleXMLTreeBuilder.py 369 2005-06-23 09:15:13Z nv $
+# $Id$
 #
 # A simple XML tree builder, based on Python's xmllib
 #

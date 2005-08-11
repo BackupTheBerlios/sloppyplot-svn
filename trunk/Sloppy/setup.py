@@ -15,8 +15,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-# $HeadURL: file:///home/nv/sloppysvn/trunk/Sloppy/setup.py $
-# $Id: setup.py 448 2005-08-11 19:21:37Z nv $
+# $HeadURL$
+# $Id$
 
 
 
@@ -34,7 +34,7 @@ import sys
 
 PATH_SHARED=join(sys.prefix,'share','sloppyplot')
  
-SVN_REVISION="SVN"+"$Rev: 448 $"[6:-2]
+SVN_REVISION="SVN"+"$Rev$"[6:-2]
 
 
 

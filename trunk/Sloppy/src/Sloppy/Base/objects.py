@@ -15,8 +15,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-# $HeadURL: file:///home/nv/sloppysvn/trunk/Sloppy/src/Sloppy/Base/objects.py $
-# $Id: objects.py 425 2005-08-01 20:29:41Z nv $
+# $HeadURL$
+# $Id$
 
 
 """

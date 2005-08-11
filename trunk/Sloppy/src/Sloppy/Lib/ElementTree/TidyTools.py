@@ -1,6 +1,6 @@
 #
 # ElementTree
-# $Id: TidyTools.py 369 2005-06-23 09:15:13Z nv $
+# $Id$
 #
 # tools to run the "tidy" command on an HTML or XHTML file, and return
 # the contents as an XHTML element tree.

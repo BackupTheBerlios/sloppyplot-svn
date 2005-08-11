@@ -15,8 +15,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-# $HeadURL: file:///home/nv/sloppysvn/trunk/Sloppy/src/Sloppy/Base/classregistry.py $
-# $Id: classregistry.py 415 2005-07-21 05:06:45Z nv $
+# $HeadURL$
+# $Id$
 
 
 import logging
