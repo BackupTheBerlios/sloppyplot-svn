@@ -1,0 +1,175 @@
+import logging
+logging.basicConfig(level=logging.INFO)
+
+logger = logging.getLogger('application')
+
+cli_logger = logging.getLogger('cli')
+cli_logger.setLevel(logging.info)
+
+
+from Sloppy.Lib.Undo import *
+from Sloppy.Lib import Signals
+
+from Sloppy.Base.objects import Plot, Axis, Line, Layer, new_lineplot2d
+from Sloppy.Base.dataset import Dataset
+from Sloppy.Base.project import Project
+from Sloppy.Base.projectio import load_project, save_project, ParseError
+from Sloppy.Base.backend import BackendRegistry
+from Sloppy.Base.table import Table
+from Sloppy.Base.dataio import ImporterRegistry, ExporterRegistry, importer_from_filename
+from Sloppy.Base import pdict, uwrap, const
+
+from Sloppy import Plugins
+from Sloppy.Base.plugin import PluginRegistry
+
+
+from Sloppy.Base.progress import ProgressList
+
+
+class Application(object):
+
+    def __init__(self, project=None):
+	" 'project' may be a Project object or a filename. "
+
+        # Set up the Project...
+        self._project = None
+	if isinstance(project, basestring):
+	    try:
+		project = load_project(project)
+	    except IOError:
+                error_msg("Failed to load project '%s'\nSetting up an empty project instead." % project)                
+		project = Project()
+	self.set_project(project)
+
+        self.plugins = dict()
+        self.init_plugins()
+        self.progresslist = ProgressList
+        
+        self.journal = UndoRedo()
+
+
+    #----------------------------------------------------------------------
+    # INTERNAL
+
+    def _check_project(self):
+        if not self.project:
+            raise RuntimeError("No Project available")
+        else:
+            return self.project
+        
+
+    #----------------------------------------------------------------------
+    # PROJECT HANDLING
+    
+    def set_project(self, project, confirm=True):
+
+        # if project changes, then close the Project properly!
+        if self._project is not None and id(project) != id(self._project):
+            self.close_project()
+
+        self._project = project
+        if project is not None:
+            project.app = self
+
+
+    # be careful when redefining get_project in derived classes -- it will
+    # not work, because the property 'project' always refers to the method
+    # in this class.
+    def get_project(self):
+        return self._project
+    project = property(get_project)
+
+
+    def new_project(self, confirm=True):
+        self.set_project(Project())
+        return self.project
+    
+
+    # TODO: Hmmm. Maybe still put this into project.py ?
+    def close_project(self, confirm=True):
+        pj = self._check_project()
+
+        print "Closing Project"
+       
+        for dataset in pj.datasets:
+            dataset.close()
+        for plot in pj.plots:
+            plot.close()
+        if pj._archive is not None:
+            pj._archive.close()
+
+        pj.app = None
+        
+        # disconnect all opened backends
+        for backend in pj.backends:
+            backend.disconnect()
+
+        print "Emitting Signal"
+        
+        Signals.emit(pj, 'close')
+
+        self._project = None
+
+
+    def save_project(self):
+        if self.project is None:
+            return None
+        
+        if self.project.filename is not None:
+            save_project(self.project)
+            self.project.journal.clear()
+        else:
+            self.save_project_as()
+
+
+    def load_project(self, filename):
+        # load new project and if it is sucessfully loaded,
+        # detach the old project
+        new_project = load_project(filename)
+        if new_project:
+            # TODO: remove old plotter objects for this project
+            # TODO: is the project deleted ?
+            self.set_project(new_project)
+
+
+    #----------------------------------------------------------------------
+    # PLUGIN HANDLING
+    
+    def init_plugins(self):
+        for key in PluginRegistry.iterkeys():
+            self.plugins[key] = PluginRegistry.new_instance(key, app=self)
+
+
+
+#------------------------------------------------------------------------------
+
+import Numeric
+
+def test_application():
+    app = Application()
+    p = app.new_project()
+    
+
+    # set up sample project
+    print "Setting up sample project with a Dataset and a Plot."
+
+    ds = p.new_dataset()
+
+    data = ds.get_data()
+    data.extend(20)
+    data[0] = Numeric.arange(21)
+    data[1] = Numeric.sin(data[0])
+
+    layer = Layer(type='line2d',
+                  lines=[Line(source=ds)],
+                  axes = {'x': Axis(label="A Number (arb. units)"),
+                          'y': Axis(label="The Sin (arb. units)")})
+
+    plot = Plot(label=u"A silly example", layers=[layer], key="a plot")
+
+    p.add_plot(plot)
+
+    p.list()
+
+    return app
+

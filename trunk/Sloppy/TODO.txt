@@ -1,0 +1,304 @@
+DONE:
+
+
+
+###############################################################################
+FIRST THINGS FIRST:
+
+- Should we stick with tarfile or should we move to zipfile?
+
+  Many people use zip and it will be easier for them to extract
+  information.  Do a comparison.
+
+- why do we get an error when extracting the tar? Maybe just because
+  we are displaying binary data. ???
+
+- Add README file to project explaining how to extract the datasets.
+
+  This is an important step to saving arbitrary data.
+
+   create temporary directory
+
+   write dataset to temporary directory
+ 
+   obtain filelist from project archive, exclude all datasets and project.xml
+
+   write all files from the filelist to the temporary directory.
+   Because we don't want to do this every time we save, we need to keep
+   track if any of these files have changed.
+
+   tar-zip temporary directory
+
+
+
+
+
+
+
+###############################################################################
+
+- make 'create plot' (-> 'new plot') work.  Opening a plot with no
+  data should work somehow.
+
+- respect commentary sign (#) in ASCII import
+
+  => the custom ascii import should be a regular expression.  This is
+     probably slower but might also be a lot more flexible.
+
+- Importer.ASCII.designations from list => string
+
+ Number of header lines (combo, blue)
+ Column names from line (combo, red)
+
+ Column label lines from (combo from, combo to), green
+ Save header lines from (combo from, combo to), --
+ 
+ checkbox 'Define header variables'
+
+- Is there a possibility to get the value of the pw, and not of the container?
+
+- Disable _all_ menus when selecting an object, enable ESC key again.
+  Hmmm.. This sucks.  Even though the main menus are disabled, we can still
+  use the accelerators of the sub menus.
+
+  Same goes for the main window.
+
+- Removing a plot while its matplotlib backend is open, does not close
+  the window.
+
+- List Of Recently Used Files.  (=> rc file or something)
+
+  - check for $USER/.sloppyrc
+  - if found, parse using elementtree.
+
+
+#----------------------------------------------------------------------
+#----------------------------------------------------------------------
+export
+------
+- ps should have correct orientation
+- aspect ratio of figures should be preserved.
+- gnuplot preview :-) ?
+
+
+View
+----
+
+- A view defines the start/end points
+- Each Plot has a ViewList, with at least one entry, the 'current'
+  view.  There should be a button 'save view as', e.g. 'overview',
+  'region 1'.
+
+  Hmmm.. But a view defines the start/end point for several axes...
+
+
+Plotting
+--------
+- what about nans/masked arrays? => use numeric
+- add linestyle and markerstyle to gnuplot
+- what about broken axes ?
+
+
+Importer
+--------
+
+- Import XPS spectra as multiple worksheets.
+- what about masked values?
+- Show Import Dialog with progress bar.
+
+
+Plugins:
+--------
+
+- toggle_logscale_y : we should clarify: It should be sufficient to
+  emit a 'changed' signal on the layer. BTW, I need to rename the 
+  'plot-changed' signals to 'changed'.
+
+  - Another idea: plot 'changed', but you can look up which part did exactly
+    change.
+    
+    Then we come back to the ::notify problem... 
+    
+    (A) Immediately notify of any change.
+    (B) Collect changes, then notify.
+
+- reverse axes.
+
+
+Cool ideas:  
+----------
+
+- the method 'add_plots', 'add_datasets' might mark the datasets as 
+  '_new_'.  If you double click on any such object, this new mark is
+  removed.  The new mark could be a little star or something similar.
+
+- show metadata in Dataset view.
+
+- preview window that tries to construct a preview via
+  'create_plot_from_datasets'
+
+
+Minor fixes
+-----------
+  - Use status bar in Tablewin to display the current row/column
+  - add 'Add Columns', 'Remove Columns' options.
+
+------------------------------------------------------------------------------
+
+#==============================================================================
+# Plotting Enhancements
+
+- add line.color and implement it in matplotlib
+
+- try to have Gnuplot and Matplotlib do the same thing...
+  => Feature Matrix ?
+
+
+=> we might want to implement hlines and vlines in the Plot.
+   Then we can combine the methods to select a line with the method
+   to put a line into the plot :-)
+
+   There is a method axvline or something that should do exactly that.
+
+    #--------------------------------------------------
+    # Text Snippet to create horizontal/vertical help lines
+
+    #         self.lx, = ax.plot( (0,0), (0,0), 'k-' )  # the horiz line
+    #         self.ly, = ax.plot( (0,0), (0,0), 'k-' )  # the vert line
+
+    #         # text location in axes coords
+    #         self.txt = ax.text( 0.7, 0.9, '', transform=ax.transAxes)
+
+    #         # update the line positions
+    #         self.lx.set_data( (minx, maxx), (y, y) )
+    #         self.ly.set_data( (x, x), (miny, maxy) )
+
+    #         self.txt.set_text( 'x=%1.2f, y=%1.2f'%(x,y) )
+    #         draw()
+
+
+
+ 
+------------------------------------------------------------------------------
+#==============================================================================
+#  Things to do for a 0.3 release:
+#==============================================================================
+
+- serialize group properties
+
+
+Export:
+
+(1) allow export templates => configuration file?
+
+- allow multi-export, especially also export several files in one
+  postscript file
+
+- allow adding linked data -- display them differently ?
+  be careful though about relative/absolute path names
+
+- Everything is centered around Tables.... why not?
+  Well, but we need to think about what to do once regular arrays are allowed:
+
+  - all backends need to check the data type before using the data
+  - the treeview must display different icons
+  - when editing an array, we can't use the tableview
+
+
+
+- When a project is saved, then naturally all data files, which have not
+  yet been loaded, are first imported, and then exported.... This is 
+a lot of unnecessary work. Why not check for this case and then just copy
+the file from the archive to the directory?
+
+
+#==============================================================================
+#  Things to do for a 0.4 release:
+#==============================================================================
+
+Plot Templates.
+
+- try to settle on a graph format so that I can start re-implementing
+  matplotlib output
+
+- WE NEED PROPER CACHING !!!!  (maybe using Builder objects?)
+
+
+###############################################################################
+
+- for each layer type, different data is needed. How do we distinguish those?
+
+#----------------------------------------------------------------------
+
+- lock Sloppy Archive upon access
+
+- if clicking on 'apply' or any other button in the layer window,
+  we need to apply all changes that are not yet active.  Maybe by
+  moving focus to the current button?
+
+
+
+#==============================================================================
+
+FANCY EXTRA STUFF
+
+- # - set key noautotitles   => only labels plots that have an explicit title option
+- allow hiding the row display in tableview
+- allow opening an editor for external data
+- allow 'unit' column, e.g. 'nm' and allow to convert to other units!
+- rewrite DatasetWindow insert/remove methods so that it can be
+  extended to cut/copy/paste operations.
+- export dataset 
+
+- implement nifty keyboard mapping ;-)
+
+If so (recommended):
+
+# create accelgroup, add to window
+ag = gtk.AccelGroup()
+window.add_accel_group(ag)
+menu = gtk.Menu()
+menu.set_accel_group(ag)
+
+menuitem = gtk.MenuItem("boo")
+# set unique path to identify the menuitem
+menuitem.set_accel_path("<SomeName>/SomeName/SomeName/MenuItemName")
+
+menu.append(menuitem)
+
+and at the end of the prog 'gtk.accel_map_save("moo")' and at the
+beginning of the prog (after setting up the menus), call
+'gtk.accel_map_load("moo")', and if the load fails,
+gtk.accel_map_change_entry("<SomeName>/SomeName/SomeName/MenuItemName",
+gtk.gdk.keyval_from_name("S"), gtk.gdk.CONTROL_MASK, True)
+
+
+
+
+examples for format
+
+%3.0em    1e+03
+%2.0f     100.00
+%L        3
+
+
+
+            # from matplotlib zooming algorithm
+            #dx=(lastx-x)/float(a.bbox.width())
+            #dy=(lasty-y)/float(a.bbox.height())
+            #dx,dy=format_deltas(event,dx,dy)
+            #alphax = pow(10.0,dx)
+            #alphay = pow(10.0,dy)#use logscaling, avoid singularities and smother scaling...
+            #lastx, lasty = trans.inverse_xy_tup( (lastx, lasty) )
+            #if a.get_xscale()=='log':
+            #    xmin = lastx*(xmin/lastx)**alphax
+            #    xmax = lastx*(xmax/lastx)**alphax
+            #else:
+            #    xmin = lastx+alphax*(xmin-lastx)
+            #    xmax = lastx+alphax*(xmax-lastx)
+            #if a.get_yscale()=='log':
+            #    ymin = lasty*(ymin/lasty)**alphay
+            #    ymax = lasty*(ymax/lasty)**alphay
+            #else:
+            #    ymin = lasty+alphay*(ymin-lasty)
+            #    ymax = lasty+alphay*(ymax-lasty)

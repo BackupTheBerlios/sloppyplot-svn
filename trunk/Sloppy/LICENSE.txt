@@ -1,0 +1,13 @@
+SloppyPlot is (C) 2004-2005 by Niklas Volbers and is distributed under
+the terms of the GNU General Public License as published by the Free
+Software Foundation; either version 2 of the License, or (at your
+option) any later version.
+
+See Licenses/gpl.txt for details.
+
+
+Elementtree, which is used and distributed as part of SloppyPlot, is
+Copyright (c) 1999-2004 by Fredrik Lundh.  
+
+See Licenses/elementtree.txt for details.
+
