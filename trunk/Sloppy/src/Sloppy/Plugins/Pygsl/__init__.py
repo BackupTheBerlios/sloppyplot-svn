@@ -15,8 +15,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-# $HeadURL: svn+ssh://svn.berlios.de/svnroot/repos/sloppyplot/trunk/Sloppy/src/Sloppy/Gtk/application.py $
-# $Id: application.py 2 2005-08-11 21:45:21Z niklasv $
+# $HeadURL$
+# $Id$
 
 
 from Sloppy.Base.plugin import PluginRegistry
