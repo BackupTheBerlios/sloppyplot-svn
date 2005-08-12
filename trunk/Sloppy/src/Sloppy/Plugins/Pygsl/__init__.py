@@ -15,10 +15,26 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-# $HeadURL$
-# $Id$
+# $HeadURL: svn+ssh://svn.berlios.de/svnroot/repos/sloppyplot/trunk/Sloppy/src/Sloppy/Gtk/application.py $
+# $Id: application.py 2 2005-08-11 21:45:21Z niklasv $
 
 
-import Default
-import Sims
-import Pygsl
+from Sloppy.Base.plugin import PluginRegistry
+
+import logging
+logger = logging.getLogger('plugin')
+
+try:
+    import pygsl
+except ImportError:
+    logger.error("Could not find pygsl. Plugin skipped.")
+else:
+    logger.info("pygsl successfully loaded.")
+    pygsl.import_all()
+
+    class Plugin:        
+        def __init__(self, app):
+            self.app = app
+            self.pygsl = pygsl
+        
+    PluginRegistry.register("pygsl", Plugin)

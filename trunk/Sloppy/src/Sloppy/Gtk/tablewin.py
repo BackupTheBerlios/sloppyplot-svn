@@ -40,8 +40,6 @@ from tableview import TableView
 import uihelper
 import propwidgets
 
-import pygsl
-pygsl.import_all()
 
 
 class DatasetWindow( gtk.Window ):    
@@ -375,6 +373,9 @@ class DatasetWindow( gtk.Window ):
 
 
     def cb_interpolate(self, action):
+        plugin = self.app.get_plugin('pygsl')
+        pygsl = plugin.pygsl
+        
         table = self.dataset.get_data()
         x, y = table[0], table[1]
         
