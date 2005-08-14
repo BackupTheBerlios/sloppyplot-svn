@@ -35,7 +35,7 @@ import sys
 PATH_SHARED=join(sys.prefix,'share','sloppyplot')
  
 SVN_REVISION="SVN"+"$Rev$"[6:-2]
-
+VERSION="0.1.1"
 
 
 DESCRIPTION="""\
@@ -46,7 +46,7 @@ using gnuplot is available.
 """
 
 setup(name='sloppyplot',
-      version='0.1.%s' % SVN_REVISION,
+      version='%s.%s' % (VERSION, SVN_REVISION),
       description=DESCRIPTION,
       author='Niklas Volbers',
       author_email = 'mithrandir42@web.de',
