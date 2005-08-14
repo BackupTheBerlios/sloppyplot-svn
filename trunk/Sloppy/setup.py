@@ -46,7 +46,7 @@ using gnuplot is available.
 """
 
 setup(name='sloppyplot',
-      version=SVN_REVISION,
+      version='0.1.%s' % SVN_REVISION,
       description=DESCRIPTION,
       author='Niklas Volbers',
       author_email = 'mithrandir42@web.de',
