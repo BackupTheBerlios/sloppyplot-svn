@@ -1,0 +1,97 @@
+
+INSTALLATION HINTS
+==================
+
+1. Requirements
+2. Generic Installation Instructions
+3. Slackware Installation Instructions
+
+
+
+------------------------------------------------------------------------------
+
+1. Requirements
+===============
+
+Sloppyplot is developed and has been tested under Linux.  Windows
+environments are not yet supported, but will be once everything has
+been stabilized.
+
+Sloppyplot unfortunately has a lot of dependencies!
+
+The following applications and libraries have to to be installed
+before running the program.  Except for python, it is not necessary to
+have these dependencies fulfilled at the time of installation.
+
+- python >= 2.4
+  http://www.python.org
+
+- pygtk 2.6, 
+  http://www.pygtk.org
+
+- Numeric (any recent version should work), 
+  http://numpy.sf.net
+
+- matplotlib 0.82
+  http://matplotlib.sf.net
+
+- netCDF
+  http://my.unidata.ucar.edu/content/software/netcdf/index.html
+
+- python bindings for netCDF
+  http://pysclint.sourceforge.net/pycdf/
+
+Future versions of SloppyPlot might be able to use the netCDF bindings
+from ScientificPython.  If you are interested, please bug me about
+this!
+
+I am currently testing analysis functions.  For these, you need to
+have the Gnu Scientific Library (GSL) and its python bindings
+installed.  These dependencies are totally optional! 
+
+- Gnu Scientific Library 1.x
+  http://www.gnu.org/software/gsl/
+
+- Python Bindings for GSL
+  http://pygsl.sourceforge.net/
+
+
+
+For the postscript export you need to have Gnuplot installed
+
+- Gnuplot
+  www.gnuplot.info
+
+
+
+
+
+2. Generic Installation Instructions
+====================================
+
+To install, stay in the directory where you found this INSTALL.txt
+file and enter:
+
+$ python setup.py install
+
+And you are done.  The executable is called sloppy-gtk
+
+
+
+
+3. Slackware Installation Instructions
+======================================
+
+Even without checkinstall (which you should try if you are using
+Slackware), you can create a Slackware-compatible package!
+
+$ python setup.py bdist
+
+will build a Slackware-compatible archive in the subdirectory dist.
+Just go there, rename the file and install it (the example uses 0.2 as
+version number; adjust to your version):
+
+$ cd dist
+$ mv sloppyplot-0.2.linux-i686.tar.gz sloppyplot-0.2-i686-1.tgz
+% installpkg sloppyplot-0.2-i686-1.tgz
+

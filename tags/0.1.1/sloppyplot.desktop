@@ -1,0 +1,10 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=SloppyPlot
+GenericName=Scientific Plotting Tool
+GenericName[de]=Wissenschaftliches Zeichenwerkzeug
+Icon=/usr/share/pixmaps/sloppyplot.png
+Exec=sloppy-gtk
+Terminal=False
+Type=Application
+Categories=Science
