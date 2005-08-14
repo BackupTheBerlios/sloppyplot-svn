@@ -114,13 +114,18 @@ class __Emitter:
                 logger.debug("emit: receiver for signal is gone. signal marked for deletion.")
                 deprecated.append(signal)
                 continue
-            
-            if receiver == Anonymous:
-                logger.debug("(anonymous signal)")
-                signal.callback( sender, *all_args, **all_kwargs )
-            else:
-                logger.debug("(regular signal!)")
-                signal.callback( receiver, sender, *all_args, **all_kwargs )                
+
+            try:
+                if receiver == Anonymous:
+                    logger.debug("(anonymous signal)")
+                    signal.callback( sender, *all_args, **all_kwargs )
+                else:
+                    logger.debug("(regular signal!)")
+                    signal.callback( receiver, sender, *all_args, **all_kwargs )
+            except:
+                print "Caught exception while trying to call signal callback", \
+                      receiver, sender, all_args, all_kwargs
+                raise
 
         # remove all obsolete signals
         for signal in deprecated:
