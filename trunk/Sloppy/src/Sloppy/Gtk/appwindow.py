@@ -483,7 +483,7 @@ class AppWindow( gtk.Window ):
 
     actions_debug = [
         ('ObjectMenu', None, '_Object'),
-        ('Edit', None, '_Edit', '<control>E', 'Edit the currently selected object.', '_cb_edit'),
+        ('Edit', gtk.STOCK_EDIT, '_Edit', '<control>E', 'Edit the currently selected object.', '_cb_edit'),
         ('DebugMenu', None, 'Debug'),
         ('LoadTestProject', None, 'Load test project', None, 'test', '_cb_load_test_project'),
         ('WindowList', None, 'Windows...'),
@@ -567,11 +567,14 @@ class AppWindow( gtk.Window ):
         <separator/>
         <menuitem action='Delete'/>
       </popup>
-      <popup name="popup_dataset">          
+      <popup name="popup_dataset">
+        <menuitem action='Edit'/>
+        <separator/>      
         <menuitem action='DatasetToPlot'/>
         <menuitem action='DatasetAddToPlot'/>
         <separator/>
         <menuitem action='Delete'/>
+        <separator/>
       </popup>
       <popup name="popup_empty">
         <menuitem action='NewDataset'/>

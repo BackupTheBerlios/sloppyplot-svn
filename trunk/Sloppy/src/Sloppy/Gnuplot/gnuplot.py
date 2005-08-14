@@ -194,7 +194,8 @@ class Backend(backend.Plotter):
         #  value: (filename, dataset_change_counter, dataset object)
         if self.exports.has_key(source) is False:
             logger.debug("Marking %s for export" % source)
-            new_export = [utils.construct_filename(source.key), -1, source]
+            filename = source.key
+            new_export = [filename, -1, source]
             self.exports[source] = new_export
             return new_export[0]
         else:
@@ -323,7 +324,10 @@ class Backend(backend.Plotter):
                 cy = line.cy or group_info.get('cy', 2)
                 group_info['cy'] = cy + 2
             else:
-                (cx, cy) = (uwrap.get(line, 'cx'), uwrap.get(line, 'cy'))
+                (cx, cy) = (line.cx, line.cy)
+                if cx is None or cy is None:
+                    logger.error("No source cx or cy given. Line skipped.")
+                    continue
             using = 'using %s:%s' % (cx+1,cy+1)
 
             # TODO: support 'style' and 'marker'

@@ -185,9 +185,12 @@ class GtkApplication(Application):
     def _cb_project_new(self,widget): self.new_project()
 
     def _cb_edit(self, action):
-        plots = self.window.treeview.get_selected_plots()
+        plots, datasets = self.window.treeview.get_selected_plds()
         if len(plots) > 0:
             self.edit_layer(plots[0])
+        else:
+            for dataset in datasets:
+                self.edit_dataset(dataset)
         
     # ----------------------------------------------------------------------
 
