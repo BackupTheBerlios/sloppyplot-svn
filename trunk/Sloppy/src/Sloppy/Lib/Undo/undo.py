@@ -101,12 +101,15 @@ class UndoInfo:
         rv = []
         rv.append("%sUndoInfo: '%s' " % (indent*" ",self.doc))
 
-        if detailed is True:
+        if detailed is True:            
             rv.append("  func  : %s" % self.func)
-            if len(self.args) > 0:
-                rv.append("  args  : %s" % self.args)
-            if len(self.kwargs) > 0:
-                rv.append("  kwargs: %s" % self.kwargs)
+            try:
+                if len(self.args) > 0:
+                    rv.append("  args  : %s" % self.args)
+                if len(self.kwargs) > 0:
+                    rv.append("  kwargs: %s" % self.kwargs)
+            except TypeError:
+                rv.append("  (ERROR DURING CONVERSION)")
         return ('\n'+indent*" ").join(rv)
 
 
