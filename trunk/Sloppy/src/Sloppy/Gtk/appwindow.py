@@ -142,7 +142,7 @@ class AppWindow( gtk.Window ):
         return toolbar
 
     def _construct_treeview(self):       
-        treeview = ProjectTreeView()
+        treeview = ProjectTreeView(self.app)
         treeview.connect( "row-activated", self._cb_row_activated )
         treeview.connect( "button-press-event", self._cb_button_pressed )
         treeview.connect( "popup-menu", self.popup_menu, 3, 0 )
@@ -352,7 +352,7 @@ class AppWindow( gtk.Window ):
         """
         plot -> plot item
         dataset -> edit dataset
-        """        
+        """
         (plots, datasets) = widget.get_selected_plds()
         for plot in plots:
             self.app.plot(plot)

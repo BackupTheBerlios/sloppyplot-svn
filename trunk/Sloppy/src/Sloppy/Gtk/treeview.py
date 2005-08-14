@@ -31,7 +31,7 @@ import gtkutils
 
 from Sloppy.Base.objects import *
 from Sloppy.Base.dataset import *
-from Sloppy.Base import pdict
+from Sloppy.Base import pdict, uwrap
 
 from Sloppy.Lib import Signals
 
@@ -52,7 +52,7 @@ class ProjectTreeView( gtk.TreeView ):
     #  Initialization
     # ----------------------------------------------------------------------
     
-    def __init__(self, project=None):
+    def __init__(self, app, project=None):
        
         # init TreeView
         gtk.TreeView.__init__( self )
@@ -61,6 +61,8 @@ class ProjectTreeView( gtk.TreeView ):
 
         self.set_size_request(width=200, height=200)
 
+        self.app = app
+        
         # init everything
         self.init_model()
         self.init_view_columns()
@@ -87,7 +89,7 @@ class ProjectTreeView( gtk.TreeView ):
         Create the visible columns and connect them to the render
         functions render_xxx which dynamically create contents from
         the object.           
-        """
+        """ 
         column = gtk.TreeViewColumn('plots and datasets')
         pixbuf_renderer = gtk.CellRendererPixbuf()        
         column.pack_start(pixbuf_renderer,expand=False)
@@ -96,6 +98,9 @@ class ProjectTreeView( gtk.TreeView ):
         column.pack_start(text_renderer,expand=True)
         column.set_attributes(text_renderer, text=self.COL_KEY)
         column.set_property('resizable', True)
+        text_renderer.set_property('editable', True)
+        text_renderer.connect('edited', self.cb_edited_key)
+        
         self.append_column(column)
 
         
@@ -243,6 +248,30 @@ class ProjectTreeView( gtk.TreeView ):
     
         
 
+    #----------------------------------------------------------------------
+
+    def cb_edited_key(self, cell, path, new_text):
+        """
+        When an object key is edited, we need to check whether
+        the key is valid. If so, the key is changed.
+        """        
+        model = self.get_model()
+        object = model[path][self.COL_OBJECT]
+
+        ul = UndoList()
+        if isinstance(object , Dataset):
+            if new_text not in [dataset.key for dataset in self.project.datasets]:
+                ul.describe("Edit Dataset key")
+                uwrap.set(object, key=new_text, undolist=ul)
+                uwrap.emit_last(self.project.plots, "changed", undolist=ul)
+        elif isinstance(object, Plot):
+            if new_text not in [plot.key for plot in self.project.plots]:
+                ul.describe("Edit Plot key")
+                uwrap.set(object, key=new_text, undolist=ul)
+                uwrap.emit_last(self.project.datasets, "changed", undolist=ul)
+
+        if len(ul) > 0:
+            self.project.journal.append(ul)        
 
 
 

@@ -5,10 +5,6 @@ DONE:
 ###############################################################################
 FIRST THINGS FIRST:
 
-- Should we stick with tarfile or should we move to zipfile?
-
-  Many people use zip and it will be easier for them to extract
-  information.  Do a comparison.
 
 - why do we get an error when extracting the tar? Maybe just because
   we are displaying binary data. ???
@@ -37,9 +33,6 @@ FIRST THINGS FIRST:
 
 ###############################################################################
 
-- make 'create plot' (-> 'new plot') work.  Opening a plot with no
-  data should work somehow.
-
 - respect commentary sign (#) in ASCII import
 
   => the custom ascii import should be a regular expression.  This is
@@ -57,12 +50,6 @@ FIRST THINGS FIRST:
 
 - Is there a possibility to get the value of the pw, and not of the container?
 
-- Disable _all_ menus when selecting an object, enable ESC key again.
-  Hmmm.. This sucks.  Even though the main menus are disabled, we can still
-  use the accelerators of the sub menus.
-
-  Same goes for the main window.
-
 - Removing a plot while its matplotlib backend is open, does not close
   the window.
 
@@ -73,7 +60,7 @@ FIRST THINGS FIRST:
 
 
 #----------------------------------------------------------------------
-#----------------------------------------------------------------------
+
 export
 ------
 - ps should have correct orientation
