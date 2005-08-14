@@ -663,18 +663,18 @@ class DataCursor( Cursor, BufferedRedraw ):
 
     def set_new_index(self, index):
         " Sets the new index (but keeps the line). "
-        xdata = self.line.get_xdata()[index]
-        ydata = self.line.get_ydata()[index]
-        
-        coords = self.axes.transData.xy_tup((xdata,ydata))
 
         if index >= self.bounds[0] and index <= self.bounds[1]:
             self.index = index
-            self.coords = coords
-            self.point = (xdata, ydata)
 
-        Signals.emit(self, "update-position", self.line, self.index, self.point)
-        self.draw()
+            xdata = self.line.get_xdata()[index]
+            ydata = self.line.get_ydata()[index]
+            self.point = (xdata, ydata)
+            
+            self.coords = self.axes.transData.xy_tup((xdata,ydata))
+
+            Signals.emit(self, "update-position", self.line, self.index, self.point)
+            self.draw()
             
             
     def mouse_move(self, event):
@@ -734,7 +734,7 @@ class DataCursor( Cursor, BufferedRedraw ):
         # TODO: This is ok, but we might need to refine this, once we use
         # TODO: matplotlib's facility to clip the lines.
         self.line = last_match[0]
-        self.bounds = (0, len(xdata-1))
+        self.bounds = (0, max(0, len(self.line.get_xdata())-1))
         self.set_new_index(last_match[1])
     
         
