@@ -118,7 +118,7 @@ class Backend:
             self.Signals['plot-changed'] = Signals.connect(
                 self.plot, 'plot-changed', self.cb_plot_changed)
             self.Signals['plot-closed'] = Signals.connect(
-                self.plot, 'closed', self.disconnect)
+                self.plot, 'closed', (lambda sender: self.disconnect()))
 
     def cb_plot_changed(self, sender):
         # TODO: only redraw if we have already drawn something!

@@ -657,6 +657,9 @@ class LinesTab(AbstractTab):
         selection = self.treeview.get_selection()
         model, pathlist = selection.get_selected_rows()
 
+        if model is None:
+            model = self.treeview.get_model()
+            
         if len(pathlist) > 0:
             source_key = model.get_value(model.get_iter(pathlist[0]), self.COL_SOURCE_KEY)
             source = self.app.project.get_dataset(source_key, default=None)
