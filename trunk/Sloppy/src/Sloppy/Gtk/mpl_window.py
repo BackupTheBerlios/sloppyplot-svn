@@ -42,12 +42,15 @@ from Sloppy.Lib import Signals
 class MatplotlibWindow( gtk.Window ):
 
     actions_dict = {
-        'View':
+        'MenuPlaceholders':
         [
         ('EditMenu', None, '_Edit'),
         ('PlotMenu', None, '_Plot'),
         ('DisplayMenu', None, '_Display'),
-        ('AnalysisMenu', None, '_Analysis'),
+        ('AnalysisMenu', None, '_Analysis')
+        ],        
+        'ViewMenu':
+        [
         ('ViewMenu', None, '_View'),
         ('Fullscreen', None, 'Fullscreen Mode', 'F11', '', '_cb_fullscreen')
         ]
@@ -150,6 +153,8 @@ class MatplotlibWindow( gtk.Window ):
         " Disable most user interaction. "        
         actiongroups = self.uimanager.get_action_groups()
         for actiongroup in actiongroups:
+            if actiongroup.get_name() in ['ViewMenu']:
+                continue
             if actiongroup.get_sensitive() is True:
                 actiongroup.set_sensitive(False)
                 self.disabled_groups.append(actiongroup)               
