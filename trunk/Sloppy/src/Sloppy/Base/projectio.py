@@ -49,7 +49,22 @@ FILEFORMAT = "0.3"
 
 class ParseError(Exception):
     pass
-            
+
+
+
+def dataset_filename(key):
+    """  The filename is dynamically created from the given key,
+    appended by the extension '.nc'. """
+    #TODO: escape special characters, like '/'
+    if not isinstance(key, basestring):
+        raise TypeError("construct_filename: 'key' must be a valid string, but it is of %s" % type(key))
+    return "%s.nc" % key
+
+
+
+#------------------------------------------------------------------------------
+# Object Creation (starting with new_xxx)
+
 
 def new_dataset(spj, element):
     ds = Dataset(**element.attrib)
@@ -78,7 +93,7 @@ def new_dataset(spj, element):
                 if key is not None:
                     column.set_value(key, eInfo.text)
 
-        filename = os.path.join('datasets', utils.construct_filename(ds.key))
+        filename = os.path.join('datasets', dataset_filename(ds.key))
         # TODO: replace DEFAULT_FF with read value
         ds.set_table_import(spj, filename, typecodes, columns, DEFAULT_FF)
     
@@ -141,13 +156,35 @@ def new_plot(spj, element):
 
 
 
-def safe_set(element, key, value):
-    if value is not None: # and isinstance(value, basestring):
-        element.set(key, str(value))    
+def fromTree(tree):
+    eProject = tree.getroot()
+
+    spj = Project()
+    version = eProject.get('version', None)
+    if version is not None and version != FILEFORMAT:
+        raise IOError("Invalid Sloppy File Format Version %s. Aborting Import." % version)        
+
+    for eDataset in eProject.findall('Datasets/*'):
+        spj.datasets.append( new_dataset(spj, eDataset))
+
+    for ePlot in eProject.findall('Plots/*'):
+        spj.plots.append( new_plot(spj, ePlot) )
+    
+    return spj
+
+
+
+#------------------------------------------------------------------------------
+# Writing objects to ElementTree Elements
 
 
 def toElement(project):
-    
+
+    # helper function
+    def safe_set(element, key, value):
+        if value is not None: # and isinstance(value, basestring):
+            element.set(key, str(value))    
+
     eProject = Element("Project")
     eProject.attrib['version'] = FILEFORMAT
 
@@ -256,23 +293,6 @@ def toElement(project):
     return eProject
 
 
-def fromTree(tree):
-    eProject = tree.getroot()
-
-    spj = Project()
-    version = eProject.get('version', None)
-    if version is not None and version != FILEFORMAT:
-        raise IOError("Invalid Sloppy File Format Version %s. Aborting Import." % version)        
-
-    for eDataset in eProject.findall('Datasets/*'):
-        spj.datasets.append( new_dataset(spj, eDataset))
-
-    for ePlot in eProject.findall('Plots/*'):
-        spj.plots.append( new_plot(spj, ePlot) )
-    
-    return spj
-
-    
 
 def save_project(spj, filename=None, path=None):
     """
@@ -314,7 +334,7 @@ def save_project(spj, filename=None, path=None):
         os.mkdir(dsdir)
         for ds in spj.datasets:
             try:
-                dspath = os.path.join(dsdir, utils.construct_filename(ds.key))
+                dspath = os.path.join(dsdir, dataset_filename(ds.key))
                 exporter.write_to_file(dspath, ds.data)
             except AttributeError:
                 logger.error("Error while writing Dataset '%s'" % ds.key)

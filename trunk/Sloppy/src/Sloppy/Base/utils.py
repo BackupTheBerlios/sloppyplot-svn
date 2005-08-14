@@ -73,13 +73,3 @@ def partial_key_extract(source,prefix='',remove_items=False,use_prefix=True):
 
 
 
-def construct_filename(key):
-        """
-        The filename is dynamically created from the Dataset's key,
-        appended by the extension '.nc'.
-        """
-        #TODO: escape special characters, like '/'
-        if not isinstance(key, basestring):
-            raise TypeError("construct_filename: 'key' must be a valid string, but it is of %s" % type(key))
-        return "%s.nc" % key
-
