@@ -458,7 +458,7 @@ class AppWindow( gtk.Window ):
         ('PlotMenu', None, '_Plot'),
         ('Plot', None, '_Plot', '<control>P', 'Plot the currently selected object with the default backend.', '_cb_plot'),
         ('PlotBackendMenu', None, 'Plot via backend'),
-        ('NewPlot', None, 'Create new Plot', None, 'Create new Plot', '_cb_new_plot'),
+        ('NewPlot', None, 'New Plot', None, 'Create new Plot', '_cb_new_plot'),
         ('DatasetMenu', None, 'Dataset'),
         ('DatasetToPlot', None, 'Create Plot from Dataset', None, 'Create a new Plot object from the current Dataset', '_cb_create_plot_from_datasets'),
         ('DatasetAddToPlot', None, 'Add Datasets to Plot', None, 'Add Datasets to Plot', '_cb_add_datasets_to_plot'),

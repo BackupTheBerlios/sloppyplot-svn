@@ -166,7 +166,7 @@ def new_lineplot2d(**kwargs):
     plot_kwargs = dict()
     for key in Plot.get_propdict().keys():
         if kwargs.has_key(key):
-            plot_kwargs = kwargs.pop(key)
+            plot_kwargs[key] = kwargs.pop(key)
 
     # create new plot...
     plot = Plot(**plot_kwargs)

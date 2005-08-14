@@ -43,7 +43,7 @@ from layerwin import LayerWindow
 import Sloppy
 from Sloppy import Application
 from Sloppy.Base import const, utils, error
-from Sloppy.Base.objects import Plot, Axis, Line, Layer
+from Sloppy.Base.objects import Plot, Axis, Line, Layer, new_lineplot2d
 from Sloppy.Base.dataset import Dataset
 from Sloppy.Base.project import Project
 from Sloppy.Base.projectio import load_project, save_project, ParseError
@@ -237,8 +237,11 @@ class GtkApplication(Application):
     #----------------------------------------------------------------------
 
     def _cb_new_plot(self,widget):
-        self.new_plot()
-
+        pj = self._check_project()
+        
+        plot = new_lineplot2d(key='empty plot')
+        pj.add_plots([plot])
+        
 
     def load_project(self):
         """
