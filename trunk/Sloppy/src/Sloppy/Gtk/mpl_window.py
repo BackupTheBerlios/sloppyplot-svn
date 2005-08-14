@@ -53,11 +53,6 @@ class MatplotlibWindow( gtk.Window ):
         ]
         }
 
-    action_list = ['/MainMenu/PlotMenu',
-                   '/MainMenu/EditMenu',
-                   '/MainMenu/DisplayMenu',
-                   '/MainMenu/AnalysisMenu']
-
     uistring = """
     <ui>
       <menubar name='MainMenu'>
@@ -88,14 +83,14 @@ class MatplotlibWindow( gtk.Window ):
         #self.set_transient_for(app.window)
         self.is_fullscreen = False
         self.app = app
-        self.ag_escape = None
+        self.disabled_groups = list()
         
         self.mpl_widget = MatplotlibWidget(app, project, plot)
-
+        
         # set up ui manager
         self.uimanager = gtk.UIManager()        
 
-        # add ui from application window
+        # add undo/redo ui from application window
         ag = uihelper.get_action_group(self.app.window.uimanager, 'UndoRedo')
         self.uimanager.insert_action_group(ag,0)
         
@@ -110,8 +105,12 @@ class MatplotlibWindow( gtk.Window ):
         self.uimanager.add_ui_from_string(self.mpl_widget.get_uistring())
 
         # and set up accelerators for all of the above
-        self.add_accel_group(self.uimanager.get_accel_group())
+        accel_group = self.uimanager.get_accel_group()
+        self.add_accel_group(accel_group)
 
+        # connect the ESC-key to the mpl widget's cancel button 
+        key, modifier = gtk.accelerator_parse('Escape')
+        self.mpl_widget.btn_cancel.add_accelerator("activate", accel_group, key, modifier, gtk.ACCEL_VISIBLE)
         
         # construct menubar 
         menubar = self.uimanager.get_widget('/MainMenu')
@@ -148,27 +147,19 @@ class MatplotlibWindow( gtk.Window ):
 
 
     def disable_interaction(self, widget):
-        uihelper.set_actions(self.uimanager, self.action_list, False)
-
-        print "Adding accel group for ESCAPE"
-
-        def my_callback(self, sender):
-            print
-            print "MY CALLBACK"
-            print
-
-        ag = gtk.AccelGroup()
-        key, modifier = gtk.accelerator_parse('Escape')
-        ag.connect_group(key, modifier, gtk.ACCEL_VISIBLE, my_callback)
-        self.add_accel_group(ag)        
-        
-        self.ag_escape = ag
+        " Disable most user interaction. "        
+        actiongroups = self.uimanager.get_action_groups()
+        for actiongroup in actiongroups:
+            if actiongroup.get_sensitive() is True:
+                actiongroup.set_sensitive(False)
+                self.disabled_groups.append(actiongroup)               
 
 
     def enable_interaction(self, widget):
-        print "Removing accel group again"
-        uihelper.set_actions(self.uimanager, self.action_list, True)                     
-        self.remove_accel_group(self.ag_escape)
+        " Re-enable all interaction disabled by disable_interaction. "
+        for actiongroup in self.disabled_groups:
+            actiongroup.set_sensitive(True)
+        self.disabled_groups = list()
 
         
 
@@ -276,6 +267,7 @@ class MatplotlibWidget(gtk.VBox):
         self._construct_actiongroups()        
         self.statusbar = self._construct_statusbar()
         self.coords = self._construct_coords()
+
         self.btn_cancel = self._construct_cancel_button()
 
         self.context_id = self.statusbar.get_context_id("coordinates")
@@ -594,7 +586,6 @@ class MatplotlibWidget(gtk.VBox):
         def finish_selector(sender, context_id):
             self.statusbar.pop(context_id)
             xvalue, yvalue = sender.point
-            print "FINISHED", xvalue, yvalue
 
         def update_position(sender, context_id, line, index, point):
             # Note that 'line' is a Line2d instance from matplotlib!
@@ -637,7 +628,6 @@ class MatplotlibWidget(gtk.VBox):
         
     #----------------------------------------------------------------------
     def abort_selection(self):
-        print "ABORTING"
         if self._current_selector is not None:
             self._current_selector.abort()
             self._current_selector = None
@@ -662,7 +652,7 @@ class MatplotlibWidget(gtk.VBox):
             self.emit("edit-mode-ended")
 
         self.btn_cancel.set_sensitive(True)
-        self.btn_cancel.connect("clicked", (lambda sender: self.abort_selection()))
+        self.btn_cancel.connect("activate", (lambda sender: self.abort_selection()))
         
         Signals.connect(selector, "finished", on_finish)
         Signals.connect(selector, "aborted", on_finish)

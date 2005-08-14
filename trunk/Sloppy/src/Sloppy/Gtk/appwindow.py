@@ -491,7 +491,7 @@ class AppWindow( gtk.Window ):
 
     actions_undoredo = [
         ('Undo', gtk.STOCK_UNDO, 'Undo', '<control>Z', 'Undo last action', '_cb_undo'),
-        ('Redo', gtk.STOCK_REDO, 'Redo', '<control>R', 'Redo','_cb_redo')
+        ('Redo', gtk.STOCK_REDO, 'Redo', '<control><shift>z', 'Redo','_cb_redo')
         ]
 
     #----------------------------------------------------------------------

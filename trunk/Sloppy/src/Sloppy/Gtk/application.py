@@ -193,7 +193,7 @@ class GtkApplication(Application):
 
     def _cb_load_test_project(self,widget):
         try:
-            filename = const.internal_path(const.PATH_EXAMPLE+'/zno.spj')
+            filename = const.internal_path(const.PATH_EXAMPLE+'/example.spj')
             spj = load_project(filename)
         except IOError:
             # TODO: Message Box
@@ -809,15 +809,13 @@ def main():
 
     gtkutils.register_all_png_icons(const.internal_path(const.PATH_ICONS), 'sloppy-')
 
-    logger.info("Test")
     try:
         filename = const.internal_path(const.PATH_EXAMPLE)
-        filename = os.path.join(filename, 'zno.spj')
+        filename = os.path.join(filename, 'example.spj')
         spj = load_project(filename)
     except IOError, msg:
 	logger.error("IOError! Sample Project could not be loaded: %s" % msg )
         spj = None        
-        #spj = Project(label='new project')
     except ParseError:
         logger.error("Error while reading project file %s" % filename)
         spj = None
