@@ -84,6 +84,23 @@ class Project(Container):
         self.app = None
 
 
+    def close(self):
+        " Close project properly. "
+        
+        for dataset in self.datasets:
+            dataset.close()
+        for plot in self.plots:
+            plot.close()
+        if self._archive is not None:
+            self._archive.close()
+        
+        # disconnect all opened backends
+        for backend in self.backends:
+            backend.disconnect()
+       
+        Signals.emit(self, 'close')
+        self.app = None # TODO: this should be unnecessary if the app catches the signal
+
     #----------------------------------------------------------------------        
     __filename = None
     def get_filename(self):

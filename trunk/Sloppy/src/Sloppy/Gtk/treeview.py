@@ -160,7 +160,6 @@ class ProjectTreeView( gtk.TreeView ):
             
         self._project = project
 
-        print "POPULATING"
         self.populate_treeview()
 
         # TODO: remove old signals

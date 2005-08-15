@@ -161,18 +161,10 @@ class GtkApplication(Application):
             
     def _cb_quit_application(self, action):
         try:
-            self.quit()
+            self.set_project(None, confirm=True)
+            gtk.main_quit()
         except error.UserCancel:
             return
-        else:
-            self.window.emit('destroy')
-
-    def quit(self):
-        try:
-            self.set_project(None, confirm=True)
-        except error.UserCancel:
-            return True
-        gtk.main_quit()
         
 
     #

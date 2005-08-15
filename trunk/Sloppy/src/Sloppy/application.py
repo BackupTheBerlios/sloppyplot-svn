@@ -64,8 +64,7 @@ class Application(object):
         self.plugins = dict()
         self.init_plugins()
         self.progresslist = ProgressList
-        
-        self.journal = UndoRedo()
+        self.recent_files = list()
 
 
     #----------------------------------------------------------------------
@@ -85,29 +84,18 @@ class Application(object):
 
         # if project changes, then close the Project properly!
         if self._project is not None and id(project) != id(self._project):
-            print "Closing Project"
-       
-            for dataset in self.project.datasets:
-                dataset.close()
-            for plot in self.project.plots:
-                plot.close()
-            if self.project._archive is not None:
-                self.project._archive.close()
-
-            self.project.app = None
-        
-            # disconnect all opened backends
-            for backend in self.project.backends:
-                backend.disconnect()
-       
-            Signals.emit(self.project, 'close')
-
-            self._project = None
-        
-
+            self._project.close()
+            
         self._project = project
         if project is not None:
             project.app = self
+            def detach_project(project):
+                if id(self._project) == id(project):
+                    self._project.app = None
+                    self._project = None
+                    
+            # TODO: connect_once would be nice.
+            Signals.connect(project, 'close', detach_project)
 
 
     # be careful when redefining get_project in derived classes -- it will

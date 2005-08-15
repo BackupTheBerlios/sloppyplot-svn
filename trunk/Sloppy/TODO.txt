@@ -6,28 +6,14 @@ DONE:
 FIRST THINGS FIRST:
 
 
-- why do we get an error when extracting the tar? Maybe just because
-  we are displaying binary data. ???
+- List Of Recently Used Files.  (=> rc file or something)
 
-- Add README file to project explaining how to extract the datasets.
-
-  This is an important step to saving arbitrary data.
-
-   create temporary directory
-
-   write dataset to temporary directory
- 
-   obtain filelist from project archive, exclude all datasets and project.xml
-
-   write all files from the filelist to the temporary directory.
-   Because we don't want to do this every time we save, we need to keep
-   track if any of these files have changed.
-
-   tar-zip temporary directory
+  - check for $USER/.sloppyrc
+  - if found, parse using elementtree.
 
 
 
-
+- connect_once
 
 
 
@@ -49,14 +35,6 @@ FIRST THINGS FIRST:
  checkbox 'Define header variables'
 
 - Is there a possibility to get the value of the pw, and not of the container?
-
-- Removing a plot while its matplotlib backend is open, does not close
-  the window.
-
-- List Of Recently Used Files.  (=> rc file or something)
-
-  - check for $USER/.sloppyrc
-  - if found, parse using elementtree.
 
 
 #----------------------------------------------------------------------
@@ -129,6 +107,29 @@ Minor fixes
 -----------
   - Use status bar in Tablewin to display the current row/column
   - add 'Add Columns', 'Remove Columns' options.
+
+
+
+- why do we get an error when extracting the tar? Maybe just because
+  we are displaying binary data. ???
+
+- Add README file to project explaining how to extract the datasets.
+
+  This is an important step to saving arbitrary data.
+
+   create temporary directory
+
+   write dataset to temporary directory
+ 
+   obtain filelist from project archive, exclude all datasets and project.xml
+
+   write all files from the filelist to the temporary directory.
+   Because we don't want to do this every time we save, we need to keep
+   track if any of these files have changed.
+
+   tar-zip temporary directory
+
+
 
 ------------------------------------------------------------------------------
 
