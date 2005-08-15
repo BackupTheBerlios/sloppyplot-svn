@@ -21,7 +21,8 @@
 
 NAME = "SloppyPlot"
 COPYRIGHT = "(C)opyright 2004-2005 Niklas Volbers"
-VERSION = "SVN $Rev$".replace("$Rev: ","").replace("$","")
+VERSION="0.1.2"
+#VERSION = "SVN $Rev$".replace("$Rev: ","").replace("$","")
 DESCRIPTION = "A scientific plotting tool"
 AUTHORS = ["Niklas Volbers"]
 HOMEPAGE="sloppyplot.berlios.de"

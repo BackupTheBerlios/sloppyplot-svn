@@ -1,0 +1,11 @@
+RELASE NOTES
+============
+
+0.1.2
+
+- many, many small bugfixes to improve the normal workflow
+
+- list of recently used files available
+
+- added configuration file ~/.sloppyplot.cfg
+

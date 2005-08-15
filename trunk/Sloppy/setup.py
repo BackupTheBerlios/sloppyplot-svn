@@ -34,9 +34,8 @@ import sys
 
 PATH_SHARED=join(sys.prefix,'share','sloppyplot')
  
-SVN_REVISION="SVN"+"$Rev$"[6:-2]
-VERSION="0.1.1"
-
+VERSION="0.1.2"
+#VERSION="SVN"+"$Rev$"[6:-2]
 
 DESCRIPTION="""\
 A scientific plotting tool that currently only supports 2d plots.  The
@@ -46,7 +45,7 @@ using gnuplot is available.
 """
 
 setup(name='sloppyplot',
-      version='%s.%s' % (VERSION, SVN_REVISION),
+      version=VERSION, 
       description=DESCRIPTION,
       author='Niklas Volbers',
       author_email = 'mithrandir42@web.de',

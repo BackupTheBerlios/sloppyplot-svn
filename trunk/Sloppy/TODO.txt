@@ -71,7 +71,8 @@ Plugins:
 
 - toggle_logscale_y : we should clarify: It should be sufficient to
   emit a 'changed' signal on the layer. BTW, I need to rename the 
-  'plot-changed' signals to 'changed'.
+  'plot-changed' signals to 'changed'.  maybe 'notify' ???
+
 
   - Another idea: plot 'changed', but you can look up which part did exactly
     change.
