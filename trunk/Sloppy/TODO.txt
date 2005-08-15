@@ -8,12 +8,11 @@ FIRST THINGS FIRST:
 
 - List Of Recently Used Files.  (=> rc file or something)
 
-  - check for $USER/.sloppyrc
-  - if found, parse using elementtree.
+  application.save_file
+  application.save_file_as
 
 
-
-- connect_once
+- Signals.connect_once
 
 
 

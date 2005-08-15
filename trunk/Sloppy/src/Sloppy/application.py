@@ -20,12 +20,13 @@
 
 import logging
 logging.basicConfig(level=logging.INFO)
-
 logger = logging.getLogger('application')
 
 cli_logger = logging.getLogger('cli')
 cli_logger.setLevel(logging.info)
 
+from ConfigParser import SafeConfigParser, NoOptionError
+import os.path
 
 from Sloppy.Lib.Undo import *
 from Sloppy.Lib import Signals
@@ -46,27 +47,41 @@ from Sloppy.Base.plugin import PluginRegistry
 from Sloppy.Base.progress import ProgressList
 
 
+CONFIG_FILE = '~/.sloppyplot.cfg'
+
 class Application(object):
 
     def __init__(self, project=None):
 	" 'project' may be a Project object or a filename. "
 
+        self.plugins = dict()
+        self.progresslist = ProgressList
+        self.recent_files = list()
+
+        print "PARSING"
+        self.config_parser = self.read_configuration_file(CONFIG_FILE)
+        print "===>", self.recent_files
+        
+        self.init()
+        
         # Set up the Project...
         self._project = None
 	if isinstance(project, basestring):
 	    try:
-		project = load_project(project)
+		self.load_project(project)
 	    except IOError:
                 error_msg("Failed to load project '%s'\nSetting up an empty project instead." % project)                
-		project = Project()
-	self.set_project(project)
+		self.set_project(Project())
+        else:
+            self.set_project(project)
 
-        self.plugins = dict()
         self.init_plugins()
-        self.progresslist = ProgressList
-        self.recent_files = list()
 
-
+    def quit(self):
+        self.set_project(None, confirm=True)
+        self.write_configuration_file(self.config_parser, CONFIG_FILE)
+        
+        
     #----------------------------------------------------------------------
     # INTERNAL
 
@@ -133,9 +148,11 @@ class Application(object):
         # detach the old project
         new_project = load_project(filename)
         if new_project:
-            # TODO: remove old plotter objects for this project
-            # TODO: is the project deleted ?
             self.set_project(new_project)
+            self.recent_files.insert(0, os.path.abspath(filename))
+            if len(self.recent_files) > 10:
+                self.recent_files.pop(-1)
+            Signals.emit(self.recent_files, "notify")            
 
 
     #----------------------------------------------------------------------
@@ -150,6 +167,59 @@ class Application(object):
             return self.plugins[key]
         except KeyError:
             raise RuntimeError("Requested plugin '%s' is not available." % key)
+
+    #----------------------------------------------------------------------
+    # CONFIGURATION FILE
+
+
+    def read_configuration_file(self, filename):
+        # read file
+        scp = SafeConfigParser()
+
+        filename = os.path.expanduser(filename)
+        if os.path.isfile(filename) is not True:
+            logger.info("No configuration file '%s' found." % filename)
+        else:
+            logger.info("Reading configuration file '%s'." % filename)
+            scp.read([filename])  # os.path.expanduser('~/.myapp.cfg'
+
+        # read list of recently used files
+        if scp.has_section('RecentFiles'):
+            ruf = list()
+            for n in range(9):
+                try:
+                    filename = scp.get('RecentFiles', 'file%d' % n)
+                    if filename is not None:
+                        ruf.append(filename)
+                except NoOptionError:
+                    pass
+
+            print "RUF"
+            print ruf
+
+            self.recent_files = ruf
+
+        return scp
+
+
+    def write_configuration_file(self, scp, filename):
+        logger.info("Writing configuration file '%s'." % filename)
+
+        # create list of recently used files
+        ruf = self.recent_files
+
+        n = 1
+        scp.remove_section('RecentFiles')
+        scp.add_section('RecentFiles')
+        for file in ruf:
+            scp.set('RecentFiles', 'file%d' % n, file)
+            n += 1
+
+        # write file
+        filename = os.path.expanduser(filename)
+        fd = open(filename, 'w+')
+        scp.write(fd)
+        fd.close()
 
 
 #------------------------------------------------------------------------------

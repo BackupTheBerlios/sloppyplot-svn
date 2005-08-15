@@ -51,7 +51,9 @@ class AppWindow( gtk.Window ):
 
         self.app = app
 	self._windows = list() # keeps track of all subwindows
+
         self._windowlist_merge_id = None
+        self._recentfiles_merge_id = None
 
 #        self.set_size_request(640,480)
         
@@ -100,16 +102,12 @@ class AppWindow( gtk.Window ):
         vbox.show()
 
         # ...and add vbox to the window.
-        self.add( vbox )
-
-        
+        self.add( vbox )        
         self.show()        
 
-        # check for backends
-        has_mpl = BackendRegistry.has_key('matplotlib')
-#        if has_mpl is True:
 
-        self._refresh_windowlist()        
+        self._refresh_windowlist()
+        Signals.connect(self.app.recent_files, "notify", (lambda sender: self._refresh_recentfiles()))
 
     def _construct_uimanager(self):
 
@@ -120,7 +118,8 @@ class AppWindow( gtk.Window ):
         uihelper.add_actions(uim, "Matplotlib", self.actions_matplotlib, self.app)
         uihelper.add_actions(uim, "Gnuplot", self.actions_gnuplot, self.app)
         uihelper.add_actions(uim, "Debug", self.actions_debug, self.app)
-        uihelper.add_actions(uim, "UndoRedo", self.actions_undoredo, self.app)        
+        uihelper.add_actions(uim, "UndoRedo", self.actions_undoredo, self.app)
+        uihelper.add_actions(uim, "RecentFiles", self.actions_recentfiles, self.app)        
 
         return uim
         
@@ -196,8 +195,8 @@ class AppWindow( gtk.Window ):
         return logwindow
 
 
-    # ----------------------------------------------------------------------
-    # update GUI element
+    #-----------------------------------------------------------------------
+    # Dynamic UI
 
     def _refresh_undo_redo(self,*args):
         
@@ -268,29 +267,83 @@ class AppWindow( gtk.Window ):
         # To avoid adding this actiongroup multiple times, we need
         # to remove it first.
         if self._windowlist_merge_id is not None:
-            ag = uihelper.get_action_group(self.uimanager, "WindowList")
+            ag = uihelper.get_action_group(self.uimanager, "DynamicWindowList")
             self.uimanager.remove_action_group(ag)
             self.uimanager.remove_ui(self._windowlist_merge_id)
             
-        # create action groups list from windowlist
-        ag =  gtk.ActionGroup('WindowList')
+        # Create action groups list from windowlist.
+        # The corresponding ui string is created as well.
+        ui = ""
+        ag =  gtk.ActionGroup('DynamicWindowList')
         for window in self._windows:            
             title = window.get_title() or "noname"
             logger.debug("Window title is %s" % title)
             action = gtk.Action(id(window), title, None, None)
             action.connect('activate', self._cb_subwindow_present, window)
             ag.add_action(action)
+            ui+="<menuitem action='%s'/>\n" % id(window)
         self.uimanager.insert_action_group(ag,0)
 
-        # create ui description from available actions        
-        ui="<ui><menubar name='MainMenu'><menu action='ViewMenu'>\n"
-        for window in self._windows:
-            ui+="<menuitem action='%s'/>\n" % id(window)
-        ui+="</menu></menubar></ui>"
-                
+        # Wrap UI description.
+        ui="""
+        <ui>
+          <menubar name='MainMenu'>
+            <menu action='ViewMenu'>
+            %s
+            </menu>
+          </menubar>
+        </ui>
+        """ % ui
+                       
         self._windowlist_merge_id = self.uimanager.add_ui_from_string(ui)                      
 
 
+    def _refresh_recentfiles(self):
+       
+        # remove last recent files
+        if self._recentfiles_merge_id is not None:
+            ag = uihelper.get_action_group(self.uimanager, "DynamicRecentFiles")
+            self.uimanager.remove_action_group(ag)
+            self.uimanager.remove_ui(self._recentfiles_merge_id)
+
+        # Create action group list from list of recent files.
+        # The corresponding ui string is created as well.
+        print "RecentFiles"
+        #self.app.recent_files = ['/home/nv/test.spj']
+        ui = ""
+        n = 0
+        ag = gtk.ActionGroup('DynamicRecentFiles')
+        for file in self.app.recent_files:
+            key = 'recent_files_%d' % n
+            action = gtk.Action(key, '%d: %s' % (n, os.path.basename(file)), None, None)
+            action.connect('activate',
+                           (lambda sender, filename: self.app.load_project(filename)),
+                           file)
+            ag.add_action(action)
+            
+            ui+="<menuitem action='%s'/>\n" % key
+            n += 1
+
+            print "Added recent file ", file
+            
+        self.uimanager.insert_action_group(ag, 0)
+
+        # Wrap UI description.
+        ui="""
+        <ui>
+          <menubar name='MainMenu'>
+            <menu action='FileMenu'>
+              <menu action='RecentFilesMenu'>
+              %s
+              </menu>
+            </menu>
+          </menubar>
+        </ui>
+        """ % ui
+            
+        self._recentfiles_merge_id = self.uimanager.add_ui_from_string(ui)
+        
+            
     #--- SUBWINDOW HANDLING -------------------------------------------------------
     
     def _cb_subwindow_present(self, widget, window):
@@ -348,6 +401,7 @@ class AppWindow( gtk.Window ):
     # ----------------------------------------------------------------------
     # MISC CALLBACKS
 
+        
     def _cb_rename_item(self, action):
         self.treeview.start_editing_key()
 
@@ -472,7 +526,7 @@ class AppWindow( gtk.Window ):
         ('ExperimentalPlot', None, 'Experimental Plotting', None, None, '_cb_experimental_plot'),
         ]
 
-    actions_appwin = [
+    actions_appwin = [        
         ('RenameItem', None, 'Rename', 'F2', 'Rename', '_cb_rename_item'),
         ('About', None, '_About', None, 'About application', '_cb_help_about')
         ]
@@ -499,6 +553,10 @@ class AppWindow( gtk.Window ):
         ('Redo', gtk.STOCK_REDO, 'Redo', '<control><shift>z', 'Redo','_cb_redo')
         ]
 
+    actions_recentfiles = [
+        ('RecentFilesMenu', None, 'Recent Files'),
+        ('RecentFilesClear', None, 'Clear Recent Files', None, None, '_cb_recent_files_clear')
+        ]
     #----------------------------------------------------------------------
     ui_string = \
     """
@@ -507,6 +565,7 @@ class AppWindow( gtk.Window ):
         <menu action='FileMenu'>
           <menuitem action='FileNew'/>
           <menuitem action='FileOpen'/>
+          <menu action='RecentFilesMenu'/>
           <separator/>
           <menuitem action='FileSave'/>
           <menuitem action='FileSaveAs'/>

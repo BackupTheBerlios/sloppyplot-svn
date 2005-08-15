@@ -72,13 +72,10 @@ class GtkApplication(Application):
     functions to work with the project.
     """
     
-    def __init__(self, project=None):        
-        # self.window needs to be initialized first
-        self.window = AppWindow(self)  # gtk        
-        Application.__init__(self, project)
-        
-        self._clipboard = gtk.Clipboard()  # not implemented yet # gtk
-        self.progresslist = GtkProgressList
+    def init(self):    
+        self.window = AppWindow(self)
+        self._clipboard = gtk.Clipboard()  # not implemented yet
+        self.progresslist = GtkProgressList        
 
 
     def init_plugins(self):
@@ -102,7 +99,6 @@ class GtkApplication(Application):
                         
                 # merge plugin ui
                 merge_id = self.window.uimanager.add_ui_from_string(plugin_ui)
-
 
     # ----------------------------------------------------------------------
     # Project
@@ -154,14 +150,17 @@ class GtkApplication(Application):
             project.journal.on_change = self.window._refresh_undo_redo
 
         self.window._refresh_undo_redo()
-
+        self.window._refresh_recentfiles()
 
     # ----------------------------------------------------------------------
     # delete-event/destroy/quit application
             
     def _cb_quit_application(self, action):
+        self.quit()
+
+    def quit(self):
         try:
-            self.set_project(None, confirm=True)
+            Application.quit(self)
             gtk.main_quit()
         except error.UserCancel:
             return
@@ -193,7 +192,7 @@ class GtkApplication(Application):
     def _cb_load_test_project(self,widget):
         try:
             filename = const.internal_path(const.PATH_EXAMPLE+'/example.spj')
-            spj = load_project(filename)
+            spj = self.load_project(filename)
         except IOError:
             # TODO: Message Box
             return None
@@ -242,46 +241,52 @@ class GtkApplication(Application):
         pj.add_plots([plot])
         
 
-    def load_project(self):
+    def load_project(self, filename=None):
         """
         Open a FileChooserDialog and let the user pick a new project
         to be loaded. The old project is replaced.
         """
 
-        # create chooser object 
-        chooser = gtk.FileChooserDialog(
-            title="Open project",
-            action=gtk.FILE_CHOOSER_ACTION_OPEN,
-            buttons=(gtk.STOCK_CANCEL,
-                     gtk.RESPONSE_CANCEL,
-                     gtk.STOCK_OPEN,
-                     gtk.RESPONSE_OK))
-        chooser.set_default_response(gtk.RESPONSE_OK)
-        chooser.set_current_folder( const.internal_path(const.PATH_EXAMPLE) )
-        chooser.set_select_multiple(False)
+        if filename is None:
+            # TODO
+            # maybe we could have application.load_project
+            # just request the file name and we simply
+            # create a method for this dialog.
+            
+            # create chooser object 
+            chooser = gtk.FileChooserDialog(
+                title="Open project",
+                action=gtk.FILE_CHOOSER_ACTION_OPEN,
+                buttons=(gtk.STOCK_CANCEL,
+                         gtk.RESPONSE_CANCEL,
+                         gtk.STOCK_OPEN,
+                         gtk.RESPONSE_OK))
+            chooser.set_default_response(gtk.RESPONSE_OK)
+            chooser.set_current_folder( const.internal_path(const.PATH_EXAMPLE) )
+            chooser.set_select_multiple(False)
 
-        filter = gtk.FileFilter()
-        filter.set_name("All files")
-        filter.add_pattern("*")
-        chooser.add_filter(filter)
+            filter = gtk.FileFilter()
+            filter.set_name("All files")
+            filter.add_pattern("*")
+            chooser.add_filter(filter)
 
-        filter = gtk.FileFilter()
-        filter.set_name("Sloppyplot Project files")
-        filter.add_pattern("*.spj")
-        filter.add_pattern("*.SPJ")
-        chooser.add_filter(filter)
-        chooser.set_filter(filter) # default filter
+            filter = gtk.FileFilter()
+            filter.set_name("Sloppyplot Project files")
+            filter.add_pattern("*.spj")
+            filter.add_pattern("*.SPJ")
+            chooser.add_filter(filter)
+            chooser.set_filter(filter) # default filter
 
-        shortcut_folder = const.internal_path(const.PATH_EXAMPLE)
-        if os.path.exists(shortcut_folder):
-            chooser.add_shortcut_folder( shortcut_folder )
+            shortcut_folder = const.internal_path(const.PATH_EXAMPLE)
+            if os.path.exists(shortcut_folder):
+                chooser.add_shortcut_folder( shortcut_folder )
 
-        response = chooser.run()
-        if response == gtk.RESPONSE_OK:
-            filename = chooser.get_filename()
-        else:
-            filename = None
-        chooser.destroy()
+            response = chooser.run()
+            if response == gtk.RESPONSE_OK:
+                filename = chooser.get_filename()
+            else:
+                filename = None
+            chooser.destroy()
 
 
         if filename is not None:
@@ -803,6 +808,13 @@ class GtkApplication(Application):
         pj.redo()
 
 
+    #----------------------------------------------------------------------
+    # MISC CALLBACKS
+
+    def _cb_recent_files_clear(self, action):
+        self.recent_files = list()
+        Signals.emit(self.app.recent_files, 'notify')
+
     
 
 # ======================================================================    
@@ -811,18 +823,8 @@ def main():
 
     gtkutils.register_all_png_icons(const.internal_path(const.PATH_ICONS), 'sloppy-')
 
-    try:
-        filename = const.internal_path(const.PATH_EXAMPLE)
-        filename = os.path.join(filename, 'example.spj')
-        spj = load_project(filename)
-    except IOError, msg:
-	logger.error("IOError! Sample Project could not be loaded: %s" % msg )
-        spj = None        
-    except ParseError:
-        logger.error("Error while reading project file %s" % filename)
-        spj = None
-
-    app = GtkApplication(spj)
+    filename = const.internal_path(const.PATH_EXAMPLE, 'example.spj')
+    app = GtkApplication(filename)
     gtk.main()
 
     
