@@ -70,7 +70,7 @@ class Application(object):
 	    try:
 		self.load_project(project)
 	    except IOError:
-                error_msg("Failed to load project '%s'\nSetting up an empty project instead." % project)                
+                logger.error("Failed to load project '%s'\nSetting up an empty project instead." % project)                
 		self.set_project(Project())
         else:
             self.set_project(project)
