@@ -85,7 +85,25 @@ class Application(object):
 
         # if project changes, then close the Project properly!
         if self._project is not None and id(project) != id(self._project):
-            self.close_project()
+            print "Closing Project"
+       
+            for dataset in self.project.datasets:
+                dataset.close()
+            for plot in self.project.plots:
+                plot.close()
+            if self.project._archive is not None:
+                self.project._archive.close()
+
+            self.project.app = None
+        
+            # disconnect all opened backends
+            for backend in self.project.backends:
+                backend.disconnect()
+       
+            Signals.emit(self.project, 'close')
+
+            self._project = None
+        
 
         self._project = project
         if project is not None:
@@ -108,27 +126,7 @@ class Application(object):
     # TODO: Hmmm. Maybe still put this into project.py ?
     def close_project(self, confirm=True):
         pj = self._check_project()
-
-        print "Closing Project"
-       
-        for dataset in pj.datasets:
-            dataset.close()
-        for plot in pj.plots:
-            plot.close()
-        if pj._archive is not None:
-            pj._archive.close()
-
-        pj.app = None
-        
-        # disconnect all opened backends
-        for backend in pj.backends:
-            backend.disconnect()
-
-        print "Emitting Signal"
-        
-        Signals.emit(pj, 'close')
-
-        self._project = None
+        self.set_project(None)
 
 
     def save_project(self):

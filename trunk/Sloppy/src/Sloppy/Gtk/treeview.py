@@ -98,11 +98,12 @@ class ProjectTreeView( gtk.TreeView ):
         column.pack_start(text_renderer,expand=True)
         column.set_attributes(text_renderer, text=self.COL_KEY)
         column.set_property('resizable', True)
-        text_renderer.set_property('editable', True)
+        text_renderer.set_property('editable', False)
         text_renderer.connect('edited', self.cb_edited_key)
         
         self.append_column(column)
 
+        self.text_renderer = text_renderer # for reference
         
     def init_dragndrop(self):
         """
@@ -146,17 +147,20 @@ class ProjectTreeView( gtk.TreeView ):
 
     def get_project(self):
         return self._project
+
     def set_project(self,project):
         """
         Assign a project to the TreeView and repopulate the tree.  If
         no project is given, the TreeView will be empty.
         """
-        if project:
+        if project is not None:
             self.set_property('sensitive',True)
         else:
             self.set_property('sensitive',False)
             
         self._project = project
+
+        print "POPULATING"
         self.populate_treeview()
 
         # TODO: remove old signals
@@ -250,6 +254,21 @@ class ProjectTreeView( gtk.TreeView ):
 
     #----------------------------------------------------------------------
 
+    def start_editing_key(self):        
+        selection = self.get_selection()
+        if selection is None:
+            return
+        
+        model, pathlist = selection.get_selected_rows()
+        if len(pathlist) > 0:
+            path = pathlist[0]
+
+            self.text_renderer.set_property('editable', True)
+            try:
+                self.set_cursor(path, self.get_column(self.COL_KEY), start_editing=True)
+            finally:
+                self.text_renderer.set_property('editable', False)
+        
     def cb_edited_key(self, cell, path, new_text):
         """
         When an object key is edited, we need to check whether

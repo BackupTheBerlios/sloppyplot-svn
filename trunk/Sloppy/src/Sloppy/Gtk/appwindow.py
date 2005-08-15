@@ -347,6 +347,10 @@ class AppWindow( gtk.Window ):
     
     # ----------------------------------------------------------------------
     # MISC CALLBACKS
+
+    def _cb_rename_item(self, action):
+        self.treeview.start_editing_key()
+
         
     def _cb_row_activated(self,widget,*udata):
         """
@@ -469,6 +473,7 @@ class AppWindow( gtk.Window ):
         ]
 
     actions_appwin = [
+        ('RenameItem', None, 'Rename', 'F2', 'Rename', '_cb_rename_item'),
         ('About', None, '_About', None, 'About application', '_cb_help_about')
         ]
     
@@ -514,6 +519,7 @@ class AppWindow( gtk.Window ):
           <menuitem action='Redo'/>
           <separator/>
           <menuitem action='Edit'/>
+          <menuitem action='RenameItem'/>          
           <separator/>
           <menuitem action='Delete'/>
         </menu>
@@ -564,11 +570,13 @@ class AppWindow( gtk.Window ):
         <menuitem action='PlotPostscript'/>
         <separator/>
         <menuitem action='Edit'/>
-        <separator/>
+        <menuitem action='RenameItem'/>
+        <separator/>        
         <menuitem action='Delete'/>
       </popup>
       <popup name="popup_dataset">
         <menuitem action='Edit'/>
+        <menuitem action='RenameItem'/>
         <separator/>      
         <menuitem action='DatasetToPlot'/>
         <menuitem action='DatasetAddToPlot'/>
