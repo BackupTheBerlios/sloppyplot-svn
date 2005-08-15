@@ -107,7 +107,7 @@ class AppWindow( gtk.Window ):
 
 
         self._refresh_windowlist()
-        Signals.connect(self.app.recent_files, "notify", (lambda sender: self._refresh_recentfiles()))
+        Signals.connect(self.app, "update-recent-files", (lambda sender: self._refresh_recentfiles()))
 
     def _construct_uimanager(self):
 
@@ -119,7 +119,7 @@ class AppWindow( gtk.Window ):
         uihelper.add_actions(uim, "Gnuplot", self.actions_gnuplot, self.app)
         uihelper.add_actions(uim, "Debug", self.actions_debug, self.app)
         uihelper.add_actions(uim, "UndoRedo", self.actions_undoredo, self.app)
-        uihelper.add_actions(uim, "RecentFiles", self.actions_recentfiles, self.app)        
+        uihelper.add_actions(uim, "RecentFiles", self.actions_recentfiles, self.app)
 
         return uim
         
@@ -308,8 +308,6 @@ class AppWindow( gtk.Window ):
 
         # Create action group list from list of recent files.
         # The corresponding ui string is created as well.
-        print "RecentFiles"
-        #self.app.recent_files = ['/home/nv/test.spj']
         ui = ""
         n = 0
         ag = gtk.ActionGroup('DynamicRecentFiles')
@@ -323,8 +321,6 @@ class AppWindow( gtk.Window ):
             
             ui+="<menuitem action='%s'/>\n" % key
             n += 1
-
-            print "Added recent file ", file
             
         self.uimanager.insert_action_group(ag, 0)
 
@@ -334,9 +330,11 @@ class AppWindow( gtk.Window ):
           <menubar name='MainMenu'>
             <menu action='FileMenu'>
               <menu action='RecentFilesMenu'>
-              %s
-              </menu>
-            </menu>
+                <placeholder name='RecentFilesList'>
+                  %s
+                </placeholder>
+               </menu>
+             </menu>
           </menubar>
         </ui>
         """ % ui
@@ -565,7 +563,11 @@ class AppWindow( gtk.Window ):
         <menu action='FileMenu'>
           <menuitem action='FileNew'/>
           <menuitem action='FileOpen'/>
-          <menu action='RecentFilesMenu'/>
+          <menu action='RecentFilesMenu'>
+            <placeholder name='RecentFilesList'/>
+            <separator/>
+            <menuitem action='RecentFilesClear'/>            
+          </menu>
           <separator/>
           <menuitem action='FileSave'/>
           <menuitem action='FileSaveAs'/>

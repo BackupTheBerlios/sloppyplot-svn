@@ -48,7 +48,11 @@ class MatplotlibWindow( gtk.Window ):
         ('PlotMenu', None, '_Plot'),
         ('DisplayMenu', None, '_Display'),
         ('AnalysisMenu', None, '_Analysis')
-        ],        
+        ],        #
+        'MatplotlibWindow':
+        [
+        ('Close', gtk.STOCK_CLOSE, '_Close', 'q', 'Close this Window', '_cb_close')
+        ],
         'ViewMenu':
         [
         ('ViewMenu', None, '_View'),
@@ -59,13 +63,17 @@ class MatplotlibWindow( gtk.Window ):
     uistring = """
     <ui>
       <menubar name='MainMenu'>
-        <menu action='PlotMenu'/>
+        <menu action='PlotMenu'>
+          <placeholder name='PlotMenuActions'/>
+          <separator/>
+          <menuitem action='Close'/>
+        </menu>
         <menu action='EditMenu'>
           <menuitem action='Undo'/>
           <menuitem action='Redo'/>
         </menu>
         <menu action='DisplayMenu'/>
-        <menu action='AnalysisMenu'/>
+        <menu action='AnalysisMenu'/>       
         <menu action='ViewMenu'>
           <menuitem action='Fullscreen'/>
         </menu>
@@ -143,7 +151,6 @@ class MatplotlibWindow( gtk.Window ):
         Signals.connect(self.mpl_widget, "closed", (lambda sender: self.destroy()))
 
     def destroy(self):
-        print "====================="
         self.mpl_widget.set_plot(None)
         gtk.Window.destroy(self)
 
@@ -175,6 +182,10 @@ class MatplotlibWindow( gtk.Window ):
         return self.mpl_widget.plot
 
 
+
+    #----------------------------------------------------------------------
+    # CALLBACKS
+    
     def _cb_fullscreen(self, action):
         " Toggle fullscreen mode. "
         if self.is_fullscreen is True:
@@ -183,6 +194,8 @@ class MatplotlibWindow( gtk.Window ):
             self.fullscreen()
         self.is_fullscreen = not self.is_fullscreen
 
+    def _cb_close(self, action):
+        self.destroy()
 
 
 
@@ -205,7 +218,6 @@ class MatplotlibWidget(gtk.VBox):
         ('Replot', 'sloppy-replot', '_Replot', '<control>R', 'Replot', '_cb_replot'),
         ('Edit', gtk.STOCK_PROPERTIES, '_Edit', '<control>E', 'Edit', '_cb_edit'),
         ('Save As', gtk.STOCK_SAVE_AS, '_Save As', '<control><shift>S', 'Save As', '_cb_save_as'),
-        ('Close', gtk.STOCK_CLOSE, '_Close', 'q', 'Close this Window', '_cb_close')
         ],
         'Analysis':
         [
@@ -227,18 +239,18 @@ class MatplotlibWidget(gtk.VBox):
         }
 
     uistring = """
-    <ui>
-      <menubar name='MainMenu'>
+    <ui>    
+      <menubar name='MainMenu'>      
         <menu action='PlotMenu'>
-          <menuitem action='Replot'/>
-          <menuitem action='Edit'/>
-          <menuitem action='Save As'/>
-          <separator/>
-          <menuitem action='Close'/>
-        </menu>
+          <placeholder name='PlotMenuActions'>
+            <menuitem action='Replot'/>
+            <menuitem action='Edit'/>
+            <menuitem action='Save As'/>
+          </placeholder>
+        </menu>        
         <menu action='AnalysisMenu'>
           <menuitem action='DataCursor'/>
-        </menu>
+        </menu>        
         <menu action='DisplayMenu'>
           <menuitem action='ToggleLogScale'/>
           <separator/>
@@ -249,8 +261,8 @@ class MatplotlibWidget(gtk.VBox):
           <menuitem action='ZoomAxes'/>          
           <separator/>
           <menuitem action='MovePlot'/>
-        </menu>
-      </menubar>
+        </menu>        
+      </menubar>      
       <toolbar name='MainToolbar'>
         <toolitem action='ZoomIn'/>
         <toolitem action='ZoomFit'/>
@@ -397,9 +409,6 @@ class MatplotlibWidget(gtk.VBox):
 
         
     #----------------------------------------------------------------------
-    def _cb_close(self, action):
-        self.destroy()
-
     def _cb_replot(self, action):
         self.backend.draw()
 

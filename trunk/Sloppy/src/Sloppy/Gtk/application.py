@@ -340,6 +340,9 @@ class GtkApplication(Application):
         save_project(self._project)
         self._project.journal.clear()
 
+        self.recent_files.append(os.path.abspath(filename))
+        Signals.emit(self, 'update-recent-files')
+
 
         
     # --- PLOT ---------------------------------------------------------------------
@@ -812,8 +815,7 @@ class GtkApplication(Application):
     # MISC CALLBACKS
 
     def _cb_recent_files_clear(self, action):
-        self.recent_files = list()
-        Signals.emit(self.app.recent_files, 'notify')
+        self.clear_recent_files()
 
     
 

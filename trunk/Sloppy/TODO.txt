@@ -6,11 +6,6 @@ DONE:
 FIRST THINGS FIRST:
 
 
-- List Of Recently Used Files.  (=> rc file or something)
-
-  application.save_file
-  application.save_file_as
-
 
 - Signals.connect_once
 

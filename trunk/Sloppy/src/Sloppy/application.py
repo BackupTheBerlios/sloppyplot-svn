@@ -142,6 +142,9 @@ class Application(object):
         else:
             self.save_project_as()
 
+    def save_project_as(self):
+        raise RuntimeError("This method needs to be implemented.")
+
 
     def load_project(self, filename):
         # load new project and if it is sucessfully loaded,
@@ -152,7 +155,7 @@ class Application(object):
             self.recent_files.insert(0, os.path.abspath(filename))
             if len(self.recent_files) > 10:
                 self.recent_files.pop(-1)
-            Signals.emit(self.recent_files, "notify")            
+            Signals.emit(self, "update-recent-files")
 
 
     #----------------------------------------------------------------------
@@ -220,6 +223,15 @@ class Application(object):
         fd = open(filename, 'w+')
         scp.write(fd)
         fd.close()
+
+
+    #----------------------------------------------------------------------
+    # MISC
+
+    def clear_recent_files(self):
+        self.recent_files = list()
+        Signals.emit(self, 'update-recent-files')
+
 
 
 #------------------------------------------------------------------------------
