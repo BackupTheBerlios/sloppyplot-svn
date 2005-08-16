@@ -98,17 +98,23 @@ def construct_actiongroups(actions_dict, map):
     return actiongroups
 
 
-def set_actions(uimanager, action_names_list, state=True):
-    for action_name in action_names_list:
-        action = uimanager.get_action(action_name)
-        if action is not None:
-            action.set_property('sensitive', state)
-        else:
-            logger.error("Could not find action %s." % action_name)
-    
 
+def setup_test_window(widget):
+    win = gtk.Window()
+    win.connect("destroy", gtk.main_quit)
+    win.add(widget)
+    widget.show()
+    win.show()
+    return win
 
-
+# DEPRECATED?
+# def set_actions(uimanager, action_names_list, state=True):
+#     for action_name in action_names_list:
+#         action = uimanager.get_action(action_name)
+#         if action is not None:
+#             action.set_property('sensitive', state)
+#         else:
+#             logger.error("Could not find action %s." % action_name)
 
 # def add_ui(uimanager, actions_dict, uistring, map=None):
 #     """

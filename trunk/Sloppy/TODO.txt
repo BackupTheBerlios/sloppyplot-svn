@@ -1,35 +1,51 @@
-DONE:
+###############################################################################
+
+Plan for 0.1.3:
+
+- The focus will be on dataset manipulation.  I want to implement the 
+  column view that I have planned for so long.  It should help to 
+  
+  - add columns
+  - remove columns
+  - reorder columns (drag'n drop? or maybe just two buttons, up and down)
+  - select columns for actions
+
+- Other things:
+
+  - Signals.connect_once -> requires an additional flag in the SignalContainer
+
+  - change toggle buttons to combos ('Default', 'Yes', 'No')
 
 
 
 ###############################################################################
-FIRST THINGS FIRST:
 
+Plan for 0.1.4:
 
+- Rewrite ASCII import, so that
 
-- Signals.connect_once
-
-
-
-###############################################################################
-
-- respect commentary sign (#) in ASCII import
-
-  => the custom ascii import should be a regular expression.  This is
+  -  The custom ascii import might be a regular expression.  This is
      probably slower but might also be a lot more flexible.
 
-- Importer.ASCII.designations from list => string
+  - respect commentary sign (#) in ASCII import
 
- Number of header lines (combo, blue)
- Column names from line (combo, red)
+  - Importer.ASCII.designations from list => string  
 
- Column label lines from (combo from, combo to), green
- Save header lines from (combo from, combo to), --
+
+- Add ASCII import wizard:
+
+   Number of header lines (combo, blue)
+   Column names from line (combo, red)
+
+   Column label lines from (combo from, combo to), green
+   Save header lines from (combo from, combo to), --
  
- checkbox 'Define header variables'
+   checkbox 'Define header variables'
+   ...
 
-- Is there a possibility to get the value of the pw, and not of the container?
 
+###############################################################################
+# EVERYTHING BELOW THIS POINT IS JUST A COLLECTION OF IDEAS
 
 #----------------------------------------------------------------------
 
@@ -101,7 +117,6 @@ Cool ideas:
 Minor fixes
 -----------
   - Use status bar in Tablewin to display the current row/column
-  - add 'Add Columns', 'Remove Columns' options.
 
 
 
@@ -194,10 +209,6 @@ Export:
 a lot of unnecessary work. Why not check for this case and then just copy
 the file from the archive to the directory?
 
-
-#==============================================================================
-#  Things to do for a 0.4 release:
-#==============================================================================
 
 Plot Templates.
 

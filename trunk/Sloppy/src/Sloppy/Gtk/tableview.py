@@ -27,10 +27,8 @@ pygtk.require('2.0') # TBR
 
 import gtk
 
-
 from Sloppy.Base.table import Table
-
-from Sloppy.Lib.Undo import FakeUndoInfo, UndoInfo, UndoList, NullUndo
+from Sloppy.Lib.Undo import UndoInfo, UndoList, NullUndo
 
 
 class TableModel(gtk.GenericTreeModel):
@@ -211,12 +209,20 @@ class TableView(gtk.TreeView):
 #         column.set_fixed_width(50)  
 #         self.append_column(column)
 
+        # For testing purposes, we might not have an Application object.
+        # In this case, we will simply use a plain list as undo journal.
+        if self.app is not None:
+            journal = self.app.project.journal
+        else:
+            journal = list()
+
+        # set up columns
         n = 0
         for name in model.get_column_names():
             cell = gtk.CellRendererText()
             cell.set_property('mode',gtk.CELL_RENDERER_MODE_EDITABLE)            
             cell.set_property('editable',True)
-            cell.connect('edited',self._cb_value_edited, model, n, self.app.project.journal)
+            cell.connect('edited',self._cb_value_edited, model, n, journal)
             column = gtk.TreeViewColumn(name,cell,text=n)
             column.set_property('resizable',True)
             column.set_property('clickable',True)
@@ -227,6 +233,7 @@ class TableView(gtk.TreeView):
             self.append_column(column)
             n += 1
                 
+    update = setup_columns
 
     def _cb_value_edited(self, cell, path, new_text, model, column, undolist=[]):
         " model, column, undolist must be provided by the connect call. "

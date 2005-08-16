@@ -98,6 +98,7 @@ class Table(object):
         if colcount > 0:
             if isinstance(typecodes, basestring) and len(typecodes) > 1:
                 typecodes = list(typecodes)
+
             if isinstance(typecodes, (list,tuple)):
                 if len(typecodes) != colcount:
                     raise ValueError("When specifying the number of columns, you may either specify a single typecode or a list with that many entries.")
@@ -113,6 +114,8 @@ class Table(object):
                     typecodes.append(tc)                    
 
         self._rowcount = rowcount
+
+        typecodes = typecodes or []
         for tc in typecodes:
             self._columns.append( self.new_column(tc) )
 
@@ -320,7 +323,8 @@ class Table(object):
         self._colcount = len(self._columns)
         self._typecodes = map(lambda x: x.typecode(), self._columns)
 
-        type_map = {'d': float, 'f': float, 'O': str}
+        # TODO: move to types.h
+        type_map = {'d': float, 'f': float, 'O': str, 'l': long}
         self._converters = map(lambda tc: type_map[tc], self._typecodes)
 
         Signals.emit(self, 'update-columns') # FIXME
@@ -328,7 +332,10 @@ class Table(object):
 
     def update_rows(self):
         " Call this whenever you add/remove a row. "
-        self._rowcount = len(self._columns[0].data)
+        try:
+            self._rowcount = len(self._columns[0].data)
+        except IndexError:
+            self._rowcount = 0
 
     def get_rowcount(self): return self._rowcount
     rowcount = property(get_rowcount)
@@ -376,7 +383,7 @@ class Table(object):
             item = Column(data=item)
 
         # check length
-        if self.rowcount != len(item.data):
+        if self.rowcount > 0 and self.rowcount != len(item.data):
             raise TypeError("Incompatible length %d of new column %s; Table columns must have a length of %d."
                             % (len(item.data), item, self.rowcount))        
 
@@ -451,28 +458,31 @@ def array_to_table(a):
 
 #------------------------------------------------------------------------------
 
-def test():
+def setup_test_table():
     # setting up a new table
-    tbl = Table(rowcount=5, colcount=3, typecodes='dfd')
-    #print tbl
+    tbl = Table()
 
-    # changing the column key
-    tbl.column(0).key = 'niki'
-    #print tbl
+    col1 = Column(data = [1.0,2,3,4,5], key='First', designation='X', label='some data')
+    col2 = Column(data = [1.0,4,9,16,25], key='Second', designation='Y', label='some data')
+    col3 = Column(data = [1.0,8,27,64,125], key='Third', designation='Y', label='some data')
 
-    # appending a new column
-    col = Column(data = [1,2,4,8,16.0], key='Anne', designation='Y', label='some data')
-    tbl.append(col)
-    print tbl
+    tbl.append(col1)
+    tbl.append(col2)
+    tbl.append(col3)    
 
+    return tbl
+
+    
+def test():
+    tbl = setup_test_table()
+
+   
     # moving the new colum to second place
     tbl.rearrange( [0,3,1,2] )
-    #print tbl
 
     # removing the first column
     tbl.remove_by_index(0)
-    #print tbl
-   
+
     # resizing the Table to 10 rows
     tbl.resize(10)
     #print tbl
