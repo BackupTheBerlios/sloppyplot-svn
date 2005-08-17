@@ -61,7 +61,7 @@ class DatasetWindow( gtk.Window ):
         ('ColumnInsert', None, 'Insert Column before', None, 'Insert column just before this one', 'cb_column_insert'),
         ('ColumnInsertAfter', None, 'Insert Column after', None, 'Insert column after this one', 'cb_column_insert_after'),
         ('ColumnRemove', None, 'Remove Column', None, 'Remove this column', 'cb_column_remove'),
-        ('EditColumns', gtk.STOCK_EDIT, 'Edit Columns', None, '', 'cb_edit_columns'),
+        ('EditColumns', gtk.STOCK_EDIT, 'Edit Columns', '<control>E', '', 'cb_edit_columns'),
         #
         ('AnalysisMenu', None, '_Analysis'),
         ('Interpolate', None, 'Interpolate data (EXPERIMENTAL)', None, 'Interpolate data (EXPERIMENTAL)', 'cb_interpolate')
@@ -71,6 +71,8 @@ class DatasetWindow( gtk.Window ):
          <ui>
            <menubar name='MainMenu'>
              <menu action='DatasetMenu'>
+               <menuitem action='EditColumns'/>
+               <separator/>
                <menuitem action='Close'/>
              </menu>
              <menu action='AnalysisMenu'>
@@ -516,64 +518,7 @@ class ColumnCalculator(gtk.Window):
         self.dataset.notify_change(undolist=ul)
         self.app.project.journal.add_undo(ul)
 
-
-
-# class ColumnPropertiesDialog(gtk.Dialog):
-
-#     def __init__(self, app, parent, table, colnr):
-
-#         gtk.Dialog.__init__(self, "Column Properties", parent,
-#                             gtk.DIALOG_MODAL|gtk.DIALOG_DESTROY_WITH_PARENT,
-#                             (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
-#                              gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
-
-#         self.app = app
-#         self.table = table
-#         self.colnr = colnr
-#         self.pwdict = dict()
-        
-#         pwlist = list()
-#         column = self.table.column(self.colnr)
-#         keys = ['key', 'designation', 'label']
-#         for key in keys:
-#             pw = propwidgets.construct_pw(column, key)
-#             self.pwdict[key] = pw
-#             pwlist.append(pw)
-
-#         self.tablewidget = propwidgets.construct_pw_table(pwlist)
-
-#         frame = gtk.Frame('Edit Column')
-#         frame.add(self.tablewidget)
-#         frame.show()
-
-#         self.vbox.pack_start(frame, False, True)
-#         self.tablewidget.show()
-                    
-        
-#     def check_in(self):
-#         for pw in self.pwdict.itervalues():
-#             pw.check_in()
-
-#     def check_out(self):
-#         ul = UndoList().describe("Set Column Properties")
-#         for pw in self.pwdict.itervalues():
-#             pw.check_out(undolist=ul)
-
-#         uwrap.emit_last(self.table, 'update-columns', undolist=ul)
-
-#         self.app.project.journal.add_undo(ul)
-            
-
-#     def run(self):
-#         self.check_in()
-#         response = gtk.Dialog.run(self)
-#         if response == gtk.RESPONSE_ACCEPT:
-#             self.check_out()
-#         return response
-
-        
-        
-        
+     
 
 
 
@@ -615,8 +560,6 @@ class ColumnPropertiesDialog(gtk.Dialog):
         ul = UndoList().describe("Set Column Properties")
         for pw in self.pwdict.itervalues():
             pw.check_out(undolist=ul)
-
-        #uwrap.emit_last(self.table, 'update-columns', undolist=ul)
 
         undolist.append(ul)
             
@@ -664,7 +607,9 @@ class TableColumnView(gtk.TreeView):
             new_column = column.copy(data=False)
             model.append( (new_column,) )
 
-    def check_out(self, undolist=[]):        
+    def check_out(self, undolist=[]):
+        ul = UndoList()
+        
         model = self.get_model()
         iter = model.get_iter_first()
         n = 0
@@ -673,10 +618,13 @@ class TableColumnView(gtk.TreeView):
             # copy all properties except for the actual data
             kwargs = column.get_key_value_dict()
             kwargs.pop('data')
-            uwrap.set(self.table.get_column(n), **kwargs)             # ADD Undo
+            kwargs['undolist'] = ul
+            uwrap.set(self.table.get_column(n), **kwargs)
             iter = model.iter_next(iter)
             n += 1
-                    
+
+        undolist.append(ul)
+        
         
     def render_column_prop(self, column, cell, model, iter, propkey):
         column = model.get_value(iter, 0)
@@ -699,16 +647,35 @@ class ModifyTableDialog(gtk.Dialog):
                             (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
                              gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
 
-        cview = TableColumnView(table)
-        cview.show()
-        
-        self.vbox.add(cview)
+        # button box
+        btnbox = gtk.VButtonBox()
 
-        # connect
-        cview.connect( "row-activated", self.on_row_activated )
+        btn_move_up = gtk.Button(stock=gtk.STOCK_GO_UP)
+        btn_move_up.show()
+
+        btn_move_down = gtk.Button(stock=gtk.STOCK_GO_DOWN)
+        btn_move_down.show()
+
+        btnbox.add(btn_move_up)
+        btnbox.add(btn_move_down)
+        btnbox.set_layout(gtk.BUTTONBOX_START)
+        btnbox.show()
         
-        # for reference
+        
+        # column view
+        cview = TableColumnView(table)
+        cview.connect( "row-activated", self.on_row_activated )
+        cview.show()
         self.cview = cview
+
+        # put cview and btnbox next to each other into a hbox
+        hbox = gtk.HBox()
+        hbox.pack_start(cview, True, True)
+        hbox.pack_start(btnbox, False, True)
+        hbox.show()
+        
+        self.vbox.add(hbox)
+
 
 
     def on_row_activated(self, treeview, *udata):
