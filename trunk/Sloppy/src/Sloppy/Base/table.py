@@ -67,6 +67,13 @@ class Column(Container):
     def typecode(self):
         return self.data.typecode()
 
+    def copy(self, data=True):
+        kwargs = self.get_key_value_dict()
+        if data is False:
+            kwargs.pop('data')
+        return Column(**kwargs)
+        
+        
 
 
 

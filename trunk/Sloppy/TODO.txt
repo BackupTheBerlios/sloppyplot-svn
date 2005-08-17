@@ -1,3 +1,6 @@
+- Fixed exporter bug where columns of type long couldn't be exported
+to netCDF.
+
 ###############################################################################
 
 Plan for 0.1.3:
@@ -16,6 +19,14 @@ Plan for 0.1.3:
 
   - change toggle buttons to combos ('Default', 'Yes', 'No')
 
+
+
+
+    # valid options should be
+    #  remove column
+    #  add column
+    #  rename column
+    #  move column (up/down)
 
 
 ###############################################################################

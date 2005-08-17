@@ -515,6 +515,13 @@ class Container(object):
     get_propdict = classmethod(get_propdict)
 
 
+    def get_key_value_dict(self):
+        rv = dict()
+        for key, prop in self.get_propdict().iteritems():
+            rv[key] = self.get_value(key)
+        return rv
+    
+
     def getClassName(cls):
         return cls.__name__
     getClassName = classmethod(getClassName)

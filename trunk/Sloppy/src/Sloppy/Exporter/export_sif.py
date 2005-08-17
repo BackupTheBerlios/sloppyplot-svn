@@ -60,7 +60,8 @@ class Exporter(dataio.Exporter):
             dim = fd.def_dim(key, rows)
 
             type_mappings = {'d' : NC.DOUBLE,
-                             'f' : NC.FLOAT}
+                             'f' : NC.FLOAT,
+                             'l' : NC.INT}
             try:
                 nc_type = type_mappings[column.data.typecode()]
             except KeyError:
