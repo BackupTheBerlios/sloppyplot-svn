@@ -149,6 +149,7 @@ class MatplotlibWindow( gtk.Window ):
                                       
         self.connect("destroy", (lambda sender: self.destroy()))
         Signals.connect(self.mpl_widget, "closed", (lambda sender: self.destroy()))
+        
 
     def destroy(self):
         self.mpl_widget.set_plot(None)
@@ -202,6 +203,9 @@ class MatplotlibWindow( gtk.Window ):
 
 
 
+
+
+
 class MatplotlibWidget(gtk.VBox):
 
 
@@ -217,7 +221,7 @@ class MatplotlibWidget(gtk.VBox):
         ('PlotMenu', None, '_Plot'),
         ('Replot', 'sloppy-replot', '_Replot', '<control>R', 'Replot', '_cb_replot'),
         ('Edit', gtk.STOCK_PROPERTIES, '_Edit', '<control>E', 'Edit', '_cb_edit'),
-        ('Save As', gtk.STOCK_SAVE_AS, '_Save As', '<control><shift>S', 'Save As', '_cb_save_as'),
+        ('Save As', gtk.STOCK_SAVE_AS, '_Save As', '<control><shift>S', 'Save As', 'on_action_save_as'),
         ],
         'Analysis':
         [
@@ -312,10 +316,11 @@ class MatplotlibWidget(gtk.VBox):
         self.set_plot(plot)
         Signals.connect(self.project, "close", (lambda sender: self.destroy()))
 
-        ### prepare file selector
-        ### TODO: this could be put into a plugin, since it is desirable to have
-        ### TODO: such a method in the shell frontend as well.
-        ##self.fileselect = FileChooserDialog(title='Save the figure', parent=self.parent_window)
+        # set up file selector for export dialog
+        # TODO: this could be put into a plugin, since it is desirable to have
+        # TODO: such a method in the shell frontend as well.
+        self.fileselect = FileChooserDialog(title='Save the figure', parent=None)
+
 
 
     def _construct_actiongroups(self):
@@ -553,19 +558,7 @@ class MatplotlibWidget(gtk.VBox):
             region = self.calculate_zoom_region(axes, dx=-0.1, dy=-0.1)
             self.zoom_to_region(layer, region, undolist=self.app.project.journal)
 
-        
-
-    def _cb_save_as(self, action):
-        self.abort_selection()
-
-        # TODO: call plugin method or something.
-        return
-    
-        # pick filename  self.plot.key
-        fname = self.fileselect.get_filename_from_user()
-        if fname is not None:
-            self.backend.canvas.print_figure(fname)
-      
+              
 
     def _cb_toggle_logscale(self, action):
         self.abort_selection()
@@ -671,6 +664,21 @@ class MatplotlibWidget(gtk.VBox):
         Signals.connect(selector, "aborted", on_finish)
         self._current_selector = selector
         selector.init()
+
+
+   #----------------------------------------------------------------------
+   # other callbacks
+
+   
+    def on_action_save_as(self, action):
+        self.abort_selection()
+
+        # TODO: pick filename based on self.get_plot().key
+        fname = self.fileselect.get_filename_from_user()
+        if fname is not None:
+            self.backend.canvas.print_figure(fname)
+
+
 
 gobject.type_register(MatplotlibWidget)        
         

@@ -87,6 +87,9 @@ class PostscriptTerminal(Terminal, Container):
                          doc="Whether to add a timestamp")
 
 
+    public_props = ['mode', 'eps', 'enhanced',
+                    'duplexing', 'fontname', 'fontsize',
+                    'solid', 'color', 'rounded', 'timestamp']
 
     def build_filename(mode, project, plot):
         if mode == 'eps':

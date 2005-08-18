@@ -420,7 +420,7 @@ class GtkApplication(Application):
         #
         # request filename
         #
-        filename = PostscriptTerminal.build_filename('eps', project, plot)
+        filename = PostscriptTerminal.build_filename('ps', project, plot)
         
         chooser = gtk.FileChooserDialog(
             title="PostScript Export",
@@ -463,6 +463,7 @@ class GtkApplication(Application):
         ##         'fontsize', 'timestamp']          
         
         dialog = OptionsDialog(PostscriptTerminal(), app.window)
+        dialog.set_size_request(320,520)
 
         # determine requested postscript mode (ps or eps) from extension
         path, ext = os.path.splitext(filename)
