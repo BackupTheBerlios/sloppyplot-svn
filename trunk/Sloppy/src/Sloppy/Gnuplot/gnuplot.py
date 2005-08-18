@@ -221,7 +221,7 @@ class Backend(backend.Plotter):
         
         # title
         title = uwrap.get(layer, 'title')
-        if title is not None: rv.append("set title '%s'" % title)
+        if title is not None: rv.append('set title "%s"' % title)
         else: rv.append("unset title")
 
         # grid
@@ -417,6 +417,7 @@ class Backend(backend.Plotter):
         print
         
         Signals.emit(self, 'gnuplot-start-plotting')
+        logger.info("Gnuplot command list:\n\n%s" % "\n".join(cmd_list))
         for cmd in cmd_list:
             self(cmd)
 
