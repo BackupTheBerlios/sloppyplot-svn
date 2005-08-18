@@ -397,6 +397,7 @@ class DatasetWindow( gtk.Window ):
         
 
 
+    # JUST FOR TESTING
     def cb_interpolate(self, action):
         plugin = self.app.get_plugin('pygsl')
         pygsl = plugin.pygsl
@@ -646,14 +647,17 @@ class ModifyTableDialog(gtk.Dialog):
                             gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
                             (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
                              gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
-
+        self.set_size_request(320,200)
+        
         # button box
         btnbox = gtk.VButtonBox()
 
         btn_move_up = gtk.Button(stock=gtk.STOCK_GO_UP)
+        btn_move_up.connect("clicked", self.on_btn_move_clicked, -1)        
         btn_move_up.show()
 
         btn_move_down = gtk.Button(stock=gtk.STOCK_GO_DOWN)
+        btn_move_down.connect("clicked", self.on_btn_move_clicked, 1)
         btn_move_down.show()
 
         btnbox.add(btn_move_up)
@@ -680,7 +684,10 @@ class ModifyTableDialog(gtk.Dialog):
 
     def on_row_activated(self, treeview, *udata):
         (model, pathlist) = self.cview.get_selection().get_selected_rows()
+        if model is None:
+            return
         column = model.get_value( model.get_iter(pathlist[0]), 0)
+
         dialog = ColumnPropertiesDialog(column)
         try:
             response = dialog.run()
@@ -690,6 +697,22 @@ class ModifyTableDialog(gtk.Dialog):
             dialog.destroy()
         self.cview.queue_draw()
 
+
+    def on_btn_move_clicked(self, button, direction):
+        (model, pathlist) = self.cview.get_selection().get_selected_rows()
+        if model is None:
+            return
+
+        new_row = max(0, pathlist[0][0] + direction)
+        iter = model.get_iter(pathlist[0])        
+        second_iter = model.iter_nth_child(None, new_row)
+
+        if second_iter is not None:
+            model.swap(iter, second_iter)        
+            self.cview.queue_draw()
+        
+        
+        
 
     def check_out(self, undolist=[]):
         self.cview.check_out(undolist=undolist)
