@@ -300,7 +300,7 @@ class Backend( backend.Plotter ):
 
                 # create legend entries from line labels
                 labels = [l.get_label() for l in line_cache]
-                ax.legend(line_cache, labels, loc=position)                
+                ax.legend(line_cache, labels, loc=position, pad=0.8)
             else:
                 ax.legend_ = None
         else:
