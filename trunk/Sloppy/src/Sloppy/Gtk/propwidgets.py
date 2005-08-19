@@ -22,9 +22,11 @@
 import logging
 logging.basicConfig()
 
+#import pygtk
+#pygtk.require('2.0')
 import gtk
 
-from Sloppy.Lib.Props import RangeError, BoolProp
+from Sloppy.Lib.Props import RangeError, BoolProp, Container
 from Sloppy.Lib.Undo import UndoList
 
 from Sloppy.Base import uwrap
@@ -32,6 +34,7 @@ from Sloppy.Base import uwrap
 
 _all__ = ["PWContainer", "PWTableBox",
           "PW", "PWString", "PWComboBox", "PWComboBox",
+          "PWToggleButton", "PWAlternateToggleButton",
           "construct_pw", "construct_pw_in_box", "construct_pw_table"]
 
 
@@ -264,14 +267,13 @@ class PWToggleButton(PW):
     def init(self):
 
         blurb = self.prop.blurb or self.prop.doc or self.key
+        self.label = gtk.Label(blurb)
+        self.label.show()
 
         self.widget = gtk.ToggleButton(label=blurb)
         self.widget.connect("toggled", self.cb_toggled)
         #self.widget.set_mode(False)
         self.widget.show()
-
-        self.label = gtk.Label(blurb)
-        self.label.show()
         
         
     def check_in(self):
@@ -305,7 +307,40 @@ class PWToggleButton(PW):
         else:
             self.widget.set_label("False")
 
+class PWAlternateToggleButton(PW):
 
+    def init(self):
+
+        blurb = self.prop.blurb or self.prop.doc or self.key
+        self.label = gtk.Label(blurb)
+        self.label.show()
+
+        model = gtk.ListStore(str, object)
+        combobox = gtk.ComboBox(model)
+        cell = gtk.CellRendererText()
+        combobox.pack_start(cell, True)
+        combobox.add_attribute(cell, 'text', 0)
+
+        for entry in [("Default",None), ("True",True), ("False",False)]:
+            model.append( (entry) )
+
+        self.widget = combobox        
+        self.widget.show()
+
+    def check_in(self):
+        index_map = {None: 0, True: 1, False: 2}
+        index = index_map[self.get_value()]
+        
+        self.widget.set_active(index)
+        self.old_value = index
+
+    def check_out(self, undolist=[]):
+        index = self.widget.get_active()
+        if index != self.old_value:
+            model = self.widget.get_model()
+            value = model[index][1]
+            uwrap.smart_set(self.container, self.key, value, undolist=undolist)
+            self.old_value = index
 
 class PWCheckButton(PW):
 
@@ -348,6 +383,8 @@ class PWCheckButton(PW):
             
 
 
+#------------------------------------------------------------------------------
+# CONVENIENCE METHODS
 
 def construct_pw(container, key):
     prop = container.get_prop(key)
@@ -355,7 +392,7 @@ def construct_pw(container, key):
     if prop.values is not None:
         pw = PWComboBox(container, key)
     elif isinstance(prop, BoolProp):
-        pw = PWToggleButton(container, key)
+        pw = PWAlternateToggleButton(container, key)
     else:
         pw = PWString(container, key)
 
@@ -380,3 +417,27 @@ def construct_pw_table(pwlist):
         pw.label.set_alignment(-1.0, 0.0)
         n += 1                                    
     return tw
+
+
+
+#------------------------------------------------------------------------------
+# TESTING
+
+import uihelper
+
+def test():
+
+    class TestContainer(Container):
+        test = BoolProp()
+
+    tc = TestContainer(test=True)
+
+    pw = PWAlternateToggleButton(tc, 'test')
+    pw.check_in()
+    
+    win = uihelper.setup_test_window(pw.widget)
+    gtk.main()
+
+    
+if __name__ == "__main__":
+    test()
