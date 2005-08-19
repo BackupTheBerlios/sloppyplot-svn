@@ -3,30 +3,9 @@ to netCDF.
 
 ###############################################################################
 
-Plan for 0.1.3:
-
-- The focus will be on dataset manipulation.  I want to implement the 
-  column view that I have planned for so long.  It should help to 
-  
-  - add columns
-  - remove columns
-  - reorder columns (drag'n drop? or maybe just two buttons, up and down)
-  - select columns for actions
-
 - Other things:
 
   - Signals.connect_once -> requires an additional flag in the SignalContainer
-
-  - change toggle buttons to combos ('Default', 'Yes', 'No')
-
-
-
-
-    # valid options should be
-    #  remove column
-    #  add column
-    #  rename column
-    #  move column (up/down)
 
 
 ###############################################################################
