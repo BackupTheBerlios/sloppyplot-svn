@@ -30,20 +30,11 @@ from Sloppy.Lib import Signals
 from Sloppy.Lib.Undo import udict
 from Sloppy.Lib.Props import Container, Prop, ListProp, DictProp, BoolProp, RangeProp
 
+        
+        
 
-
-#----------------------------------------------------------------------
-   
-#         Set the foreground color.  fg can be a matlab format string, a
-#         html hex color string, an rgb unit tuple, or a float between 0
-#         and 1.  In the latter case, grayscale is used.
-
-#         The GraphicsContext converts colors to rgb internally.  If you
-#         know the color is rgb already, you can set isRGB to True to
-#         avoid the performace hit of the conversion
-
-# ----------------------------------------------------------------------
-
+#------------------------------------------------------------------------------
+# BASE OBJECTS
 
 class Axis(Container):
     " A single axis for a plot. "
@@ -59,7 +50,9 @@ class Line(Container):
     " A single line or collection of points in a Plot. "
     label = Prop(cast=unicode)
     cx = RangeProp(cast=int, min=0)
+    #cx = RangeProp(cast=str, min=0)
     cy = RangeProp(cast=int, min=0)
+    #cy = Column...RangeProp(cast=str, min=0)
     cxerr = RangeProp(cast=int, min=0)
     cyerr = RangeProp(cast=int, min=0)
     source = Prop(types=Dataset)

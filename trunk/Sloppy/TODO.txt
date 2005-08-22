@@ -1,11 +1,17 @@
-- Fixed exporter bug where columns of type long couldn't be exported
-to netCDF.
-
 ###############################################################################
 
 - Other things:
 
   - Signals.connect_once -> requires an additional flag in the SignalContainer
+
+
+- we might want to change cx, cy to a string of the form
+
+  'column:index'
+
+  where column can either be a column number or a column name, while
+  index is a valid index.  This way, we could specify ranges without
+  requiring yet another property.
 
 
 ###############################################################################
@@ -55,6 +61,20 @@ View
   'region 1'.
 
   Hmmm.. But a view defines the start/end point for several axes...
+
+
+
+#----------------------------------------------------------------------
+   
+#         Set the foreground color.  fg can be a matlab format string, a
+#         html hex color string, an rgb unit tuple, or a float between 0
+#         and 1.  In the latter case, grayscale is used.
+
+#         The GraphicsContext converts colors to rgb internally.  If you
+#         know the color is rgb already, you can set isRGB to True to
+#         avoid the performace hit of the conversion
+
+# ----------------------------------------------------------------------
 
 
 Plotting

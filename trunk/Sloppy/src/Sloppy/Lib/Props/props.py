@@ -292,9 +292,17 @@ class Prop:
         if val is None:
             return self.default
 
-        if self.types is not None and not isinstance(val, self.types):
-            raise TypeError("The value '%s' has %s while it should have %s" %
-                            (val, type(val), self.types))                
+        if self.types is not None:
+            #self.types is either a type or a function
+            if isinstance(self.types, type):
+                # -> type
+                if not isinstance(val, self.types):
+                    raise TypeError("The value '%s' has %s while it should have %s" %
+                                    (val, type(val), self.types))
+            else:
+                # -> function
+                self.types(self, val)
+                
 
         if self.cast is not None:
             val = self.cast(val)

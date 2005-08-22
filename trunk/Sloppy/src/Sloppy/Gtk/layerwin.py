@@ -487,15 +487,7 @@ class LinesTab(AbstractTab):
         column.set_attributes(cell, text=self.COL_CX)
         tv.append_column(column)
 
-        # self.COL_CXERR
-        cell = gtk.CellRendererText()
-        cell.set_property('editable', True)
-        cell.connect('edited', self._cb_edited_text, 
-                     model, self.COL_CXERR, 'cxerr')
-        column = gtk.TreeViewColumn('cxerr', cell)
-        column.set_attributes(cell, text=self.COL_CXERR)
-        tv.append_column(column)
-        
+       
         # self.COL_CY
         cell = gtk.CellRendererText()
         cell.set_property('editable', True)
@@ -505,14 +497,24 @@ class LinesTab(AbstractTab):
         column.set_attributes(cell, text=self.COL_CY)
         tv.append_column(column)
 
-        # self.COL_CYERR
-        cell = gtk.CellRendererText()
-        cell.set_property('editable', True)
-        cell.connect('edited', self._cb_edited_text, 
-                     model, self.COL_CYERR, 'cyerr')
-        column = gtk.TreeViewColumn('cyerr', cell)
-        column.set_attributes(cell, text=self.COL_CYERR)
-        tv.append_column(column)
+        # error bars are not yet implemented, so I disabled the next two
+#         # self.COL_CXERR
+#         cell = gtk.CellRendererText()
+#         cell.set_property('editable', True)
+#         cell.connect('edited', self._cb_edited_text, 
+#                      model, self.COL_CXERR, 'cxerr')
+#         column = gtk.TreeViewColumn('cxerr', cell)
+#         column.set_attributes(cell, text=self.COL_CXERR)
+#         tv.append_column(column)
+
+#         # self.COL_CYERR
+#         cell = gtk.CellRendererText()
+#         cell.set_property('editable', True)
+#         cell.connect('edited', self._cb_edited_text, 
+#                      model, self.COL_CYERR, 'cyerr')
+#         column = gtk.TreeViewColumn('cyerr', cell)
+#         column.set_attributes(cell, text=self.COL_CYERR)
+#         tv.append_column(column)
 
         # put treeview in a scrolled window
         sw = gtk.ScrolledWindow()
