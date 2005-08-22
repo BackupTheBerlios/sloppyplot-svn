@@ -355,6 +355,7 @@ class LinesTab(AbstractTab):
      COL_WIDTH,
      COL_SOURCE_KEY,
      COL_CX, COL_CY,
+     COL_INDEX_RANGE,
      COL_CXERR, COL_CYERR) = range(11)
     
     def construct_pwdict(self):
@@ -485,6 +486,15 @@ class LinesTab(AbstractTab):
                      model, self.COL_CX, 'cx')
         column = gtk.TreeViewColumn('cx', cell)
         column.set_attributes(cell, text=self.COL_CX)
+        tv.append_column(column)
+
+        # self.COL_INDEX_RANGE
+        cell = gtk.CellRendererText()
+        cell.set_property('editable', True)
+        cell.connect('edited', self._cb_edited_text, 
+                     model, self.COL_INDEX_RANGE, 'index_range')
+        column = gtk.TreeViewColumn('index_range', cell)
+        column.set_attributes(cell, text=self.COL_INDEX_RANGE)
         tv.append_column(column)
 
        

@@ -49,10 +49,9 @@ class Axis(Container):
 class Line(Container):
     " A single line or collection of points in a Plot. "
     label = Prop(cast=unicode)
-    cx = RangeProp(cast=int, min=0)
-    #cx = RangeProp(cast=str, min=0)
-    cy = RangeProp(cast=int, min=0)
-    #cy = Column...RangeProp(cast=str, min=0)
+    cx = RangeProp(cast=int, min=0, blurb="x-column")
+    cy = RangeProp(cast=int, min=0, blurb="y-column")
+    index_range = RangeProp(cast=int)
     cxerr = RangeProp(cast=int, min=0)
     cyerr = RangeProp(cast=int, min=0)
     source = Prop(types=Dataset)

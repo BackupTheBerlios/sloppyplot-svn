@@ -243,13 +243,9 @@ class MetaAttribute(object):
         inst.set_value( self.key, self.prop.check_type(val))
 
 
-class WeakMetaAttribute(object):
-    
-    def __init__(self, prop, key):
-        object.__init__(self)
-        self.key = key
-        self.prop = prop
 
+class WeakMetaAttribute(MetaAttribute):
+    
     def __get__(self, inst, cls=None):
         val = inst.get_value(self.key)
         if val is not None:
