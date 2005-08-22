@@ -79,6 +79,8 @@ class MatplotlibWindow( gtk.Window ):
         </menu>
       </menubar>
       <toolbar name='MainToolbar'>
+        <placeholder name='MainToolbarEdit'/>
+        <separator/>
         <toolitem action='Undo'/>
         <toolitem action='Redo'/>
         <separator/>              
@@ -268,6 +270,9 @@ class MatplotlibWidget(gtk.VBox):
         </menu>        
       </menubar>      
       <toolbar name='MainToolbar'>
+        <placeholder name='MainToolbarEdit'>
+        <toolitem action='Edit'/>
+        </placeholder>
         <toolitem action='ZoomIn'/>
         <toolitem action='ZoomFit'/>
         <separator/>              
