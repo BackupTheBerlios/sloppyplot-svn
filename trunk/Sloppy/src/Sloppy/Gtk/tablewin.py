@@ -27,9 +27,10 @@ pygtk.require('2.0') # TBR
 
 import gtk, gobject
 
-from Sloppy.Base.table import Table
+from Sloppy.Base.table import Table, Column
 from Sloppy.Base.dataset import Dataset
-from Sloppy.Base import uwrap
+
+from Sloppy.Base import uwrap, utable
 
 from Sloppy.Lib.Undo import UndoList, UndoInfo
 from Sloppy.Lib import Signals
@@ -596,40 +597,52 @@ class TableColumnView(gtk.TreeView):
         # set up model
         if table is None:
             return self.set_model(None)
-                    
-        model = gtk.ListStore( object )            
+
+        # model := (new_column_object, old_column_object)
+        model = gtk.ListStore(object, object)
         self.set_model(model)
 
     def check_in(self):
         # create copies of columns (except for the data)
         model = self.get_model()
         model.clear()
+
         for column in self.table.get_columns():
             new_column = column.copy(data=False)
-            model.append( (new_column,) )
+            model.append( (new_column,column) )            
 
     def check_out(self, undolist=[]):
-        ul = UndoList()
-        
+
+        columns = list()
+            
         model = self.get_model()
         iter = model.get_iter_first()
         n = 0
         while iter:
             column = model.get_value(iter, 0)
-            # copy all properties except for the actual data
-            kwargs = column.get_key_value_dict()
-            kwargs.pop('data')
-            kwargs['undolist'] = ul
-            uwrap.set(self.table.get_column(n), **kwargs)
-            iter = model.iter_next(iter)
-            n += 1
+            old_column = model.get_value(iter, 1)
+            if old_column is not None:
+                # => reuse existing table column data
+                column.data = old_column.data
+            else:
+                # => new column
+                column.data = Numeric.zeros((self.table.rowcount,), 'd')            
 
-        undolist.append(ul)
+            columns.append(column)                
+            iter = model.iter_next(iter)            
+            n += 1
+    
+        utable.set_columns(self.table, columns, undolist=undolist)
         
         
     def render_column_prop(self, column, cell, model, iter, propkey):
         column = model.get_value(iter, 0)
         cell.set_property('text', column.get_value(propkey) or "")
+
+
+
+
+
 
 
 
@@ -648,10 +661,16 @@ class ModifyTableDialog(gtk.Dialog):
                             (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
                              gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
         self.set_size_request(320,200)
-        
+
+        #
         # button box
+        #
         btnbox = gtk.VButtonBox()
 
+        btn_edit = gtk.Button(stock=gtk.STOCK_EDIT)
+        btn_edit.connect("clicked", self.on_row_activated)
+        btn_edit.show()
+        
         btn_move_up = gtk.Button(stock=gtk.STOCK_GO_UP)
         btn_move_up.connect("clicked", self.on_btn_move_clicked, -1)        
         btn_move_up.show()
@@ -660,13 +679,24 @@ class ModifyTableDialog(gtk.Dialog):
         btn_move_down.connect("clicked", self.on_btn_move_clicked, 1)
         btn_move_down.show()
 
-        btnbox.add(btn_move_up)
+        btn_add = gtk.Button(stock=gtk.STOCK_NEW)
+        btn_add.connect("clicked", self.on_btn_add_clicked)
+        btn_add.show()
+
+        btn_remove = gtk.Button(stock=gtk.STOCK_REMOVE)
+        btn_remove.connect("clicked", self.on_btn_remove_clicked)
+        btn_remove.show()
+
+        btnbox.add(btn_edit)        
+        btnbox.add(btn_move_up)        
         btnbox.add(btn_move_down)
+        btnbox.add(btn_add)
+        btnbox.add(btn_remove)
         btnbox.set_layout(gtk.BUTTONBOX_START)
         btnbox.show()
         
         
-        # column view
+        # cview = column view
         cview = TableColumnView(table)
         cview.connect( "row-activated", self.on_row_activated )
         cview.show()
@@ -682,6 +712,17 @@ class ModifyTableDialog(gtk.Dialog):
 
 
 
+    def check_out(self, undolist=[]):
+        self.cview.check_out(undolist=undolist)
+        
+    def run(self):
+        self.cview.check_in()
+        return gtk.Dialog.run(self)
+
+
+    #----------------------------------------------------------------------
+    # BUTTON CALLBACKS
+        
     def on_row_activated(self, treeview, *udata):
         (model, pathlist) = self.cview.get_selection().get_selected_rows()
         if model is None:
@@ -695,7 +736,7 @@ class ModifyTableDialog(gtk.Dialog):
                 dialog.check_out()
         finally:
             dialog.destroy()
-        self.cview.queue_draw()
+        self.cview.grab_focus()
 
 
     def on_btn_move_clicked(self, button, direction):
@@ -708,15 +749,30 @@ class ModifyTableDialog(gtk.Dialog):
         second_iter = model.iter_nth_child(None, new_row)
 
         if second_iter is not None:
-            model.swap(iter, second_iter)        
-            self.cview.queue_draw()
-        
-        
+            model.swap(iter, second_iter)
+            self.cview.grab_focus()
         
 
-    def check_out(self, undolist=[]):
-        self.cview.check_out(undolist=undolist)
+    def on_btn_add_clicked(self, button):        
+        selection = self.cview.get_selection()
+        (model, iter) = selection.get_selected()
+
+        new_column = self.table.new_column(key='new column')
+        iter = model.insert_after(iter, (new_column,None))
+        selection.select_iter(iter)
         
-    def run(self):
-        self.cview.check_in()
-        return gtk.Dialog.run(self)
+        self.cview.grab_focus()
+
+
+    def on_btn_remove_clicked(self, button):        
+        selection = self.cview.get_selection()
+        (model, iter) = selection.get_selected()
+        if iter is None:
+            return
+
+        new_iter = model.iter_next(iter)
+        model.remove(iter)
+        selection.select_iter(new_iter)
+        
+        self.cview.grab_focus()        
+        

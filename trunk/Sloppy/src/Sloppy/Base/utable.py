@@ -24,7 +24,7 @@ Undo wrappers for table.py
 """
 
 
-from Sloppy.Base.table import table
+from Sloppy.Base.table import Table
 from Sloppy.Lib.Undo import UndoInfo, UndoList, NullUndo
 
 
@@ -64,6 +64,12 @@ def rearrange(self, order, undolist=[]):
     self.rearrange(order)
     undolist.append( UndoInfo(rearrange, self, old_order) )
 
+def set_columns(self, columns, undolist=[]):
+    old_columns = self.get_columns()
+    self.set_columns(columns)
+    undolist.append( UndoInfo(set_columns, self, old_columns) )
+
+    
 #--- row operations ----------------------------------------------------
 
 # TODO: this is not a highlevel undo wrapper but rather a replacement
@@ -115,4 +121,5 @@ def delete_n_rows(self, i, n=1, only_zeros=False, undolist=[]):
     rv = self.delete_n_rows(i, n)
     undolist.append(ui)
     return rv
+
 
