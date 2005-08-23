@@ -199,9 +199,11 @@ class LayerWindow(gtk.Window):
             tab.check_in()
 
     def cb_apply(self, sender):
+        sender.grab_focus()        
         self.apply_changes()
             
     def cb_ok(self, sender):
+        sender.grab_focus()
         self.apply_changes()
         self.destroy()            
 
@@ -355,8 +357,7 @@ class LinesTab(AbstractTab):
      COL_WIDTH,
      COL_SOURCE_KEY,
      COL_CX, COL_CY,
-     COL_INDEX_RANGE,
-     COL_VALUE_RANGE,
+     COL_INDEX_FIRST, COL_INDEX_LAST,
      COL_CXERR, COL_CYERR) = range(13)
     
     def construct_pwdict(self):
@@ -489,25 +490,6 @@ class LinesTab(AbstractTab):
         column.set_attributes(cell, text=self.COL_CX)
         tv.append_column(column)
 
-        # self.COL_INDEX_RANGE
-        cell = gtk.CellRendererText()
-        cell.set_property('editable', True)
-        cell.connect('edited', self._cb_edited_text, 
-                     model, self.COL_INDEX_RANGE, 'index_range')
-        column = gtk.TreeViewColumn('index_range', cell)
-        column.set_attributes(cell, text=self.COL_INDEX_RANGE)
-        tv.append_column(column)
-
-        # self.COL_VALUE_RANGE
-        cell = gtk.CellRendererText()
-        cell.set_property('editable', True)
-        cell.connect('edited', self._cb_edited_text, 
-                     model, self.COL_VALUE_RANGE, 'value_range')
-        column = gtk.TreeViewColumn('value_range', cell)
-        column.set_attributes(cell, text=self.COL_VALUE_RANGE)
-        tv.append_column(column)
-
-       
         # self.COL_CY
         cell = gtk.CellRendererText()
         cell.set_property('editable', True)
@@ -516,6 +498,25 @@ class LinesTab(AbstractTab):
         column = gtk.TreeViewColumn('cy', cell)
         column.set_attributes(cell, text=self.COL_CY)
         tv.append_column(column)
+
+        # self.COL_INDEX_FIRST
+        cell = gtk.CellRendererText()
+        cell.set_property('editable', True)
+        cell.connect('edited', self._cb_edited_text, 
+                     model, self.COL_INDEX_FIRST, 'index_first')
+        column = gtk.TreeViewColumn('index_first', cell)
+        column.set_attributes(cell, text=self.COL_INDEX_FIRST)
+        tv.append_column(column)
+
+        # self.COL_INDEX_LAST
+        cell = gtk.CellRendererText()
+        cell.set_property('editable', True)
+        cell.connect('edited', self._cb_edited_text, 
+                     model, self.COL_INDEX_LAST, 'index_last')
+        column = gtk.TreeViewColumn('index_last', cell)
+        column.set_attributes(cell, text=self.COL_INDEX_LAST)
+        tv.append_column(column)
+
 
         # error bars are not yet implemented, so I disabled the next two
 #         # self.COL_CXERR
@@ -611,8 +612,8 @@ class LinesTab(AbstractTab):
                          'source', source,
                          'cx', get_column(self.COL_CX),
                          'cy', get_column(self.COL_CY),
-                         'index_range', get_column(self.COL_INDEX_RANGE),
-                         'value_range', get_column(self.COL_INDEX_RANGE),                                
+                         'index_first', get_column(self.COL_INDEX_FIRST),
+                         'index_last', get_column(self.COL_INDEX_LAST),
                          'cxerr', get_column(self.COL_CXERR),
                          'cyerr', get_column(self.COL_CYERR),
                          undolist=ul)
@@ -653,8 +654,8 @@ class LinesTab(AbstractTab):
                 source_key,
                 str(uwrap.get(line, 'cx',"")),
                 str(uwrap.get(line, 'cy',"")),
-                str(uwrap.get(line, 'index_range',"")),
-                str(uwrap.get(line, 'value_range',"")),                
+                str(uwrap.get(line, 'index_first',"")),
+                str(uwrap.get(line, 'index_last',"")),                
                 str(uwrap.get(line, 'cxerr',"")),
                 str(uwrap.get(line, 'cyerr',""))]
 

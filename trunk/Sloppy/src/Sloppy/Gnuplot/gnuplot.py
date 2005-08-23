@@ -229,17 +229,19 @@ class Backend(backend.Plotter):
         if grid is True: rv.append('set grid')
         else: rv.append('unset grid')
 
-        # legend (aka key in gnuplot)
+        #:legend
+        # (aka key in gnuplot)
         legend = uwrap.get(layer, 'legend')
-        if legend is not None:            
+        if legend is not None:
+            #:legend.visible
             visible = uwrap.get(legend, 'visible')
             if visible is True:
-                # legend label (aka title in gnuplot)
+                #:legend.label
                 label = uwrap.get(legend, 'label')
                 if label is not None: key_title = 'title "%s"' % label
                 else: key_title = ""
 
-                # legend border
+                #:legend.border
                 border = uwrap.get(legend, 'border')
                 if border is True: key_border = "box"
                 else: key_border = "nobox"

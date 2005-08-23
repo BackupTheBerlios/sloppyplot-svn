@@ -233,11 +233,23 @@ class Backend( backend.Plotter ):
                 continue
 
 
+            #:line.index_first
+            #:line.index_last
+            start, end = line.index_first, line.index_last
+            try:
+                xdata = xdata[start:end]
+                ydata = ydata[start:end]
+            except IndexError:
+                logger.error("Index range '%s'out of bounds!" % (start,end) )
+                continue
+            
+
             #:line.style
             global linestyle_mappings
             default = default_style or group_styles[line_count % len(group_styles)]
             style = uwrap.get(line, 'style', default)
             style = linestyle_mappings[style]
+
 
             #:line.marker
             global linemarker_mappings
@@ -245,8 +257,10 @@ class Backend( backend.Plotter ):
             marker = uwrap.get(line, 'marker', default)
             marker = linemarker_mappings[marker]
 
+
             #:line.width
             width = uwrap.get(line, 'width')
+
             
             #:line.color
             default = default_color or group_colors[line_count % len(group_colors)]
@@ -291,7 +305,7 @@ class Backend( backend.Plotter ):
                     pass
                                 
                 #:legend.border TODO
-                border = uwrap.get(legend, 'border')
+                border = uwrap.get(legend, 'border')                
                 
                 #:legend.position TODO
                 position = uwrap.get(legend, 'position', 'best')

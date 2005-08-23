@@ -409,7 +409,7 @@ class GtkApplication(Application):
             self.plot(plot, backend_name)
 
 
-    def _cb_plot_postscript(self, action):
+    def on_action_export_via_gnuplot(self, action):
         plots = self.window.treeview.get_selected_plots()
         if len(plots) > 0:
             self.plot_postscript(self.project, plots[0])

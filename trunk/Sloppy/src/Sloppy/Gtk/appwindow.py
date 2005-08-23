@@ -535,7 +535,7 @@ class AppWindow( gtk.Window ):
 
     actions_gnuplot = [
         ('PlotBackendGnuplot', None, 'gnuplot', None, 'Plot current plot via gnuplot. ', '_cb_plot_gnuplot'),
-        ('PlotPostscript', None, 'Export as Postscript...', None, 'Export the current plot as postscript file.', '_cb_plot_postscript')
+        ('ExportViaGnuplot', None, 'Export via gnuplot...', None, 'Export the current plot via Gnuplot as postscript file.', 'on_action_export_via_gnuplot')
         ]
 
     actions_debug = [
@@ -597,7 +597,7 @@ class AppWindow( gtk.Window ):
              <menuitem action='PlotBackendGnuplot'/>
              <menuitem action='PlotBackendMatplotlib'/>
           </menu>
-          <menuitem action='PlotPostscript'/>
+          <menuitem action='ExportViaGnuplot'/>
           <separator/>
           <menuitem action='NewPlot'/>
           <menuitem action='DatasetToPlot'/>
@@ -628,7 +628,7 @@ class AppWindow( gtk.Window ):
            <menuitem action='PlotBackendGnuplot'/>
            <menuitem action='PlotBackendMatplotlib'/>
         </menu>
-        <menuitem action='PlotPostscript'/>
+        <menuitem action='ExportViaGnuplot'/>
         <separator/>
         <menuitem action='Edit'/>
         <menuitem action='RenameItem'/>

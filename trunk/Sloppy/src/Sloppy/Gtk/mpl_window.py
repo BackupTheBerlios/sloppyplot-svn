@@ -223,7 +223,7 @@ class MatplotlibWidget(gtk.VBox):
         ('PlotMenu', None, '_Plot'),
         ('Replot', 'sloppy-replot', '_Replot', '<control>R', 'Replot', '_cb_replot'),
         ('Edit', gtk.STOCK_PROPERTIES, '_Edit', '<control>E', 'Edit', '_cb_edit'),
-        ('Save As', gtk.STOCK_SAVE_AS, '_Save As', '<control><shift>S', 'Save As', 'on_action_save_as'),
+        ('ExportViaMPL', gtk.STOCK_SAVE_AS, 'Export via matplotlib...', None, 'Export via Matplotlib', 'on_export_via_matplotlib'),
         ],
         'Analysis':
         [
@@ -251,7 +251,8 @@ class MatplotlibWidget(gtk.VBox):
           <placeholder name='PlotMenuActions'>
             <menuitem action='Replot'/>
             <menuitem action='Edit'/>
-            <menuitem action='Save As'/>
+            <separator/>
+            <menuitem action='ExportViaMPL'/>
           </placeholder>
         </menu>        
         <menu action='AnalysisMenu'>
@@ -675,7 +676,7 @@ class MatplotlibWidget(gtk.VBox):
    # other callbacks
 
    
-    def on_action_save_as(self, action):
+    def on_export_via_matplotlib(self, action):
         self.abort_selection()
 
         # TODO: pick filename based on self.get_plot().key
