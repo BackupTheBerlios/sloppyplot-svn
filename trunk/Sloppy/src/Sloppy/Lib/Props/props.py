@@ -289,8 +289,9 @@ class Prop:
             return self.default
 
         if self.types is not None:
+
             #self.types is either a type or a function
-            if isinstance(self.types, type):
+            if isinstance(self.types, (type,list,tuple)):
                 # -> type
                 if not isinstance(val, self.types):
                     raise TypeError("The value '%s' has %s while it should have %s" %

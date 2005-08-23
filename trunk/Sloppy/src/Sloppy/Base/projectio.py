@@ -277,7 +277,10 @@ def toElement(project):
 
                 safe_set(eLine, 'cx', line.cx)
                 safe_set(eLine, 'cy', line.cy)
-                safe_set(eLine, 'cxerr', line.cxerr)
+                safe_set(eLine, 'index_range', line.index_range)
+                safe_set(eLine, 'value_range', line.value_range)
+                
+                safe_set(eLine, 'cxerr', line.cxerr)                
                 safe_set(eLine, 'cyerr', line.cyerr)
             
 
