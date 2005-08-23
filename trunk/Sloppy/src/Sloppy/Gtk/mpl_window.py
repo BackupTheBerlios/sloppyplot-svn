@@ -298,8 +298,8 @@ class MatplotlibWidget(gtk.VBox):
         self.btn_cancel = self._construct_cancel_button()
 
         self.context_id = self.statusbar.get_context_id("coordinates")
-        self.statusbar.push(self.context_id, "X: 10, Y: 20")
-        self.statusbar.pop(self.context_id)
+        #self.statusbar.push(self.context_id, "X: 10, Y: 20")
+        #self.statusbar.pop(self.context_id)
         
         vbox = self.vbox = gtk.VBox()
         hbox = gtk.HBox()

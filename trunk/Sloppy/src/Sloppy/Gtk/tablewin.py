@@ -119,10 +119,12 @@ class DatasetWindow( gtk.Window ):
         self.toolbar = self._construct_toolbar()
         self.popup = self.uimanager.get_widget('/popup_column')
         self.popup_info = None # needed for popup
-        
+        self.statusbar = self._construct_statusbar()
+
         self.tableview = self._construct_tableview()
         sw = uihelper.add_scrollbars(self.tableview)
         sw.show()
+        
         
         hpaned = gtk.HPaned()
         hpaned.pack1( sw )
@@ -135,22 +137,27 @@ class DatasetWindow( gtk.Window ):
         vbox.pack_start( self.menubar, expand=False, fill=True )
         vbox.pack_start( self.toolbar, expand=False, fill=True )
         vbox.pack_start( self.hpaned, expand=True, fill=True )
+        vbox.pack_start( self.statusbar, expand=False, fill=True )
 
         vbox.show()
         self.add(vbox)
 
         self.project = project  # immutable
         self._dataset = None
-        self.dataset = dataset        
+        self.dataset = dataset
 
         Signals.connect(self.project, "close", (lambda sender: self.destroy()))
         Signals.connect(self.dataset, "closed", (lambda sender: self.destroy()))
-        
+
+        self.tableview.emit('cursor_changed')                
+
         
     def _cb_close(self, action):
         self.destroy()
-        
-    #--- GUI construction -------------------------------------------------
+
+    #----------------------------------------------------------------------
+    # GUI Construction
+    #
     
     def _construct_uimanager(self):
         uimanager = gtk.UIManager()
@@ -174,6 +181,8 @@ class DatasetWindow( gtk.Window ):
     def _construct_tableview(self):        
         tableview = TableView(self.app)
         tableview.connect('button-press-event', self.cb_tableview_button_press_event)
+        contextid = self.statusbar.get_context_id("coordinates")
+        tableview.connect('cursor-changed', self.on_cursor_changed, contextid)
         tableview.show()
         return tableview
 
@@ -181,8 +190,19 @@ class DatasetWindow( gtk.Window ):
         widget = gtk.Label('metadata')
         widget.show()
         return widget
-        
-    #--- Dataset ----------------------------------------------------------
+
+
+    def _construct_statusbar(self):
+        statusbar = gtk.Statusbar()
+        statusbar.set_has_resize_grip(True)        
+        statusbar.show()
+        return statusbar
+
+    
+    #----------------------------------------------------------------------
+    # Dataset Handling
+    #
+    
     def set_dataset(self, dataset):
         
         if dataset is None:
@@ -219,7 +239,10 @@ class DatasetWindow( gtk.Window ):
         return self._dataset
     dataset = property(get_dataset,set_dataset)
 
-    #--- Callbacks ---------------------------------------------------------
+
+    #----------------------------------------------------------------------
+    # Callbacks
+    #
 
     def cb_insert_row(self, widget):
         model = self.tableview.get_model()
@@ -395,7 +418,20 @@ class DatasetWindow( gtk.Window ):
                 self.project.journal.append(ul)
         finally:
             dialog.destroy()
-        
+
+
+    def on_cursor_changed(self, tableview, contextid):
+        total_rows = self.tableview.get_model().table.rowcount        
+        path, column = tableview.get_cursor()
+        if path is not None:
+            row = str(path[0]+1)            
+            msg = 'row %s of %s' % (row, total_rows)            
+        else:
+            msg = '%s rows' % total_rows
+
+
+        self.statusbar.pop(contextid)        
+        self.statusbar.push (contextid, msg)
 
 
     # JUST FOR TESTING
@@ -660,12 +696,13 @@ class ModifyTableDialog(gtk.Dialog):
                             gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
                             (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
                              gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
-        self.set_size_request(320,200)
+        self.set_size_request(480,300)
 
         #
         # button box
         #
         btnbox = gtk.VButtonBox()
+        btnbox.set_spacing(5)
 
         btn_edit = gtk.Button(stock=gtk.STOCK_EDIT)
         btn_edit.connect("clicked", self.on_row_activated)
@@ -694,8 +731,7 @@ class ModifyTableDialog(gtk.Dialog):
         btnbox.add(btn_remove)
         btnbox.set_layout(gtk.BUTTONBOX_START)
         btnbox.show()
-        
-        
+                
         # cview = column view
         cview = TableColumnView(table)
         cview.connect( "row-activated", self.on_row_activated )
@@ -704,10 +740,11 @@ class ModifyTableDialog(gtk.Dialog):
 
         # put cview and btnbox next to each other into a hbox
         hbox = gtk.HBox()
+        hbox.set_spacing(5)
         hbox.pack_start(cview, True, True)
         hbox.pack_start(btnbox, False, True)
         hbox.show()
-        
+
         self.vbox.add(hbox)
 
 
