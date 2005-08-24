@@ -183,6 +183,7 @@ class DatasetWindow( gtk.Window ):
         tableview.connect('button-press-event', self.cb_tableview_button_press_event)
         contextid = self.statusbar.get_context_id("coordinates")
         tableview.connect('cursor-changed', self.on_cursor_changed, contextid)
+        tableview.connect('column-clicked', self.on_column_clicked)
         tableview.show()
         return tableview
 
@@ -244,6 +245,9 @@ class DatasetWindow( gtk.Window ):
     # Callbacks
     #
 
+    def on_column_clicked(self, tableview, tvcolumn):
+        print "CLICK!"
+        
     def cb_insert_row(self, widget):
         model = self.tableview.get_model()
         if model is None:

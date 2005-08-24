@@ -25,7 +25,9 @@ logging.basicConfig()
 import pygtk # TBR
 pygtk.require('2.0') # TBR
 
+import gobject
 import gtk
+
 
 from Sloppy.Base.table import Table
 from Sloppy.Lib.Undo import UndoInfo, UndoList, NullUndo
@@ -170,9 +172,17 @@ class TableModel(gtk.GenericTreeModel):
 
 class TableView(gtk.TreeView):
 
+    __gsignals__ = {
+        'column-clicked' : (gobject.SIGNAL_RUN_FIRST,
+                            gobject.TYPE_NONE,
+                            (gobject.TYPE_OBJECT,))
+        }
+
+    
     def __init__(self, app, table=None, model=None):        
         gtk.TreeView.__init__(self)
         self.set_headers_visible(True)
+        self.set_headers_clickable(True)
         self.set_property("rules-hint", True)
         self.get_selection().set_mode(gtk.SELECTION_MULTIPLE)
         self.set_fixed_height_mode(True) # PYGTK 2.6
@@ -198,17 +208,6 @@ class TableView(gtk.TreeView):
         for col in self.get_columns():
             self.remove_column(col)
 
-        # ...and set up new columns.
-        # The first column is simply the (non-editable) line number,
-        # while the others contain the data.
-#         cell = gtk.CellRendererText()
-#         column = gtk.TreeViewColumn('row',cell)
-#         column.set_cell_data_func(cell,self._cb_render_rownr)
-#         column.set_property('sizing', gtk.TREE_VIEW_COLUMN_FIXED) # PYGTK 2.6
-#         column.set_property('resizable',True)
-#         column.set_fixed_width(50)  
-#         self.append_column(column)
-
         # For testing purposes, we might not have an Application object.
         # In this case, we will simply use a plain list as undo journal.
         if self.app is not None:
@@ -222,7 +221,7 @@ class TableView(gtk.TreeView):
             cell = gtk.CellRendererText()
             cell.set_property('mode',gtk.CELL_RENDERER_MODE_EDITABLE)            
             cell.set_property('editable',True)
-            cell.connect('edited',self._cb_value_edited, model, n, journal)
+            cell.connect('edited',self.on_value_edited, model, n, journal)
             column = gtk.TreeViewColumn(name,cell,text=n)
             column.set_property('resizable',True)
             column.set_property('clickable',True)
@@ -230,26 +229,44 @@ class TableView(gtk.TreeView):
             column.set_fixed_width(100)
             column.set_expand(False)
 
+            ## create custom label widget
+            #widget = gtk.Button()
+            #widget.show()
+            #column.set_widget(widget)
+
+            column.connect("clicked", self.on_column_clicked)
+            
             self.append_column(column)
             n += 1
                 
     update = setup_columns
 
-    def _cb_value_edited(self, cell, path, new_text, model, column, undolist=[]):
+
+    #----------------------------------------------------------------------
+    # Callbacks
+    #
+    
+    def on_column_clicked(self, tvcolumn):
+        self.emit('column-clicked', tvcolumn)
+        
+    def on_value_edited(self, cell, path, new_text, model, column, undolist=[]):
         " model, column, undolist must be provided by the connect call. "
         # Since the first column is not a data column (and not editable),
         # we need to subtract 1 from the column number.
         #column -= 1 
         path = (int(path), column)
-        model.set_value(path, new_text, undolist=undolist)
-        
+        model.set_value(path, new_text, undolist=undolist)        
 
-    def _cb_render_rownr(self,column,cell,model,iter):
+    def on_render_rownr(self,column,cell,model,iter):
         rownr = model.get_row_from_path(model.get_path(iter))
         cell.set_property('text',str(rownr))
         return
 
 
+    #----------------------------------------------------------------------
+    # Table/Model
+    #
+    
     def set_table(self, table):
         self.set_model( TableModel(table) )
 
@@ -263,3 +280,6 @@ class TableView(gtk.TreeView):
         " Return index of the given column, not counting the first column. "
         return self.get_columns().index(column)
         #return self.get_columns().index(column) - 1
+
+
+gobject.type_register(TableView)

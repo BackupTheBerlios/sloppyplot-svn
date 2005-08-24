@@ -233,9 +233,9 @@ class Backend( backend.Plotter ):
                 continue
 
 
-            #:line.index_first
-            #:line.index_last
-            start, end = line.index_first, line.index_last
+            #:line.row_first
+            #:line.row_last
+            start, end = line.row_first, line.row_last
             try:
                 xdata = xdata[start:end]
                 ydata = ydata[start:end]

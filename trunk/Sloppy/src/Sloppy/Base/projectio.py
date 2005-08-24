@@ -277,8 +277,8 @@ def toElement(project):
 
                 safe_set(eLine, 'cx', line.cx)
                 safe_set(eLine, 'cy', line.cy)
-                safe_set(eLine, 'index_first', line.index_first)
-                safe_set(eLine, 'index_last', line.index_last)
+                safe_set(eLine, 'row_first', line.row_first)
+                safe_set(eLine, 'row_last', line.row_last)
 
                 #safe_set(eLine, 'value_range', line.value_range)
                 

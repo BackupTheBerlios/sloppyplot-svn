@@ -357,7 +357,7 @@ class LinesTab(AbstractTab):
      COL_WIDTH,
      COL_SOURCE_KEY,
      COL_CX, COL_CY,
-     COL_INDEX_FIRST, COL_INDEX_LAST,
+     COL_ROW_FIRST, COL_ROW_LAST,
      COL_CXERR, COL_CYERR) = range(13)
     
     def construct_pwdict(self):
@@ -499,22 +499,22 @@ class LinesTab(AbstractTab):
         column.set_attributes(cell, text=self.COL_CY)
         tv.append_column(column)
 
-        # self.COL_INDEX_FIRST
+        # self.COL_ROW_FIRST
         cell = gtk.CellRendererText()
         cell.set_property('editable', True)
         cell.connect('edited', self._cb_edited_text, 
-                     model, self.COL_INDEX_FIRST, 'index_first')
-        column = gtk.TreeViewColumn('index_first', cell)
-        column.set_attributes(cell, text=self.COL_INDEX_FIRST)
+                     model, self.COL_ROW_FIRST, 'row_first')
+        column = gtk.TreeViewColumn('row_first', cell)
+        column.set_attributes(cell, text=self.COL_ROW_FIRST)
         tv.append_column(column)
 
-        # self.COL_INDEX_LAST
+        # self.COL_ROW_LAST
         cell = gtk.CellRendererText()
         cell.set_property('editable', True)
         cell.connect('edited', self._cb_edited_text, 
-                     model, self.COL_INDEX_LAST, 'index_last')
-        column = gtk.TreeViewColumn('index_last', cell)
-        column.set_attributes(cell, text=self.COL_INDEX_LAST)
+                     model, self.COL_ROW_LAST, 'row_last')
+        column = gtk.TreeViewColumn('row_last', cell)
+        column.set_attributes(cell, text=self.COL_ROW_LAST)
         tv.append_column(column)
 
 
@@ -612,8 +612,8 @@ class LinesTab(AbstractTab):
                          'source', source,
                          'cx', get_column(self.COL_CX),
                          'cy', get_column(self.COL_CY),
-                         'index_first', get_column(self.COL_INDEX_FIRST),
-                         'index_last', get_column(self.COL_INDEX_LAST),
+                         'row_first', get_column(self.COL_ROW_FIRST),
+                         'row_last', get_column(self.COL_ROW_LAST),
                          'cxerr', get_column(self.COL_CXERR),
                          'cyerr', get_column(self.COL_CYERR),
                          undolist=ul)
@@ -654,13 +654,15 @@ class LinesTab(AbstractTab):
                 source_key,
                 str(uwrap.get(line, 'cx',"")),
                 str(uwrap.get(line, 'cy',"")),
-                str(uwrap.get(line, 'index_first',"")),
-                str(uwrap.get(line, 'index_last',"")),                
+                str(uwrap.get(line, 'row_first',"")),
+                str(uwrap.get(line, 'row_last',"")),                
                 str(uwrap.get(line, 'cxerr',"")),
                 str(uwrap.get(line, 'cyerr',""))]
 
-        
-    #--- GUI CALLBACKS ----------------------------------------------------
+
+    #----------------------------------------------------------------------
+    # GUI Callbacks
+    #
 
     def _cb_edited_text(self, cell, path, new_text, model, column, prop_key):
         # check if the new_text is appropriate for the property
