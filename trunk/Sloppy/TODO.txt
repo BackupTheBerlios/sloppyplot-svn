@@ -1,3 +1,9 @@
+TODO:
+
+fix attribute saving bug => only save typecode and key in netCDF.  all
+other properties should be saved in the project (once again) to ensure
+proper encoding.
+
 
 ###############################################################################
 
@@ -8,7 +14,7 @@
 
 ###############################################################################
 
-Plan for 0.1.4:
+Plan for 0.4:
 
 - Rewrite ASCII import, so that
 

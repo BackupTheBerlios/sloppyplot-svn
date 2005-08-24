@@ -59,6 +59,7 @@ class Exporter(dataio.Exporter):
 
             dim = fd.def_dim(key, rows)
 
+            # TODO: move to types.py
             type_mappings = {'d' : NC.DOUBLE,
                              'f' : NC.FLOAT,
                              'l' : NC.INT}
@@ -74,7 +75,13 @@ class Exporter(dataio.Exporter):
             for key in ['key', 'designation', 'label', 'query']:
                 value = column.get_value(key)
                 if value is not None:
-                    setattr(var, key, value)
+                    if isinstance(value, unicode):
+                        value = 'invalid encoding'
+                    try:
+                        setattr(var, key, value)
+                    except CDFError:
+                        logger.error("Error while setting key '%s' to '%s'" % (key,value))
+                        raise
 
             j += 1        
 
