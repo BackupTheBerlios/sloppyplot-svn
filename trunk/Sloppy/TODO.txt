@@ -1,17 +1,9 @@
+
 ###############################################################################
 
 - Other things:
 
   - Signals.connect_once -> requires an additional flag in the SignalContainer
-
-
-- we might want to change cx, cy to a string of the form
-
-  'column:index'
-
-  where column can either be a column number or a column name, while
-  index is a valid index.  This way, we could specify ranges without
-  requiring yet another property.
 
 
 ###############################################################################
@@ -44,6 +36,15 @@ Plan for 0.1.4:
 # EVERYTHING BELOW THIS POINT IS JUST A COLLECTION OF IDEAS
 
 #----------------------------------------------------------------------
+
+- we might want to change cx, cy to a string of the form
+
+  'column:index'
+
+  where column can either be a column number or a column name, while
+  index is a valid index.  This way, we could specify ranges without
+  requiring yet another property.
+
 
 export
 ------

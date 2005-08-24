@@ -32,7 +32,7 @@ have these dependencies fulfilled at the time of installation.
 - Numeric (any recent version should work), 
   http://numpy.sf.net
 
-- matplotlib 0.82
+- matplotlib 0.83.1
   http://matplotlib.sf.net
 
 - netCDF

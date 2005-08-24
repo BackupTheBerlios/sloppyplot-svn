@@ -34,8 +34,8 @@ import sys
 
 PATH_SHARED=join(sys.prefix,'share','sloppyplot')
  
-VERSION="0.2"
-VERSION=VERSION+".SVN"+"$Rev$"[6:-2]
+VERSION="0.3"
+#VERSION=VERSION+".SVN"+"$Rev$"[6:-2]
 
 DESCRIPTION="""\
 A scientific plotting tool that currently only supports 2d plots.  The

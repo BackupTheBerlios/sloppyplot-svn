@@ -1,0 +1,39 @@
+CHANGELOG
+=========
+
+
+2005-20-24: SloppyPlot 0.3
+==========================
+
+Plotting:
+  - added row_first, row_last to specify first and last row index
+    to use while plotting.  This is still experimental and is only
+    supported by matplotlib, not by gnuplot!    
+  
+Web Site:
+  - launched 'real' web site using DokuWiki
+    
+User Interface:
+  - Cleaned up the menus a little (added edit button in mpl window,
+    renamed Save As to Export Via Matplotlib,...)
+  - fixed some little annoying bugs, e.g. in layerwin
+  - replaced the boolean toggle buttons with comboboxes (default,true,false)
+    
+Dataset Window:
+  - implemented Column modification dialog (add/remove/move/edit columns)
+  - added status bar to dataset window
+
+
+SloppyPlot 0.2
+==============
+
+- first build considered alpha quality
+
+
+SloppyPlot 0.1.2
+================
+
+- many, many small bugfixes to improve the normal workflow
+- list of recently used files available
+- added configuration file ~/.sloppyplot.cfg
+

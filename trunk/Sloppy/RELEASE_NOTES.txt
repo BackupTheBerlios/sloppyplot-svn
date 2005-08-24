@@ -1,11 +1,10 @@
-RELASE NOTES
-============
 
-0.1.2
+Release Notes for SloppyPlot 0.3 (released 2005-20-24)
+======================================================
 
-- many, many small bugfixes to improve the normal workflow
+This release features a lot of bug fixes and little improvements to
+the user interface.  The biggest visible change is the addition of a
+dialog to modify the dataset columns (add/remove/move/edit).
 
-- list of recently used files available
-
-- added configuration file ~/.sloppyplot.cfg
+It is recommended to update matplotlib to the newest version (0.83.1)
 
