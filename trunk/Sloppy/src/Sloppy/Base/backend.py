@@ -29,6 +29,8 @@ import logging, os
 from Sloppy.Lib import Signals
 
 from Sloppy.Base import uwrap, klassregistry
+from Sloppy.Base.table import Table
+
 
 #==============================================================================
 class Backend:
@@ -136,7 +138,8 @@ class Backend:
 
 
     #----------------------------------------------------------------------
-    # methods that a Plotter might want to re-implement
+    # Methods that a Plotter might want to re-implement
+    #
 
     def connect(self):
         """ Open the connection to the backend. """
@@ -170,7 +173,64 @@ class Backend:
         pass
 
 
+    #----------------------------------------------------------------------
+    # Common Backend Utility Functions
+    #
 
+    def get_line_source(self, line):
+        #:line.source            
+        if line.source is None:
+            raise BackendError("No Dataset specified for Line!")
+        else:
+            return line.source
+
+    def get_table(self, source):
+        if source.is_empty() is True:
+            raise BackendError("No data for Line!")
+
+        table = source.get_data()
+        if not isinstance(table, Table):
+            raise BackendError("Gnuplot Backend currently only supports data of type Table, while this is of %s" % type(table))
+        return table
+
+    def get_column_indices(self, line):
+        #:line.cx
+        if line.cx is None or line.cy is None:
+            raise BackendError("No x or y source given for Line. Line skipped.")
+        else:
+            return line.cx, line.cy
+
+    def get_line_label(self, line, table=None, cy=None):
+        #:line.label:OK
+        label = line.label
+        if label is None:
+            if table is not None and cy is not None:
+                column = table.column(cy)
+                label = column.label or column.key or uwrap.get(line, 'label')
+            else:
+                label = uwrap.get(line, 'label')
+        return label
+
+
+    def get_table_data(self, table, cx, cy):
+        #:line.cx
+        try:
+            xdata = table[cx]
+        except IndexError:
+            raise BackendError("X-Index out of range (%s). Line skipped." % cx)
+
+
+        #:line.cy
+        try:
+            ydata = table[cy]
+        except IndexError:
+            raise BackendError("Y-Index out of range (%s). Line skipped." % cy)
+
+        return xdata, ydata
+
+
+
+###############################################################################
 # deprecated
 Plotter = Backend
 

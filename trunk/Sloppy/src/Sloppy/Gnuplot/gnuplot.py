@@ -36,14 +36,10 @@ from Sloppy.Base.dataset import Dataset
 from Sloppy.Base.dataio import ExporterRegistry
 from Sloppy.Base.backend  import BackendRegistry
 from Sloppy.Base import backend, utils, uwrap
-from Sloppy.Base.table import Table
 
 from terminal import XTerminal, DumbTerminal, PostscriptTerminal
 
 from Sloppy.Lib import Signals
-
-#class Builder:
-#    def build(self): pass
 
 
 class BackendError(Exception):
@@ -311,56 +307,20 @@ class Backend(backend.Plotter):
             try:
                 if uwrap.get(line, 'visible') is False: continue
 
-                #:line.source            
-                if line.source is None:
-                    raise BackendError("No Dataset specified for Line!")
-                else:
-                    ds = line.source
-
-                if ds.is_empty() is True:
-                    raise BackendError("No data for Line!")
-
-                table = ds.get_data()
-                if not isinstance(table, Table):
-                    raise TypeError("Gnuplot Backend currently only supports data of type Table, while this is of %s"
-                                    % type(table))
-
-                #:line.cx
-                if line.cx is None or line.cy is None:
-                    logger.error("No x or y source given for Line. Line skipped.")
-                    continue
-                else:
-                    cx, cy = line.cx, line.cy
-
+                ds = self.get_line_source(line)
+                table = self.get_table(ds)
+                cx, cy = self.get_column_indices(line)
+                
                 # mark source for export            
                 filename = self.mark_for_export(ds)
                 if filename is None:
                     continue
                 source = '"%s"' % filename
 
-                #:line.label:OK
-                label = line.label
-                if label is None:
-                    column = table.column(cy)
-                    label = column.label or column.key or uwrap.get(line, 'label')            
-
+                label = self.get_line_label(line, table=table, cy=cy)
                 if label is not None: title = 'title "%s"' % label
                 else: title = 'notitle'
 
-                # using-clause
-                # TODO: only do this if we have a group
-                # TODO: on the other hand, we should only advance
-                # TODO: cx/cy if we are talking about the same source!
-                if 1 == 0:
-                    cx = line.cx or group_info.get('cx', 1)
-                    group_info['cx'] = cx + 2
-                    cy = line.cy or group_info.get('cy', 2)
-                    group_info['cy'] = cy + 2
-                else:
-                    (cx, cy) = (line.cx, line.cy)
-                    if cx is None or cy is None:
-                        logger.error("No source cx or cy given. Line skipped.")
-                        continue
                 using = 'using %s:%s' % (cx+1,cy+1)
 
                 # TODO: support 'style' and 'marker'

@@ -813,7 +813,9 @@ class ModifyTableDialog(gtk.Dialog):
 
         new_iter = model.iter_next(iter)
         model.remove(iter)
-        selection.select_iter(new_iter)
+
+        if new_iter is not None:
+            selection.select_iter(new_iter)
         
         self.cview.grab_focus()        
         

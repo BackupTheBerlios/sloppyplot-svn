@@ -41,7 +41,6 @@ from Sloppy.Base.backend import BackendRegistry
 from Sloppy.Base import objects
 from Sloppy.Base import utils, uwrap
 from Sloppy.Base.dataset import Dataset
-from Sloppy.Base.table import Table
 
 
 
@@ -195,53 +194,22 @@ class Backend( backend.Plotter ):
                     ax.lines.remove(line)
                 continue
 
-            #:line.source            
-            if line.source is None:
-                logger.warn("No Dataset specified for Line!")
-                continue
-            else:
-                ds = line.source
-                
-            if ds.is_empty() is True:
-                logger.warn("No data for Line!")
-                continue
-
-            table = ds.get_data()
-            if not isinstance(table, Table):
-                raise TypeError("Matplotlib Backend currently only supports data of type Table, while this is of %s"
-                                % type(table))
-
-            #:line.cx
-            if line.cx is None or line.cy is None:
-                logger.error("No x or y source given for Line. Line skipped.")
-                continue
-            else:
-                cx, cy = line.cx, line.cy
-            
-            try:
-                xdata = table[cx]
-            except IndexError:
-                logger.error("X-Index out of range (%s). Line skipped." % cx)
-                continue
-
-
-            #:line.cy
-            try:
-                ydata = table[cy]
-            except IndexError:
-                logger.error("Y-Index out of range (%s). Line skipped." % cy)
-                continue
-
+            ds = self.get_line_source(line)
+            table = self.get_table(ds)
+            cx, cy = self.get_column_indices(line)
+            xdata, ydata = self.get_table_data(table, cx, cy)
 
             #:line.row_first
             #:line.row_last
+            def limit_data(data, start, end):
+                try:
+                    return data[start:end]
+                except IndexError:
+                    BackendError("Index range '%s'out of bounds!" % (start,end) )
+
             start, end = line.row_first, line.row_last
-            try:
-                xdata = xdata[start:end]
-                ydata = ydata[start:end]
-            except IndexError:
-                logger.error("Index range '%s'out of bounds!" % (start,end) )
-                continue
+            xdata = limit_data(xdata, start, end)
+            ydata = limit_data(ydata, start, end)
             
 
             #:line.style
@@ -274,13 +242,9 @@ class Backend( backend.Plotter ):
                           marker=marker,
                           color=color)
             line_cache.append(l)
-            
-            # TODO: if we set the label afterwards, don't we then have a redraw?
-            #:line.label
-            label = line.label
-            if label is None:
-                column = table.column(cy)
-                label = column.label or column.key or uwrap.get(line, 'label')
+
+
+            label = self.get_line_label(line, table=table, cy=cy)
             l.set_label(label)
 
             line_count += 1
