@@ -314,7 +314,8 @@ class Backend( backend.Plotter ):
                     position = (uwrap.get(legend, 'x'), uwrap.get(legend, 'y'))
 
                 # create legend entries from line labels
-                labels = [l.get_label() for l in line_cache]
+                labels = [l.get_label() for l in line_cache]                
+                
                 legend = ax.legend(line_cache, labels, loc=position, pad=0.8)
                 legend.draw_frame(border)
 
