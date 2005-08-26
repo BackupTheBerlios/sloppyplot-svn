@@ -94,11 +94,6 @@ def new_dataset(spj, element):
                 key = eInfo.get('key', None)
                 if key is not None:
                     p[key] = eInfo.text
-                    logger.info("Found column info %s=%s for column %s." % (key, eInfo.text, n))
-
-        print "TABLE PROPERTIES"
-        print column_props
-        print
 
         filename = os.path.join('datasets', dataset_filename(ds.key))
         # TODO: replace DEFAULT_FF with read value
