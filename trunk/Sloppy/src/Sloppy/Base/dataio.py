@@ -87,7 +87,7 @@ class Importer(Container):
 
         try:
             table = self.read_table_from_stream(fd)
-            if table.rowcount == 0:
+            if table.nrows == 0:
                 raise ImportError("Empty Table.")
             return table
         finally:

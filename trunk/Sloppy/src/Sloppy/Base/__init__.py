@@ -19,6 +19,6 @@
 # $Id$
 
 
-__all__ = ['const', 'dataset', 'error', 'objects', 'project']
+__all__ = ['const', 'dataset', 'error', 'objects', 'project','application']
 
 

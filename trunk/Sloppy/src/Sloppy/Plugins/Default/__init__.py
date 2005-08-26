@@ -93,13 +93,13 @@ class Plugin:
 
         ds = Dataset()
         ds.key = pdict.unique_key(project.datasets, "exp_ds")
-        ds.data = Table(colcount=2, rowcount=5)
+        ds.data = Table(ncols=2, nrows=5)
         ds.data[0] = [1,2,3,4,5]
         ds.data[1] = [1,4,9,16,25]
 
         ds2 = Dataset()
         ds2.key = pdict.unique_key(project.datasets, "exp_ds2")
-        ds2.data = Table(colcount=2, rowcount=4)
+        ds2.data = Table(ncols=2, nrows=4)
         ds2.data[0] = [10,17,3,8]
         ds2.data[1] = [1,89,48,1]
 
@@ -115,7 +115,7 @@ class Plugin:
                        lines=[Line(source=ds2,cx=0,cy=1)],
                        x=0.0, y=0.5, width=1.0, height=0.5)
         plot.layers = [layer1, layer2]
-#        plot.layers.arrange(rowcount=1, colcount=2)
+#        plot.layers.arrange(nrows=1, ncols=2)
         
         ulist.append( project.plots, plot, undolist=ul )
 

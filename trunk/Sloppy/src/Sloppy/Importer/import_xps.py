@@ -55,7 +55,7 @@ class Importer(dataio.Importer):
     public_props = []
     
     def __init__(self, **kwargs):
-        self.colcount = 0
+        self.ncols = 0
         self.designations = 0
         self.splitter = None
         
@@ -99,7 +99,7 @@ class Importer(dataio.Importer):
                              "%s:%d" % (self.sample, n)])
                             
             options = {'delimiter' : ' ',
-                       'colcount' : self.ranges * 2,
+                       'ncols' : self.ranges * 2,
                        'designations': self.ranges * ['X','Y'],
                        'splitter' : splitter,
                        'keys' : keys,
@@ -116,7 +116,7 @@ class Importer(dataio.Importer):
             #            
             pos = fd.seek()
             options = {'delimiter' : ' ',
-                       'colcount' : self.ranges * 2,
+                       'ncols' : self.ranges * 2,
                        'designations': self.ranges * ['X','Y'],
                        'splitter' : splitter,
                        'skip' : 33}            

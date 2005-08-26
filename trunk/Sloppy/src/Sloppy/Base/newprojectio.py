@@ -56,7 +56,7 @@ def toElement(project):
             tbl = ds.data
             
             eData = SubElement(eDatasets, 'Table')            
-            safe_set(eData, 'cols', tbl.colcount)
+            safe_set(eData, 'cols', tbl.ncols)
             safe_set(eData, 'typecodes', tbl.typecodes_as_string)
             
         elif isinstance(ds.data, ArrayType): # TODO: untested
@@ -162,14 +162,14 @@ def write_dataset(fd, ds):
 
     
     if isinstance(data, Table):
-        dim_x = fd.def_dim( "%s_x" % key, data.colcount )
-        dim_y = fd.def_dim( "%s_y" % key, data.rowcount )
+        dim_x = fd.def_dim( "%s_x" % key, data.ncols )
+        dim_y = fd.def_dim( "%s_y" % key, data.nrows )
         var = fd.def_var( key, NC.FLOAT, (dim_y, dim_x))
-        for n in range(data.colcount):
+        for n in range(data.ncols):
             var[n:] = data[n]
 
         # add Column properties
-        for j in range(data.colcount):
+        for j in range(data.ncols):
             column = data.get_column(j)
             for k in ['key', 'designation', 'label', 'query']:
                 v = column.get_value(k)

@@ -3,7 +3,7 @@ __all__ = ['Application', 'app',
            'Plot', 'Axis', 'Layer', 'Line',
            'Table']
 
-from Sloppy.application import Application, test_application
+from Sloppy.Base.application import Application, test_application
 
 from Sloppy.Base.dataset import Dataset
 from Sloppy.Base.objects import Line, Layer, Axis, Plot

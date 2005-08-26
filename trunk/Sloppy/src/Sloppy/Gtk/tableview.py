@@ -64,7 +64,7 @@ class TableModel(gtk.GenericTreeModel):
                    col.get_value('designation'),
                    col.get_value('label')
                    ),
-                  self.table.columns, range(self.table.colcount))
+                  self.table.columns, range(self.table.ncols))
         return rv
 
     def get_row_from_path(self, path):
@@ -75,7 +75,7 @@ class TableModel(gtk.GenericTreeModel):
         return gtk.TREE_MODEL_LIST_ONLY
 
     def on_get_n_columns(self):
-        return self.table.colcount
+        return self.table.ncols
 
     def on_get_column_type(self,index):
         return self.table.get_converter(index)

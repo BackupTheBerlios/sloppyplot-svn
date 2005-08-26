@@ -79,48 +79,48 @@ class Column(Container):
 
 class Table(object):
 
-    def __init__(self, colcount=0, rowcount=0, typecodes=None):
+    def __init__(self, ncols=0, nrows=0, typecodes=None):
         """
 
         Allowed syntax for typecodes:
 
-        - A single typecode, e.g. 'f', will create a Table with `colcount`
-          columns of type 'f'. If `colcount` is unspecified, a Table with
+        - A single typecode, e.g. 'f', will create a Table with `ncols`
+          columns of type 'f'. If `ncols` is unspecified, a Table with
           a single column will be created.
 
         - A string of typecodes, e.g. 'fdf' specifies the typecode for
-          each column.  If `colcount` is provided, the length of the
+          each column.  If `ncols` is provided, the length of the
           string must match the number of requested columns or a
           ValueError is raised.
 
         - A list of typecodes, e.g. ['f', 'd'] is equivalent to 'fd'.
           Note however that ['f'] is not the same as 'f' since the
           list form will always require the length of the list to be
-          the same as the `colcount` given.
+          the same as the `ncols` given.
           
         """        
         
         self._columns = []
 
-        if colcount > 0:
+        if ncols > 0:
             if isinstance(typecodes, basestring) and len(typecodes) > 1:
                 typecodes = list(typecodes)
 
             if isinstance(typecodes, (list,tuple)):
-                if len(typecodes) != colcount:
+                if len(typecodes) != ncols:
                     raise ValueError("When specifying the number of columns, you may either specify a single typecode or a list with that many entries.")
             elif typecodes is None:
                 tc = 'f'
                 typecodes = list()
-                for i in range(colcount):
+                for i in range(ncols):
                     typecodes.append(tc)
             else:
                 tc = typecodes
                 typecodes = list()
-                for i in range(colcount):
+                for i in range(ncols):
                     typecodes.append(tc)                    
 
-        self._rowcount = rowcount
+        self._nrows = nrows
 
         typecodes = typecodes or []
         for tc in typecodes:
@@ -166,7 +166,7 @@ class Table(object):
             else:
                 typecode = 'd'
 
-        return Column( data = zeros((self.rowcount,), typecode), **kwargs)            
+        return Column( data = zeros((self.nrows,), typecode), **kwargs)            
 
 
     def get_value(self, col, row):
@@ -186,7 +186,7 @@ class Table(object):
         " Insert a column `item` at index `i`. "
         self.columns.insert(i, self.check_item(item))
         if i < 0: # account for negative indexes
-            i = max(0, self.colcount + i - 1)
+            i = max(0, self.ncols + i - 1)
             print i
         self.update_cols()        
 
@@ -231,17 +231,17 @@ class Table(object):
 
     #--- row operations ----------------------------------------------------
     
-    def resize(self, rowcount):
-        " Resize all columns to the given number of `rowcount`. "
-        rowcount = max(0, rowcount)
-        if rowcount < self.rowcount:
-            self.delete_n_rows( rowcount, self.rowcount - rowcount)
-        elif rowcount > self.rowcount:
-            self.insert_n_rows( self.rowcount, rowcount - self.rowcount)
+    def resize(self, nrows):
+        " Resize all columns to the given number of `nrows`. "
+        nrows = max(0, nrows)
+        if nrows < self.nrows:
+            self.delete_n_rows( nrows, self.nrows - nrows)
+        elif nrows > self.nrows:
+            self.insert_n_rows( self.nrows, nrows - self.nrows)
 
     def extend(self, n):
         " Add `n` rows to the end of all columns. "
-        self.insert_n_rows( self.rowcount, n)
+        self.insert_n_rows( self.nrows, n)
 
     def insert_n_rows(self, i, n=1):
         " Insert `n` rows into each column at row `i`. "
@@ -260,7 +260,7 @@ class Table(object):
         them to the Column type using astype.
         """
         # [ [all new rows of col1], [all new rows of col2], ...]
-        if len(rows) != self.colcount:
+        if len(rows) != self.ncols:
             raise ValueError("When adding new rows, you must provide the values in a transposed form: TODO: EXAMPLE.")
 
         # To make sure that the operation does not fail and leaves invalid
@@ -291,7 +291,7 @@ class Table(object):
         Returns the old data.
         """
 
-        n = min(self.rowcount-i, n)
+        n = min(self.nrows-i, n)
 
         # To make sure that the operation does not fail and leaves invalid
         # data, we first create the new column datas in new_data, and then,
@@ -327,7 +327,7 @@ class Table(object):
         Call this whenever you add/remove a column or when you change
         the type of a column.
         """
-        self._colcount = len(self._columns)
+        self._ncols = len(self._columns)
         self._typecodes = map(lambda x: x.typecode(), self._columns)
 
         # TODO: move to types.h
@@ -340,14 +340,14 @@ class Table(object):
     def update_rows(self):
         " Call this whenever you add/remove a row. "
         try:
-            self._rowcount = len(self._columns[0].data)
+            self._nrows = len(self._columns[0].data)
         except IndexError:
-            self._rowcount = 0
+            self._nrows = 0
 
-    def get_rowcount(self): return self._rowcount
-    rowcount = property(get_rowcount)
-    def get_colcount(self): return self._colcount
-    colcount = property(get_colcount)
+    def get_nrows(self): return self._nrows
+    nrows = property(get_nrows)
+    def get_ncols(self): return self._ncols
+    ncols = property(get_ncols)
     def get_typecode(self, i): return self._typecodes[i]
     def get_typecodes(self): return self._typecodes
     typecodes = property(get_typecodes)
@@ -362,10 +362,10 @@ class Table(object):
     def row(self, i): return RowIterator(self, i+1)   
     def iterrows(self): return RowIterator(self, 0)
 
-    def __len__(self): return self.colcount
+    def __len__(self): return self.ncols
     
     def __str__(self):
-        rv = ["\nTable (%d colcount: '%s', %d rowcount)" % (self.colcount, self.typecodes_as_string, self.rowcount) ]
+        rv = ["\nTable (%d ncols: '%s', %d nrows)" % (self.ncols, self.typecodes_as_string, self.nrows) ]
         j = 0
         for col in self.columns:
             rv.append( "  col %d: %s" % (j, str(col)) )
@@ -390,9 +390,9 @@ class Table(object):
             item = Column(data=item)
 
         # check length
-        if self.rowcount > 0 and self.rowcount != len(item.data):
+        if self.nrows > 0 and self.nrows != len(item.data):
             raise TypeError("Incompatible length %d of new column %s; Table columns must have a length of %d."
-                            % (len(item.data), item, self.rowcount))        
+                            % (len(item.data), item, self.nrows))        
 
         return item
         
@@ -413,14 +413,14 @@ class RowIterator:
     def __str__(self):
         return '%s:' % ', '.join( map(lambda col: str(col[self.row]), self.table) )
 
-    def __len__(self): return self.table.colcount
+    def __len__(self): return self.table.ncols
     
     def __getslice__(self, i, j): return map(lambda col: col[self.row], self.table[i:j])
     
     def __iter__(self): return self
     
     def next(self):
-        if self.row + 1 < self.table.rowcount:
+        if self.row + 1 < self.table.nrows:
             self.row += 1
             return self
         else:
@@ -439,10 +439,10 @@ class RowIterator:
 
 
 def table_to_array(tbl, typecode='d'):
-    shape = (tbl.colcount, tbl.rowcount)
+    shape = (tbl.ncols, tbl.nrows)
     
-    a = zeros( (tbl.colcount, tbl.rowcount), typecode)
-    for j in range(tbl.colcount):
+    a = zeros( (tbl.ncols, tbl.nrows), typecode)
+    for j in range(tbl.ncols):
         a[j] = tbl[j].astype(typecode)
 
     return transpose(a)
@@ -452,11 +452,11 @@ def array_to_table(a):
     if len(a.shape) != 2:
         raise TypeError("Array must be 2-dimensional if you want to convert it to a Table.")
     
-    rowcount, colcount =a.shape
+    nrows, ncols =a.shape
     a = transpose(a)
     
-    tbl = Table(colcount=colcount, rowcount=rowcount, typecodes=a.typecode())
-    for j in range(tbl.colcount):
+    tbl = Table(ncols=ncols, nrows=nrows, typecodes=a.typecode())
+    for j in range(tbl.ncols):
         tbl[j] = a[j]
         
     return tbl
@@ -482,10 +482,9 @@ def setup_test_table():
     
 def test():
     tbl = setup_test_table()
-
    
     # moving the new colum to second place
-    tbl.rearrange( [0,3,1,2] )
+    tbl.rearrange( [0,1,2] )
 
     # removing the first column
     tbl.remove_by_index(0)
@@ -507,7 +506,7 @@ def test():
     #print tbl
 
     # remove second column
-    c = tbl.column(2)
+    c = tbl.column(1)
     tbl.remove(c)
     #print tbl
 

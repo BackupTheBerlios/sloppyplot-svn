@@ -41,7 +41,7 @@ from mpl_window import MatplotlibWindow, MatplotlibWidget
 from layerwin import LayerWindow
 
 import Sloppy
-from Sloppy import Application
+from Sloppy.Base.application import Application
 from Sloppy.Base import const, utils, error
 from Sloppy.Base.objects import Plot, Axis, Line, Layer, new_lineplot2d
 from Sloppy.Base.dataset import Dataset

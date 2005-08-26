@@ -1,7 +1,7 @@
 
 __all__ = ['Base','Filters','Lib', 'Plugins',
            'ImporterRegistry', 'ExporterRegistry',
-           'Application', 'Cli']
+           'Cli']
 
 import logging
 logger = logging.getLogger()
@@ -19,4 +19,3 @@ import Gnuplot
 
 import Importer
 import Exporter
-from application import Application

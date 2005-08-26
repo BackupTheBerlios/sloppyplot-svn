@@ -41,7 +41,7 @@ class Importer(dataio.Importer):
 
     delimiter = Prop(types=basestring, values=[None,',', '\t',';', ' '], default=None, doc="Delimiter")
     custom_delimiter = Prop(types=basestring, doc="Custom delimiter")
-    colcount = RangeProp(cast=int,min=0, steps=1, default=None,
+    ncols = RangeProp(cast=int,min=0, steps=1, default=None,
                          doc="# Columns")
     skip = RangeProp(cast=int, min=0, default=0,
                 doc="# Skipped lines")
@@ -52,14 +52,14 @@ class Importer(dataio.Importer):
     typecodes = Prop(types=(basestring, list), default='f')
     splitter = Prop(types=object)
 
-    public_props = ['delimiter', 'custom_delimiter', 'colcount', 'skip']
+    public_props = ['delimiter', 'custom_delimiter', 'ncols', 'skip']
     
         
     def read_table_from_stream(self, fd):
 
         # determine optional arguments
         typecodes = self.typecodes
-        colcount = self.colcount
+        ncols = self.ncols
 
         # skip lines if requested
         skip = self.skip
@@ -96,21 +96,21 @@ class Importer(dataio.Importer):
         # new table.
         if self.table is None:
             # if no column count is given, try to
-            # determine nr. of colcount from first line
-            if colcount is None:
+            # determine nr. of ncols from first line
+            if ncols is None:
                 rewind = fd.tell()
                 line = fd.readline()
-                colcount = len(line.split(delimiter))
+                ncols = len(line.split(delimiter))
                 fd.seek(rewind)
-                logger.debug("# of columns to be expected: %d" % colcount)
+                logger.debug("# of columns to be expected: %d" % ncols)
 
 
             # create new Table
-            self.table = Table(rowcount=STEP_ROWS, colcount=colcount, typecodes=typecodes)
+            self.table = Table(nrows=STEP_ROWS, ncols=ncols, typecodes=typecodes)
         
         # make sure existing Table has at least one entry.
         tbl = self.table
-        if tbl.rowcount == 0:
+        if tbl.nrows == 0:
             tbl.resize(1)
                 
         iter = tbl.row(0)
@@ -129,7 +129,7 @@ class Importer(dataio.Importer):
         # designations X/Y.
         designations = self.designations
         if designations is None:
-            designations = [('X','Y')[i%2] for i in range(tbl.colcount)]
+            designations = [('X','Y')[i%2] for i in range(tbl.ncols)]
         
         n = 0
         for column in tbl.get_columns():
@@ -167,7 +167,7 @@ class Importer(dataio.Importer):
         
         # Resize dataset to real size, i.e. the number
         # of rows that have actually been read.
-        tbl.resize(rowcount=iter.row)
+        tbl.resize(nrows=iter.row)
 
         return tbl
 

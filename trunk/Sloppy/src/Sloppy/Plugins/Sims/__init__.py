@@ -91,12 +91,12 @@ class Plugin:
 
         table = dataset.data   # TODO: check for Table
         
-        if table.colcount % 2 == 1:
+        if table.ncols % 2 == 1:
             logger.error("action_plot_profile_plot: Dataset '%s' has wrong shape." % dataset.key)
             return None
         
         lines = []
-        for i in range(int(table.colcount/2.0)):
+        for i in range(int(table.ncols/2.0)):
             l = Line( source=dataset, cx=i*2, cy=i*2+1 )
             lines.append(l)
             

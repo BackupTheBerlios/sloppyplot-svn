@@ -387,7 +387,7 @@ class Project(Container):
         key = pdict.unique_key(self.datasets, key)
         ds = Dataset()
         pdict.setitem(self.datasets, key, ds)
-        ds.data = Table(rowcount=1,colcount=2)
+        ds.data = Table(nrows=1,ncols=2)
         ds.data.column(0).designation = 'X'
         ds.data.column(1).designation = 'Y'        
         Signals.emit(self.datasets, "changed")

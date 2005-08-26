@@ -197,7 +197,7 @@ def toElement(project):
             tbl = ds.data
             
             eData = SubElement(eDatasets, 'Table')            
-            safe_set(eData, 'cols', tbl.colcount)
+            safe_set(eData, 'cols', tbl.ncols)
             safe_set(eData, 'typecodes', tbl.typecodes_as_string)
             
         elif isinstance(ds.data, ArrayType): # TODO: untested

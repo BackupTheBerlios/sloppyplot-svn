@@ -425,7 +425,7 @@ class DatasetWindow( gtk.Window ):
 
 
     def on_cursor_changed(self, tableview, contextid):
-        total_rows = self.tableview.get_model().table.rowcount        
+        total_rows = self.tableview.get_model().table.nrows        
         path, column = tableview.get_cursor()
         if path is not None:
             row = str(path[0]+1)            
@@ -446,16 +446,16 @@ class DatasetWindow( gtk.Window ):
         table = self.dataset.get_data()
         x, y = table[0], table[1]
         
-        steps = table.rowcount * 3
+        steps = table.nrows * 3
         start, end = x[0], x[-1]
         stepwidth = (end - start) / steps
         new_x = Numeric.arange(start=start, stop=end+stepwidth, step=stepwidth)
 
-        new_table = Table(rowcount=steps, colcount=2,
+        new_table = Table(nrows=steps, ncols=2,
                           typecodes=[table.get_typecode(0),
                                      table.get_typecode(1)])
 
-        sp = pygsl.spline.cspline(table.rowcount)
+        sp = pygsl.spline.cspline(table.nrows)
         sp.init(x, y)
 
         iter = new_table.row(0)
@@ -540,7 +540,7 @@ class ColumnCalculator(gtk.Window):
         # We create an array from this by multiplying it with an array
         # that consists only of ones.
         if not isinstance(result, Numeric.ArrayType):
-            o = Numeric.ones( (table.rowcount,), table[self.colnr].typecode() )
+            o = Numeric.ones( (table.nrows,), table[self.colnr].typecode() )
             result = o * result
             print "-- result is not an array --"
             print "==> converted to array"
@@ -666,7 +666,7 @@ class TableColumnView(gtk.TreeView):
                 column.data = old_column.data
             else:
                 # => new column
-                column.data = Numeric.zeros((self.table.rowcount,), 'd')            
+                column.data = Numeric.zeros((self.table.nrows,), 'd')            
 
             columns.append(column)                
             iter = model.iter_next(iter)            

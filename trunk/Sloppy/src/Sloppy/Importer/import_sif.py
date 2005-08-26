@@ -55,7 +55,7 @@ class Importer(dataio.Importer):
         ncols = len(nc.variables())
 
         # create new table according to dimension information
-        self.table = Table(rowcount=0, colcount=ncols)
+        self.table = Table(nrows=0, ncols=ncols)
 
         # vars => columns
         j = 0

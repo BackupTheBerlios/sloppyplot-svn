@@ -32,6 +32,12 @@ from Sloppy.Lib.Props import *
 
 
 
+types_numeric2netcdf = {'d' : NC.DOUBLE,
+                        'f' : NC.FLOAT,
+                        'l' : NC.INT}
+
+
+
 class Exporter(dataio.Exporter):
 
     extensions = ['sif']
@@ -50,7 +56,7 @@ class Exporter(dataio.Exporter):
     def write_table_to_stream(self, fd, table):
         fd.automode()
 
-        rows = table.rowcount
+        rows = table.nrows
        
         # column => vars
         j = 0
@@ -59,12 +65,8 @@ class Exporter(dataio.Exporter):
 
             dim = fd.def_dim(key, rows)
 
-            # TODO: move to types.py
-            type_mappings = {'d' : NC.DOUBLE,
-                             'f' : NC.FLOAT,
-                             'l' : NC.INT}
             try:
-                nc_type = type_mappings[column.data.typecode()]
+                nc_type = types_numeric2netcdf[column.data.typecode()]
             except KeyError:
                 raise dataio.ExportError("Column type '%s' is not supported. Can't save the column." % column.data.typecode())
                 

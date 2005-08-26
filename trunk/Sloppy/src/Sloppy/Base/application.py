@@ -152,10 +152,16 @@ class Application(object):
         new_project = load_project(filename)
         if new_project:
             self.set_project(new_project)
-            self.recent_files.insert(0, os.path.abspath(filename))
-            if len(self.recent_files) > 10:
-                self.recent_files.pop(-1)
-            Signals.emit(self, "update-recent-files")
+
+            # Add filename to list of recent_files __unless__
+            # it is identical with the most recent file.
+            new_filename = os.path.abspath(filename)
+            if len(self.recent_files) == 0 or \
+                   self.recent_files[0] != new_filename:                               
+                self.recent_files.insert(0, new_filename)
+                if len(self.recent_files) > 10:
+                    self.recent_files.pop(-1)
+                Signals.emit(self, "update-recent-files")
 
 
     #----------------------------------------------------------------------

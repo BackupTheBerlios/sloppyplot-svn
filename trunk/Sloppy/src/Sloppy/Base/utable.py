@@ -73,18 +73,18 @@ def set_columns(self, columns, undolist=[]):
 #--- row operations ----------------------------------------------------
 
 # TODO: this is not a highlevel undo wrapper but rather a replacement
-def resize(self, rowcount, undolist=[]):    
-    rowcount = max(0, rowcount)
-    if rowcount < self.rowcount:
-        delete_n_rows(self, rowcount, self.rowcount - rowcount, undolist=undolist)
-    elif rowcount > self.rowcount:
-        insert_n_rows(self, self.rowcount, rowcount - self.rowcount, undolist=undolist)
+def resize(self, nrows, undolist=[]):    
+    nrows = max(0, nrows)
+    if nrows < self.nrows:
+        delete_n_rows(self, nrows, self.nrows - nrows, undolist=undolist)
+    elif nrows > self.nrows:
+        insert_n_rows(self, self.nrows, nrows - self.nrows, undolist=undolist)
     else:
         undolist.append( NullUndo() )
 
 
 def extend(self, n, undolist=[]):
-    insert_n_rows( self.rowcount, n, undolist=undolist)
+    insert_n_rows( self.nrows, n, undolist=undolist)
 
 
 # TODO: no highlevel undo wrapper
@@ -107,7 +107,7 @@ def delete_n_rows(self, i, n=1, only_zeros=False, undolist=[]):
     for better undo performance.
     """
     
-    n = min(self.rowcount-i, n)
+    n = min(self.nrows-i, n)
     undo_data = list()
     for col in self.columns:
         undo_data.append( col.data[i:i+n].copy() )                
