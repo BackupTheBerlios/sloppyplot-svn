@@ -241,7 +241,7 @@ class Backend(backend.Plotter):
                 if label is not None: key_title = 'title "%s"' % label
                 else: key_title = ""
 
-                #:legend.border
+                #:legend.border:OK
                 border = uwrap.get(legend, 'border')
                 if border is True: key_border = "box"
                 else: key_border = "nobox"

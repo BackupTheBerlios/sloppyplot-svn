@@ -299,14 +299,15 @@ class Backend( backend.Plotter ):
         if legend is not None and line_count > 0:
             visible = uwrap.get(legend, 'visible')
             if visible is True:
-                #:legend.label TODO
+                #:legend.label:TODO
                 label = uwrap.get(legend, 'visible')
                 if label is not None:
                     pass
-                                
-                #:legend.border TODO
-                border = uwrap.get(legend, 'border')                
-                
+
+                #:legend.border:OK
+                # (see below but keep it here!)
+                border = uwrap.get(legend, 'border')
+                                                
                 #:legend.position TODO
                 position = uwrap.get(legend, 'position', 'best')
                 if position == 'at position':
@@ -314,7 +315,9 @@ class Backend( backend.Plotter ):
 
                 # create legend entries from line labels
                 labels = [l.get_label() for l in line_cache]
-                ax.legend(line_cache, labels, loc=position, pad=0.8)
+                legend = ax.legend(line_cache, labels, loc=position, pad=0.8)
+                legend.draw_frame(border)
+
             else:
                 ax.legend_ = None
         else:
