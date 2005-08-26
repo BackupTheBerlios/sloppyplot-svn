@@ -36,6 +36,7 @@ from Sloppy.Base.dataset import Dataset
 from Sloppy.Base.dataio import ExporterRegistry
 from Sloppy.Base.backend  import BackendRegistry
 from Sloppy.Base import backend, utils, uwrap
+from Sloppy.Base.table import Table
 
 from terminal import XTerminal, DumbTerminal, PostscriptTerminal
 
@@ -43,7 +44,11 @@ from Sloppy.Lib import Signals
 
 #class Builder:
 #    def build(self): pass
-    
+
+
+class BackendError(Exception):
+    pass
+
     
 class Backend(backend.Plotter):
 
@@ -237,7 +242,7 @@ class Backend(backend.Plotter):
             visible = uwrap.get(legend, 'visible')
             if visible is True:
                 #:legend.label
-                label = uwrap.get(legend, 'label')
+                label = uwrap.get(legend, 'label')                
                 if label is not None: key_title = 'title "%s"' % label
                 else: key_title = ""
 
@@ -303,51 +308,81 @@ class Backend(backend.Plotter):
         # lines
         line_cache = []
         for line in layer.lines:
-            if uwrap.get(line, 'visible') is False: continue
-
-            # mark source for export 
-            filename = self.mark_for_export(uwrap.get(line, 'source'))
-            if filename is None:
-                continue
-            source = '"%s"' % filename
-            
-            # title-clause
-            label = uwrap.get(line, 'label')
-            if label is not None: title = 'title "%s"' % label
-            else: title = 'notitle'
-
-            # using-clause
-            # TODO: only do this if we have a group
-            # TODO: on the other hand, we should only advance
-            # TODO: cx/cy if we are talking about the same source!
-            if 1 == 0:
-                cx = line.cx or group_info.get('cx', 1)
-                group_info['cx'] = cx + 2
-                cy = line.cy or group_info.get('cy', 2)
-                group_info['cy'] = cy + 2
-            else:
-                (cx, cy) = (line.cx, line.cy)
-                if cx is None or cy is None:
-                    logger.error("No source cx or cy given. Line skipped.")
-                    continue
-            using = 'using %s:%s' % (cx+1,cy+1)
-
-            # TODO: support 'style' and 'marker'
-            # with-clause
-            type = uwrap.get(line, 'style')
-            type_mappings = {'solid': 'w l'}
             try:
-                with = type_mappings[type]
-            except KeyError:
-                with = ''
-                logger.error('line type "%s" not supported by this backend.' % type )
+                if uwrap.get(line, 'visible') is False: continue
 
-            # line width
-            width = uwrap.get(line, 'width')
-            width = 'lw %s' % str(width)
-            
-            # merge all of the above
-            line_cache.append( " ".join([source,using,with,width,title]) )
+                #:line.source            
+                if line.source is None:
+                    raise BackendError("No Dataset specified for Line!")
+                else:
+                    ds = line.source
+
+                if ds.is_empty() is True:
+                    raise BackendError("No data for Line!")
+
+                table = ds.get_data()
+                if not isinstance(table, Table):
+                    raise TypeError("Gnuplot Backend currently only supports data of type Table, while this is of %s"
+                                    % type(table))
+
+                #:line.cx
+                if line.cx is None or line.cy is None:
+                    logger.error("No x or y source given for Line. Line skipped.")
+                    continue
+                else:
+                    cx, cy = line.cx, line.cy
+
+                # mark source for export            
+                filename = self.mark_for_export(ds)
+                if filename is None:
+                    continue
+                source = '"%s"' % filename
+
+                #:line.label:OK
+                label = line.label
+                if label is None:
+                    column = table.column(cy)
+                    label = column.label or column.key or uwrap.get(line, 'label')            
+
+                if label is not None: title = 'title "%s"' % label
+                else: title = 'notitle'
+
+                # using-clause
+                # TODO: only do this if we have a group
+                # TODO: on the other hand, we should only advance
+                # TODO: cx/cy if we are talking about the same source!
+                if 1 == 0:
+                    cx = line.cx or group_info.get('cx', 1)
+                    group_info['cx'] = cx + 2
+                    cy = line.cy or group_info.get('cy', 2)
+                    group_info['cy'] = cy + 2
+                else:
+                    (cx, cy) = (line.cx, line.cy)
+                    if cx is None or cy is None:
+                        logger.error("No source cx or cy given. Line skipped.")
+                        continue
+                using = 'using %s:%s' % (cx+1,cy+1)
+
+                # TODO: support 'style' and 'marker'
+                # with-clause
+                type = uwrap.get(line, 'style')
+                type_mappings = {'solid': 'w l'}
+                try:
+                    with = type_mappings[type]
+                except KeyError:
+                    with = ''
+                    logger.error('line type "%s" not supported by this backend.' % type )
+
+                # line width
+                width = uwrap.get(line, 'width')
+                width = 'lw %s' % str(width)
+            except BackendError, msg:
+                logger.error("Error while processing line: %s" % msg)
+                continue
+            else:
+                # merge all of the above into a nice gnuplot command
+                line_cache.append( " ".join([source,using,with,width,title]) )
+
 
         # construct plot command from line_cache
         if len(line_cache) > 0:
