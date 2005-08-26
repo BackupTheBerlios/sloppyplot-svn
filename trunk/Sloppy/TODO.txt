@@ -1,20 +1,10 @@
-TODO:
 
-fix attribute saving bug => only save typecode and key in netCDF.  all
-other properties should be saved in the project (once again) to ensure
-proper encoding.
+- Signals.connect_once -> requires an additional flag in the SignalContainer
 
 
 ###############################################################################
 
-- Other things:
-
-  - Signals.connect_once -> requires an additional flag in the SignalContainer
-
-
-###############################################################################
-
-Plan for 0.4:
+Plan for 0.5:
 
 - Rewrite ASCII import, so that
 
