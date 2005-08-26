@@ -43,9 +43,10 @@ from Numeric import *
 
 
 DEFAULT_FF = "SIF"
-FILEFORMAT = "0.3"
+FILEFORMAT = "0.4"
 
 
+# changes from 0.3->0.4: Table.cols -> Table.ncols
 
 class ParseError(Exception):
     pass
@@ -77,25 +78,31 @@ def new_dataset(spj, element):
 
     # actual Table
     if element.tag == 'Table':
-        ### extract metadata special to Table objects
-        typecodes = element.get('typecodes', '')
+
+        # Extract additional column information.
+        # This information will be passed on to 'set_table_import',
+        # which will pass it on to the internal importer.        
+        column_props = list()
+        ncols = int(element.get('ncols',0))
+        for i in range(ncols):
+            column_props.append(dict())
         
-        # fill columns, if information is available
-        columns = list()
-        for tc in typecodes:
-            columns.append(Column(data=array((),tc)))
-            
         for eColumn in element.findall('Column'):
             n = int(eColumn.get('n'))
-            column = columns[n]
+            p = column_props[n]
             for eInfo in eColumn.findall('Info'):
                 key = eInfo.get('key', None)
                 if key is not None:
-                    column.set_value(key, eInfo.text)
+                    p[key] = eInfo.text
+                    logger.info("Found column info %s=%s for column %s." % (key, eInfo.text, n))
+
+        print "TABLE PROPERTIES"
+        print column_props
+        print
 
         filename = os.path.join('datasets', dataset_filename(ds.key))
         # TODO: replace DEFAULT_FF with read value
-        ds.set_table_import(spj, filename, typecodes, columns, DEFAULT_FF)
+        ds.set_table_import(spj, filename, typecodes, column_props, DEFAULT_FF)
     
     return ds
 
@@ -159,10 +166,26 @@ def new_plot(spj, element):
 def fromTree(tree):
     eProject = tree.getroot()
 
+                    
     spj = Project()
+
     version = eProject.get('version', None)
-    if version is not None and version != FILEFORMAT:
-        raise IOError("Invalid Sloppy File Format Version %s. Aborting Import." % version)        
+    def raise_version(new_version):
+        logger.info("Converted SloppyPlot Archive to version %s" % new_version)
+        return new_version
+    
+    while (version is not None and version != FILEFORMAT):
+        if version=='0.3':
+            eTables = tree.findall('Datasets/Table')
+            for eTable in eTables:
+                ncols = eTable.get('cols',None)
+                if ncols is not None:
+                    eTable.set('ncols',str(ncols))
+
+            version = raise_version('0.4')
+            continue
+        else:
+            raise IOError("Invalid Sloppy File Format Version %s. Aborting Import." % version)        
 
     for eDataset in eProject.findall('Datasets/*'):
         spj.datasets.append( new_dataset(spj, eDataset))
@@ -197,8 +220,26 @@ def toElement(project):
             tbl = ds.data
             
             eData = SubElement(eDatasets, 'Table')            
-            safe_set(eData, 'cols', tbl.ncols)
+            safe_set(eData, 'ncols', tbl.ncols)
             safe_set(eData, 'typecodes', tbl.typecodes_as_string)
+
+            # We write all Column properties except for the
+            # key and the data to the element tree, because
+            # netCDF does not like unicode!
+            n = 0
+            for column in tbl.get_columns():
+                kw = column.get_key_value_dict()
+                kw.pop('key')
+                kw.pop('data')
+                if len(kw) > 0:
+                    eColumn = SubElement(eData, 'Column')
+                    safe_set(eColumn, 'n', n)
+                    for k,v in kw.iteritems():
+                        eInfo = SubElement(eColumn, 'Info')
+                        safe_set(eInfo, 'key', k)
+                        eInfo.text = v
+                n += 1
+                
             
         elif isinstance(ds.data, ArrayType): # TODO: untested
             eData = SubElement(eDatasets, 'Array')

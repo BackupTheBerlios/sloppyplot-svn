@@ -73,17 +73,11 @@ class Exporter(dataio.Exporter):
             var = fd.def_var(key, nc_type, dim)
             var[:] = column.data
 
-            # add Column properties as attributes
-            for key in ['key', 'designation', 'label', 'query']:
-                value = column.get_value(key)
-                if value is not None:
-                    if isinstance(value, unicode):
-                        value = 'invalid encoding'
-                    try:
-                        setattr(var, key, value)
-                    except CDFError:
-                        logger.error("Error while setting key '%s' to '%s'" % (key,value))
-                        raise
+            # Add key as attribute.
+            # All other Column properties might need unicode, so they are
+            # saved separately!
+            key = column.key or ""
+            setattr(var, 'key', key)
 
             j += 1        
 

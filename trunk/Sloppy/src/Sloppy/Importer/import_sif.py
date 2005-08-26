@@ -29,6 +29,7 @@ from Numeric import *
 from Sloppy.Base.dataset import *
 from Sloppy.Base import dataio
 from Sloppy.Base.table import Table, array_to_table, Column
+from Sloppy.Lib.Props import ListProp
 
 
 class Importer(dataio.Importer):
@@ -38,6 +39,8 @@ class Importer(dataio.Importer):
     blurb = "SloppyPlot Internal Format"
     filemode = 'b'
 
+    column_props = ListProp(types=dict)
+    
     def read_table_from_stream(self, fd):
         raise RuntimeError("Please call 'read_table_from_file'.")
 
@@ -63,9 +66,15 @@ class Importer(dataio.Importer):
             v = nc.var(j)
             column.data = array(v[:])
 
+            # Read attributes from netCDF file. This _should_ only
+            # be the key right now.
             attributes = v.attributes(full=1)
             for k,v in attributes.iteritems():
                 column.set_value(k, v[0])
+
+            # Set properties which can be passed via 'column_props'.
+            for k,v in self.column_props[j].iteritems():
+                column.set_value(k,v)
             j += 1
 
         nc.close()

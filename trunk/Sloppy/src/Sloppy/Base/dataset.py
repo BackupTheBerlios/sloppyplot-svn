@@ -129,13 +129,13 @@ class Dataset(Container):
             self._table_import = None
         return self.data
 
-    def import_table(self, project, filename, typecodes, columns, importer_key):
+    def import_table(self, project, filename, typecodes, column_props, importer_key):
         dir = tempfile.mkdtemp('spj')
         name = os.path.join(dir, filename)
         project._archive.extract(filename, dir)
         
         try:
-            table = read_table_from_file(name, importer_key)
+            table = read_table_from_file(name, importer_key, column_props=column_props)
         finally:
             os.remove(name)
             os.rmdir(os.path.join(dir, 'datasets'))
