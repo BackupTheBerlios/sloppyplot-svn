@@ -19,7 +19,6 @@
 # $Id$
 
 
-
 # TODO: for the final distributable version, make sure that
 
 # (1) we use os.path.join for constructing pathes
@@ -31,26 +30,27 @@ from os.path import join
 from glob import glob
 import sys
 
-
+# Place to put shared data.
+# TODO: This should be adjusted for windows.
 PATH_SHARED=join(sys.prefix,'share','sloppyplot')
- 
-VERSION="0.3"
-#VERSION=VERSION+".SVN"+"$Rev$"[6:-2]
 
-DESCRIPTION="""\
-A scientific plotting tool that currently only supports 2d plots.  The
-plots and their data are stored in a single file, keeping the
-scientific workspace a little more uncluttered.  A postscript export
-using gnuplot is available.
-"""
+# Much information is taken from Sloppy.Base.version, as we
+# don't want to write down all of it twice!  The next lines
+# make sure that we import the variables from the correct
+# Sloppy.Base.version.
+import os
+source_dir = os.path.join(os.path.curdir, 'src')
+os.sys.path.insert(0, source_dir)
+from Sloppy.Base.version import NAME, VERSION, LONG_DESCRIPTION, URL
 
-setup(name='sloppyplot',
+
+setup(name=NAME,
       version=VERSION, 
-      description=DESCRIPTION,
+      description=LONG_DESCRIPTION,
       author='Niklas Volbers',
       author_email = 'mithrandir42@web.de',
-      url='http://sloppyplot.berlios.de',
-      download_url='http://sloppyplot.berlios.de',
+      url=URL,
+      download_url=URL,
       license='GPL',
       package_dir = {'' : 'src'}, 
       packages=['Sloppy',

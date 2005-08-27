@@ -21,11 +21,21 @@
 
 NAME = "SloppyPlot"
 COPYRIGHT = "(C)opyright 2004-2005 Niklas Volbers"
+AUTHORS = ["Niklas Volbers"]
+URL="http://sloppyplot.berlios.de"
+
+# Version information. Uncomment second line while developing.
 VERSION="0.3"
 #VERSION = VERSION+".SVN $Rev$".replace("$Rev: ","").replace("$","")
+
 DESCRIPTION = "A scientific plotting tool"
-AUTHORS = ["Niklas Volbers"]
-HOMEPAGE="sloppyplot.berlios.de"
+LONG_DESCRIPTION="""\
+A scientific plotting tool that currently only supports 2d plots.  The
+plots and their data are stored in a single file, keeping the
+scientific workspace a little more uncluttered.  A postscript export
+using gnuplot is available.
+"""
+
 
 LICENSES = \
 ["""SloppyPlot is (C) 2004-2005 by Niklas Volbers and is distributed under

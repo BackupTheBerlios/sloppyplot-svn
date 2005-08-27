@@ -480,7 +480,7 @@ class AppWindow( gtk.Window ):
         dialog.set_comments(version.DESCRIPTION)
         dialog.set_copyright(version.COPYRIGHT)
         dialog.set_license("\n\n\n".join(version.LICENSES))
-        dialog.set_website(version.HOMEPAGE)
+        dialog.set_website(version.URL)
         #dialog.set_website_label("Heh?")
         dialog.set_authors(version.AUTHORS)
         #dialog.set_documenters(["Documenters"])
