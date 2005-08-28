@@ -28,13 +28,13 @@ from Sloppy.Base.dataset import Dataset
 
 from Sloppy.Lib import Signals
 from Sloppy.Lib.Undo import udict
-from Sloppy.Lib.Props import Container, Prop, ListProp, DictProp, BoolProp, RangeProp
-
-        
+from Sloppy.Lib.Props import Container, Prop, ListProp, DictProp, BoolProp, RangeProp, KeyProp
+       
         
 
 #------------------------------------------------------------------------------
 # BASE OBJECTS
+#
 
 class Axis(Container):
     " A single axis for a plot. "
@@ -147,7 +147,8 @@ class Plot(Container):
 
 
 #------------------------------------------------------------------------------
-# factory methods
+# Factory Methods
+#
 
 def new_lineplot2d(**kwargs):
     """
