@@ -82,11 +82,10 @@ setup(name=NAME,
                     (join(sys.prefix, 'share', 'pixmaps'),
                      [join("src", "Sloppy", "Gtk", "Icons", "sloppyplot.png")])
 		     ],
-      scripts = [ join('src', 'sloppy-gtk') ],
+      scripts = [ join('src', 'sloppy') ],
 
       # see http://python.org/pypi?%3Aaction=list_classifiers
-      classifiers = ["Development Status :: 2 - Pre-Alpha",
-                     #Development Status :: 3 - Alpha
+      classifiers = ["Development Status :: 3 - Alpha",
                      #Development Status :: 4 - Beta
                      "Topic :: Scientific/Engineering :: Visualization",
                      "Intended Audience :: Science/Research",
