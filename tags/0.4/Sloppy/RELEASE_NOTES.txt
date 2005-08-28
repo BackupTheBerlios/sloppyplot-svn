@@ -1,0 +1,21 @@
+
+Release Notes for SloppyPlot 0.4 (released 2005-08-28)
+======================================================
+
+This release features once again many stability fixes.  Most
+importantly, I decided to settle on the current file format: Using an
+old .spj file will not be a problem in future releases. The location
+of the config file has changed according the freedesktop
+specifications.
+
+
+
+Release Notes for SloppyPlot 0.3 (released 2005-08-24)
+======================================================
+
+This release features a lot of bug fixes and little improvements to
+the user interface.  The biggest visible change is the addition of a
+dialog to modify the dataset columns (add/remove/move/edit).
+
+It is recommended to update matplotlib to the newest version (0.83.1)
+

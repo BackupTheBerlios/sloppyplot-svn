@@ -1,0 +1,75 @@
+#!/usr/bin/env python
+
+import logging
+logging.basicConfig(level=logging.DEBUG,
+                    #format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
+                    format='%(name)-22s %(levelname)-8s %(message)s',
+                    datefmt='%m-%d %H:%M')
+
+#------------------------------------------------------------------------------
+# Parse Options
+#
+
+from Sloppy.Base.version import VERSION
+from optparse import OptionParser
+import sys
+
+parser = OptionParser(version=VERSION)
+
+parser.add_option("-q","--quiet",action="store_true", dest="verbose",
+                  help="don't print status messages to stdout")
+parser.add_option("-d","--debug",action="store_true", dest="debug",
+                  default=True,help="print debug messages to stdout")
+
+parser.add_option('','--use',dest="use",default="gtk",
+                  help="specify frontend to use (currently only GTK)")
+
+options, args = parser.parse_args(sys.argv[1:])
+
+
+logging.debug("Supplied options: %s" % options)
+
+
+# option: debug
+logger = logging.getLogger('')
+if options.debug is True:
+    print "(debug mode)"
+    logger.setLevel(logging.DEBUG)
+else:
+    if options.verbose is False:
+        print "(quiet mode)"
+        logger.setLevel(logging.WARNING)
+    else:
+        print "(normal mode)"
+        logger.setLevel(logging.INFO)
+
+# process arguments
+if len(args) > 0:
+    filename = args.pop()
+    if len(args) > 0:
+        logger.warn("SloppyPlot currently only supports one open project at a time.  Please restrict yourself to one file!")
+else:
+    filename = None
+
+#------------------------------------------------------------------------------
+# Start Application
+#
+
+import Sloppy
+
+# Set path to Sloppy package.
+# TODO: This solution seems rather awkward to me.  I would prefer, if
+# Sloppy.Base.const could figure out its absolute path and set the
+# path itself.  How?
+from Sloppy.Base import const
+const.set_path(Sloppy.__path__[0])
+
+
+# only support gtk frontend right now
+if options.use == 'gtk':
+    import Sloppy.Gtk.application
+    Sloppy.Gtk.application.main(filename)
+else:
+    raise RuntimeError("Sorry, only GTK frontend supported right now!")
+
+

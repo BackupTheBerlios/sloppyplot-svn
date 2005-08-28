@@ -1,0 +1,25 @@
+SloppyPlot is still under construction.
+
+If you would like to test the application, then install the
+requirements (see INSTALL.txt).  Then, from this directory, type
+
+  $ source adjust_path.sh
+
+This will set your $PYTHONPATH variable to the source path, so that
+'import Sloppy' will import the module from this directory.  So there
+is no need to install SloppyPlot!
+
+Then execute the program by typing
+
+  $ cd src
+  $ python sloppy
+
+
+Have fun!
+
+
+Feedback is very welcome!
+
+
+
+
