@@ -413,7 +413,7 @@ class Prop:
     def check_value(self, value):
         return generic_value_check(value, types=self.types, coerce=self.coerce, values=self.values)
         
-    def default_value(self):
+    def default_value(self):        
         return self.default
             
     def meta_attribute(self, key):
@@ -421,7 +421,7 @@ class Prop:
                 
 
 #------------------------------------------------------------------------------
-# Check Types and Values
+# Check Type, Coerce and Check Value Methods
 #
 
 def ct_tuple(length):
@@ -429,6 +429,19 @@ def ct_tuple(length):
         if isinstance(value, tuple) and len(value) == length: return
         else: raise TypeError("Value must be tuple of length %d!" % length )
     return check_type
+
+
+
+def coerce_bool(value):
+    if isinstance(value, basestring):
+        if value == "False": return False
+        elif value == "True": return True
+        else:
+            raise ValueError("Unknown boolean string '%s'. Use either 'False' or 'True' or a real bool." % value)
+    else:
+        return bool(value)
+
+
 
 def cv_valid(alist):
     alist = as_list(alist)
@@ -497,7 +510,7 @@ class DictProp(Prop):
         Prop.__init__(self, types=types, coerce=coerce, values=values,
                       blurb=blurb, doc=doc)
 
-    def check_value(self, valie):
+    def check_value(self, value):
         if isinstance(value, TypedDict):
             return value
         elif isinstance(value, dict):
@@ -508,6 +521,30 @@ class DictProp(Prop):
 
     def default_value(self):
         return TypedDict(types=self.types,coerce=self.coerce,values=self.values)
+
+
+#
+# UNTESTED!
+#
+class WeakRefProp(Prop):
+
+    def __init__(self, types=None, coerce=None, values=None,
+                 doc=None, blurb=None):
+        Prop.__init__(self, types=types, coerce=coerce, values=values,
+                      doc=doc, blurb=blurb)
+
+    def meta_attribute(self, key):
+        return WeakMetaAttribute(self, key)
+
+
+    
+class BoolProp(Prop):
+
+    def __init__(self, default=None, doc=None, blurb=None):
+        Prop.__init__(self, types=(bool,str), coerce=coerce_bool,
+                      default=default, doc=doc, blurb=blurb)
+
+    
 
 #------------------------------------------------------------------------------
 # Container
@@ -550,7 +587,6 @@ class Container(object):
 
 
 
-
 #------------------------------------------------------------------------------
 # Testing
 
@@ -582,6 +618,9 @@ if __name__ == "__main__":
 
         mydict = DictProp(types=str,
                           values=(cv_regexp("^\w*$")))
+
+        mybool = BoolProp()
+
         
     nc = NC()
     nc.myint=None
@@ -628,3 +667,15 @@ if __name__ == "__main__":
     nc.mydict.update( {'Author':'Niklas_Volbers', 'Version': 'a'} )
     print nc.mydict
     
+
+    nc.mybool = False
+    print nc.mybool
+    nc.mybool = True
+    print nc.mybool
+    nc.mybool = "True"
+    print nc.mybool
+    nc.mybool = "False"
+    print nc.mybool
+    
+    #nc.mybool = "Tru" # fails
+    #nc.mybool = 52 # fails
