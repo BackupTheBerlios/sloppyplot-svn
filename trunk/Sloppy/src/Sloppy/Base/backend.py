@@ -21,7 +21,7 @@
 
 """ 
 Generic plotting backend.
-See documentation of the Plotter class for details.
+See documentation of the Backend class for details.
 """
 
 import logging, os
@@ -32,7 +32,18 @@ from Sloppy.Base import uwrap, klassregistry
 from Sloppy.Base.table import Table
 
 
-#==============================================================================
+#------------------------------------------------------------------------------
+# Backend Error
+#
+
+class BackendError(Exception):
+    pass
+
+
+#------------------------------------------------------------------------------
+# Backend
+#
+
 class Backend(object):
     """
     'Backend' is the abstract base class for any plotting backend.
@@ -103,7 +114,7 @@ class Backend(object):
         
 
     def set(self, project,plot):
-        logging.debug("Assigning project %s to Plotter" % repr(project))
+        logging.debug("Assigning project %s to Backend" % repr(project))
 
         # if necessary, detach messages from old project
         for signal in self.Signals:
@@ -127,7 +138,7 @@ class Backend(object):
         self.redraw()
         
     def cb_project_closed(self, sender):
-        logging.debug("The project '%s' is closing. The Plotter will close as well." % uwrap.get(sender, 'label'))
+        logging.debug("The project '%s' is closing. The Backend will close as well." % uwrap.get(sender, 'label'))
         if self.connected is True:
             self.disconnect()
 
@@ -138,7 +149,7 @@ class Backend(object):
 
 
     #----------------------------------------------------------------------
-    # Methods that a Plotter might want to re-implement
+    # Methods that a Backend might want to re-implement
     #
 
     def connect(self):
@@ -195,7 +206,6 @@ class Backend(object):
 
     def get_column_indices(self, line):
         #:line.cx
-        print "--------------------", line.cx, type(line.cx)
         if line.cx is None or line.cy is None:
             raise BackendError("No x or y source given for Line. Line skipped.")
         else:
@@ -231,8 +241,8 @@ class Backend(object):
 
 
 
-###############################################################################
-# deprecated
-Plotter = Backend
+#------------------------------------------------------------------------------
+# BackendRegistry
+#
 
 BackendRegistry = klassregistry.Registry("Backends")

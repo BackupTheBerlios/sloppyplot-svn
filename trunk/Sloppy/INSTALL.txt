@@ -88,10 +88,9 @@ Slackware), you can create a Slackware-compatible package!
 $ python setup.py bdist
 
 will build a Slackware-compatible archive in the subdirectory dist.
-Just go there, rename the file and install it (the example uses 0.2 as
-version number; adjust to your version):
+Just go there, rename the file and install it, e.g.:
 
 $ cd dist
-$ mv sloppyplot-0.2.linux-i686.tar.gz sloppyplot-0.2-i686-1.tgz
-% installpkg sloppyplot-0.2-i686-1.tgz
+$ mv SloppyPlot-0.4.linux-i686.tar.gz SloppyPlot-0.4-i686-1.tgz
+% installpkg SloppyPlot-0.4-i686-1.tgz
 

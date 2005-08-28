@@ -34,7 +34,6 @@ logger = logging.getLogger('Gnuplot.gnuplot')
 from Sloppy.Base import objects
 from Sloppy.Base.dataset import Dataset
 from Sloppy.Base.dataio import ExporterRegistry
-from Sloppy.Base.backend  import BackendRegistry
 from Sloppy.Base import backend, utils, uwrap
 
 from terminal import XTerminal, DumbTerminal, PostscriptTerminal
@@ -42,11 +41,8 @@ from terminal import XTerminal, DumbTerminal, PostscriptTerminal
 from Sloppy.Lib import Signals
 
 
-class BackendError(Exception):
-    pass
-
     
-class Backend(backend.Plotter):
+class Backend(backend.Backend):
 
     tmpdir = None  
     tmpfiles = []  # list of files that have been created by this class
@@ -83,7 +79,7 @@ class Backend(backend.Plotter):
         self.history = list()
 
         logger.debug("gnuplot.py: creating tempfile: %s" % self.tmpdir)
-        backend.Plotter.connect(self)
+        backend.Backend.connect(self)
 
     def disconnect(self):
         logger.debug("Closing gnuplot session.")
@@ -101,14 +97,17 @@ class Backend(backend.Plotter):
         else:
             logger.debug("gnuplot.py: deleted tmpfile %s" % self.tmpdir)
             
-        backend.Plotter.disconnect(self)
+        backend.Backend.disconnect(self)
+
+
 
     #----------------------------------------------------------------------
-    # methods that a Plotter might want to re-implement
-
+    # methods that a Backend might want to re-implement
+    #
+    
     def cd(self, dirname):
         """
-        Change directory of Plotter process to `dirname`, which
+        Change directory of Backend process to `dirname`, which
         may also be a file name or a relative path name.
         """
         dirname = os.path.abspath(os.path.dirname(dirname))
@@ -118,7 +117,7 @@ class Backend(backend.Plotter):
     def pwd(self):
         """
         Return absolute path name of the working directory used by the
-        Plotter process.
+        Backend process.
         """
         return self.current_dir
 
@@ -336,7 +335,7 @@ class Backend(backend.Plotter):
                 # line width
                 width = uwrap.get(line, 'width')
                 width = 'lw %s' % str(width)
-            except BackendError, msg:
+            except backend.BackendError, msg:
                 logger.error("Error while processing line: %s" % msg)
                 continue
             else:
@@ -438,9 +437,9 @@ class BackendX11(Backend):
         Backend.__init__(self, *args, **kwargs)
 
         
-BackendRegistry.register('gnuplot', Backend)
-BackendRegistry.register('gnuplot/dumb', BackendDumb)
-BackendRegistry.register('gnuplot/x11', BackendX11)
+backend.BackendRegistry.register('gnuplot', Backend)
+backend.BackendRegistry.register('gnuplot/dumb', BackendDumb)
+backend.BackendRegistry.register('gnuplot/x11', BackendX11)
 
 
 

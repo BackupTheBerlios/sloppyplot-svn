@@ -199,7 +199,7 @@ class LayerWindow(gtk.Window):
             tab.check_in()
 
     def cb_apply(self, sender):
-        sender.grab_focus()        
+        sender.grab_focus()
         self.apply_changes()
             
     def cb_ok(self, sender):
@@ -212,10 +212,6 @@ class LayerWindow(gtk.Window):
         for tab in self.tabs:
             ui = UndoList()
             tab.check_out(undolist=ui)
-            print "ui from tab ", type(tab)
-            print ui.dump(detailed=True)
-            print "simplified: ", ui.simplify().dump()
-            print
             ul.append(ui.simplify())
 
 
@@ -250,7 +246,6 @@ class LayerTab(AbstractTab):
 
     def construct_pwdict(self):        
         frame = gtk.Frame("Layer") ; frame.show()
-        #tt = gtk.Tooltips() # TODO
         
         pwlist = list()
         for key in ['title','visible', 'grid']:
@@ -573,7 +568,10 @@ class LinesTab(AbstractTab):
 
     #--- CHECK IN/CHECK OUT -----------------------------------------------    
 
-    def check_out(self, undolist=[]):        
+    def check_out(self, undolist=[]):
+
+        # TOOD: make sure we are finished with editing the treeview
+        
         ul = UndoList().describe("Set Line Property")
 
         model = self.treeview.get_model()
@@ -669,7 +667,7 @@ class LinesTab(AbstractTab):
         prop = Line.get_prop(prop_key)
         try:
             if new_text == "": new_text = None
-            new_text = prop.check_type(new_text)
+            new_text = prop.check_value(new_text)
         except (TypeError, ValueError):
             print "Invalid value"
         else:

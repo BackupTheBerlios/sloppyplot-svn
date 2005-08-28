@@ -96,7 +96,6 @@ def new_dataset(spj, element):
                 key = eInfo.get('key', None)
                 if key is not None:
                     p[key] = unicode(eInfo.text)
-                    print "Retrieved value ", p[key]
 
         filename = os.path.join('datasets', dataset_filename(ds.key))
         # TODO: replace DEFAULT_FF with read value

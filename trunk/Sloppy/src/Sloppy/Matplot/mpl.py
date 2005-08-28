@@ -20,7 +20,7 @@
 
 
 """
-An implementation of the Plotter object using matplotlib.
+An implementation of the Backend object using matplotlib.
 """
 
 import pygtk  # TBR
@@ -37,7 +37,6 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_gtk import FigureCanvasGTK as FigureCanvas
 
 from Sloppy.Base import backend
-from Sloppy.Base.backend import BackendRegistry
 from Sloppy.Base import objects
 from Sloppy.Base import utils, uwrap
 from Sloppy.Base.dataset import Dataset
@@ -82,7 +81,7 @@ linemarker_mappings = \
 
 
 
-class Backend( backend.Plotter ):
+class Backend( backend.Backend ):
 
     def init(self):
         # line_cache: key = id(Curve), value=mpl line object
@@ -103,7 +102,7 @@ class Backend( backend.Plotter ):
         self.layer_to_axes.clear()
         self.axes_to_layer.clear()
 
-        backend.Plotter.connect(self)
+        backend.Backend.connect(self)
         logger.debug("Init finished")
 
 
@@ -116,7 +115,7 @@ class Backend( backend.Plotter ):
         if not self.figure is None:
             self.figure = None
         
-        backend.Plotter.disconnect(self)
+        backend.Backend.disconnect(self)
 
 
     #----------------------------------------------------------------------
@@ -205,7 +204,7 @@ class Backend( backend.Plotter ):
                 try:
                     return data[start:end]
                 except IndexError:
-                    BackendError("Index range '%s'out of bounds!" % (start,end) )
+                    backend.BackendError("Index range '%s'out of bounds!" % (start,end) )
 
             start, end = line.row_first, line.row_last
             xdata = limit_data(xdata, start, end)
@@ -358,8 +357,8 @@ class BackendWithWindow(Backend):
         
 
 #------------------------------------------------------------------------------
-BackendRegistry.register('matplotlib', Backend)
-BackendRegistry.register('matplotlib/w', Backend)
+backend.BackendRegistry.register('matplotlib', Backend)
+backend.BackendRegistry.register('matplotlib/w', Backend)
 
 
             

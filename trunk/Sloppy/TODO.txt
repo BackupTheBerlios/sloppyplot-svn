@@ -1,4 +1,5 @@
 
+
 - Signals.connect_once -> requires an additional flag in the SignalContainer
 
 
@@ -123,12 +124,6 @@ Cool ideas:
 
 Minor fixes
 -----------
-  - Use status bar in Tablewin to display the current row/column
-
-
-
-- why do we get an error when extracting the tar? Maybe just because
-  we are displaying binary data. ???
 
 - Add README file to project explaining how to extract the datasets.
 

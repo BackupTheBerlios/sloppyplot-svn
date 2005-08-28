@@ -12,10 +12,10 @@ is no need to install SloppyPlot!
 Then execute the program by typing
 
   $ cd src
-  $ python sloppy-gtk
+  $ python sloppy
 
 
-Have Fun!
+Have fun!
 
 
 Feedback is very welcome!

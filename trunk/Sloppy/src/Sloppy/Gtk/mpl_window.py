@@ -664,7 +664,7 @@ class MatplotlibWidget(gtk.VBox):
             self.emit("edit-mode-ended")
 
         self.btn_cancel.set_sensitive(True)
-        self.btn_cancel.connect("activate", (lambda sender: self.abort_selection()))
+        self.btn_cancel.connect("clicked", (lambda sender: self.abort_selection()))
         
         Signals.connect(selector, "finished", on_finish)
         Signals.connect(selector, "aborted", on_finish)
