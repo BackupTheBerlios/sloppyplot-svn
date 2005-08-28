@@ -51,31 +51,31 @@ class PostscriptTerminal(Terminal, Container):
 
     mode = Prop(coerce=str,
                 value_list=['eps', 'landscape', 'portrait'],
-                blurb="mode",
-                doc="output mode")
+                blurb="mode", default='eps',
+                doc="Output mode")
     enhanced = Prop(value_list=['enhanced', 'noenhanced'],
                     blurb="PS mode",
                     doc="Enable subscripts, superscripts, mixed fonts")
     color = Prop(value_list=['color','monochrome'],
                  blurb="color mode",
-                 doc="Enables color")
+                 doc="Color mode")
     blacktext = BoolProp(blurb="black text only",
                          doc="all text in black, even in color mode")
     solid = Prop(value_list=['solid', 'dashed'],
-                 blurb="line style")
+                 blurb="Line style")
     dashlength = RangeProp(coerce=float, min=0.0,
                            blurb="dash length",
-                           doc = "scales the length of dashed-line segments")
+                           doc = "Scales the length of dashed-line segments")
     linewidth = RangeProp(coerce=float, min=0.0,
                           blurb="line width",
-                          doc = "scales all linewidths")
-    duplexing = Prop(values = ['defaultplex', 'simplex', 'duplex'] )
+                          doc = "Scales all linewidths")
+    duplexing = Prop(value_list = ['defaultplex', 'simplex', 'duplex'] )
     rounded = Prop(value_list= ['rounded', 'butt'],
-                   blurb="cap style",
+                   blurb="Cap style",
                    doc="Whether line caps and line joins should be rounded")
     fontname = Prop(coerce=str,
                     blurb="font name",
-                    doc="valid PostScript font")
+                    doc="Name of a valid PostScript font")
     fontsize = RangeProp(coerce=float, min=0.0,
                     blurb="font size",
                     doc="Size of the font in PostScript points.")

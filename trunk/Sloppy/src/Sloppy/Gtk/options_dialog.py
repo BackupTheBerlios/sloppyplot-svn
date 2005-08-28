@@ -51,7 +51,7 @@ class OptionsDialog(gtk.Dialog):
 
         if len(props) == 0:
             raise NoOptionsError
-        
+
         self.pwbox = PWTableBox(self.container, props)
         self.pwbox.show()
         

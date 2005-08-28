@@ -457,9 +457,14 @@ class Prop:
         self.types = as_list(types or [])
         self.values = as_list(values or [])
 
+        # value_list is just a shorthand for
+        #  values=cv_valid(...), default=first_value_of_the_list
+        # 
         self.value_list = value_list
         if value_list is not None:
             self.values.append(cv_valid(self.value_list))
+            if default is None and len(value_list) > 0:
+                default = value_list[0]
 
         if default is not None:
             default = self.check_value(default)

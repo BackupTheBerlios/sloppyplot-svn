@@ -78,7 +78,8 @@ class PWTableBox(gtk.ScrolledWindow, PWContainer):
             self.pwdict[key] = pw
             pwlist.append(pw)
 
-        tablewidget = construct_pw_table(pwlist)
+        tooltips = gtk.Tooltips()
+        tablewidget = construct_pw_table(pwlist, tooltips=tooltips)
         tablewidget.show()    
 
         self.add_with_viewport(tablewidget)
@@ -237,7 +238,11 @@ class PWComboBox(PW):
 
 
     def check_in(self):
-        index = self.prop.value_list.index(self.get_value())
+        try:
+            index = self.prop.value_list.index(self.get_value())
+        except:
+            print "Failed to retrieve value ", self.get_value(), self.prop.doc
+            raise
         self.widget.set_active(index)
 
         self.old_value = index
@@ -408,13 +413,25 @@ def construct_pw_in_box(container, key, tooltips=None):
 
     return (pw, hbox)
     
-def construct_pw_table(pwlist):
+def construct_pw_table(pwlist, tooltips=None):
     tw = gtk.Table(rows=len(pwlist), columns=2)
     n = 0            
     for pw in pwlist:
+        # widget
         tw.attach(pw.widget, 1,2,n,n+1, xoptions=gtk.EXPAND|gtk.FILL, yoptions=0, xpadding=5, ypadding=1)
-        tw.attach(pw.label, 0,1,n,n+1, xoptions=0, yoptions=0, xpadding=5, ypadding=1)
-        pw.label.set_alignment(-1.0, 0.0)
+
+        # associated label
+        if tooltips is None:
+            label = pw.label
+        else:
+            label = gtk.EventBox()
+            tooltips.set_tip(label, pw.prop.doc or pw.prop.blurb or "(no documentation avaiable)")
+            label.add(pw.label)
+            label.show()
+
+        tw.attach(label, 0,1,n,n+1, xoptions=0, yoptions=0, xpadding=5, ypadding=1)
+        #label.set_alignment(-1.0, 0.0)        
+            
         n += 1                                    
     return tw
 
