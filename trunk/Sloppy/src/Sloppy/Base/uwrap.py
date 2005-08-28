@@ -102,7 +102,7 @@ def get(self, key, default=None):
             return default
         else:
             try:
-                key = ("%s.%s" % (self.getClassName(), key)).lower()
+                key = ("%s.%s" % (self.__class__.__name__, key)).lower()
                 return default_params[key]
             except KeyError:
                 logging.error("No default key for key: %s" % key)

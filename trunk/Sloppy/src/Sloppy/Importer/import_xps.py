@@ -48,7 +48,7 @@ class Importer(dataio.Importer):
     extensions = ["xps"]
     author = "Niklas Volbers"
 
-    ranges = Prop(cast=int, default=2)    
+    ranges = Prop(coerce=int, default=2)    
     split_ranges = BoolProp(default=False)
     sample = Prop(types=basestring, default="")
     

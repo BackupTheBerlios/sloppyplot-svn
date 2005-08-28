@@ -25,7 +25,7 @@ logging.basicConfig()
 import gtk
 
 
-from Sloppy.Lib.Props import BoolProp, RangeError
+from Sloppy.Lib.Props import BoolProp
 from Sloppy.Lib.Undo import UndoList, UndoInfo, FakeUndoInfo, NullUndo, ulist
 from Sloppy.Lib import Signals
 
@@ -670,7 +670,7 @@ class LinesTab(AbstractTab):
         try:
             if new_text == "": new_text = None
             new_text = prop.check_type(new_text)
-        except (TypeError, ValueError, RangeError):
+        except (TypeError, ValueError):
             print "Invalid value"
         else:
             if new_text is None: new_text=""

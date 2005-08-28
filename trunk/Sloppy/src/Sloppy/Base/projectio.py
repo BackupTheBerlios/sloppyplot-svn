@@ -68,6 +68,9 @@ def dataset_filename(key):
 
 
 def new_dataset(spj, element):
+    ncols = int(element.attrib.pop('ncols',0))
+    typecodes = element.attrib.pop('typecodes','')
+    
     ds = Dataset(**element.attrib)
 
     # metadata
@@ -83,7 +86,6 @@ def new_dataset(spj, element):
         # This information will be passed on to 'set_table_import',
         # which will pass it on to the internal importer.        
         column_props = list()
-        ncols = int(element.get('ncols',0))
         for i in range(ncols):
             column_props.append(dict())
         

@@ -134,14 +134,14 @@ class ProjectTreeView( gtk.TreeView ):
         # add Plots
         def add_plot_object(plots, model, parent=None):            
             for (key, plot) in pdict.iteritems( self._project.plots ):
-                iter = model.append(parent, [key, plot, 'sloppy-%s' % plot.getClassName()])
+                iter = model.append(parent, [key, plot, 'sloppy-%s' % plot.__class__.__name__])
             # TODO ?
             # We might add Layers here
         add_plot_object(self._project.plots, model)
             
         # add Datasets
         for (key, ds) in pdict.iteritems( self._project.datasets ):
-            model.append(None, [key, ds, 'sloppy-%s' % ds.getClassName()])
+            model.append(None, [key, ds, 'sloppy-%s' % ds.__class__.__name__])
 
         self.collapse_all()
 

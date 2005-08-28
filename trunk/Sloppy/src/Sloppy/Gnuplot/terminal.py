@@ -49,36 +49,36 @@ class XTerminal(Terminal):
    
 class PostscriptTerminal(Terminal, Container):
 
-    mode = Prop(cast=str,
-                values=['eps', 'landscape', 'portrait'],
+    mode = Prop(coerce=str,
+                value_list=['eps', 'landscape', 'portrait'],
                 blurb="mode",
                 doc="output mode")
     eps = BoolProp(blurb="generate EPS",
                    doc="generate EPS (Enhanced PostScript)")
-    enhanced = Prop(values=['enhanced', 'noenhanced'],
+    enhanced = Prop(value_list=['enhanced', 'noenhanced'],
                     blurb="PS mode",
                     doc="Enable subscripts, superscripts, mixed fonts")
-    color = Prop(values=['color','monochrome'],
+    color = Prop(value_list=['color','monochrome'],
                  blurb="color mode",
                  doc="Enables color")
     blacktext = BoolProp(blurb="black text only",
                          doc="all text in black, even in color mode")
-    solid = Prop(values=['solid', 'dashed'],
+    solid = Prop(value_list=['solid', 'dashed'],
                  blurb="line style")
-    dashlength = RangeProp(cast=float, min=0.0,
+    dashlength = RangeProp(coerce=float, min=0.0,
                            blurb="dash length",
                            doc = "scales the length of dashed-line segments")
-    linewidth = RangeProp(cast=float, min=0.0,
+    linewidth = RangeProp(coerce=float, min=0.0,
                           blurb="line width",
                           doc = "scales all linewidths")
     duplexing = Prop(values = ['defaultplex', 'simplex', 'duplex'] )
-    rounded = Prop(values= ['rounded', 'butt'],
+    rounded = Prop(value_list= ['rounded', 'butt'],
                    blurb="cap style",
                    doc="Whether line caps and line joins should be rounded")
-    fontname = Prop(cast=str,
+    fontname = Prop(coerce=str,
                     blurb="font name",
                     doc="valid PostScript font")
-    fontsize = RangeProp(cast=float, min=0.0,
+    fontsize = RangeProp(coerce=float, min=0.0,
                     blurb="font size",
                     doc="Size of the font in PostScript points.")
 

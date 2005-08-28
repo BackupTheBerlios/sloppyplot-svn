@@ -33,7 +33,7 @@ from Sloppy.Base.table import Table
 
 
 #==============================================================================
-class Backend:
+class Backend(object):
     """
     'Backend' is the abstract base class for any plotting backend.
     Any actual implementation should use this as a base class.
@@ -195,6 +195,7 @@ class Backend:
 
     def get_column_indices(self, line):
         #:line.cx
+        print "--------------------", line.cx, type(line.cx)
         if line.cx is None or line.cy is None:
             raise BackendError("No x or y source given for Line. Line skipped.")
         else:

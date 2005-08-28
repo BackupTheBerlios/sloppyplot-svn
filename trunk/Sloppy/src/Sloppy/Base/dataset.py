@@ -30,7 +30,7 @@ from Sloppy.Base.table import Table
 
 from Sloppy.Lib import Signals
 from Sloppy.Lib.Undo import UndoInfo, UndoList
-from Sloppy.Lib.Props import DictProp, Prop, Container
+from Sloppy.Lib.Props import DictProp, Prop, Container, KeyProp
 
 from Numeric import ArrayType
 
@@ -82,11 +82,11 @@ class Dataset(Container):
     
     """
     
-    key = Prop(types=str)
+    key = KeyProp()
 
-    label = Prop(cast=unicode)
-    metadata = DictProp(cast=unicode)
-    data = Prop(types=(Table, ArrayType))
+    label = Prop(coerce=unicode)
+    metadata = DictProp(coerce=unicode)
+    data = Prop(types=(Table, ArrayType,None))
 
     def __init__(self, **kwargs):
         Container.__init__(self, **kwargs)

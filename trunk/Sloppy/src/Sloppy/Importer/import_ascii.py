@@ -39,11 +39,11 @@ class Importer(dataio.Importer):
     author = "Niklas Volbers"
     blurb = "ASCII"
 
-    delimiter = Prop(types=basestring, values=[None,',', '\t',';', ' '], default=None, doc="Delimiter")
+    delimiter = Prop(types=basestring, value_list=[None,',', '\t',';', ' '], default=None, doc="Delimiter")
     custom_delimiter = Prop(types=basestring, doc="Custom delimiter")
-    ncols = RangeProp(cast=int,min=0, steps=1, default=None,
+    ncols = RangeProp(coerce=int,min=0, steps=1, default=None,
                          doc="# Columns")
-    skip = RangeProp(cast=int, min=0, default=0,
+    skip = RangeProp(coerce=int, min=0, default=0,
                 doc="# Skipped lines")
     table = Prop(types=Table)
     keys = Prop(types=list, default=None)

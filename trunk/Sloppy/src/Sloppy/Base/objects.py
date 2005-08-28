@@ -38,45 +38,45 @@ from Sloppy.Lib.Props import Container, Prop, ListProp, DictProp, BoolProp, Rang
 
 class Axis(Container):
     " A single axis for a plot. "
-    label = Prop(cast=unicode, blurb='Label')
-    start = Prop(cast=float, blurb='Start')
-    end = Prop(cast=float, blurb='End')
+    label = Prop(coerce=unicode, blurb='Label')
+    start = Prop(coerce=float, blurb='Start')
+    end = Prop(coerce=float, blurb='End')
 
-    scale = Prop(types=str, blurb='Scale', values=PV['axis.scale'])
+    scale = Prop(types=str, blurb='Scale', value_list=PV['axis.scale'])
     format = Prop(types=str, blurb='Format')
 
 
 class Line(Container):
     " A single line or collection of points in a Plot. "
-    label = Prop(cast=unicode)
-    cx = RangeProp(cast=int, min=0, blurb="x-column")
-    cy = RangeProp(cast=int, min=0, blurb="y-column")
-    row_first = RangeProp(cast=int,min=0)
-    row_last = RangeProp(cast=int,min=0)
-    #value_range = Prop(cast=str)    
-    cxerr = RangeProp(cast=int, min=0)
-    cyerr = RangeProp(cast=int, min=0)
+    label = Prop(coerce=unicode)
+    cx = RangeProp(coerce=int, min=0, blurb="x-column")
+    cy = RangeProp(coerce=int, min=0, blurb="y-column")
+    row_first = RangeProp(coerce=int,min=0)
+    row_last = RangeProp(coerce=int,min=0)
+    #value_range = Prop(coerce=str)    
+    cxerr = RangeProp(coerce=int, min=0)
+    cyerr = RangeProp(coerce=int, min=0)
     source = Prop(types=Dataset)
-    width = RangeProp(cast=float, min=0, max=10)
-    style = Prop(values=PV['line.style'])
-    marker = Prop(values=PV['line.marker'])
-    color = Prop(cast=str)
+    width = RangeProp(coerce=float, min=0, max=10)
+    style = Prop(value_list=PV['line.style'])
+    marker = Prop(value_list=PV['line.marker'])
+    color = Prop(coerce=str)
     visible = BoolProp()
 
 
 class Legend(Container):
     " Plot legend. "
-    label = Prop(cast=unicode, doc='Legend Label')
+    label = Prop(coerce=unicode, doc='Legend Label')
     visible = BoolProp()
     border = BoolProp()
-    position = Prop(types=str, values=PV['legend.position'])
-    x = RangeProp(cast=float, min=0.0, max=1.0)
-    y = RangeProp(cast=float, min=0.0, max=1.0)
+    position = Prop(types=str, value_list=PV['legend.position'])
+    x = RangeProp(coerce=float, min=0.0, max=1.0)
+    y = RangeProp(coerce=float, min=0.0, max=1.0)
 
 
 class Layer(Container):
-    type = Prop(types=str, values=PV['layer.type'])
-    title = Prop(cast=unicode, blurb="Title")
+    type = Prop(types=str, value_list=PV['layer.type'])
+    title = Prop(coerce=unicode, blurb="Title")
     axes = DictProp(types=Axis, blurb="Axes")
     lines = ListProp(types=Line, blurb="Lines")
     grid = BoolProp(blurb="Grid", doc="Display a grid")
@@ -105,23 +105,23 @@ class Layer(Container):
     
 class TextLabel(Container):
     " Single text label. "
-    text = Prop(cast=unicode)
+    text = Prop(coerce=unicode)
     
-    x = Prop(cast=float)
-    y = Prop(cast=float)
+    x = Prop(coerce=float)
+    y = Prop(coerce=float)
 
 
 
 class View(Container):
-    start = Prop(cast=float, blurb='Start')
-    end = Prop(cast=float, blurb='End')
+    start = Prop(coerce=float, blurb='Start')
+    end = Prop(coerce=float, blurb='End')
     
 
 class Plot(Container):
     key = Prop(types=str, blurb="Key")
 
-    title = Prop(cast=unicode, blurb="Title")
-    comment = Prop(cast=unicode, blurb="Comment")
+    title = Prop(coerce=unicode, blurb="Title")
+    comment = Prop(coerce=unicode, blurb="Comment")
     
     legend = Prop(types=Legend)
     lines = ListProp(types=Line)

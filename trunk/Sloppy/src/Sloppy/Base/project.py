@@ -68,8 +68,8 @@ about netCDF, see
 
 class Project(Container):
 
-    label = Prop(cast=unicode)
-    comment = Prop(cast=unicode)
+    label = Prop(coerce=unicode)
+    comment = Prop(coerce=unicode)
 
     plots = ListProp(types=Plot)
     datasets = ListProp(types=Dataset)

@@ -23,42 +23,44 @@ from Numeric import *
 
 
 from Sloppy.Lib import Signals
-from Sloppy.Lib.Props import Container, Prop
+from Sloppy.Lib.Props import Container, Prop, KeyProp
 
 
-class ArrayProp(Prop):
 
-    def __init__(self, rank=1, doc=None, blurb=None):
-        Prop.__init__(self, doc=doc, blurb=blurb)
-        self.rank = rank
-
-    def check_type(self, val):
-        if val is None:
-            return None
-
+def coerce_array(_rank):
+    def do_coerce(value):
         # check type
-        if isinstance(val, ArrayType):
+        if isinstance(value, ArrayType):
             pass
-        elif isinstance(val, (tuple,list)):
-            val = array(val)
+        elif isinstance(value, (tuple,list)):
+            value = array(value)
         else:
             raise TypeError("ArrayProp data must be of type array/tuple/list.")
 
         # check rank
-        if rank(val) != self.rank:
-            raise TypeError("ArrayProp data must be of rank %d but it is %d." % (self.rank, rank(val)))
+        if rank(value) != _rank:
+            raise TypeError("ArrayProp data must be of rank %d but it is %d." % (_rank, rank(value)))
 
-        return val
+        return value
+    
+    return do_coerce
+
+class ArrayProp(Prop):
+
+    def __init__(self, rank=1, doc=None, blurb=None):
+        Prop.__init__(self, doc=doc, blurb=blurb, coerce=coerce_array(rank))
+        self.rank = rank
 
         
         
 class Column(Container):
 
-    key = Prop(cast=str)
-    designation = Prop(cast=str,
-                       values=['X','Y','XY','XERR', 'YERR', 'LABEL'])
-    query = Prop(cast=str)
-    label = Prop(cast=unicode)
+    key = KeyProp()
+    
+    designation = Prop(coerce=str,
+                       value_list=['X','Y','XY','XERR', 'YERR', 'LABEL'])
+    query = Prop(coerce=str)
+    label = Prop(coerce=unicode)
     data = ArrayProp(rank=1)
                                    
     def __str__(self):

@@ -26,7 +26,7 @@ logging.basicConfig()
 #pygtk.require('2.0')
 import gtk
 
-from Sloppy.Lib.Props import RangeError, BoolProp, Container
+from Sloppy.Lib.Props import BoolProp, Container
 from Sloppy.Lib.Undo import UndoList
 
 from Sloppy.Base import uwrap
@@ -194,7 +194,7 @@ class PWString(PW):
         if len(val) == 0:
             val = None
         else:
-            val = self.prop.check_type(val)
+            val = self.prop.check_value(val)
 
         if val != self.old_value:
             uwrap.set(self.container, self.key, val, undolist=undolist)
@@ -208,8 +208,8 @@ class PWString(PW):
         val = self.widget.get_text()
         if len(val) == 0: val = None
         try:
-            self.prop.check_type(val)
-        except (TypeError, ValueError, RangeError):
+            self.prop.check_value(val)
+        except (TypeError, ValueError):
             print "Value is wrong, resetting"
             self.widget.set_text(self.last_value)
         
@@ -237,7 +237,7 @@ class PWComboBox(PW):
 
 
     def check_in(self):
-        index = self.prop.values.index(self.get_value())
+        index = self.prop.value_list.index(self.get_value())
         self.widget.set_active(index)
 
         self.old_value = index
@@ -257,7 +257,7 @@ class PWComboBox(PW):
     def fill_combo(self):
         model = self.widget.get_model()
         model.clear()
-        for value in self.prop.values:
+        for value in self.prop.value_list:
             model.append( (value or "<None>", value) )
         
 
@@ -389,7 +389,7 @@ class PWCheckButton(PW):
 def construct_pw(container, key):
     prop = container.get_prop(key)
     
-    if prop.values is not None:
+    if prop.value_list is not None:
         pw = PWComboBox(container, key)
     elif isinstance(prop, BoolProp):
         pw = PWAlternateToggleButton(container, key)
