@@ -63,6 +63,38 @@ from Sloppy.Lib import Signals
 from progress import GtkProgressList
 
 
+#------------------------------------------------------------------------------
+# Helper Methods
+#
+
+def register_all_png_icons(imgdir, prefix=""):
+    """
+    Register all svg icons in the Icons subdirectory as stock icons.
+    The prefix is the prefix for the stock_id.
+    """
+    logger.debug("Trying to register png icons from dir '%s'" % imgdir)
+    import glob, os
+    filelist = map(lambda fn: ("%s%s" % (prefix, fn.split(os.path.sep)[-1][:-4]), fn), \
+                   glob.glob(os.path.join(imgdir,'*.png')))
+    
+    iconfactory = gtk.IconFactory()
+    stock_ids = gtk.stock_list_ids()
+    for stock_id, file in filelist:
+        # only load image files when our stock_id is not present
+        if stock_id not in stock_ids:
+            logger.debug( "loading image '%s' as stock icon '%s'" % (file, stock_id) )
+            pixbuf = gtk.gdk.pixbuf_new_from_file(file)
+            pixbuf = pixbuf.scale_simple(48,48,gtk.gdk.INTERP_BILINEAR)
+            iconset = gtk.IconSet(pixbuf)
+            iconfactory.add(stock_id, iconset)
+    iconfactory.add_default()
+
+
+
+#------------------------------------------------------------------------------
+# GtkApplication, the main object
+#
+
 class GtkApplication(Application):
     """    
     Application is a wrapper window for the ProjectTreeView which
@@ -72,7 +104,9 @@ class GtkApplication(Application):
     functions to work with the project.
     """
     
-    def init(self):    
+    def init(self):
+        register_all_png_icons(const.internal_path(const.PATH_ICONS), 'sloppy-')
+        
         self.window = AppWindow(self)
         self._clipboard = gtk.Clipboard()  # not implemented yet
         self.progresslist = GtkProgressList        
@@ -822,11 +856,8 @@ class GtkApplication(Application):
 
 # ======================================================================    
 
-def main():
-
-    gtkutils.register_all_png_icons(const.internal_path(const.PATH_ICONS), 'sloppy-')
-
-    filename = const.internal_path(const.PATH_EXAMPLE, 'example.spj')
+def main(filename):
+    filename = filename or const.internal_path(const.PATH_EXAMPLE, 'example.spj')
     app = GtkApplication(filename)
     gtk.main()
 
