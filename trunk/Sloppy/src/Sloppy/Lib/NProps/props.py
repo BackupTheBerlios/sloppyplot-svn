@@ -47,8 +47,10 @@ import re
 
 def as_list(o):
     # make sure we are talking about a list!
-    if isinstance(o, (list,tuple)):
+    if isinstance(o, list):
         return o
+    elif isinstance(o, tuple):
+        return list(o)
     else:
         return [o]
             
@@ -108,11 +110,6 @@ def generic_value_check(value, types=(), coerce=None, values=()):
             item(value)
 
     return value
-
-
-class RangeError(Exception):
-    pass
-
 
 
 #------------------------------------------------------------------------------
@@ -467,6 +464,8 @@ class Prop:
         self.types = as_list(types or [])
         self.values = as_list(values or [])
 
+        if default is not None:
+            default = self.check_value(default)
         self.default = default
         
         self.blurb = blurb        
@@ -570,6 +569,13 @@ class RangeProp(Prop):
             raise RuntimeError("Keyword `steps` may only provided along with a minimum value.")
         self.steps = steps
 
+class KeyProp(Prop):
+
+    def __init__(self, default=None, blurb=None, doc=None):
+        Prop.__init__(self, types=basestring, values=cv_regexp('^\w*$'),
+                      default=default, doc=doc, blurb=blurb)
+
+
     
 #------------------------------------------------------------------------------
 # Container
@@ -606,10 +612,59 @@ class Container(object):
         attrName = '_XO_%s' % key
         object.__setattr__(self, attrName, val)
 
+    def set_values(self, *args, **kwargs):
+        arglist = list(args)
+        while len(arglist) > 1:
+            key = arglist.pop(0)
+            value = arglist.pop(0)
+            self.set_value(key, value)
+
+        for k,v in kwargs.iteritems():
+            self.set_value(k,v)
+            
     def get_value(self, key, default=None):
         attrName = '_XO_%s' % key
         return object.__getattribute__(self, attrName)
+        return rv
 
+    def get_values(self, *keys):
+        rv = list()
+        for key in keys:
+            rv.append(self.get_value(key))
+        return tuple(rv)
+            
+
+    def get_prop(cls, key):
+        dict = cls.__dict__
+        if dict.has_key(key):
+            return dict.get(key, None)
+        else:
+            raise KeyError("No property %s defined for class %s" % (key, str(cls)))
+    get_prop = classmethod(get_prop)
+
+    def get_proplist(cls):
+        rv = list()
+        for k, v in cls.__dict__.iteritems():
+            if isinstance(v, Prop):
+                rv.append(k)
+        return rv
+    get_proplist = classmethod(get_proplist)
+    
+    def get_propdict(cls):
+        rv = dict()
+        for k,v in cls.__dict__.iteritems():
+            if isinstance(v, Prop):
+                rv[k] = v
+        return rv
+    get_propdict = classmethod(get_propdict)
+
+
+    def get_key_value_dict(self):
+        rv = dict()
+        for key, prop in self.get_propdict().iteritems():
+            rv[key] = self.get_value(key)
+        return rv
+    
 
 
 #------------------------------------------------------------------------------
@@ -709,3 +764,5 @@ if __name__ == "__main__":
 
     nc.myrange = 0
     nc.myrange = 10
+
+    #nc.mylist.append(None)
