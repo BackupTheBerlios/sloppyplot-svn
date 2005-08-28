@@ -105,14 +105,15 @@ def unique_key(obj, keyproposal):
 
     """    
     Return a valid key that is not yet in use in the dict based on the
-    proposal.    
+    proposal.  
+    The keyproposal must be an ASCII-string!
     """
     
-    counter = 0
     suggestion = keyproposal
+    counter = 1
     while has_key(obj, suggestion):
-        counter += 1
         suggestion = "%s_%02d" % (keyproposal, counter)
+        counter += 1        
     return suggestion
 
 

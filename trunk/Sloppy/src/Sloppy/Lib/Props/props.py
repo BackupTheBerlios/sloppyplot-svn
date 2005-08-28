@@ -417,6 +417,9 @@ def cv_invalid(alist):
             
 def cv_bounds(start, end,steps=None):
     def check_value(value):
+        if value is None:
+            return None
+        
         if (start is not None and value < start) \
            or (end is not None and value > end):
             raise ValueError("Value %s should be in between [%s:%s]" % (value, start or "", end or ""))

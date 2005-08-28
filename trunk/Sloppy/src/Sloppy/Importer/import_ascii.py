@@ -39,22 +39,49 @@ class Importer(dataio.Importer):
     author = "Niklas Volbers"
     blurb = "ASCII"
 
-    delimiter = Prop(types=basestring, value_list=[None,',', '\t',';', ' '], default=None, doc="Delimiter")
-    custom_delimiter = Prop(types=basestring, doc="Custom delimiter")
-    ncols = RangeProp(coerce=int,min=0, steps=1, default=None,
-                         doc="# Columns")
-    skip = RangeProp(coerce=int, min=0, default=0,
-                doc="# Skipped lines")
-    table = Prop(types=Table)
-    keys = Prop(types=list, default=None)
-    designations = Prop(types=list, default=None)
 
-    typecodes = Prop(types=(basestring, list), default='f')
+    #----------------------------------------------------------------------
+    # Properties
+    #
+    
+    delimiter = Prop(blurb ="Delimiter",
+                     types=basestring,
+                     value_list=[None,',', '\t',';', ' '])
+    
+    custom_delimiter = Prop(blurb="Custom delimiter",
+                            types=(basestring,None))
+    
+    ncols = RangeProp(blurb="# Columns",
+                      types=(int,None),
+                      coerce=int,
+                      min=0, steps=1,
+                      default=None)
+
+    skip = RangeProp(blurb="# Skipped lines",
+                     coerce=int,
+                     min=0, default=0)
+    
+    table = Prop(types=Table)
+    
+    keys = Prop(types=list,
+                default=None)
+    
+    designations = Prop(types=list,
+                        default=None)
+
+    typecodes = Prop(types=(basestring, list),
+                     default='f')
+    
     splitter = Prop(types=object)
 
     public_props = ['delimiter', 'custom_delimiter', 'ncols', 'skip']
+
     
-        
+
+    #----------------------------------------------------------------------
+    # Reading in Data
+    #
+    
     def read_table_from_stream(self, fd):
 
         # determine optional arguments
@@ -142,10 +169,15 @@ class Importer(dataio.Importer):
         split = self.splitter or split
 
         # read in file line by line
-        row = fd.readline()
+        row = fd.readline()        
         while len(row) > 0:
+            # check for linefeed (windows or unix)
+            if row[-1] == '\r':
+                splitat = -2
+            else:
+                splitat = -1
             try:
-                values = map(lambda x, c: c(x), split(row[:-2]), converters)
+                values = map(lambda x, c: c(x), split(row[:splitat]), converters)
             except ValueError, msg:
                 logger.warn("Skipped: %s (%s)" % (row,msg))
                 row = fd.readline()
@@ -154,6 +186,8 @@ class Importer(dataio.Importer):
                 logger.warn("Skipped: %s (%s)" % (row,msg))
                 row = fd.readline()
                 continue
+            else:
+                logger.info("Read %s" % values)
             
             iter.set( values )
 

@@ -89,7 +89,6 @@ class GtkProgressList(ProgressList, gtk.Window):
         #vbox.pack_start(listview, False, True, padding=5)
         vbox.pack_start(bar, False, True, padding=5)
         vbox.pack_start(expander, True, True, padding=5)
-        vbox.pack_start(sw, True, True, padding=5)
         vbox.pack_end(btnbox,False,True, padding=5)
         vbox.show()
                 

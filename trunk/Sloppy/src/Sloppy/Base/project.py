@@ -34,7 +34,7 @@ from Sloppy.Base.backend import Backend, BackendRegistry
 from Sloppy.Base.table import Table
 from Sloppy.Base.dataio import ImporterRegistry, ExporterRegistry, importer_from_filename, Importer, ImportError
 from Sloppy.Base.plugin import PluginRegistry
-from Sloppy.Base import pdict, uwrap, const
+from Sloppy.Base import pdict, uwrap, const, utils
 
 from Sloppy.Base.progress import SimpleProgressList
 
@@ -291,7 +291,9 @@ class Project(Container):
                 pl.fail(msg)
                 continue
 
-            ds = Dataset(key=basename(filename), data=tbl)
+            root, ext = os.path.splitext(basename(filename))
+            filename = utils.encode_as_key(root)
+            ds = Dataset(key=filename, data=tbl)
             ds.metadata['Import-Source'] = unicode(filename)
             ds.metadata['Import-Filter'] = unicode(importer.blurb)
 

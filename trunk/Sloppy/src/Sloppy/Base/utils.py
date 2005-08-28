@@ -56,6 +56,17 @@ def partial_key_extract(source,prefix='',remove_items=False,use_prefix=True):
     return nd
 
 
+def encode_as_key(key):
+    " This function ensures that the key contains only valid characters ([a-zA-Z0-9_])."
+    rv = ""
+    for letter in key:
+        if letter in "_ ":
+            rv += "_"
+        elif letter in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_":
+            rv += letter
+    return rv
+
+
 
 # def unique_key(dict, keyproposal):
 
