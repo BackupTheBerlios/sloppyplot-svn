@@ -195,7 +195,7 @@ class ProjectTreeView( gtk.TreeView ):
 
     def render_type(self,column,cell,model,iter):
         object = model.get_value(iter, self.COL_OBJECT)
-        classname = object.getClassName()
+        classname = object.__class__.__name__
         if classname is None:
             classname = ""
         cell.set_property('text', classname)

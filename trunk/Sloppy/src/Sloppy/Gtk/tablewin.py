@@ -798,7 +798,7 @@ class ModifyTableDialog(gtk.Dialog):
         selection = self.cview.get_selection()
         (model, iter) = selection.get_selected()
 
-        new_column = self.table.new_column(key='new column')
+        new_column = self.table.new_column(key='new_column')
         iter = model.insert_after(iter, (new_column,None))
         selection.select_iter(iter)
         

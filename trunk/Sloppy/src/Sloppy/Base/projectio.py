@@ -95,7 +95,8 @@ def new_dataset(spj, element):
             for eInfo in eColumn.findall('Info'):
                 key = eInfo.get('key', None)
                 if key is not None:
-                    p[key] = eInfo.text
+                    p[key] = unicode(eInfo.text)
+                    print "Retrieved value ", p[key]
 
         filename = os.path.join('datasets', dataset_filename(ds.key))
         # TODO: replace DEFAULT_FF with read value
@@ -254,7 +255,7 @@ def toElement(project):
                        
     ePlots = SubElement(eProject, "Plots")
     for plot in project.plots:
-        ePlot = SubElement(ePlots, plot.getClassName())
+        ePlot = SubElement(ePlots, plot.__class__.__name__)
         safe_set(ePlot, 'key', plot.key)
         safe_set(ePlot, 'title', plot.title)
 

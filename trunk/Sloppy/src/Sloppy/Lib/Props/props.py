@@ -92,7 +92,7 @@ def generic_value_check(value, types=(), coerce=None, values=()):
                 else: break
         else:
             raise TypeError("Not a valid type %s." % type(value))
-
+        
     if len(types) > 0:
         require_one(value, types)
 
@@ -103,9 +103,9 @@ def generic_value_check(value, types=(), coerce=None, values=()):
         value = coerce(value)
 
     #
-    # value checking
+    # value checking (only if value is not None)
     #
-    if len(values) > 0:
+    if value is not None and len(values) > 0:
         for item in values:
             item(value)
 
@@ -351,7 +351,8 @@ class MetaAttribute(object):
 
     def __set__(self, inst, value):
         try:
-            inst.set_value( self.key, self.prop.check_value(value))
+            value = self.prop.check_value(value)
+            inst.set_value( self.key, value)
         except TypeError, msg:
             raise TypeError("Failed to set property '%s' of container '%s' to '%s':\n  %s" %
                             (self.key, repr(inst), value, msg))
@@ -417,9 +418,6 @@ def cv_invalid(alist):
             
 def cv_bounds(start, end,steps=None):
     def check_value(value):
-        if value is None:
-            return None
-        
         if (start is not None and value < start) \
            or (end is not None and value > end):
             raise ValueError("Value %s should be in between [%s:%s]" % (value, start or "", end or ""))
@@ -438,6 +436,7 @@ def cv_regexp(regexp):
         match = expression.match(value)
         if match is None:
             raise ValueError("Value %s does not match the regular expression %s" % (value,regexp))
+
     return check_value
 
 
@@ -577,7 +576,7 @@ class RangeProp(Prop):
 class KeyProp(Prop):
 
     def __init__(self, default=None, blurb=None, doc=None):
-        Prop.__init__(self, types=basestring, values=cv_regexp('^\w*$'),
+        Prop.__init__(self, types=(basestring,None), values=cv_regexp('^\w*$'),
                       default=default, doc=doc, blurb=blurb)
 
 
