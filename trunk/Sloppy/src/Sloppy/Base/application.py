@@ -26,7 +26,7 @@ cli_logger = logging.getLogger('cli')
 cli_logger.setLevel(logging.info)
 
 from ConfigParser import SafeConfigParser, NoOptionError
-import os.path
+import os
 
 from Sloppy.Lib.Undo import *
 from Sloppy.Lib import Signals
@@ -47,8 +47,6 @@ from Sloppy.Base.plugin import PluginRegistry
 from Sloppy.Base.progress import ProgressList
 
 
-CONFIG_FILE = '~/.sloppyplot.cfg'
-
 class Application(object):
 
     def __init__(self, project=None):
@@ -58,10 +56,17 @@ class Application(object):
         self.progresslist = ProgressList
         self.recent_files = list()
 
-        print "PARSING"
-        self.config_parser = self.read_configuration_file(CONFIG_FILE)
-        print "===>", self.recent_files
+        # make sure config path exists and then open config file
+        if os.path.exists(const.PATH_CONFIG) is False:
+            try:
+                os.mkdir(const.PATH_CONFIG)
+            except IOError, msg:
+                logging.error("Big Fat Warning: Could not create config path! Configuration will not be saved! Please check permissions for creating '%s'. (%s)" % (PATH_CONFIG, msg))
         
+        self.config_parser = self.read_configuration_file(const.CONFIG_FILE)
+
+        
+        # init() is a good place for initialization of derived class
         self.init()
         
         # Set up the Project...
@@ -79,7 +84,7 @@ class Application(object):
 
     def quit(self):
         self.set_project(None, confirm=True)
-        self.write_configuration_file(self.config_parser, CONFIG_FILE)
+        self.write_configuration_file(self.config_parser, const.CONFIG_FILE)
         
         
     #----------------------------------------------------------------------

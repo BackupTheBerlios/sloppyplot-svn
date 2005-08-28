@@ -23,11 +23,10 @@
 Constant declarations for SloppyPlot
 """
 
-from os.path import abspath,join
-
 import logging
 logging.basicConfig()
 
+import os
 
 #
 # path handling
@@ -41,14 +40,24 @@ def internal_path(*path):
     if len(the_path) == 0:
 	logging.error("Fatal Error: internal path not set up properly!")
 	raise SystemExit
-    return join( the_path[-1], *path )
+    return os.path.join( the_path[-1], *path )
 
-PATH_EXAMPLE  = join('../../Examples')
-PATH_DATA     = join('Base','Data')
-PATH_ICONS    = join('Gtk','Icons')
+
+PATH_EXAMPLE  = os.path.join('../../Examples')
+PATH_DATA     = os.path.join('Base','Data')
+PATH_ICONS    = os.path.join('Gtk','Icons')
+
+# determine config path
+if os.environ.has_key('XDG_CONFIG_HOME'):
+    PATH_CONFIG = os.path.expandvars('${XDG_CONFIG_HOME}/SloppyPlot')
+else:
+    PATH_CONFIG = os.path.expanduser('~/.config/SloppyPlot')
+
+CONFIG_FILE = os.path.join(PATH_CONFIG, 'sloppyrc')
+
 
 # TODO: how to represent absolut dirs?
-LOGFILE=join('/','var','tmp','sloppyplot.log')
+LOGFILE = os.path.join('/','var','tmp','sloppyplot.log')
 
 DEBUG_SIGNALS = False
 DEBUG_FILTERS = False
