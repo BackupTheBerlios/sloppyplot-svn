@@ -389,38 +389,6 @@ class WeakMetaAttribute(MetaAttribute):
 
 
 #------------------------------------------------------------------------------
-# Base Class 'Prop'
-#
-
-class Prop:
-
-    def __init__(self, types=None, coerce=None, values=None,
-                 default=None,
-                 blurb=None, doc=None):
-
-        if isinstance(coerce, type):
-            coerce = _coerce(coerce)                
-        self.coerce = coerce
-        
-        self.types = as_list(types or [])
-        self.values = as_list(values or [])
-
-        self.default = default
-        
-        self.blurb = blurb        
-        self.doc = doc
-    
-    def check_value(self, value):
-        return generic_value_check(value, types=self.types, coerce=self.coerce, values=self.values)
-        
-    def default_value(self):        
-        return self.default
-            
-    def meta_attribute(self, key):
-        return MetaAttribute(self, key)
-                
-
-#------------------------------------------------------------------------------
 # Check Type, Coerce and Check Value Methods
 #
 
@@ -457,12 +425,19 @@ def cv_invalid(alist):
             raise ValueError("Value %s in in the list of invalid values: %s" % (value, alist))    
     return check_value
             
-def cv_bounds(start, end):
+def cv_bounds(start, end,steps=None):
     def check_value(value):
-        if value < start or value > end:
-            raise ValueError("Value %s is not in the required bounds [%s:%s]" % (value, start, end))
-    return check_value
+        if (start is not None and value < start) \
+           or (end is not None and value > end):
+            raise ValueError("Value %s should be in between [%s:%s]" % (value, start or "", end or ""))
 
+        if steps is not None:
+            remainder = (value - start) % steps
+            if remainder != 0.0:
+                raise ValueError("Value %s must .... Remainder %s" % (value, remainder) ) # TODO: how to word this?
+
+        return value
+    return check_value
 
 def cv_regexp(regexp):
     expression = re.compile(regexp)
@@ -473,8 +448,40 @@ def cv_regexp(regexp):
             raise ValueError("Value %s does not match the regular expression %s" % (value,regexp))
     return check_value
 
-        
 
+
+#------------------------------------------------------------------------------
+# Base Class 'Prop'
+#
+
+class Prop:
+
+    def __init__(self, types=None, coerce=None, values=None,
+                 default=None,
+                 blurb=None, doc=None):
+
+        if isinstance(coerce, type):
+            coerce = _coerce(coerce)                
+        self.coerce = coerce
+        
+        self.types = as_list(types or [])
+        self.values = as_list(values or [])
+
+        self.default = default
+        
+        self.blurb = blurb        
+        self.doc = doc
+    
+    def check_value(self, value):
+        return generic_value_check(value, types=self.types, coerce=self.coerce, values=self.values)
+        
+    def default_value(self):        
+        return self.default
+            
+    def meta_attribute(self, key):
+        return MetaAttribute(self, key)
+
+                      
 
 #------------------------------------------------------------------------------
 # Extended Props
@@ -545,7 +552,25 @@ class BoolProp(Prop):
                       default=default, doc=doc, blurb=blurb)
 
     
+class RangeProp(Prop):
 
+    def __init__(self, types=None, coerce=None,
+                 default=None,
+                 doc=None, blurb=None,
+                 min=None, max=None, steps=None):
+        
+        Prop.__init__(self, types=types, coerce=coerce, values=cv_bounds(min,max,steps),
+                      default=default,
+                      doc=doc, blurb=blurb)
+
+        self.min = min
+        self.max = max
+
+        if steps is not None and self.min is None:
+            raise RuntimeError("Keyword `steps` may only provided along with a minimum value.")
+        self.steps = steps
+
+    
 #------------------------------------------------------------------------------
 # Container
 #
@@ -609,7 +634,7 @@ if __name__ == "__main__":
         mylistvalue = Prop(types=str,
                            values=cv_valid(['Anne','Niklas']))
 
-        myrange = Prop(types=int,
+        mybounded = Prop(types=int,
                        values=(cv_bounds(0,20),
                                cv_invalid(10)))
 
@@ -621,6 +646,8 @@ if __name__ == "__main__":
 
         mybool = BoolProp()
 
+        myrange = RangeProp(types=int, min=0, max=10, steps=2)
+        
         
     nc = NC()
     nc.myint=None
@@ -649,9 +676,9 @@ if __name__ == "__main__":
     nc.mylistvalue = 'Anne'
     #nc.mylistvalue = 'Anne2'
 
-    nc.myrange = 9
-    #nc.myrange = 10
-    #nc.myrange = 22 # fails
+    nc.mybounded = 9
+    #nc.mybounded = 10
+    #nc.mybounded = 22 # fails
 
 
     print "List"
@@ -679,3 +706,6 @@ if __name__ == "__main__":
     
     #nc.mybool = "Tru" # fails
     #nc.mybool = 52 # fails
+
+    nc.myrange = 0
+    nc.myrange = 10
