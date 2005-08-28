@@ -118,7 +118,7 @@ class View(Container):
     
 
 class Plot(Container):
-    key = Prop(types=str, blurb="Key")
+    key = KeyProp(blurb="Key")
 
     title = Prop(coerce=unicode, blurb="Title")
     comment = Prop(coerce=unicode, blurb="Comment")
