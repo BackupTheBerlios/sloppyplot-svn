@@ -53,8 +53,6 @@ class PostscriptTerminal(Terminal, Container):
                 value_list=['eps', 'landscape', 'portrait'],
                 blurb="mode",
                 doc="output mode")
-    eps = BoolProp(blurb="generate EPS",
-                   doc="generate EPS (Enhanced PostScript)")
     enhanced = Prop(value_list=['enhanced', 'noenhanced'],
                     blurb="PS mode",
                     doc="Enable subscripts, superscripts, mixed fonts")
@@ -87,7 +85,7 @@ class PostscriptTerminal(Terminal, Container):
                          doc="Whether to add a timestamp")
 
 
-    public_props = ['mode', 'eps', 'enhanced',
+    public_props = ['mode', 'enhanced',
                     'duplexing', 'fontname', 'fontsize',
                     'solid', 'color', 'rounded', 'timestamp']
 
