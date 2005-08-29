@@ -99,8 +99,6 @@ class Wrapper(object):
     def use_widget(self, widget):
         self.check_widget_type(widget)
         self.widget = widget
-        self.check_in()
-
 
 
     
@@ -156,16 +154,16 @@ class ComboBox(Wrapper):
         Wrapper.use_widget(self, widget)
 
         # if value_list is available
-        liststore = gtk.ListStore(str, object)
-        widget.set_model(liststore)
+        model = gtk.ListStore(str, object)
+        widget.set_model(model)
         cell = gtk.CellRendererText()
         widget.pack_start(cell, True)
         widget.add_attribute(cell, 'text', 0)
 
         # fill combo
-        liststore.clear()
+        model.clear()
         for value in self.prop.value_list:
-            liststore.append( (value or "<None>", value) )
+            model.append((value or "<None>", value) )
 
             
     #----------------------------------------------------------------------
@@ -177,7 +175,9 @@ class ComboBox(Wrapper):
         except:
             raise ValueError("Failed to retrieve prop value %s in list of available values %s" % (self.get_value(), self.value_list))
 
-        self.widget.set_active(index)
+        model = self.widget.get_model()
+        iter = model.get_iter((index,))
+        self.widget.set_active_iter(iter)
         self.last_value = index
         
     
@@ -256,41 +256,37 @@ def test():
         include_header = BoolProp(default=None)
         
     options = Options(filename="test.dat", mode=u'read-only')
-    
-    # set up Entry
-    entry = Entry(options, 'filename')
-    widget = tree.get_widget('pw_filename')
-    if widget is not None:
-        entry.use_widget(widget)
-    else:
-        print "Widget not found!"
 
-    # set up ComboBox
-    cbox = ComboBox(options, 'mode')
-    widget = tree.get_widget('pw_mode')
-    if widget is not None:
-        cbox.use_widget(widget)
-    else:
-        print "Widget not found!"
 
-    # set up CheckButton
-    cbutton = CheckButton(options, 'include_header')
-    widget = tree.get_widget('pw_include_header')
-    if widget is not None:
-        cbutton.use_widget(widget)
-    else:
-        print "Widget not found!"
+    def wrap(container, key, wrapper_class):
+        wrapper = wrapper_class(container, key)
+        widget_key = 'pw_%s' % key
+        widget = tree.get_widget(widget_key)
+        if widget is not None:
+            wrapper.use_widget(widget)
+        else:
+            raise RuntimeError("Could not find widget '%s'" % widget_key)
+        wrapper.check_in()
+        return wrapper
 
+    to_be_wrapped = {'filename' : Entry,
+                     'mode' : ComboBox,
+                     'include_header' : CheckButton}
+
+    wrapped = {}
+    for k,v in to_be_wrapped.iteritems():
+        wrapped[k] = wrap(options, k, v)    
         
     def finish_up(sender):
-        # check out everything
-        entry.check_out()
-        cbox.check_out()
-        cbutton.check_out()
+        for wrapper in wrapped.itervalues():
+            wrapper.check_out()
         
         # display props
+        print 
         for k,v in options.get_key_value_dict().iteritems():            
             print "%s = %s" % (k,v)
+        print
+        
         gtk.main_quit()
     signals = {"on_button_ok_clicked": finish_up}
     tree.signal_autoconnect(signals)
