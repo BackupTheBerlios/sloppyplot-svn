@@ -40,7 +40,7 @@ except ImportError:
 
 import gtk
 
-from Sloppy.Lib.Props import Container,Prop
+from Sloppy.Lib.Props import Container,Prop, BoolProp
 from Sloppy.Base import uwrap
 
 
@@ -58,7 +58,11 @@ class Wrapper(object):
         self.container = container
         self.key = key
         self.widget = None
+        self.last_value = None
         self.init()
+
+    def init(self):
+        pass
 
     #----------------------------------------------------------------------
     # Helper Functions
@@ -103,33 +107,6 @@ class Wrapper(object):
 class Entry(Wrapper):
 
     widget_type = gtk.Entry
-
-    #----------------------------------------------------------------------
-
-    def init(self):
-        self.last_value = None
-
-    def check_in(self):
-        self.last_value = self.get_value()
-        
-        if self.last_value is not None:
-            value = unicode(self.last_value)
-        else:
-            value = ""        
-        self.widget.set_text(value)
-
-    def check_out(self, undolist=[]):           
-        value = self.widget.get_text()
-        if len(value) == 0: value = None
-        else: value = self.prop.check_value(value)
-
-        if value != self.last_value:
-            uwrap.set(self.container, self.key, value, undolist=undolist)
-            self.last_value = value
-
-
-    #----------------------------------------------------------------------
-    # UI Stuff
     
     def use_widget(self, widget):
         Wrapper.use_widget(self, widget)
@@ -149,6 +126,111 @@ class Entry(Wrapper):
             print "Entry Value is wrong, resetting."
             self.widget.set_text(self.last_value)
 
+    #----------------------------------------------------------------------
+
+    def check_in(self):
+        self.last_value = self.get_value()
+        
+        if self.last_value is not None:
+            value = unicode(self.last_value)
+        else:
+            value = ""        
+        self.widget.set_text(value)
+
+    def check_out(self, undolist=[]):           
+        value = self.widget.get_text()
+        if len(value) == 0: value = None
+        else: value = self.prop.check_value(value)
+
+        if value != self.last_value:
+            uwrap.smart_set(self.container, self.key, value, undolist=undolist)
+            self.last_value = value
+
+
+
+class ComboBox(Wrapper):
+    
+    widget_type = gtk.ComboBox
+
+    def use_widget(self, widget):
+        Wrapper.use_widget(self, widget)
+
+        # if value_list is available
+        liststore = gtk.ListStore(str, object)
+        widget.set_model(liststore)
+        cell = gtk.CellRendererText()
+        widget.pack_start(cell, True)
+        widget.add_attribute(cell, 'text', 0)
+
+        # fill combo
+        liststore.clear()
+        for value in self.prop.value_list:
+            liststore.append( (value or "<None>", value) )
+
+            
+    #----------------------------------------------------------------------
+
+    
+    def check_in(self):
+        try:
+            index = self.prop.value_list.index(self.get_value())
+        except:
+            raise ValueError("Failed to retrieve prop value %s in list of available values %s" % (self.get_value(), self.value_list))
+
+        self.widget.set_active(index)
+        self.last_value = index
+        
+    
+    def check_out(self, undolist=[]):
+        index = self.widget.get_active()
+        if index != self.last_value:
+            if index < 0:
+                value = None
+            else:
+                model = self.widget.get_model()
+                value = model[index][1]
+            uwrap.smart_set(self.container, self.key, value, undolist=undolist)
+            self.last_value = index
+        
+        
+
+class CheckButton(Wrapper):
+
+    widget_type = gtk.CheckButton
+
+    def use_widget(self, widget):
+        Wrapper.use_widget(self, widget)
+        self.widget.connect('toggled', self.on_toggled)
+        
+    def on_toggled(self, widget):
+        if self.widget.get_inconsistent() is True:
+            self.widget.set_inconsistent(False)
+
+    def check_in(self):
+        value = self.get_value()
+        self.last_value = value
+
+        if value is None:
+            self.widget.set_inconsistent(True)
+        else:
+            self.widget.set_inconsistent(False)
+            self.widget.set_active(value is True)
+
+    def check_out(self, undolist=[]):
+        # determine value (None,False,True)
+        if self.widget.get_inconsistent() is True:
+            value = None
+        else:
+            value = self.widget.get_active()
+
+        # set new value
+        if self.last_value != value:
+            uwrap.set(self.container, self.key, value, undolist=undolist)
+            self.last_value = value
+
+
+
+    
 
 
 #------------------------------------------------------------------------------
@@ -169,21 +251,42 @@ def test():
     # set up container
     class Options(Container):
         filename = Prop(coerce=unicode)
-    options = Options(filename="test.dat")
+        mode = Prop(coerce=unicode,
+                    value_list=[None, u'read-only', u'write-only', u'read-write'])
+        include_header = BoolProp(default=None)
+        
+    options = Options(filename="test.dat", mode=u'read-only')
     
     # set up Entry
     entry = Entry(options, 'filename')
-    
-    # try to connect to an existing widget
     widget = tree.get_widget('pw_filename')
     if widget is not None:
         entry.use_widget(widget)
     else:
         print "Widget not found!"
 
+    # set up ComboBox
+    cbox = ComboBox(options, 'mode')
+    widget = tree.get_widget('pw_mode')
+    if widget is not None:
+        cbox.use_widget(widget)
+    else:
+        print "Widget not found!"
+
+    # set up CheckButton
+    cbutton = CheckButton(options, 'include_header')
+    widget = tree.get_widget('pw_include_header')
+    if widget is not None:
+        cbutton.use_widget(widget)
+    else:
+        print "Widget not found!"
+
+        
     def finish_up(sender):
         # check out everything
         entry.check_out()
+        cbox.check_out()
+        cbutton.check_out()
         
         # display props
         for k,v in options.get_key_value_dict().iteritems():            
