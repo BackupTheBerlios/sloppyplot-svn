@@ -77,7 +77,7 @@ def get_action_group(uimanager, key):
 
 
 
-def add_scrollbars(widget, viewport=False):
+def add_scrollbars(widget, viewport=False, show=True):
     " Returns a scrollbar window that wraps the given widget. "
     sw = gtk.ScrolledWindow()
     sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
@@ -86,6 +86,8 @@ def add_scrollbars(widget, viewport=False):
         sw.add_with_viewport(widget)
     else:
         sw.add(widget)
+    if show is True:
+        sw.show()
     return sw
 
 

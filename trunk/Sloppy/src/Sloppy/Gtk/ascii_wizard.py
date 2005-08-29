@@ -41,16 +41,32 @@ class ImportWizard(gtk.Dialog):
                             gtk.DIALOG_MODAL|gtk.DIALOG_DESTROY_WITH_PARENT,
                             (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
                             gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
+
         self.set_size_request(480,320)
         
-        self.treeview = self.construct_treeview()        
-        self.populate_preview(filenames[0])
+        #awp = AsciiWizardPage(filenames[0])
+        #awp.show()        
+        #self.vbox.pack_end(awp, True, True)
 
-        sw = uihelper.add_scrollbars(self.treeview)
+
+#------------------------------------------------------------------------------
+#
+#
+
+class WizardPage(gtk.VBox):
+    pass
+
+
+class AsciiWizardPage(WizardPage):
+
+    def __init__(self, filename):
+        WizardPage.__init__(self)
+        
+        self.treeview = self.construct_treeview()
         self.treeview.show()
+        
+        self.populate_preview(filename)
 
-        self.vbox.pack_end(sw, True, True)
-        sw.show()
 
         self.importer = ImporterRegistry.new_instance('ASCII')
 
@@ -59,26 +75,29 @@ class ImportWizard(gtk.Dialog):
 
         def redisplay(sender, event, treeview):
             treeview.queue_draw()
+
+
             
-        pw_skip, box_skip = propwidgets.construct_pw_in_box(self.importer, 'skip')
-        pw_skip.widget.connect('focus-out-event', redisplay, self.treeview)
-        self.pw_skip = pw_skip        
-        box_skip.show()
+#         pw_skip, box_skip = propwidgets.construct_pw_in_box(self.importer, 'header_lines')
+#         pw_skip.widget.connect('focus-out-event', redisplay, self.treeview)
+#         self.pw_skip = pw_skip        
+#         box_skip.show()
 
         
-        pw_designations, box_designations = propwidgets.construct_pw_in_box(self.importer, 'designations')
-        #pw_designations.connect('
-        box_designations.show()
+#         pw_designations, box_designations = propwidgets.construct_pw_in_box(self.importer, 'designations')
+#         #pw_designations.connect('
+#         box_designations.show()
 
-        hbox = gtk.HBox()
-        hbox.pack_start(box_skip)
-        hbox.pack_start(box_designations)
-        hbox.show()
+#         hbox = gtk.HBox()
+#         hbox.pack_start(box_skip)
+#         hbox.pack_start(box_designations)
+#         hbox.show()
         
-        frame.add(hbox)
-
-        self.vbox.pack_start(frame, False, True)
-        frame.show()
+#         frame.add(hbox)
+#         frame.show()
+        
+#         self.pack_start(frame, False, True)
+#         self.pack_start(uihelper.add_scrollbars(self.treeview), True, True)
         
         
         # properties to determine:
@@ -86,6 +105,7 @@ class ImportWizard(gtk.Dialog):
         # designations (=repeating pattern)
         # delimiter | custom_delimiter
         # nr of columns
+
 
     def construct_treeview(self):
        
@@ -95,7 +115,7 @@ class ImportWizard(gtk.Dialog):
             
             cell.set_property('text', value)
 
-            print "==>", self.pw_skip.get_value()
+            #print "==>", self.pw_skip.get_value()
             foreground = ('blue', 'black')[not linenr < self.pw_skip.get_value()]
             cell.set_property('foreground', foreground)
                 
