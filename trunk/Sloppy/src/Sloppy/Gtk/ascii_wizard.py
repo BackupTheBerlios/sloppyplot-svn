@@ -25,7 +25,7 @@ logger = logging.getLogger('gtk.ascii_wizard')
 import pygtk # TBR
 pygtk.require('2.0') # TBR
 
-import gtk, gobject
+import gtk, gobject, gtk.glade
 
 import uihelper
 import propwidgets
@@ -44,9 +44,9 @@ class ImportWizard(gtk.Dialog):
 
         self.set_size_request(480,320)
         
-        #awp = AsciiWizardPage(filenames[0])
-        #awp.show()        
-        #self.vbox.pack_end(awp, True, True)
+        awp = AsciiWizardPage(filenames[0])
+        awp.show()        
+        self.vbox.pack_end(awp, True, True)
 
 
 #------------------------------------------------------------------------------
@@ -59,6 +59,8 @@ class WizardPage(gtk.VBox):
 
 class AsciiWizardPage(WizardPage):
 
+    gladefile = './Glade/ascii_wizard.glade'
+    
     def __init__(self, filename):
         WizardPage.__init__(self)
         
@@ -77,6 +79,27 @@ class AsciiWizardPage(WizardPage):
             treeview.queue_draw()
 
 
+        # construct property widgets
+        pwdict = {}
+        for key in ['header_lines', 'designations']:
+            print "Creating propwidget %s" % key
+            pwdict[key] = propwidgets.construct_pw(self.importer, key)        
+            
+        # construct ui from glade file
+        print "Setting up GUI"
+        self.tree = gtk.glade.XML(self.gladefile, 'wizard_page_1')
+        page = self.tree.get_widget('wizard_page_1')
+        page.show()
+        self.add(page)
+
+        # fill in property widgets
+        print dir(self.tree)
+        for key, pw in pwdict.iteritems():
+            print "Filling in property widget %s" % key
+            widget = self.tree.get_widget('pw_%s' % key)
+            print "..Found %s" % widget
+            if widget is not None:
+                widget.destroy()
             
 #         pw_skip, box_skip = propwidgets.construct_pw_in_box(self.importer, 'header_lines')
 #         pw_skip.widget.connect('focus-out-event', redisplay, self.treeview)
