@@ -20,7 +20,6 @@ parser.add_option("-q","--quiet",action="store_true", dest="verbose",
                   help="don't print status messages to stdout")
 parser.add_option("-d","--debug",action="store_true", dest="debug",
                   default=True,help="print debug messages to stdout")
-
 parser.add_option('','--use',dest="use",default="gtk",
                   help="specify frontend to use (currently only GTK)")
 
@@ -43,6 +42,7 @@ else:
         print "(normal mode)"
         logger.setLevel(logging.INFO)
 
+    
 # process arguments
 if len(args) > 0:
     filename = args.pop()
