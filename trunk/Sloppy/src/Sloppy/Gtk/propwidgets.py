@@ -108,7 +108,7 @@ class PW(object):
     def get_value(self):
         return getattr( self.container, self.key)
     def get_prop(self):
-        return self.container.get_prop(self.key)
+        return self.container.props[self.key]
     prop = property(get_prop)
 
 
@@ -392,7 +392,7 @@ class PWCheckButton(PW):
 # CONVENIENCE METHODS
 
 def construct_pw(container, key):
-    prop = container.get_prop(key)
+    prop = container.props[key]
     
     if prop.value_list is not None:
         pw = PWComboBox(container, key)

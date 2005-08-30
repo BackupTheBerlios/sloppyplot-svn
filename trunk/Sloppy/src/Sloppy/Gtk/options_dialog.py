@@ -47,7 +47,7 @@ class OptionsDialog(gtk.Dialog):
         if hasattr(container, 'public_props'):
             props = container.public_props
         else:
-            props = self.container.get_proplist()
+            props = self.container.props.values()
 
         if len(props) == 0:
             raise NoOptionsError

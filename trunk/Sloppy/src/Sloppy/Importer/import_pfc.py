@@ -50,7 +50,7 @@ class Importer(dataio.Importer):
         options = {'ncols' : ncols,
                    'typecodes' : 'f',
                    'designations' : ['X','Y'] * (ncols/2),
-                   'skip' : 1,
+                   'header_lines' : 1,
                    'keys' : self.column_keys,
                    'delimiter' : ','}
                            

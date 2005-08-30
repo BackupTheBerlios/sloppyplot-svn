@@ -159,7 +159,7 @@ def new_lineplot2d(**kwargs):
     
     # pass only those keywords to the plot that are meaningful
     plot_kwargs = dict()
-    for key in Plot.get_propdict().keys():
+    for key in Plot.props.keys():
         if kwargs.has_key(key):
             plot_kwargs[key] = kwargs.pop(key)
 

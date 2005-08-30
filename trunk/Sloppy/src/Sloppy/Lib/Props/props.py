@@ -22,23 +22,6 @@
 import weakref
 import re
 
-# NOTE
-
-# Inherited properties don't work, because Container.__init__
-# only instantiates all properties of self.__class__ and not
-# those of all sub-classes.
-# I have not yet written a workaround for that.
-
-
-# NOTE
-
-# The keyword argument 'cast' could have been named 'coerce'.  While
-# 'cast' should be an explicit type conversion, 'coerce' is an
-# implicit one.  It was hard for me to decide which one it is.  After
-# all, for each Prop, you can _specify_ the cast operation.
-
-
-        
 
 
 #------------------------------------------------------------------------------
@@ -110,6 +93,7 @@ def generic_value_check(value, types=(), coerce=None, values=()):
             item(value)
 
     return value
+
 
 
 #------------------------------------------------------------------------------
@@ -343,7 +327,7 @@ class MetaAttribute(object):
         self.prop = prop
 
     def __get__(self, inst, cls=None):
-        rv = inst.get_value(self.key)
+        rv = inst.values[self.key]
         if rv is not None:
             return rv
         else:
@@ -352,7 +336,7 @@ class MetaAttribute(object):
     def __set__(self, inst, value):
         try:
             value = self.prop.check_value(value)
-            inst.set_value( self.key, value)
+            inst.values[self.key] = value
         except TypeError, msg:
             raise TypeError("Failed to set property '%s' of container '%s' to '%s':\n  %s" %
                             (self.key, repr(inst), value, msg))
@@ -361,21 +345,21 @@ class MetaAttribute(object):
                              (self.key, repr(inst), value, msg))
 
 
-
-class WeakMetaAttribute(MetaAttribute):
+# untested, therefore commented out
+# class WeakMetaAttribute(MetaAttribute):
     
-    def __get__(self, inst, cls=None):
-        value = MetaAttribute.__get__(inst,cls)
-        if value is not None:
-            return value()
-        else:
-            return value
+#     def __get__(self, inst, cls=None):
+#         value = MetaAttribute.__get__(inst,cls)
+#         if value is not None:
+#             return value()
+#         else:
+#             return value
 
-    def __set__(self, inst, value):
-        value = self.prop.check_value(value)
-        if value is not None:
-            value = weakref.ref(value)
-        inst.set_value(self.key, value)
+#     def __set__(self, inst, value):
+#         value = self.prop.check_value(value)
+#         if value is not None:
+#             value = weakref.ref(value)
+#         inst.set_value(self.key, value)
 
 
 
@@ -477,8 +461,13 @@ class Prop:
     
     def check_value(self, value):
         return generic_value_check(value, types=self.types, coerce=self.coerce, values=self.values)
+
+    def reset_value(self):
+        " Reset value is requested upon first initialization and when using Container.reset. "
+        return None
         
-    def default_value(self):        
+    def default_value(self):
+        " Default value is requested if value is None. "
         return self.default
             
     def meta_attribute(self, key):
@@ -508,9 +497,9 @@ class ListProp(Prop):
             raise TypeError("The value '%s' has %s while it should be a list/tuple." %
                             (value, type(value)))
 
-    def default_value(self):
+    def reset_value(self):
         return TypedList(types=self.types,coerce=self.coerce,values=self.values)
-
+    
 
                 
 class DictProp(Prop):
@@ -529,22 +518,22 @@ class DictProp(Prop):
             raise TypeError("The value '%s' has %s while it should be a dict." %
                             (value, type(value)))
 
-    def default_value(self):
+    def reset_value(self):
         return TypedDict(types=self.types,coerce=self.coerce,values=self.values)
 
 
-#
-# UNTESTED!
-#
-class WeakRefProp(Prop):
+# #
+# # UNTESTED!
+# #
+# class WeakRefProp(Prop):
 
-    def __init__(self, types=None, coerce=None, values=None,
-                 doc=None, blurb=None):
-        Prop.__init__(self, types=types, coerce=coerce, values=values,
-                      doc=doc, blurb=blurb)
+#     def __init__(self, types=None, coerce=None, values=None,
+#                  doc=None, blurb=None):
+#         Prop.__init__(self, types=types, coerce=coerce, values=values,
+#                       doc=doc, blurb=blurb)
 
-    def meta_attribute(self, key):
-        return WeakMetaAttribute(self, key)
+#     def meta_attribute(self, key):
+#         return WeakMetaAttribute(self, key)
 
 
     
@@ -588,92 +577,79 @@ class KeyProp(Prop):
 class Container(object):
 
     def __init__(self, **kwargs):
+        
+        # Initialize props and values dict
+        object.__setattr__(self, 'values', {})
+        object.__setattr__(self, 'props', {})
 
-        for key, value in self.__class__.__dict__.iteritems():
-            if isinstance(value, Prop):
-                attrName = '_XO_%s' % key                
-                object.__setattr__(self, attrName, value.default_value())
+        # We need to init the Props of all classes that the object instance
+        # belongs to.  To give meaningful error messages, we reverse the
+        # order and define the base class Props first.
+        classlist = list(object.__getattribute__(self,'__class__').__mro__[:-1])
+        classlist.reverse()
+        
+        for klass in classlist:
+            # initialize default values
+            for key, value in klass.__dict__.iteritems():
+                if isinstance(value, Prop):
+                    if self.props.has_key(key):
+                        raise KeyError("%s defines Prop '%s', which has already been defined by a base class!" % (klass,key)  )
+                    self.props[key] = value
+                    self.values[key] = value.reset_value()
+                    kwvalue = kwargs.pop(key,None)
+                    if kwvalue is not None:
+                        self.__setattr__(key,kwvalue)
 
-        for k,v in kwargs.iteritems():
-            #v = v or value.default_value())
-            #print "Setting value ", attrName, v, type(v)
-            if v is not None:
-                self.__setattr__(k, v)
+        # complain if there are unused keyword arguments
+        if len(kwargs) > 0:
+            raise ValueError("Unrecognized keyword arguments: %s" % kwargs)
 
-#         if len(kwargs) > 0:
-#             raise RuntimeError("Unrecognized properties: %s" % kwargs)
 
+    #----------------------------------------------------------------------
+    # Setting/Getting Magic
+    #
+    
     def __setattr__(self, key, value):
-        prop = self.__class__.__dict__.get(key, None)
+        if key in ('props','values'):
+            raise RuntimeError("Attributes 'props' and 'values' cannot be altered for Container objects.")
+        
+        prop = object.__getattribute__(self, 'props').get(key,None)
         if prop is not None and isinstance(prop, Prop):
             prop.meta_attribute(key).__set__(self, value)
         else:
             object.__setattr__(self, key, value)
     
-    def __getattribute__(self, key):
-        if '_' not in key[:1]:
-            prop = self.__class__.__dict__.get(key, None)
-            if prop is not None and isinstance(prop, Prop):
-                return prop.meta_attribute(key).__get__(self, None)
-        return object.__getattribute__(self, key)
-
-    def set_value(self, key, val):
-        attrName = '_XO_%s' % key
-        object.__setattr__(self, attrName, val)
-
-    def set_values(self, *args, **kwargs):
-        arglist = list(args)
-        while len(arglist) > 1:
-            key = arglist.pop(0)
-            value = arglist.pop(0)
-            self.set_value(key, value)
-
-        for k,v in kwargs.iteritems():
-            self.set_value(k,v)
-            
-    def get_value(self, key, default=None):
-        attrName = '_XO_%s' % key
-        return object.__getattribute__(self, attrName)
-        return rv
-
-    def get_values(self, *keys):
-        rv = list()
-        for key in keys:
-            rv.append(self.get_value(key))
-        return tuple(rv)
-            
-
-    def get_prop(cls, key):
-        dict = cls.__dict__
-        if dict.has_key(key):
-            return dict.get(key, None)
+    def __getattribute__(self, key, default=None):        
+        if key in ('props','values'):
+            return object.__getattribute__(self, key)
         else:
-            raise KeyError("No property %s defined for class %s" % (key, str(cls)))
-    get_prop = classmethod(get_prop)
+            prop = object.__getattribute__(self, 'props').get(key,None)
+            if prop is not None and isinstance(prop, Prop):
+                return prop.meta_attribute(key).__get__(self, default)
+            else:
+                return object.__getattribute__(self, key)
 
-    def get_proplist(cls):
-        rv = list()
-        for k, v in cls.__dict__.iteritems():
-            if isinstance(v, Prop):
-                rv.append(k)
-        return rv
-    get_proplist = classmethod(get_proplist)
+
+    def set(self, key, value):
+        self.__setattr__(key, value)
+    set_value = set
+
     
-    def get_propdict(cls):
-        rv = dict()
-        for k,v in cls.__dict__.iteritems():
-            if isinstance(v, Prop):
-                rv[k] = v
-        return rv
-    get_propdict = classmethod(get_propdict)
+    def get(self, key, default=None):
+        return self.__getattribute__(key, default)
+    get_value = get
 
 
-    def get_key_value_dict(self):
-        rv = dict()
-        for key, prop in self.get_propdict().iteritems():
-            rv[key] = self.get_value(key)
-        return rv
-    
+    # This might be a candiate for Props
+            
+    #def copy(self, data=True):
+    #    kwargs = self.values.copy()
+    #    if data is False:
+    #        kwargs.pop('data')
+    #    return Column(**kwargs)
+
+
+
 
 
 #------------------------------------------------------------------------------
@@ -682,7 +658,10 @@ class Container(object):
 
 if __name__ == "__main__":
 
-    class NC(Container):
+    class CBaseContainer(Container):
+        myinherited = Prop(types=float)
+        
+    class NC(CBaseContainer):
         myint = Prop(types=(int,None),
                      default=5)
 
@@ -711,12 +690,11 @@ if __name__ == "__main__":
         mybool = BoolProp()
 
         myrange = RangeProp(coerce=int, min=0, max=10, steps=2)
-        
+        #myinherited = BoolProp()
         
     nc = NC(myrange='4')
     print nc.myrange, type(nc.myrange)
 
-    raise SystemExit
 
     nc.myint=None
     print nc.myint
@@ -779,3 +757,6 @@ if __name__ == "__main__":
     nc.myrange = '4'
     print nc.myrange, type(nc.myrange)
     #nc.mylist.append(None)
+
+    nc.myinherited = 4.2
+    print nc.myinherited, type(nc.myinherited)

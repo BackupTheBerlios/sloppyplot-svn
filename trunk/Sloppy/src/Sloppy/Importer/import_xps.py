@@ -103,7 +103,7 @@ class Importer(dataio.Importer):
                        'designations': self.ranges * ['X','Y'],
                        'splitter' : splitter,
                        'keys' : keys,
-                       'skip' : 33}
+                       'header_lines' : 33}
 
             print "Calling ASCII IMPORT"
             importer = dataio.ImporterRegistry.new_instance('ASCII', **options)
@@ -119,7 +119,7 @@ class Importer(dataio.Importer):
                        'ncols' : self.ranges * 2,
                        'designations': self.ranges * ['X','Y'],
                        'splitter' : splitter,
-                       'skip' : 33}            
+                       'header_lines' : 33}            
                        
             importer = dataio.ImporterRegistry.new_instance('ASCII', **options)
             return importer.read_table_from_stream(fd)

@@ -225,7 +225,7 @@ def toElement(project):
             # netCDF does not like unicode!
             n = 0
             for column in tbl.get_columns():
-                kw = column.get_key_value_dict()
+                kw = column.values.copy()
                 kw.pop('key')
                 kw.pop('data')
                 if len(kw) > 0:

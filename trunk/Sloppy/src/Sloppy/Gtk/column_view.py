@@ -131,7 +131,7 @@ class TableColumnView(gtk.TreeView):
         while iter:
             column = model.get_value(iter, 0)
             # copy all properties except for the actual data
-            kwargs = column.get_key_value_dict()
+            kwargs = column.values.copy()
             kwargs.pop('data')
             uwrap.set(self.table.get_column(n), **kwargs)             # ADD Undo
             iter = model.iter_next(iter)

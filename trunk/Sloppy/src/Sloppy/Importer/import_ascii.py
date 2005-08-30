@@ -57,7 +57,7 @@ class Importer(dataio.Importer):
                       min=0, steps=1,
                       default=None)
 
-    skip = RangeProp(blurb="# Skipped lines",
+    header_lines = RangeProp(blurb="Number of header lines",
                      coerce=int,
                      min=0, default=0)
     
@@ -74,7 +74,7 @@ class Importer(dataio.Importer):
     
     splitter = Prop(types=object)
 
-    public_props = ['delimiter', 'custom_delimiter', 'ncols', 'skip']
+    public_props = ['delimiter', 'custom_delimiter', 'ncols', 'header_lines']
 
     
 
@@ -88,11 +88,11 @@ class Importer(dataio.Importer):
         typecodes = self.typecodes
         ncols = self.ncols
 
-        # skip lines if requested
-        skip = self.skip
-        while skip > 0:
+        # skip header lines if requested
+        header_lines = self.header_lines
+        while header_lines > 0:
             line = fd.readline()
-            skip -= 1
+            header_lines -= 1
 
         # skip comments
         line = '#'
