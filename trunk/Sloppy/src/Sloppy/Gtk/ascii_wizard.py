@@ -22,16 +22,21 @@
 import logging
 logger = logging.getLogger('gtk.ascii_wizard')
 
-import pygtk # TBR
-pygtk.require('2.0') # TBR
+try:
+    import pygtk
+    pygtk.require('2.0')
+except ImportError:
+    pass
 
-import gtk, gobject, gtk.glade
+import gtk, gtk.glade
 
 import uihelper
-import propwidgets
+import pwconnect, pwglade
 
 from Sloppy.Base.dataio import ImporterRegistry
 
+
+#------------------------------------------------------------------------------
 
 class ImportWizard(gtk.Dialog):
     
@@ -49,6 +54,8 @@ class ImportWizard(gtk.Dialog):
         self.vbox.pack_end(awp, True, True)
 
 
+
+
 #------------------------------------------------------------------------------
 #
 #
@@ -63,111 +70,74 @@ class AsciiWizardPage(WizardPage):
     
     def __init__(self, filename):
         WizardPage.__init__(self)
-        
-        self.treeview = self.construct_treeview()
-        self.treeview.show()
-        
-        self.populate_preview(filename)
 
-
-        self.importer = ImporterRegistry.new_instance('ASCII')
-
-        frame = gtk.Frame()
-
-
-        def redisplay(sender, event, treeview):
-            treeview.queue_draw()
-
-
-        # construct property widgets
-        pwdict = {}
-        for key in ['header_lines', 'designations']:
-            print "Creating propwidget %s" % key
-            pwdict[key] = propwidgets.construct_pw(self.importer, key)        
-            
         # construct ui from glade file
-        print "Setting up GUI"
-        self.tree = gtk.glade.XML(self.gladefile, 'wizard_page_1')
-        page = self.tree.get_widget('wizard_page_1')
+        tree = gtk.glade.XML(self.gladefile, 'wizard_page_1')
+        page = tree.get_widget('wizard_page_1')
         page.show()
         self.add(page)
-
-        # fill in property widgets
-        print dir(self.tree)
-        for key, pw in pwdict.iteritems():
-            print "Filling in property widget %s" % key
-            widget = self.tree.get_widget('pw_%s' % key)
-            print "..Found %s" % widget
-            if widget is not None:
-                widget.destroy()
-            
-#         pw_skip, box_skip = propwidgets.construct_pw_in_box(self.importer, 'header_lines')
-#         pw_skip.widget.connect('focus-out-event', redisplay, self.treeview)
-#         self.pw_skip = pw_skip        
-#         box_skip.show()
-
-        
-#         pw_designations, box_designations = propwidgets.construct_pw_in_box(self.importer, 'designations')
-#         #pw_designations.connect('
-#         box_designations.show()
-
-#         hbox = gtk.HBox()
-#         hbox.pack_start(box_skip)
-#         hbox.pack_start(box_designations)
-#         hbox.show()
-        
-#         frame.add(hbox)
-#         frame.show()
-        
-#         self.pack_start(frame, False, True)
-#         self.pack_start(uihelper.add_scrollbars(self.treeview), True, True)
-        
-        
-        # properties to determine:
-        # skip
-        # designations (=repeating pattern)
-        # delimiter | custom_delimiter
-        # nr of columns
+       
+        # Set up import object which hold the options and
+        # create the connection to the GUI.
+        self.importer = ImporterRegistry.new_instance('ASCII')             
+        cf = pwglade.ConnectorFactory()
+        self.connectors = cf.create_from_glade_tree(self.importer, tree)
+        pwglade.check_in(self.connectors)
 
 
-    def construct_treeview(self):
+        self.header_lines = 0
+
+        def update_header_lines(sender, event):
+            try: self.header_lines = int(sender.get_text())
+            except: self.header_lines = 0
+            self.treeview.queue_draw()
+
+        widget = self.connectors['header_lines'].widget
+        widget.connect('focus-out-event', update_header_lines)
+        
+        # populate treeview
+        self.treeview = tree.get_widget('treeview_preview')
+        self.prepare_treeview()
+        self.populate_preview(filename)
+        
+
+
+    def prepare_treeview(self):
        
         def render_line(column, cell, model, iter):
             linenr = model.get_value(iter, 0)
             value = model.get_value(iter, 1)
             
             cell.set_property('text', value)
-
-            #print "==>", self.pw_skip.get_value()
-            foreground = ('blue', 'black')[not linenr < self.pw_skip.get_value()]
+            foreground = ('blue', 'black')[not linenr <= self.header_lines]
             cell.set_property('foreground', foreground)
                 
 
         model = gtk.ListStore(int, str) # linenr, line
-        treeview = gtk.TreeView(model)
-
+        self.treeview.set_model(model)
+        
         cell = gtk.CellRendererText()
         column = gtk.TreeViewColumn('linenr', cell, text=0)
-        treeview.append_column(column)
+        self.treeview.append_column(column)
 
+        cell = gtk.CellRendererText()
         column = gtk.TreeViewColumn('line', cell)
         column.set_cell_data_func(cell, render_line)
-        treeview.append_column(column)
-        return treeview
+        self.treeview.append_column(column)
 
 
     def populate_preview(self, filename):
+        # we try to include the first N lines into the preview
+        N = 99
         
-        try:
-            fd = open(filename, 'r')
-        except IOError:
-            raise
-
+        try: fd = open(filename, 'r')
+        except IOError:  raise
+        
         model = self.treeview.get_model()
         model.clear()
         
         try:
-            for j in range(1,99):
+            for j in range(1,N):
                 line = fd.readline()
                 if len(line) == 0:
                     break

@@ -42,24 +42,80 @@ import gtk
 
 import pwconnect
 
-from Sloppy.Lib.Props import Container,Prop, BoolProp
-
-#------------------------------------------------------------------------------
-
-
 
 
 #------------------------------------------------------------------------------
 
+class ConnectorFactory:
+
+    def __init__(self):
+
+        # create mapping of available Connectors
+        available = {}
+        for key, classwrapper in pwconnect.Registry.iteritems():
+            available[key] = classwrapper.klass
+        self.available = available
+
+
+    def create_from_glade_tree(self, container, tree):
+        
+        # Find the widgets in the glade file that match the props
+        # of the given Container.  If e.g. the prop key is 'filename',
+        # then we are looking for a widget called 'pw_filename'.
+        # A Connector that matches the widget's type is created.
+        connectors = {}
+        keys = container.get_props().keys()
+        for key in keys:
+            widget_key = 'pw_%s' % key
+            widget = tree.get_widget(widget_key)
+            if widget is None:
+                logger.error("No widget found for prop '%s'" % key)
+                continue
+            try:
+                connector = self.available[widget.__class__.__name__](container, key)
+            except KeyError:
+                raise RuntimeError("No matching Connector available for widget '%s' of %s" % (widget_key, widget.__class__.__name__))
+            connector.use_widget(widget)
+            connectors[key] = connector
+
+        return connectors
+
+        
+
+#------------------------------------------------------------------------------
+
+def check_in(connectors):
+    for connector in connectors.itervalues():
+        connector.check_in()
+
+def check_out(connectors):
+    for connector in connectors.itervalues():
+        connector.check_out()
+
+
+def create_changeset(container, working_copy):
+    # find differences to old Container
+    changeset = {}
+    for key, value in working_copy.get_values().iteritems():
+        old_value = container.get_value(key)
+        if value != old_value:
+            changeset[key] = value
+    return changeset
+
+
+#------------------------------------------------------------------------------        
+# Testing Area
+#
+
+from Sloppy.Lib.Props import Container,Prop, BoolProp, ListProp
 
 # set up container
+    
 class Options(Container):
     filename = Prop(coerce=unicode)
     mode = Prop(coerce=unicode,
                 value_list=[None, u'read-only', u'write-only', u'read-write'])
     include_header = BoolProp(default=None)
-        
-
 
 
 
@@ -70,48 +126,31 @@ def test():
     widgetname = 'main_box'
     myoptions = Options(filename="test.dat", mode=u'read-only')
     options = myoptions.copy()
-    
+
+    # create window and add widget created by libglade
     win = gtk.Window()
     win.connect("destroy", gtk.main_quit)
+
+    # This is the actual wrapping 
     tree = gtk.glade.XML(filename, widgetname)    
     widget = tree.get_widget(widgetname)
     win.add(widget)
-
-    print options._values
-    print options._props
-
-    def wrap(container, key, wrapper_class):
-        wrapper = wrapper_class(container, key)
-        widget_key = 'pw_%s' % key
-        widget = tree.get_widget(widget_key)
-        if widget is not None:
-            wrapper.use_widget(widget)
-        else:
-            raise RuntimeError("Could not find widget '%s'" % widget_key)
-        wrapper.check_in()
-        return wrapper
-
-    to_be_wrapped = {'filename' : pwconnect.Entry,
-                     'mode' : pwconnect.ComboBox,
-                     'include_header' : pwconnect.CheckButton}
-
-    wrapped = {}
-    for k,v in to_be_wrapped.iteritems():
-        wrapped[k] = wrap(options, k, v)    
-        
+    cf = ConnectorFactory()
+    connectors = cf.create_from_glade_tree(options, tree)
+    check_in(connectors)
+       
     def finish_up(sender):
-        for wrapper in wrapped.itervalues():
-            wrapper.check_out()
-        
-        # display props
-        print 
-        for k,v in options.get_values().iteritems():            
-            print "%s = %s" % (k,v)
-        print
-        
+        check_out(connectors)
+        changeset = create_changeset(myoptions, options)
+        myoptions.set_values(**changeset)
+        print "CHANGES: ", changeset        
+        print "MYOPTIONS: ", myoptions.get_values()
         gtk.main_quit()
     signals = {"on_button_ok_clicked": finish_up}
     tree.signal_autoconnect(signals)
+
+
+        
 
     win.show()
     gtk.main()

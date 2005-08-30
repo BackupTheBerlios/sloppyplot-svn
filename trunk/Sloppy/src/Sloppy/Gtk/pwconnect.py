@@ -40,6 +40,7 @@ except ImportError:
 
 import gtk
 
+from Sloppy.Base import klassregistry
 from Sloppy.Lib.Props import Container,Prop, BoolProp
 
 
@@ -98,6 +99,9 @@ class Connector(object):
         self.check_widget_type(widget)
         self.widget = widget
 
+Registry = klassregistry.Registry("Connectors")
+
+
 
     
 class Entry(Connector):
@@ -139,6 +143,8 @@ class Entry(Connector):
         else: value = self.prop.check_value(value)
 
         self.set_value(value)
+
+Registry.register('Entry', Entry)
 
 
 class ComboBox(Connector):
@@ -186,7 +192,10 @@ class ComboBox(Connector):
             value = model[index][1]
 
         self.set_value(value)        
-        
+
+Registry.register('ComboBox', ComboBox)
+
+
 
 class CheckButton(Connector):
 
@@ -219,6 +228,7 @@ class CheckButton(Connector):
 
         self.set_value(value)
 
+Registry.register('CheckButton', CheckButton)
 
 
 

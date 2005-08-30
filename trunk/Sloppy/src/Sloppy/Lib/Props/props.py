@@ -654,8 +654,9 @@ class Container(object):
 
     def get_values(self, include=None, exclude=None):
         if include is None:
-            include = self._values.keys()
-        include = [key for key in include if key not in exclude]
+            include = self._values.keys()        
+        if exclude is not None:
+            include = [key for key in include if key not in exclude]
 
         rv = {}
         for key in include:
@@ -674,7 +675,8 @@ class Container(object):
     def get_props(self, include=None, exclude=None):
         if include is None:
             include = self._props.keys()
-        include = [key for key in include if key not in exclude]
+        if exclude is not None:
+            include = [key for key in include if key not in exclude]
 
         rv = {}
         for key in include:
