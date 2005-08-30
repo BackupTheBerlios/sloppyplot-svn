@@ -38,27 +38,32 @@ from Sloppy.Base.dataio import ImporterRegistry
 
 #------------------------------------------------------------------------------
 
-class ImportWizard(gtk.Dialog):
-    
-    def __init__(self, filenames):
+class Wizard(gtk.Dialog):
 
+    def __init__(self):
         gtk.Dialog.__init__(self, "Import Wizard", None,
                             gtk.DIALOG_MODAL|gtk.DIALOG_DESTROY_WITH_PARENT,
                             (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
                             gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
 
         self.set_size_request(480,320)
+       
+        self.nb = gtk.Notebook()
+        self.nb.show()        
+        self.vbox.pack_start(self.nb,True,True)
+
+    def add_page(self, wizardpage):
+        self.nb.append_page(wizardpage)
+
+    def run(self):
+        pages = self.nb.get_children()
+        if len(pages) > 0:
+            page = pages[0]
+            page.show()
+
+        gtk.Dialog.run(self)
         
-        awp = AsciiWizardPage(filenames[0])
-        awp.show()        
-        self.vbox.pack_end(awp, True, True)
 
-
-
-
-#------------------------------------------------------------------------------
-#
-#
 
 class WizardPage(gtk.VBox):
     pass
@@ -156,7 +161,9 @@ class AsciiWizardPage(WizardPage):
 
 if __name__ == "__main__":
 
-    dlg = ImportWizard( ["test.dat"] )
+    dlg = Wizard()
+    page = AsciiWizardPage('test.dat')
+    dlg.add_page(page)
     dlg.run()
 
     
