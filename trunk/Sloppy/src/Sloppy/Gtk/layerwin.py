@@ -664,7 +664,7 @@ class LinesTab(AbstractTab):
 
     def _cb_edited_text(self, cell, path, new_text, model, column, prop_key):
         # check if the new_text is appropriate for the property
-        prop = Line().props[prop_key]
+        prop = Line().get_prop(prop_key)
         try:
             if new_text == "": new_text = None
             new_text = prop.check_value(new_text)

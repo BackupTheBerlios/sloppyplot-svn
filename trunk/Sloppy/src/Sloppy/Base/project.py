@@ -361,7 +361,7 @@ class Project(Container):
             return
             
         layer = Layer(lines=lines)
-        plot = Plot(label=plot_label, key=plot_key, layers=[layer])
+        plot = Plot(title=plot_label, key=plot_key, layers=[layer])
 
         ui = UndoList().describe("Create Plot from Datasets")
         self.add_plots( [plot], undolist=ui )

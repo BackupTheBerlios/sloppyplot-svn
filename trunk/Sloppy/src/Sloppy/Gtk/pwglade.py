@@ -44,29 +44,41 @@ import pwconnect
 
 from Sloppy.Lib.Props import Container,Prop, BoolProp
 
+#------------------------------------------------------------------------------
+
+
+
+
+#------------------------------------------------------------------------------
+
+
+# set up container
+class Options(Container):
+    filename = Prop(coerce=unicode)
+    mode = Prop(coerce=unicode,
+                value_list=[None, u'read-only', u'write-only', u'read-write'])
+    include_header = BoolProp(default=None)
+        
+
+
+
 
 def test():
     import gtk.glade
 
     filename = "./Glade/example.glade"
     widgetname = 'main_box'
- 
+    myoptions = Options(filename="test.dat", mode=u'read-only')
+    options = myoptions.copy()
+    
     win = gtk.Window()
     win.connect("destroy", gtk.main_quit)
     tree = gtk.glade.XML(filename, widgetname)    
     widget = tree.get_widget(widgetname)
     win.add(widget)
 
-    # set up container
-    class Options(Container):
-        filename = Prop(coerce=unicode)
-        mode = Prop(coerce=unicode,
-                    value_list=[None, u'read-only', u'write-only', u'read-write'])
-        include_header = BoolProp(default=None)
-        
-    options = Options(filename="test.dat", mode=u'read-only')
-    print options.values
-    print options.props
+    print options._values
+    print options._props
 
     def wrap(container, key, wrapper_class):
         wrapper = wrapper_class(container, key)
@@ -93,7 +105,7 @@ def test():
         
         # display props
         print 
-        for k,v in options.values.iteritems():            
+        for k,v in options.get_values().iteritems():            
             print "%s = %s" % (k,v)
         print
         

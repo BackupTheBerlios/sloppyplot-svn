@@ -648,7 +648,7 @@ class TableColumnView(gtk.TreeView):
         model.clear()
 
         for column in self.table.get_columns():
-            new_column = column.copy(data=False)
+            new_column = column.copy(exclude=['data'])
             model.append( (new_column,column) )            
 
     def check_out(self, undolist=[]):

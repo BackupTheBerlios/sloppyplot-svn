@@ -327,7 +327,7 @@ class MetaAttribute(object):
         self.prop = prop
 
     def __get__(self, inst, cls=None):
-        rv = inst.values[self.key]
+        rv = inst._values[self.key]
         if rv is not None:
             return rv
         else:
@@ -335,8 +335,8 @@ class MetaAttribute(object):
 
     def __set__(self, inst, value):
         try:
-            value = self.prop.check_value(value)
-            inst.values[self.key] = value
+            value = self.prop.check_value(value)            
+            inst._values[self.key] = value
         except TypeError, msg:
             raise TypeError("Failed to set property '%s' of container '%s' to '%s':\n  %s" %
                             (self.key, repr(inst), value, msg))
@@ -579,8 +579,8 @@ class Container(object):
     def __init__(self, **kwargs):
         
         # Initialize props and values dict
-        object.__setattr__(self, 'values', {})
-        object.__setattr__(self, 'props', {})
+        object.__setattr__(self, '_values', {})
+        object.__setattr__(self, '_props', {})
 
         # We need to init the Props of all classes that the object instance
         # belongs to.  To give meaningful error messages, we reverse the
@@ -592,10 +592,10 @@ class Container(object):
             # initialize default values
             for key, value in klass.__dict__.iteritems():
                 if isinstance(value, Prop):
-                    if self.props.has_key(key):
+                    if self._props.has_key(key):
                         raise KeyError("%s defines Prop '%s', which has already been defined by a base class!" % (klass,key)  )
-                    self.props[key] = value
-                    self.values[key] = value.reset_value()
+                    self._props[key] = value
+                    self._values[key] = value.reset_value()
                     kwvalue = kwargs.pop(key,None)
                     if kwvalue is not None:
                         self.__setattr__(key,kwvalue)
@@ -610,43 +610,85 @@ class Container(object):
     #
     
     def __setattr__(self, key, value):
-        if key in ('props','values'):
-            raise RuntimeError("Attributes 'props' and 'values' cannot be altered for Container objects.")
+        if key in ('_props','_values'):
+            raise RuntimeError("Attributes '_props' and '_values' cannot be altered for Container objects.")
         
-        prop = object.__getattribute__(self, 'props').get(key,None)
+        prop = object.__getattribute__(self, '_props').get(key,None)
         if prop is not None and isinstance(prop, Prop):
             prop.meta_attribute(key).__set__(self, value)
         else:
             object.__setattr__(self, key, value)
     
     def __getattribute__(self, key, default=None):        
-        if key in ('props','values'):
+        if key in ('_props','_values'):
             return object.__getattribute__(self, key)
         else:
-            prop = object.__getattribute__(self, 'props').get(key,None)
+            prop = object.__getattribute__(self, '_props').get(key,None)
             if prop is not None and isinstance(prop, Prop):
                 return prop.meta_attribute(key).__get__(self, default)
             else:
                 return object.__getattribute__(self, key)
 
 
-    def set(self, key, value):
+    #----------------------------------------------------------------------
+    # Value Handling
+    #
+
+    def set_value(self, key, value):
         self.__setattr__(key, value)
-    set_value = set
 
-    
-    def get(self, key, default=None):
+    def set_values(self, *args, **kwargs):
+        arglist = list(args)
+        while len(arglist) > 1:
+            key = arglist.pop(0)
+            value = arglist.pop(0)
+            self.__setattr__(key, value)
+           
+        for (key, value) in kwargs.iteritems():
+            self.__setattr__(key, value)
+
+                   
+                   
+    def get_value(self, key, default=None):
         return self.__getattribute__(key, default)
-    get_value = get
+
+    def get_values(self, include=None, exclude=None):
+        if include is None:
+            include = self._values.keys()
+        include = [key for key in include if key not in exclude]
+
+        rv = {}
+        for key in include:
+            rv[key] = self.__getattribute__(key)
+
+        return rv
 
 
-    # This might be a candiate for Props
+    #----------------------------------------------------------------------
+    # Prop Handling
+    #
+
+    def get_prop(self, key):
+        return self._props[key]
+
+    def get_props(self, include=None, exclude=None):
+        if include is None:
+            include = self._props.keys()
+        include = [key for key in include if key not in exclude]
+
+        rv = {}
+        for key in include:
+            rv[key] = self._props[key]
+
+        return rv
             
-    #def copy(self, data=True):
-    #    kwargs = self.values.copy()
-    #    if data is False:
-    #        kwargs.pop('data')
-    #    return Column(**kwargs)
+
+    #----------------------------------------------------------------------
+    # Convenience Methods
+
+    def copy(self, include=None,exclude=None):
+        kw = self.get_values(include=include,exclude=exclude)                
+        return self.__class__(**kw)
 
 
 

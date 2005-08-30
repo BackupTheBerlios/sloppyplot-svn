@@ -156,15 +156,15 @@ def new_lineplot2d(**kwargs):
     Arguments that do not match a Plot property are passed on to
     the Layer.
     """
+
+    plot = Plot()
     
     # pass only those keywords to the plot that are meaningful
     plot_kwargs = dict()
-    for key in Plot.props.keys():
+    for key in plot.get_props().keys():
         if kwargs.has_key(key):
             plot_kwargs[key] = kwargs.pop(key)
-
-    # create new plot...
-    plot = Plot(**plot_kwargs)
+    plot.set_values(**plot_kwargs)
 
     # ...and then create the appropriate layer, assuming
     # that all remaining keyword arguments are meant for the layer

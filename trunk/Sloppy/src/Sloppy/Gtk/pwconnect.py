@@ -70,7 +70,7 @@ class Connector(object):
             self.container.set_value(self.key, value)
             self.last_value = value
     def get_prop(self):
-        return self.container.props[self.key]
+        return self.container.get_prop(self.key)
     prop = property(get_prop)
 
     #----------------------------------------------------------------------

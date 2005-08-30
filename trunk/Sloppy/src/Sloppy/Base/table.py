@@ -67,15 +67,7 @@ class Column(Container):
         return "%s (%s): %s" % (self.key, self.designation, self.label)
 
     def typecode(self):
-        return self.data.typecode()
-
-    # This might be a candiate for Props
-    def copy(self, data=True):
-        kwargs = self.values.copy()
-        if data is False:
-            kwargs.pop('data')
-        return Column(**kwargs)
-        
+        return self.data.typecode()        
         
 
 

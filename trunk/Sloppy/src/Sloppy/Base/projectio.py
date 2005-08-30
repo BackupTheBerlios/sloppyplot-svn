@@ -225,16 +225,15 @@ def toElement(project):
             # netCDF does not like unicode!
             n = 0
             for column in tbl.get_columns():
-                kw = column.values.copy()
-                kw.pop('key')
-                kw.pop('data')
+                kw = column.get_values(exclude=['key','data'])
                 if len(kw) > 0:
                     eColumn = SubElement(eData, 'Column')
                     safe_set(eColumn, 'n', n)
                     for k,v in kw.iteritems():
-                        eInfo = SubElement(eColumn, 'Info')
-                        safe_set(eInfo, 'key', k)
-                        eInfo.text = v
+                        if v is not None:
+                            eInfo = SubElement(eColumn, 'Info')
+                            safe_set(eInfo, 'key', k)
+                            eInfo.text = v
                 n += 1
                 
             
