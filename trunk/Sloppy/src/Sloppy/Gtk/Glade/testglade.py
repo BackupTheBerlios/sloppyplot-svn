@@ -6,8 +6,8 @@ import gtk
 import gtk.glade
 
 
-filename = "ascii_wizard.glade"
-widgetname = 'wizard_page'
+filename = "layer_editor.glade"
+widgetname = 'container_axes'
 
 tree = gtk.glade.XML(filename, widgetname)
 # skip signal connect
