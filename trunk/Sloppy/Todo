@@ -1,6 +1,16 @@
+Most important points are:
+
+- provide new ASCII import using regular expressions
+
+- try to (once again) replace the default file format to this ASCII
+format.  It might fail (i.e. it might be too slow), but I have to try,
+because it would mean that I would be able to drop two more
+dependencies (netCDF and pycdf), resulting in only pygtk,numeric and
+matplotlib (and matplotlib requires numeric anyway).
 
 
-- Signals.connect_once -> requires an additional flag in the SignalContainer
+
+
 
 
 ###############################################################################
@@ -33,6 +43,11 @@ Plan for 0.5:
 # EVERYTHING BELOW THIS POINT IS JUST A COLLECTION OF IDEAS
 
 #----------------------------------------------------------------------
+
+
+
+- Signals.connect_once -> requires an additional flag in the SignalContainer
+
 
 - we might want to change cx, cy to a string of the form
 

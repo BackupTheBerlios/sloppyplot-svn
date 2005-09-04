@@ -109,12 +109,9 @@ class Importer(dataio.Importer):
             line = fd.readline()
             if line.find(',') != -1:
                 delimiter = ','
-            elif line.find('\t')!= -1:
-                delimiter = '\t'
             else:
-                raise dataio.ImportError("Could not determine delimiter.")
+                delimiter = '[\s\t]*'
             fd.seek(rewind)
-        print "ASCII MARK"
                 
         logging.debug("determined delimiter: %s" % delimiter)
         
@@ -163,39 +160,59 @@ class Importer(dataio.Importer):
             column.designation = designations[n]
             n += 1
 
-        # default line splitting method
-        def split(row):
-            return row.split(delimiter)
-        split = self.splitter or split
+        #
+        # Create regular expression used to match the lines.
+        #
+        expmap = {'number' : '([-+]?\d+)',
+                  'string' : '(\".*?\")',
+                  'eol' : '(?:\s*\#+.*)?$',
+                  'delimiter' : delimiter}
+    
+        tcmap = {'d' : expmap['number'],
+                 'f' : expmap['number']}
+
+        if len(typecodes) > 1:
+            regexp = [tcmap[tc] for tc in typecodes]
+        else:
+            regexp = [tcmap[typecodes] for n in range(ncols)]
+
+        regexp = expmap['delimiter'].join(regexp) + expmap['eol']
+        cregexp = re.compile(regexp)
+        logger.info("Regular Expression is: %s" % regexp)
 
         # read in file line by line
+        skipcount = 0
         row = fd.readline()        
-        while len(row) > 0:
-            # check for linefeed (windows or unix)
-            if row[-1] == '\r':
-                splitat = -2
+        while len(row) > 0:            
+            matches = cregexp.match(row)
+            if matches is None:
+                print "Skipped Line"            
+                skipcount += 1
+                if skipcount > 100:
+                    print "--WARNING--"
+                    skipcount = 0
             else:
-                splitat = -1
-            try:
-                values = map(lambda x, c: c(x), split(row[:splitat]), converters)
-            except ValueError, msg:
-                logger.warn("Skipped: %s (%s)" % (row,msg))
-                row = fd.readline()
-                continue
-            except TypeError, msg:
-                logger.warn("Skipped: %s (%s)" % (row,msg))
-                row = fd.readline()
-                continue
-            else:
-                logger.info("Read %s" % values)
+                print matches.groups()
+                try:
+                    values = map(lambda x, c: c(x), matches.groups(), converters)
+                except ValueError, msg:
+                    logger.warn("Skipped: %s (%s)" % (row,msg))
+                    row = fd.readline()
+                    continue
+                except TypeError, msg:
+                    logger.warn("Skipped: %s (%s)" % (row,msg))
+                    row = fd.readline()
+                    continue
+                else:
+                    logger.info("Read %s" % values)
             
-            iter.set( values )
+                iter.set( values )
 
-            try:
-                iter = iter.next()
-            except StopIteration:
-                tbl.extend(STEP_ROWS)
-                iter = iter.next()
+                try:
+                    iter = iter.next()
+                except StopIteration:
+                    tbl.extend(tbl.ncols+STEP_ROWS)
+                    iter = iter.next()
 
             row = fd.readline()
         

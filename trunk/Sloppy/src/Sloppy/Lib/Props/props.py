@@ -364,14 +364,16 @@ class MetaAttribute(object):
 
 
 #------------------------------------------------------------------------------
-# Check Type, Coerce and Check Value Methods
+# Check Type, Coerce and Check Value Methods and Classes
 #
 
-def ct_tuple(length):
-    def check_type(value):
-        if isinstance(value, tuple) and len(value) == length: return
-        else: raise TypeError("Value must be tuple of length %d!" % length )
-    return check_type
+
+class ct_tuple:
+    def __init__(self, length):
+        self.length = length
+    def __call__(self, value):
+        if isinstance(value, tuple) and len(value) == self.length: return
+        else: raise TypeError("Value must be tuple of length %d!" % self.length )
 
 
 
@@ -386,42 +388,48 @@ def coerce_bool(value):
 
 
 
-def cv_valid(alist):
-    alist = as_list(alist)
-    def check_value(value):
-        if (value in alist) is False:
-            raise ValueError("Value %s is in the list of valid values: %s" % (value, alist))
-    return check_value
+class cv_valid:
+    def __init__(self, alist):
+        self.alist = as_list(alist)        
+    def __call__(self, value):
+        if (value in self.alist) is False:
+            raise ValueError("Value %s is in the list of valid values: %s" % (value, self.alist))
 
-def cv_invalid(alist):
-    alist = as_list(alist)
-    def check_value(value):
-        if value in alist:
-            raise ValueError("Value %s in in the list of invalid values: %s" % (value, alist))    
-    return check_value
-            
-def cv_bounds(start, end,steps=None):
-    def check_value(value):
-        if (start is not None and value < start) \
-           or (end is not None and value > end):
-            raise ValueError("Value %s should be in between [%s:%s]" % (value, start or "", end or ""))
+class cv_invalid:
+    def __init__(self, alist):
+        self.alist = as_list(alist)        
+    def __call__(self, value):
+        if value in self.alist:
+            raise ValueError("Value %s in in the list of invalid values: %s" % (value, self.alist))    
 
-        if steps is not None:
-            remainder = (value - start) % steps
+
+
+class cv_bounds:
+    def __init__(self,start,end,steps=None):
+        self.start=start
+        self.end=end
+        self.steps=steps        
+    def __call__(self,value):
+        if (self.start is not None and value < self.start) \
+           or (self.end is not None and value > self.end):
+            raise ValueError("Value %s should be in between [%s:%s]" % (value, self.start or "", self.end or ""))
+
+        if self.steps is not None:
+            remainder = (value - self.start) % self.steps
             if remainder != 0.0:
                 raise ValueError("Value %s must .... Remainder %s" % (value, remainder) ) # TODO: how to word this?
 
-        return value
-    return check_value
 
-def cv_regexp(regexp):
-    expression = re.compile(regexp)
-    def check_value(value):
-        match = expression.match(value)
+class cv_regexp:
+    def __init__(self, regexp):
+        self.regexp=regexp
+        self.expression = re.compile(regexp)
+    def __call__(self, value):
+        match = self.expression.match(value)
         if match is None:
-            raise ValueError("Value %s does not match the regular expression %s" % (value,regexp))
+            raise ValueError("Value %s does not match the regular expression %s" % (value,self.regexp))
 
-    return check_value
+
 
 
 
@@ -709,7 +717,9 @@ if __name__ == "__main__":
         myint = Prop(types=(int,None),
                      default=5)
 
-        mynumber = Prop(coerce=int)
+        mynumber = Prop(coerce=int,
+                        values=(cv_valid([1,2,3,4,17,18]))
+                        )
 
         myfloat = Prop(types=float)
         
