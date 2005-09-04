@@ -54,13 +54,6 @@ class Importer(dataio.Importer):
     
     public_props = []
     
-    def __init__(self, **kwargs):
-        self.ncols = 0
-        self.designations = 0
-        self.splitter = None
-        
-        dataio.Importer.__init__(self, **kwargs)
-
 
     def read_header_from_stream(self, fd):
 
@@ -79,33 +72,26 @@ class Importer(dataio.Importer):
         
     def read_table_from_stream(self, fd):
 
-        print "READING FILE"
         current_range = 0
         
-        def splitter(row):
-            rv = row.split(' ')
-            rv = [item for item in rv if item != '']
-            for n in range(len(rv)):
-                if rv[n] == '-':
-                    rv[n] = float()
-            return rv
-
         self.read_header_from_stream(fd)
 
         if self.split_ranges is False:           
             keys = list()
+            labels = list()            
             for n in range(self.ranges):
-                keys.extend(["Binding Energy %s:%d" % (self.sample, n),
+                keys.extend(["BE_%s_%d" % (self.sample, n),
+                             "COUNTS_%s_%d" % (self.sample, n)])
+                labels.extend(["Binding Energy %s:%d" % (self.sample, n),
                              "%s:%d" % (self.sample, n)])
                             
-            options = {'delimiter' : ' ',
+            options = {'delimiter' : '\s*',
                        'ncols' : self.ranges * 2,
                        'designations': self.ranges * ['X','Y'],
-                       'splitter' : splitter,
                        'keys' : keys,
+                       'labels' : labels,                      
                        'header_lines' : 33}
 
-            print "Calling ASCII IMPORT"
             importer = dataio.ImporterRegistry.new_instance('ASCII', **options)
             return importer.read_table_from_stream(fd)
 
@@ -113,14 +99,9 @@ class Importer(dataio.Importer):
         else:
             #
             # currently unused
-            #            
-            pos = fd.seek()
-            options = {'delimiter' : ' ',
-                       'ncols' : self.ranges * 2,
-                       'designations': self.ranges * ['X','Y'],
-                       'splitter' : splitter,
-                       'header_lines' : 33}            
-                       
+            #
+            pass
+
             importer = dataio.ImporterRegistry.new_instance('ASCII', **options)
             return importer.read_table_from_stream(fd)
 

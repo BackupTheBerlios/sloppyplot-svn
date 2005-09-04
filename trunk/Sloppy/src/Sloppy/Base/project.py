@@ -290,6 +290,9 @@ class Project(Container):
             except ImportError, msg:
                 pl.fail(msg)
                 continue
+            except:
+                pl.abort
+                break
 
             root, ext = os.path.splitext(basename(filename))
             filename = utils.encode_as_key(root)

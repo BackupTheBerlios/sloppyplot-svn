@@ -1,3 +1,4 @@
+
 # This file is part of SloppyPlot, a scientific plotting tool.
 # Copyright (C) 2005 Niklas Volbers
 #
@@ -27,7 +28,7 @@ pygtk.require('2.0') # TBR
 
 import gobject
 import gtk
-
+import pango
 
 from Sloppy.Base.table import Table
 from Sloppy.Lib.Undo import UndoInfo, UndoList, NullUndo
@@ -222,7 +223,8 @@ class TableView(gtk.TreeView):
             cell.set_property('mode',gtk.CELL_RENDERER_MODE_EDITABLE)            
             cell.set_property('editable',True)
             cell.connect('edited',self.on_value_edited, model, n, journal)
-            column = gtk.TreeViewColumn(name,cell,text=n)
+            name = name.replace('_','__')
+            column = gtk.TreeViewColumn(name,cell,text=n)            
             column.set_property('resizable',True)
             column.set_property('clickable',True)
             column.set_property('sizing', gtk.TREE_VIEW_COLUMN_FIXED) # PYGTK 2.6

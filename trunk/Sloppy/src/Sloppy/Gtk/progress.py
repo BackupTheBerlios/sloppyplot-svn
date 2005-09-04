@@ -155,6 +155,7 @@ class GtkProgressList(ProgressList, gtk.Window):
 
     def fail(self, msg=None):
         self.model.set_value( self.iter, 1, "FAILED (%s)" % msg or "unknown error" )
+        self.expander.set_expanded(True)        
         while gtk.events_pending():
             gtk.main_iteration()
         self.is_successful = False
@@ -176,7 +177,27 @@ class GtkProgressList(ProgressList, gtk.Window):
         self.expander.set_expanded(True)
         self.stop_iteration()
         
-        
+
+class Confirmation:
+    pass
+
+
+class GtkConfirmation(Confirmation, gtk.MessageDialog):
+
+    def __init__(self, question):
+
+        gtk.MessageDialog.__init__(self,
+                                   parent=None,
+                          flags=0,
+                          type=gtk.MESSAGE_WARNING,
+                          buttons=gtk.BUTTONS_NONE,
+                          message_format=question)
+        self.set_title("Warning")
+
+    def ask(self):
+        response = self.run()
+        print "RESPONSE ", response
+
 
 
 
@@ -199,6 +220,11 @@ def test():
 
     gtk.main()
 
+
+def test2():
+
+    cd = GtkConfirmation("There have been more than 100 skipped lines. Continue with this file?")
+    cd.ask()
     
 if __name__ == "__main__":
-    test()
+    test2()

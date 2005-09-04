@@ -13,10 +13,18 @@ def import_ascii(fd):
     typecodes = 'ff'
     ncols = len(typecodes)
     delimiter = '\s*'
+    header_lines = 34
     
-    expmap = {'number' : '([-+]?\d+)',
+    # skip header lines if requested
+    while header_lines > 0:
+        line = fd.readline()
+        header_lines -= 1
+    
+    
+    expmap = {'number' : '([-+]?[\d.]+)',
               'string' : '(\".*?\")',
-              'eol' : '(?:\s*\#+.*)?$',
+              'bol' : '\s*',
+              'eol' : '\s*$',
               'delimiter' : delimiter}
     
     tcmap = {'d' : expmap['number'],
@@ -27,9 +35,11 @@ def import_ascii(fd):
     else:
         regexp = [tcmap[typecodes] for n in range(ncols)]
                   
-    regexp = expmap['delimiter'].join(regexp) + expmap['eol']
+    regexp = expmap['bol'] + expmap['delimiter'].join(regexp) + expmap['eol']
     cregexp = re.compile(regexp)
+    print
     print regexp
+    print
 
     skipcount = 0
     
@@ -52,7 +62,7 @@ def import_ascii(fd):
 
 # open file for testing
 
-fd = open('test.dat', 'r')
+fd = open('test.xps', 'r')
 
 
 try:

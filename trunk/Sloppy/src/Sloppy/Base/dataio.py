@@ -26,7 +26,7 @@ import os.path
 
 from Sloppy.Base import klassregistry
 from Sloppy.Base.table import table_to_array, array_to_table, Table
-from Sloppy.Lib.Props import Container
+from Sloppy.Lib.Props import Container, Prop
 
 from Numeric import ArrayType
 
@@ -70,6 +70,7 @@ class Importer(Container):
     author = "your name"       
     filemode = '' # set to 'b' for binary objects
 
+    app = Prop()
     
     def read_table_from_stream(self,fd):
         return None

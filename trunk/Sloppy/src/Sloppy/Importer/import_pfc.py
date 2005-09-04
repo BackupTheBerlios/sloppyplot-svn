@@ -46,8 +46,7 @@ class Importer(dataio.Importer):
 
         self.read_header_from_stream(fd)
 
-        ncols = len(self.column_keys)
-        options = {'ncols' : ncols,
+        options = {'ncols' : len(self.column_keys),
                    'typecodes' : 'f',
                    'designations' : ['X','Y'] * (ncols/2),
                    'header_lines' : 1,

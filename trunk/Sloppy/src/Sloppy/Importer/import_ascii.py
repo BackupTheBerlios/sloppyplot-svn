@@ -46,25 +46,25 @@ class Importer(dataio.Importer):
     
     delimiter = Prop(blurb ="Delimiter",
                      types=basestring,
-                     value_list=[None,',', '\t',';', ' '])
+                     value_list=[None,',', '\t',';', '\s*'])
     
-    custom_delimiter = Prop(blurb="Custom delimiter",
+    custom_delimiter = Prop(blurb="Custom delimiter used if delimiter is None.",
                             types=(basestring,None))
     
-    ncols = RangeProp(blurb="# Columns",
-                      types=(int,None),
+    ncols = RangeProp(blurb="Number of columns",
                       coerce=int,
                       min=0, steps=1,
                       default=None)
 
     header_lines = RangeProp(blurb="Number of header lines",
-                     coerce=int,
-                     min=0, default=0)
+                             coerce=int,
+                             min=0, default=0)
     
     table = Prop(types=Table)
     
-    keys = Prop(types=list,
-                default=None)
+    keys = Prop(types=list)
+
+    labels = Prop(types=list)
     
     designations = Prop(types=list,
                         default=None)
@@ -72,8 +72,6 @@ class Importer(dataio.Importer):
     typecodes = Prop(types=(basestring, list),
                      default='f')
     
-    splitter = Prop(types=object)
-
     public_props = ['delimiter', 'custom_delimiter', 'ncols', 'header_lines']
 
     
@@ -101,10 +99,10 @@ class Importer(dataio.Importer):
             line = fd.readline()
         fd.seek(rewind)
 
-        # Delimiter
+        # determine delimiter
         delimiter = self.delimiter or self.custom_delimiter
         if delimiter is None:
-            # Determine from the first non-comment line    
+            # determine from first non-comment line
             rewind = fd.tell()
             line = fd.readline()
             if line.find(',') != -1:
@@ -140,14 +138,19 @@ class Importer(dataio.Importer):
         iter = tbl.row(0)
         converters = tbl.converters
 
-        # assign column information from keyword arguments 'keys' and
-        # 'designations'
+        # assign column information from keyword arguments 'keys' & 'label'
         keys = self.keys
-        if keys is not None:
+        labels = self.labels
+        if keys:
             n = 0
             for column in tbl.get_columns():
                 column.key = keys[n]
                 n +=1
+        if labels:
+            n = 0
+            for column in tbl.get_columns():
+                column.label = labels[n]
+                n += 1
 
         # use given designation or if none given, alternate column
         # designations X/Y.
@@ -163,9 +166,10 @@ class Importer(dataio.Importer):
         #
         # Create regular expression used to match the lines.
         #
-        expmap = {'number' : '([-+]?\d+)',
+        expmap = {'number' : '([-+]?[\d.]+)',
                   'string' : '(\".*?\")',
-                  'eol' : '(?:\s*\#+.*)?$',
+                  'eol' :'\s*(?:\#+.*)?$',
+                  'bol' : '\s*',
                   'delimiter' : delimiter}
     
         tcmap = {'d' : expmap['number'],
@@ -176,23 +180,24 @@ class Importer(dataio.Importer):
         else:
             regexp = [tcmap[typecodes] for n in range(ncols)]
 
-        regexp = expmap['delimiter'].join(regexp) + expmap['eol']
+        regexp = expmap['bol'] + expmap['delimiter'].join(regexp) + expmap['eol']
         cregexp = re.compile(regexp)
         logger.info("Regular Expression is: %s" % regexp)
 
+        #
         # read in file line by line
+        #
         skipcount = 0
         row = fd.readline()        
-        while len(row) > 0:            
+        while len(row) > 0:
             matches = cregexp.match(row)
             if matches is None:
-                print "Skipped Line"            
+                logger.info("skipped: %s" % row)
                 skipcount += 1
-                if skipcount > 100:
-                    print "--WARNING--"
+                if skipcount > 100 and self.app is not None:                                       
+                    print "--WARNING--" # TODO: ask if we should continue
                     skipcount = 0
             else:
-                print matches.groups()
                 try:
                     values = map(lambda x, c: c(x), matches.groups(), converters)
                 except ValueError, msg:
@@ -204,10 +209,14 @@ class Importer(dataio.Importer):
                     row = fd.readline()
                     continue
                 else:
-                    logger.info("Read %s" % values)
+                    #logger.info("Read %s" % values)
+                    pass
+                    
             
                 iter.set( values )
 
+                # Move to next row.
+                # If this is the last row, then the Table is extended.
                 try:
                     iter = iter.next()
                 except StopIteration:
