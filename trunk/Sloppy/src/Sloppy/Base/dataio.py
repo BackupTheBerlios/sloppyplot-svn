@@ -70,7 +70,7 @@ class Importer(Container):
     author = "your name"       
     filemode = '' # set to 'b' for binary objects
 
-    app = Prop()
+    app = Prop(types=object)
     
     def read_table_from_stream(self,fd):
         return None

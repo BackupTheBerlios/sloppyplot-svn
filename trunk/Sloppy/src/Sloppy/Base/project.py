@@ -34,9 +34,8 @@ from Sloppy.Base.backend import Backend, BackendRegistry
 from Sloppy.Base.table import Table
 from Sloppy.Base.dataio import ImporterRegistry, ExporterRegistry, importer_from_filename, Importer, ImportError
 from Sloppy.Base.plugin import PluginRegistry
-from Sloppy.Base import pdict, uwrap, const, utils
 
-from Sloppy.Base.progress import SimpleProgressList
+from Sloppy.Base import pdict, uwrap, const, utils, error
 
 
 import logging
@@ -277,7 +276,8 @@ class Project(Container):
             importer = ImporterRegistry.new_instance(importer)
         elif not isinstance(importer, Importer):
             raise TypeError("'importer' needs to be a key or a valid Importer instance.")
-
+        importer.app = self.app
+        
         # To ensure a proper undo, the Datasets are imported one by one
         # to a temporary dict.  When finished, they are added as a whole.
         new_datasets = list()
@@ -290,9 +290,9 @@ class Project(Container):
             except ImportError, msg:
                 pl.fail(msg)
                 continue
-            except:
-                pl.abort
-                break
+            except error.UserCancel:                
+                pl.abort()
+                continue
 
             root, ext = os.path.splitext(basename(filename))
             filename = utils.encode_as_key(root)

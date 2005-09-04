@@ -852,6 +852,23 @@ class GtkApplication(Application):
     def _cb_recent_files_clear(self, action):
         self.clear_recent_files()
 
+
+    #----------------------------------------------------------------------
+    # Simple user I/O
+    #
+
+    def ask_yes_no(self, msg):
+        dialog = gtk.MessageDialog(parent=self.window,
+                                   flags=0,
+                                   type=gtk.MESSAGE_WARNING,
+                                   buttons=gtk.BUTTONS_YES_NO,
+                                   message_format=msg)
+            
+        result = dialog.run()
+        dialog.destroy()
+
+        return result == gtk.RESPONSE_YES
+
     
 
 # ======================================================================    

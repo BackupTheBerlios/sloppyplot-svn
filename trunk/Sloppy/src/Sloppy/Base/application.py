@@ -243,6 +243,13 @@ class Application(object):
         self.recent_files = list()
         Signals.emit(self, 'update-recent-files')
 
+    #----------------------------------------------------------------------
+    # Simple user I/O
+    #
+
+    def ask_yes_no(self, msg):
+        return True
+    
 
 
 #------------------------------------------------------------------------------

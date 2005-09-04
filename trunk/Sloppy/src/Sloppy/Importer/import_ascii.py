@@ -192,10 +192,13 @@ class Importer(dataio.Importer):
         while len(row) > 0:
             matches = cregexp.match(row)
             if matches is None:
-                logger.info("skipped: %s" % row)
+                #logger.info("skipped: %s" % row)
                 skipcount += 1
-                if skipcount > 100 and self.app is not None:                                       
-                    print "--WARNING--" # TODO: ask if we should continue
+                if skipcount > 100:
+                    if self.app is not None:
+                        result = self.app.ask_yes_no("Warning: More than 100 lines skipped recently. Should we continue with this file?")
+                        if result is False:
+                            raise ImportError("Aborted")
                     skipcount = 0
             else:
                 try:
