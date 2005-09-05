@@ -53,6 +53,7 @@ from Sloppy.Base.table import Table
 from Sloppy.Base.dataio import ImporterRegistry, ExporterRegistry, importer_from_filename
 from Sloppy.Base import pdict, uwrap
 from Sloppy.Base.plugin import PluginRegistry
+from Sloppy.Base.dataio import ImporterRegistry, ExporterRegistry, importer_from_filename, Importer, ImportError
 
 from Sloppy.Gnuplot.terminal import PostscriptTerminal
 from options_dialog import OptionsDialog, NoOptionsError
@@ -769,13 +770,12 @@ class GtkApplication(Application):
             thread_progress = GIdleThread(set_text(queue))
             thread_progress.start()
 
-            thread_import = GIdleThread(pj.import_datasets(filenames, importer), queue)
+            thread_import = GIdleThread(self.import_datasets(pj, filenames, importer), queue)
             thread_import.start()
             thread_import.wait()
 
         finally:
             chooser.destroy()
-
 
 
 

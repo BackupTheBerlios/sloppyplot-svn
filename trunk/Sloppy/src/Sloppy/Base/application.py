@@ -38,7 +38,8 @@ from Sloppy.Base.projectio import load_project, save_project, ParseError
 from Sloppy.Base.backend import BackendRegistry
 from Sloppy.Base.table import Table
 from Sloppy.Base.dataio import ImporterRegistry, ExporterRegistry, importer_from_filename
-from Sloppy.Base import uwrap, const
+from Sloppy.Base import uwrap, const, utils
+from Sloppy.Base.dataio import ImporterRegistry, ExporterRegistry, importer_from_filename, Importer, ImportError
 
 from Sloppy import Plugins
 from Sloppy.Base.plugin import PluginRegistry
@@ -247,6 +248,54 @@ class Application(object):
         return True
     
 
+    #------------------------------------------------------------------------------
+    def import_datasets(self, project, filenames, importer, undolist=None):
+
+        if undolist is None:
+            undolist = project.journal
+
+        if isinstance(importer, basestring):
+            importer = ImporterRegistry.new_instance(importer)
+        elif not isinstance(importer, Importer):
+            raise TypeError("'importer' needs to be a key or a valid Importer instance.")
+
+        # To ensure a proper undo, the Datasets are imported one by one
+        # to a temporary dict.  When finished, they are added as a whole.
+        new_datasets = list()
+
+        n = 0.0
+        N = len(filenames)
+        for filename in filenames:
+            yield ("Importing %s" % filename, n/N)
+
+            try:
+                tbl = importer.read_table_from_file(filename)
+            except ImportError, msg:
+                self.error_message(msg)
+                continue
+            except error.UserCancel:
+                self.error_message("Import aborted by user")
+                continue
+
+            root, ext = os.path.splitext(os.path.basename(filename))
+            filename = utils.encode_as_key(root)
+            ds = Dataset(key=filename, data=tbl)
+            ds.metadata['Import-Source'] = unicode(filename)
+            ds.metadata['Import-Filter'] = unicode(importer.blurb)
+
+            new_datasets.append(ds)
+
+            n+=1
+            yield (None,n/N)
+
+        yield (-1,None)
+
+        if len(new_datasets) > 0:
+            ul = UndoList().describe("Import Dataset(s)")
+            project.add_datasets(new_datasets, undolist=ul)
+            undolist.append(ul)
+        else:
+            undolist.append(NullUndo())    
 
 #------------------------------------------------------------------------------
 

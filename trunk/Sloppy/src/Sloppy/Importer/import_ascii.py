@@ -199,10 +199,7 @@ class Importer(dataio.Importer):
             if matches is None:
                 skipcount += 1
                 if skipcount > 100:
-                    if self.app is not None:
-                        result = self.app.ask_yes_no("Warning: More than 100 lines skipped recently. Should we continue with this file?")
-                        if result is False:
-                            raise dataio.ImportError("Aborted")
+                    Signals.emit("ask-for-confirmation", "Warning: More than 100 lines skipped recently. Should we continue with this file?")
                     skipcount = 0
             else:
                 try:

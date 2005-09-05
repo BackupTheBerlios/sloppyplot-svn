@@ -32,7 +32,6 @@ from Sloppy.Base.objects import Plot, Axis, Line, Layer, new_lineplot2d
 from Sloppy.Base.dataset import Dataset
 from Sloppy.Base.backend import Backend, BackendRegistry
 from Sloppy.Base.table import Table
-from Sloppy.Base.dataio import ImporterRegistry, ExporterRegistry, importer_from_filename, Importer, ImportError
 from Sloppy.Base.plugin import PluginRegistry
 
 from Sloppy.Base import pdict, uwrap, const, utils, error
@@ -268,57 +267,6 @@ class Project(Container):
 
     #----------------------------------------------------------------------
 
-    def import_datasets(self, filenames, importer, undolist=None):
-
-        if undolist is None:
-            undolist = self.journal
-
-        if isinstance(importer, basestring):
-            importer = ImporterRegistry.new_instance(importer)
-        elif not isinstance(importer, Importer):
-            raise TypeError("'importer' needs to be a key or a valid Importer instance.")
-
-        importer.app = self.app
-
-        # To ensure a proper undo, the Datasets are imported one by one
-        # to a temporary dict.  When finished, they are added as a whole.
-        new_datasets = list()
-
-        n = 0.0
-        N = len(filenames)
-        for filename in filenames:
-            yield ("Importing %s" % filename, n/N)
-
-            try:
-                tbl = importer.read_table_from_file(filename)
-            except ImportError, msg:
-                self.app.error_message(msg)
-                continue
-            except error.UserCancel:
-                self.app.error_message("Import aborted by user")
-                continue
-
-            root, ext = os.path.splitext(basename(filename))
-            filename = utils.encode_as_key(root)
-            ds = Dataset(key=filename, data=tbl)
-            ds.metadata['Import-Source'] = unicode(filename)
-            ds.metadata['Import-Filter'] = unicode(importer.blurb)
-
-            new_datasets.append(ds)
-
-            n+=1
-            yield (None,n/N)
-
-        yield (-1,None)
-
-        if len(new_datasets) > 0:
-            ul = UndoList().describe("Import Dataset(s)")
-            self.add_datasets(new_datasets, undolist=ul)
-            undolist.append(ul)
-        else:
-            undolist.append(NullUndo())
-
-
     def create_plot_from_datasets(self, datasets, plot_label=None, undolist=None):
         """
         Creates a new plot from the list of given Datasets.
@@ -379,37 +327,6 @@ class Project(Container):
         return plot
 
 
-    def new_dataset(self, key='dataset', undolist=None):
-        """
-        Add a new Dataset object to the Project.
-
-        The `data` field contains a nearly empty numarray (1 row, 2
-        columns, all zero).
-
-        If no key is given, then one is created.  If the key already
-        exists, then the method assures that it is unique within the
-        Project.
-
-        Returns newly created Dataset.
-        """
-        if undolist is None:
-            undolist = self.journal
-        
-        key = pdict.unique_key(self.datasets, key)
-        ds = Dataset()
-        pdict.setitem(self.datasets, key, ds)
-        ds.data = Table(nrows=1,ncols=2)
-        ds.data.column(0).designation = 'X'
-        ds.data.column(1).designation = 'Y'        
-        Signals.emit(self.datasets, "changed")
-
-        ui = UndoInfo(self.remove_objects, [ds], False)
-        ui.describe("Create new Dataset '%s'" % key)
-        undolist.append(ui)
-        
-        return ds
-
-
     def add_datasets_to_plot(self, datasets, plot, undolist=None):
         """
         Adds the given Datasets to Dataset to the Plot object.
@@ -442,8 +359,38 @@ class Project(Container):
         
         return plot
 
+
+    def new_dataset(self, key='dataset', undolist=None):
+        """
+        Add a new Dataset object to the Project.
+
+        The `data` field contains a nearly empty numarray (1 row, 2
+        columns, all zero).
+
+        If no key is given, then one is created.  If the key already
+        exists, then the method assures that it is unique within the
+        Project.
+
+        Returns newly created Dataset.
+        """
+        if undolist is None:
+            undolist = self.journal
         
+        key = pdict.unique_key(self.datasets, key)
+        ds = Dataset()
+        pdict.setitem(self.datasets, key, ds)
+        ds.data = Table(nrows=1,ncols=2)
+        ds.data.column(0).designation = 'X'
+        ds.data.column(1).designation = 'Y'        
+        Signals.emit(self.datasets, "changed")
+
+        ui = UndoInfo(self.remove_objects, [ds], False)
+        ui.describe("Create new Dataset '%s'" % key)
+        undolist.append(ui)
         
+        return ds
+
+             
 
     def new_plot(self, undolist=None):
         " Returns a new Plot. "
