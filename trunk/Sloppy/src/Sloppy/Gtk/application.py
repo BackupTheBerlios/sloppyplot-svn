@@ -60,9 +60,6 @@ from Sloppy.Lib.Undo import *
 from Sloppy.Lib import Signals
 
    
-from progress import GtkProgressList
-
-
 #------------------------------------------------------------------------------
 # Helper Methods
 #
@@ -91,6 +88,20 @@ def register_all_png_icons(imgdir, prefix=""):
 
 
 
+class ProgressIndicator:
+    def __init__(self, pb):
+        self.pb = pb
+    def set_text(self, text):
+        self.pb.set_text(text) # TODO: encode properly
+        while gtk.events_pending():
+            gtk.main_iteration()                                        
+    def set_fraction(self, fraction):
+        self.pb.set_fraction(fraction)
+        while gtk.events_pending():
+            gtk.main_iteration()                    
+
+
+
 #------------------------------------------------------------------------------
 # GtkApplication, the main object
 #
@@ -109,7 +120,6 @@ class GtkApplication(Application):
         
         self.window = AppWindow(self)
         self._clipboard = gtk.Clipboard()  # not implemented yet
-        self.progresslist = GtkProgressList        
 
 
     def init_plugins(self):
@@ -613,12 +623,12 @@ class GtkApplication(Application):
         if os.path.exists(shortcut_folder):
             chooser.add_shortcut_folder(shortcut_folder)
 
+        #
+        # prepare extra widget
+        #
+        
         # The custom widget `combobox` lets the user choose,
         # which Importer is to be used.
-        hbox = gtk.HBox()       
-
-        label = gtk.Label("Importer")
-        label.show()
         
         # model: key, blurb
         model = gtk.ListStore(str, str)
@@ -633,14 +643,30 @@ class GtkApplication(Application):
         combobox.add_attribute(cell, 'text', 1)
         combobox.set_active(0)
         combobox.show()
-        
+
+        label = gtk.Label("Importer")
+        label.show()
+            
+        hbox = gtk.HBox()       
         hbox.pack_end(combobox,False)
         hbox.pack_end(label,False)
         hbox.show()        
 
-        chooser.set_extra_widget(hbox)
+        # The progress bar display which file is currently being imported.
+        pbar = gtk.ProgressBar()
+        
+        vbox = gtk.VBox()
+        vbox.pack_start(hbox,False)
+        vbox.pack_start(pbar,False)
+        vbox.show()
+        
+        chooser.set_extra_widget(vbox)
 
+
+        #
         # run dialog
+        #
+        
         try:
             response = chooser.run()
             if response == gtk.RESPONSE_OK:
@@ -660,64 +686,69 @@ class GtkApplication(Application):
                             importer_key = 'ASCII'
             else:
                 return
+
+            # TODO
+            #chooser.set_active(False)
+            pbar.show()
+            
+            # request import options
+            importer = ImporterRegistry.new_instance(importer_key)
+
+            try:
+                dialog = OptionsDialog(importer, self.window)
+            except NoOptionsError:
+                pass
+            else:
+                # If there are any options, construct a
+                # preview widget to help the user.
+                view = gtk.TextView()
+                buffer = view.get_buffer()
+                view.set_editable(False)
+                view.show()
+
+                tag_main = buffer.create_tag(family="Courier")
+                tag_linenr = buffer.create_tag(family="Courier", weight=pango.WEIGHT_HEAVY)
+
+                # fill preview buffer with at most 100 lines
+                preview_file = filenames[0]
+                try:
+                    fd = open(preview_file, 'r')
+                except IOError:
+                    raise RuntimeError("Could not open file %s for preview!" % preview_file)
+
+                iter = buffer.get_start_iter()        
+                try:
+                    for j in range(100):
+                        line = fd.readline()
+                        if len(line) == 0:
+                            break
+                        buffer.insert_with_tags(iter, u"%3d\t" % j, tag_linenr)
+                        try:
+                            buffer.insert_with_tags(iter, unicode(line), tag_main)
+                        except UnicodeDecodeError:
+                            buffer.insert_with_tags(iter, u"<unreadable line>\n", tag_main)
+                finally:
+                    fd.close()
+
+                preview_widget = uihelper.add_scrollbars(view)
+                preview_widget.show()
+
+                dialog.vbox.add(preview_widget)
+                dialog.set_size_request(480,320)
+
+                try:
+                    result = dialog.run()
+                finally:
+                    dialog.destroy()
+
+                if result != gtk.RESPONSE_ACCEPT:
+                    return
+
+            pj.import_datasets(filenames, importer,
+                               progress_indicator=ProgressIndicator(pbar))
+
         finally:
             chooser.destroy()
-    
-        
-        # request import options
-        importer = ImporterRegistry.new_instance(importer_key)
-
-        try:
-            dialog = OptionsDialog(importer, self.window)
-        except NoOptionsError:
-            pass
-        else:
-            # If there are any options, construct a
-            # preview widget to help the user.
-            view = gtk.TextView()
-            buffer = view.get_buffer()
-            view.set_editable(False)
-            view.show()
-
-            tag_main = buffer.create_tag(family="Courier")
-            tag_linenr = buffer.create_tag(family="Courier", weight=pango.WEIGHT_HEAVY)
-
-            # fill preview buffer with at most 100 lines
-            preview_file = filenames[0]
-            try:
-                fd = open(preview_file, 'r')
-            except IOError:
-                raise RuntimeError("Could not open file %s for preview!" % preview_file)
-
-            iter = buffer.get_start_iter()        
-            try:
-                for j in range(100):
-                    line = fd.readline()
-                    if len(line) == 0:
-                        break
-                    buffer.insert_with_tags(iter, u"%3d\t" % j, tag_linenr)
-                    try:
-                        buffer.insert_with_tags(iter, unicode(line), tag_main)
-                    except UnicodeDecodeError:
-                        buffer.insert_with_tags(iter, u"<unreadable line>\n", tag_main)
-            finally:
-                fd.close()
-
-            preview_widget = uihelper.add_scrollbars(view)
-            preview_widget.show()
-            
-            dialog.vbox.add(preview_widget)
-            dialog.set_size_request(480,320)
-
-            try:
-                result = dialog.run()
-            finally:
-                dialog.destroy()
-
-            if result != gtk.RESPONSE_ACCEPT:
-                return
-
-        pj.import_datasets(filenames, importer)
 
 
 
@@ -869,7 +900,8 @@ class GtkApplication(Application):
 
         return result == gtk.RESPONSE_YES
 
-    
+
+
 
 # ======================================================================    
 

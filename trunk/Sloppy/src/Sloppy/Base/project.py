@@ -268,7 +268,7 @@ class Project(Container):
 
     #----------------------------------------------------------------------
 
-    def import_datasets(self, filenames, importer, progresslist=None, undolist=None):
+    def import_datasets(self, filenames, importer, progress_indicator=None, undolist=None):
         if undolist is None:
             undolist = self.journal
 
@@ -282,16 +282,18 @@ class Project(Container):
         # to a temporary dict.  When finished, they are added as a whole.
         new_datasets = list()
 
-        progresslist = progresslist or self.app.progresslist
-        pl = progresslist(filenames)
-        for filename in pl:
+        pl = progress_indicator
+        for filename in filenames:
+            pl.set_text(filename)
             try:
                 tbl = importer.read_table_from_file(filename)
             except ImportError, msg:
-                pl.fail(msg)
+                self.app.error_message(msg)
+                #pl.fail(msg)
                 continue
-            except error.UserCancel:                
-                pl.abort()
+            except error.UserCancel:
+                self.app.error_message("Import aborted by user")
+                #pl.abort()
                 continue
 
             root, ext = os.path.splitext(basename(filename))
@@ -301,9 +303,7 @@ class Project(Container):
             ds.metadata['Import-Filter'] = unicode(importer.blurb)
 
             new_datasets.append(ds)
-            pl.succeed()
 
-        pl.finish()
 
         if len(new_datasets) > 0:
             ul = UndoList().describe("Import Dataset(s)")

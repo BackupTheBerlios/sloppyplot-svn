@@ -44,16 +44,12 @@ from Sloppy import Plugins
 from Sloppy.Base.plugin import PluginRegistry
 
 
-from Sloppy.Base.progress import ProgressList
-
-
 class Application(object):
 
     def __init__(self, project=None):
 	" 'project' may be a Project object or a filename. "
 
         self.plugins = dict()
-        self.progresslist = ProgressList
         self.recent_files = list()
 
         # make sure config path exists and then open config file
