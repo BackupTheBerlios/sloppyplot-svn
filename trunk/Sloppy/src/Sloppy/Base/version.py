@@ -19,14 +19,14 @@
 # $Id$
 
 
-NAME = "SloppyPlot"
+NAME = "sloppyplot"
 COPYRIGHT = "(C)opyright 2004-2005 Niklas Volbers"
 AUTHORS = ["Niklas Volbers"]
 URL="http://sloppyplot.berlios.de"
 
 # Version information. Uncomment second line while developing.
 VERSION="0.4"
-#VERSION = VERSION+".SVN $Rev$".replace("$Rev: ","").replace("$","")
+VERSION = VERSION+".SVN $Rev$".replace("$Rev: ","").replace("$","")
 
 DESCRIPTION = "A scientific plotting tool"
 LONG_DESCRIPTION="""\
