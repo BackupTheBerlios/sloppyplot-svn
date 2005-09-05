@@ -29,6 +29,7 @@ import gtk, gobject, pango
 import gtkexcepthook
 
 import gtkutils, uihelper
+from gidlethread import *
 
 
 import sys, glob, os.path, time
@@ -750,8 +751,27 @@ class GtkApplication(Application):
                 if result != gtk.RESPONSE_ACCEPT:
                     return
 
-            pj.import_datasets(filenames, importer,
-                               progress_indicator=ProgressIndicator(pbar))
+            def set_text(queue):
+                while True:
+                    try:
+                        text, fraction = queue.get()
+                        if text == -1:
+                            pbar.hide()
+                        elif text is not None:
+                            pbar.set_text(text)                                        
+                        if fraction is not None:
+                            pbar.set_fraction(fraction)
+                    except QueueEmpty:
+                        pass
+                    yield None
+
+            queue = Queue()
+            thread_progress = GIdleThread(set_text(queue))
+            thread_progress.start()
+
+            thread_import = GIdleThread(pj.import_datasets(filenames, importer), queue)
+            thread_import.start()
+            thread_import.wait()
 
         finally:
             chooser.destroy()

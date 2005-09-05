@@ -132,10 +132,11 @@ class Importer(dataio.Importer):
 
 
             # create new Table
-            self.table = Table(nrows=self.growth_offset, ncols=ncols, typecodes=typecodes)
-        
+            tbl = Table(nrows=self.growth_offset, ncols=ncols, typecodes=typecodes)
+        else:
+            tbl = self.table
+            
         # make sure existing Table has at least one entry.
-        tbl = self.table
         if tbl.nrows == 0:
             tbl.resize(1)
                 
@@ -228,10 +229,6 @@ class Importer(dataio.Importer):
                 except StopIteration:
                     tbl.extend(tbl.ncols+self.growth_offset)
                     iter = iter.next()
-
-                # notify of progress every N'th row
-                if (iter.row % 50) == 0:
-                    Signals.emit(self, "progress-pulse", iter.row)                    
 
             row = fd.readline()
         

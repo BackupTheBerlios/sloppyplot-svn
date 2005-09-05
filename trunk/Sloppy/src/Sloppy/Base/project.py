@@ -268,7 +268,8 @@ class Project(Container):
 
     #----------------------------------------------------------------------
 
-    def import_datasets(self, filenames, importer, progress_indicator=None, undolist=None):
+    def import_datasets(self, filenames, importer, undolist=None):
+
         if undolist is None:
             undolist = self.journal
 
@@ -278,33 +279,23 @@ class Project(Container):
             raise TypeError("'importer' needs to be a key or a valid Importer instance.")
 
         importer.app = self.app
-        importer.progress_indicator = progress_indicator
 
         # To ensure a proper undo, the Datasets are imported one by one
         # to a temporary dict.  When finished, they are added as a whole.
         new_datasets = list()
 
-        if progress_indicator is not None:
-            def pulse(self, row):
-#                 if row > 600:
-#                     print "ROW IS VERY BIG!"
-#                     raise error.UserCancel
-                progress_indicator.pulse()
-                
-            Signals.connect(importer, "progress-pulse", pulse)
-                            
+        n = 0.0
+        N = len(filenames)
         for filename in filenames:
+            yield ("Importing %s" % filename, n/N)
+
             try:
-                old_values = importer.get_values()
                 tbl = importer.read_table_from_file(filename)
-                importer.set_values(**old_values)
             except ImportError, msg:
                 self.app.error_message(msg)
-                #pl.fail(msg)
                 continue
             except error.UserCancel:
                 self.app.error_message("Import aborted by user")
-                #pl.abort()
                 continue
 
             root, ext = os.path.splitext(basename(filename))
@@ -315,6 +306,10 @@ class Project(Container):
 
             new_datasets.append(ds)
 
+            n+=1
+            yield (None,n/N)
+
+        yield (-1,None)
 
         if len(new_datasets) > 0:
             ul = UndoList().describe("Import Dataset(s)")
