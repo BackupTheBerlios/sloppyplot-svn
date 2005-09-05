@@ -83,6 +83,8 @@ class Importer(dataio.Importer):
     
     def read_table_from_stream(self, fd):
 
+        print "=====", self.progress_indicator
+        
         # determine optional arguments
         typecodes = self.typecodes
         ncols = self.ncols
@@ -186,6 +188,7 @@ class Importer(dataio.Importer):
         cregexp = re.compile(regexp)
         logger.info("Regular Expression is: %s" % regexp)
 
+        print "Indicator", self.progress_indicator
         #
         # read in file line by line
         #
@@ -227,6 +230,11 @@ class Importer(dataio.Importer):
                 except StopIteration:
                     tbl.extend(tbl.ncols+self.growth_offset)
                     iter = iter.next()
+
+                # call progress indicator every 10'th row
+                if self.progress_indicator is not None and (iter.row % 10 == 0):
+                    self.progress_indicator.pulse()
+                    
 
             row = fd.readline()
         

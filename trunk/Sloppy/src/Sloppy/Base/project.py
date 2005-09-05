@@ -276,7 +276,10 @@ class Project(Container):
             importer = ImporterRegistry.new_instance(importer)
         elif not isinstance(importer, Importer):
             raise TypeError("'importer' needs to be a key or a valid Importer instance.")
+
         importer.app = self.app
+        print "Setting progress indicator to ", progress_indicator
+        importer.progress_indicator = progress_indicator
         
         # To ensure a proper undo, the Datasets are imported one by one
         # to a temporary dict.  When finished, they are added as a whole.

@@ -71,6 +71,7 @@ class Importer(Container):
     filemode = '' # set to 'b' for binary objects
 
     app = Prop(types=object)
+    progress_indicator = Prop(types=object)
     
     def read_table_from_stream(self,fd):
         return None

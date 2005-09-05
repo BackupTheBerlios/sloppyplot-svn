@@ -91,6 +91,7 @@ def register_all_png_icons(imgdir, prefix=""):
 class ProgressIndicator:
     def __init__(self, pb):
         self.pb = pb
+        self.pb.set_pulse_step(0.1)
     def set_text(self, text):
         self.pb.set_text(text) # TODO: encode properly
         while gtk.events_pending():
@@ -98,7 +99,13 @@ class ProgressIndicator:
     def set_fraction(self, fraction):
         self.pb.set_fraction(fraction)
         while gtk.events_pending():
-            gtk.main_iteration()                    
+            gtk.main_iteration()
+    def pulse(self):
+        print "PULSE"
+        self.pb.pulse()
+        while gtk.events_pending():
+            gtk.main_iteration()
+        
 
 
 
