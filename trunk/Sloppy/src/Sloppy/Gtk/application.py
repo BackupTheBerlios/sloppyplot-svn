@@ -101,7 +101,6 @@ class ProgressIndicator:
         while gtk.events_pending():
             gtk.main_iteration()
     def pulse(self):
-        print "PULSE"
         self.pb.pulse()
         while gtk.events_pending():
             gtk.main_iteration()

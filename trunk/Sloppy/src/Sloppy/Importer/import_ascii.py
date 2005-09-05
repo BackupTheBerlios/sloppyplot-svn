@@ -83,8 +83,6 @@ class Importer(dataio.Importer):
     
     def read_table_from_stream(self, fd):
 
-        print "=====", self.progress_indicator
-        
         # determine optional arguments
         typecodes = self.typecodes
         ncols = self.ncols
@@ -104,6 +102,7 @@ class Importer(dataio.Importer):
         fd.seek(rewind)
 
         # determine delimiter
+        print "<===", self.delimiter, self.header_lines
         delimiter = self.delimiter or self.custom_delimiter
         if delimiter is None:
             # determine from first non-comment line
@@ -188,7 +187,6 @@ class Importer(dataio.Importer):
         cregexp = re.compile(regexp)
         logger.info("Regular Expression is: %s" % regexp)
 
-        print "Indicator", self.progress_indicator
         #
         # read in file line by line
         #
@@ -197,13 +195,12 @@ class Importer(dataio.Importer):
         while len(row) > 0:
             matches = cregexp.match(row)
             if matches is None:
-                #logger.info("skipped: %s" % row)
                 skipcount += 1
                 if skipcount > 100:
                     if self.app is not None:
                         result = self.app.ask_yes_no("Warning: More than 100 lines skipped recently. Should we continue with this file?")
                         if result is False:
-                            raise ImportError("Aborted")
+                            raise dataio.ImportError("Aborted")
                     skipcount = 0
             else:
                 try:
@@ -232,7 +229,7 @@ class Importer(dataio.Importer):
                     iter = iter.next()
 
                 # call progress indicator every 10'th row
-                if self.progress_indicator is not None and (iter.row % 10 == 0):
+                if self.progress_indicator is not None and (iter.row % 50 == 0):
                     self.progress_indicator.pulse()
                     
 

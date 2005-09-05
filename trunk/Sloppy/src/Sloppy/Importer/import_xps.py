@@ -41,8 +41,10 @@ import re
 from Sloppy.Base import dataio
 from Sloppy.Lib.Props import Prop, BoolProp
 
+import import_ascii
 
-class Importer(dataio.Importer):
+
+class Importer(import_ascii.Importer):
 
     blurb = "XPS Spectra"
     extensions = ["xps"]
@@ -63,7 +65,7 @@ class Importer(dataio.Importer):
         r = re.compile(re_first)
         matches = r.match(line)
         if matches is None:
-            raise RuntimeError("Import Error: First line of data file is invalid.")
+            raise dataio.ImportError("First line of data file is invalid: %s" % line )
 
         gd = matches.groupdict()
         self.ranges = gd['ranges']
@@ -92,8 +94,8 @@ class Importer(dataio.Importer):
                        'labels' : labels,                      
                        'header_lines' : 33}
 
-            importer = dataio.ImporterRegistry.new_instance('ASCII', **options)
-            return importer.read_table_from_stream(fd)
+            self.set_values(**options)
+            return import_ascii.Importer.read_table_from_stream(self, fd)
 
         
         else:
