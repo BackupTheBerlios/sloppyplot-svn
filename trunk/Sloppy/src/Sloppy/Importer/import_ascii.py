@@ -58,7 +58,7 @@ class Importer(dataio.Importer):
     header_lines = RangeProp(blurb="Number of header lines",
                              coerce=int,
                              min=0, default=0)
-    
+
     table = Prop(types=Table)
     
     keys = Prop(types=list)
@@ -73,7 +73,6 @@ class Importer(dataio.Importer):
 
     growth_offset = RangeProp(coerce=int, min=10, default=100)
 
-    # TODO: remove?
     public_props = ['delimiter', 'custom_delimiter', 'ncols', 'header_lines']
 
     
@@ -94,6 +93,7 @@ class Importer(dataio.Importer):
             line = fd.readline()
             header_lines -= 1
 
+        # TODO: use given expression and re
         # skip comments
         line = '#'
         while line[0] == '#':
