@@ -31,7 +31,6 @@ from Sloppy.Base.table import Table
 from Sloppy.Lib.Props import *
 
 
-STEP_ROWS = 100
             
 class Importer(dataio.Importer):
 
@@ -71,7 +70,10 @@ class Importer(dataio.Importer):
 
     typecodes = Prop(types=(basestring, list),
                      default='f')
-    
+
+    growth_offset = RangeProp(coerce=int, min=10, default=100)
+
+    # TODO: remove?
     public_props = ['delimiter', 'custom_delimiter', 'ncols', 'header_lines']
 
     
@@ -128,7 +130,7 @@ class Importer(dataio.Importer):
 
 
             # create new Table
-            self.table = Table(nrows=STEP_ROWS, ncols=ncols, typecodes=typecodes)
+            self.table = Table(nrows=self.growth_offset, ncols=ncols, typecodes=typecodes)
         
         # make sure existing Table has at least one entry.
         tbl = self.table
@@ -223,7 +225,7 @@ class Importer(dataio.Importer):
                 try:
                     iter = iter.next()
                 except StopIteration:
-                    tbl.extend(tbl.ncols+STEP_ROWS)
+                    tbl.extend(tbl.ncols+self.growth_offset)
                     iter = iter.next()
 
             row = fd.readline()
