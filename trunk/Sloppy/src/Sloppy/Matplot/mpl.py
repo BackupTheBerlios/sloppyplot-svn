@@ -279,7 +279,7 @@ class Backend( backend.Backend ):
                 # create legend entries from line labels
                 labels = [l.get_label() for l in line_cache]                
                 
-                legend = ax.legend(line_cache, labels, loc=position, pad=0.8)
+                legend = ax.legend(line_cache, labels, loc=position)
                 legend.draw_frame(border)
 
             else:

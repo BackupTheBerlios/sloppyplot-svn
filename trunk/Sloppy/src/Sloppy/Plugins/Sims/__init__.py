@@ -100,7 +100,7 @@ class Plugin:
             l = Line( source=dataset, cx=i*2, cy=i*2+1 )
             lines.append(l)
             
-        p = Plot( key = pdict.unique_key(project.plots, "Profile %s" % dataset.key),
+        p = Plot( key = pdict.unique_key(project.plots, "profile_%s" % dataset.key),
                   layers = [Layer(type='line2d',
                                   lines=lines,
                                   axes={'y' : Axis(scale="log",
@@ -132,7 +132,7 @@ class Plugin:
             
         table = dataset.data   # TODO: check for Table
             
-        p = Plot( key = pdict.unique_key(project.plots, "Spectrum %s" % dataset.key),
+        p = Plot( key = pdict.unique_key(project.plots, "spectrum_%s" % dataset.key),
                   layers = [Layer(type='line2d',
                                   lines=[Line( label=dataset.key,
                                                source=dataset,

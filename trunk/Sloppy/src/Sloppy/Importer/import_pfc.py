@@ -40,13 +40,13 @@ class Importer(dataio.Importer):
     def read_header_from_stream(self, fd):
         # first line is header line, delimited by ','
         line = fd.readline()[:-2]
-        self.keys = line.split(',')
+        self.labels = line.split(',')                    
 
            
     def read_table_from_stream(self, fd):
 
         self.read_header_from_stream(fd)
-        ncols = len(self.keys)
+        ncols = len(self.labels)
         
         if ncols == 0 or (ncols%2 != 0):
             raise ImportError("Invalid header line for PFC.")        
@@ -55,7 +55,9 @@ class Importer(dataio.Importer):
                    'typecodes' : 'f',
                    'designations' : ['X','Y'] * (ncols/2),
                    'header_lines' : 1,
-                   'delimiter' : ','}
+                   'labels': self.labels,
+                   'delimiter' : None,
+                   'custom_delimiter' : ',\s*'}
                            
         importer = dataio.ImporterRegistry.new_instance('ASCII', **options)
         return importer.read_table_from_stream(fd)

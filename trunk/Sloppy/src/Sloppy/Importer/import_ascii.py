@@ -98,7 +98,7 @@ class Importer(dataio.Importer):
         # TODO: use given expression and re
         # skip comments
         line = '#'
-        while line[0] == '#':
+        while len(line) > 0 and line[0] == '#':
             rewind = fd.tell()
             line = fd.readline()
         fd.seek(rewind)

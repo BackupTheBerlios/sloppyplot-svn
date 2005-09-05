@@ -908,6 +908,13 @@ class GtkApplication(Application):
         return result == gtk.RESPONSE_YES
 
 
+    def error_message(self, msg):
+        dialog = gtk.MessageDialog(type=gtk.MESSAGE_ERROR,
+                                   buttons=gtk.BUTTONS_OK,
+                                   message_format=unicode(msg))
+        dialog.run()
+        dialog.destroy()
+
 
 
 # ======================================================================    
