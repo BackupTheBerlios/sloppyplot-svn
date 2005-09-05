@@ -12,7 +12,7 @@ is no need to install SloppyPlot!
 Then execute the program by typing
 
   $ cd src
-  $ python sloppy
+  $ python sloppyplot
 
 
 Have fun!
