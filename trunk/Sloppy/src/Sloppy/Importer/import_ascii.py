@@ -29,6 +29,7 @@ from Sloppy.Base import dataio
 from Sloppy.Base.table import Table
 
 from Sloppy.Lib.Props import *
+from Sloppy.Lib.Signals import *
 
 
             
@@ -48,7 +49,7 @@ class Importer(dataio.Importer):
                      value_list=[None,',', '\t',';', '\s*'])
     
     custom_delimiter = Prop(blurb="Custom delimiter used if delimiter is None.",
-                            types=(basestring,None))
+                            types=basestring)
     
     ncols = RangeProp(blurb="Number of columns",
                       coerce=int,
@@ -61,9 +62,9 @@ class Importer(dataio.Importer):
 
     table = Prop(types=Table)
     
-    keys = Prop(types=list)
+    keys = ListProp()
 
-    labels = Prop(types=list)
+    labels = ListProp()
     
     designations = Prop(types=list,
                         default=None)
@@ -206,11 +207,11 @@ class Importer(dataio.Importer):
                 try:
                     values = map(lambda x, c: c(x), matches.groups(), converters)
                 except ValueError, msg:
-                    logger.warn("Skipped: %s (%s)" % (row,msg))
+                    #logger.warn("Skipped: %s (%s)" % (row,msg))
                     row = fd.readline()
                     continue
                 except TypeError, msg:
-                    logger.warn("Skipped: %s (%s)" % (row,msg))
+                    #logger.warn("Skipped: %s (%s)" % (row,msg))
                     row = fd.readline()
                     continue
                 else:
@@ -228,10 +229,9 @@ class Importer(dataio.Importer):
                     tbl.extend(tbl.ncols+self.growth_offset)
                     iter = iter.next()
 
-                # call progress indicator every 10'th row
-                if self.progress_indicator is not None and (iter.row % 50 == 0):
-                    self.progress_indicator.pulse()
-                    
+                # notify of progress every N'th row
+                if (iter.row % 50) == 0:
+                    Signals.emit(self, "progress-pulse", iter.row)                    
 
             row = fd.readline()
         

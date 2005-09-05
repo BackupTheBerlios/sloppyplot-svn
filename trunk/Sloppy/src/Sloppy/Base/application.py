@@ -164,7 +164,7 @@ class Application(object):
                     self.recent_files.pop(-1)
                 Signals.emit(self, "update-recent-files")
 
-
+                
     #----------------------------------------------------------------------
     # PLUGIN HANDLING
     
@@ -238,7 +238,7 @@ class Application(object):
     def clear_recent_files(self):
         self.recent_files = list()
         Signals.emit(self, 'update-recent-files')
-
+            
     #----------------------------------------------------------------------
     # Simple user I/O
     #

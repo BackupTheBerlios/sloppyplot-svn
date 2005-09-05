@@ -63,10 +63,7 @@ def generic_value_check(value, types=(), coerce=None, values=()):
     def require_one(value, items):
         # 'One of the listed types/methods should be successful'
         for item in items:
-            if item is None:
-                if value is None: break
-                else: continue
-            elif isinstance(item, type):
+            if isinstance(item, type):
                 if isinstance(value, item): break
                 else: continue
             else:
@@ -76,7 +73,7 @@ def generic_value_check(value, types=(), coerce=None, values=()):
         else:
             raise TypeError("Not a valid type %s." % type(value))
         
-    if len(types) > 0:
+    if len(types) > 0 and value is not None:
         require_one(value, types)
 
     #

@@ -100,7 +100,7 @@ class ProgressIndicator:
         self.pb.set_fraction(fraction)
         while gtk.events_pending():
             gtk.main_iteration()
-    def pulse(self):
+    def pulse(self):        
         self.pb.pulse()
         while gtk.events_pending():
             gtk.main_iteration()

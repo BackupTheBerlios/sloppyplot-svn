@@ -279,16 +279,25 @@ class Project(Container):
 
         importer.app = self.app
         importer.progress_indicator = progress_indicator
-        
+
         # To ensure a proper undo, the Datasets are imported one by one
         # to a temporary dict.  When finished, they are added as a whole.
         new_datasets = list()
 
-        pl = progress_indicator
+        if progress_indicator is not None:
+            def pulse(self, row):
+#                 if row > 600:
+#                     print "ROW IS VERY BIG!"
+#                     raise error.UserCancel
+                progress_indicator.pulse()
+                
+            Signals.connect(importer, "progress-pulse", pulse)
+                            
         for filename in filenames:
-            pl.set_text(filename)
             try:
+                old_values = importer.get_values()
                 tbl = importer.read_table_from_file(filename)
+                importer.set_values(**old_values)
             except ImportError, msg:
                 self.app.error_message(msg)
                 #pl.fail(msg)
