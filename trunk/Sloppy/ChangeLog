@@ -1,6 +1,19 @@
 CHANGELOG
 =========
 
+2005-09-06 SloppyPlot 0.4.1
+===========================
+	
+  * Put API documentation online (and write script to automate the process)
+  * Fixed progress report (at least a little).
+  * Rewrote ASCII import to use regular expressions.  This makes it much more powerful.
+  * Let ASCII import issue a warning if there were more than 100 errors and let user choose to abort, abort all(=UserCancel) or continue.
+  * Adjusted derived import filters (XPS and PFC) to use the regular expressions instead of skip lines.
+  * Added API documentation via epydoc
+  * Renamed executable to `sloppyplot`
+	
+	
+	
 2005-08-28: SloppyPlot 0.4
 ==========================
 
