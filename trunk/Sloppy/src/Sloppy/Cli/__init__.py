@@ -1,3 +1,6 @@
+# This file is part of SloppyPlot, a scientific plotting tool.
+# (C)opyright Niklas Volbers 2005.
+
 __all__ = ['Application', 'app',
            'Dataset', 'Project',
            'Plot', 'Axis', 'Layer', 'Line',
