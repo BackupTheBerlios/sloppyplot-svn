@@ -57,7 +57,9 @@ class UndoInfo:
 
 
     def check_info(self):
-        " Raises UndoError if the UndoInfo is invalid. "
+        """ Raises L{UndoError} if the UndoInfo is invalid.
+        @raises: UndoError
+        """
         if self.kwargs.has_key('undolist'):
             raise UndoError("Keyword arguments in undoinfo contain an argument 'undolist'. This is reserved as a keyword and may not be used.")
 
@@ -160,10 +162,11 @@ class UndoList( UserList.UserList, UndoInfo ):
         undolist.append(new_list.simplify())
 
     def simplify(self, preserve_list=False):
-        """ Returns a simplified UndoList.
+        """
+        Returns a simplified UndoList.
 
-        - Removes all NullUndo items.
-        - Removes empty UndoList instances.
+          - Removes all NullUndo items.          
+          - Removes empty UndoList instances.
 
         If the UndoList can be reduced to a NullUndo and if
         preserve_list is 'false' (default), then NullUndo is returned.

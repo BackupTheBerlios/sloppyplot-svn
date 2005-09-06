@@ -42,44 +42,38 @@ class Dataset(Container):
     """
     A Dataset is a wrapper for any data used for plotting.
 
-    Attributes are:
-
-    key - string that identifies the Dataset
-
-    label - descriptive label
-
-    metadata - additional meta info
-
-    data - the actual data, either a Table or a numeric array.  Note
-      that the numeric array should be 2-dimensional, even though this
-      is not checked.
-
     To create a Dataset from scratch:
 
-    >>> ds = Dataset(key='dataset01', label='Recent data on weather',
-    >>>              metadata={'ImportSource': 'Local Weather TV'},
-    >>>              data=array([[1,2,3,4],[5,6,7,8]])
+        >>> ds = Dataset(key='dataset01', label='Recent data on weather',
+        ...              metadata={'ImportSource': 'Local Weather TV'},
+        ...              data=array([[1,2,3,4],[5,6,7,8]])
 
     If you use the Dataset's data, then always make sure that you are
     dealing with the right kind of data.  The recommended way to do so
     is
 
-    >>> data = ds.data  # ds is the Dataset
-    >>> if not isinstance(data, Table):
-    >>>     ....
+        >>> data = ds.data  # ds is the Dataset
+        >>> if not isinstance(data, Table): ...
 
     or alternatively
 
-    >>> if not isinstance(data, ArrayType):
-    >>>     ....
-
-    where ArrayType must have been imported from `numeric`.
+        >>> from Numeric import ArrayType
+        >>> if not isinstance(data, ArrayType): ...
 
     If you add a Dataset to a Project, then you must make sure that
-    its key is unique.
+    its key is unique.  The best way to do so is to use the Project's
+    add methods.   
 
-    TODO: implement some function in Project that does that.
-    
+    @cvar key: KeyProp that identifies the Dataset
+
+    @cvar label: descriptive label
+
+    @cvar metadata: additional meta info
+
+    @cvar data: the actual data, either a Table or a numeric array.  Note
+    that the numeric array should be 2-dimensional, even though this
+    is not checked.
+
     """
     
     key = KeyProp()
@@ -146,6 +140,3 @@ class Dataset(Container):
         
     def set_table_import(self, *args):
         self._table_import = args
-
-    #----------------------------------------------------------------------
-    

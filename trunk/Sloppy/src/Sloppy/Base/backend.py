@@ -66,18 +66,18 @@ class Backend(object):
     
     Any real implementation must implement the following:
 
-      connect -- open the connection to the backend
-      disconnect -- close it again
-      check_connection -- connect, if necessary
+        - connect -- open the connection to the backend
+        - disconnect -- close it again
+        - check_connection -- connect, if necessary
 
-      clear -- clear the plotting output
-      draw -- plot the data of self.plot
-      redraw
+        - clear -- clear the plotting output
+        - draw -- plot the data of self.plot
+        - redraw
       
     You might want to redefine the following:
     
-      cd -- change the internal directory of the Backend
-      pwd -- return the internal directory of the Backend
+        - cd -- change the internal directory of the Backend
+        - pwd -- return the internal directory of the Backend
 
     For information on how to register a new Backend, consult the
     BackendRegistry documentation and have a look at the sample
@@ -89,10 +89,10 @@ class Backend(object):
         """
         Initalization consists of:
 
-        - save keyword arguments as self.options
-        - merge in any extra keywords assigned via BackendRegistry.register
-        - assign `self.project` and `self.plot`
-        - call self.connect()
+            - save keyword arguments as self.options
+            - merge in any extra keywords assigned via BackendRegistry.register
+            - assign `self.project` and `self.plot`
+            - call self.connect()
 
         Do not overwrite this method, use self.init() for custom
         initialization!
@@ -134,7 +134,9 @@ class Backend(object):
                 self.plot, 'closed', (lambda sender: self.disconnect()))
 
     def cb_plot_changed(self, sender):
-        # TODO: only redraw if we have already drawn something!
+        """
+        @todo: only redraw if we have already drawn something!
+        """
         self.redraw()
         
     def cb_project_closed(self, sender):

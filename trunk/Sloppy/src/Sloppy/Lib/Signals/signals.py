@@ -110,12 +110,8 @@ class __Emitter:
 
         >>> emit(self, 'a-signal', 'dead', volts=1000)
 
-        Then the resulting arguments to my_callback would look like this:
-
-          an_object (the sender)
-          'parrot'
-          'dead'
-          volts = 500                  
+        Then the resulting arguments to my_callback would be an_object
+        (the sender), 'parrot', 'dead', volts = 500.
         
         """
         logger.debug("emit: received emission of signal '%s'" % name)
