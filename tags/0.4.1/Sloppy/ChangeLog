@@ -1,0 +1,78 @@
+CHANGELOG
+=========
+
+2005-09-06 SloppyPlot 0.4.1
+===========================
+	
+  * Put API documentation online (and write script to automate the process)
+  * Fixed progress report (at least a little).
+  * Rewrote ASCII import to use regular expressions.  This makes it much more powerful.
+  * Let ASCII import issue a warning if there were more than 100 errors and let user choose to abort, abort all(=UserCancel) or continue.
+  * Adjusted derived import filters (XPS and PFC) to use the regular expressions instead of skip lines.
+  * Added API documentation via epydoc
+  * Renamed executable to `sloppyplot`
+	
+	
+	
+2005-08-28: SloppyPlot 0.4
+==========================
+
+There were many, many changes.  Among them are:
+
+  * Created directory 'doc' and moved licenses to it.
+  * setup.py now uses all information from version.py (version,author,...)
+  * Moved netcdf type conversions to const.py AND reverted this back again! Doing this would introduce a pycdf dependency on the Base dir!
+  * Moved application.py to directory Base.
+  * In table.py renamed 'rowcount' to 'nrows', 'colcount' to 'ncols'.  This caused a lot of replacing in other modules.
+  * Don't add current project to list of recently files if it is the same as the most recent file in the list.
+  * Moved all Column information except data, typecode and key into project.xml.
+  * Created a sample transformation to show how to convert the project.xml file from an old version to a new one.
+  * Synchronized 'legend.border'.
+  * Both backends, gnuplot and matplotlib, now share some methods, e.g. for determining the source from a line, the table from a source, the label from a line. These common functions are naturally implemented in backend.py
+  * Reworked Props heavily.
+  * Use KeyProp for Column keys.
+  * Started documentation for directory layout.
+  * Removed EPS option for PostscriptTerminal.
+  * Added tooltips to Gnuplot export status (actually to propwidgets in general).
+  * Moved config file location from $HOME/.sloppyplot to $HOME/.config/SloppyPlot/sloppyrc. The XDG_CONFIG_HOME variable is honored.  If the directory does not exist, it is created.
+  * Renamed executable to 'sloppy', hide 'CLI' frontend (hey, it is not cli, it's actually a shell frontend!)
+  * Added options to executable.  Now it is possible to specify the project filename.
+  * check key if setting it automatically via the importer.  It might contain invalid characters!
+  * Import files regardless if they have unix or windows line-feed!
+
+
+2005-08-24: SloppyPlot 0.3
+==========================
+
+Plotting:
+  - added row_first, row_last to specify first and last row index
+    to use while plotting.  This is still experimental and is only
+    supported by matplotlib, not by gnuplot!    
+  
+Web Site:
+  - launched 'real' web site using DokuWiki
+    
+User Interface:
+  - Cleaned up the menus a little (added edit button in mpl window,
+    renamed Save As to Export Via Matplotlib,...)
+  - fixed some little annoying bugs, e.g. in layerwin
+  - replaced the boolean toggle buttons with comboboxes (default,true,false)
+    
+Dataset Window:
+  - implemented Column modification dialog (add/remove/move/edit columns)
+  - added status bar to dataset window
+
+
+SloppyPlot 0.2
+==============
+
+- first build considered alpha quality
+
+
+SloppyPlot 0.1.2
+================
+
+- many, many small bugfixes to improve the normal workflow
+- list of recently used files available
+- added configuration file ~/.sloppyplot.cfg
+
