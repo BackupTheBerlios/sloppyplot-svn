@@ -20,8 +20,9 @@
 
 
 """
-Constant declarations for SloppyPlot
+Constant declarations.
 """
+
 
 import logging
 logging.basicConfig()

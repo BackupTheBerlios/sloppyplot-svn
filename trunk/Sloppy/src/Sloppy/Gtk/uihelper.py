@@ -19,6 +19,10 @@
 # $Id$
 
 
+"""
+Commonly used helper functions for pygtk.
+"""
+
 import gtk
 
 import logging

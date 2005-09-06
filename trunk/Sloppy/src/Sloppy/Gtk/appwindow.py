@@ -542,7 +542,6 @@ class AppWindow( gtk.Window ):
         ('ObjectMenu', None, '_Object'),
         ('Edit', gtk.STOCK_EDIT, '_Edit', '<control>E', 'Edit the currently selected object.', '_cb_edit'),
         ('DebugMenu', None, 'Debug'),
-        ('LoadTestProject', None, 'Load test project', None, 'test', '_cb_load_test_project'),
         ('WindowList', None, 'Windows...'),
         ]
 

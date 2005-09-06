@@ -18,13 +18,22 @@
 # $HeadURL$
 # $Id$
 
+"""
+Registry class for registering and retrieving classes at runtime.
+
+See class L{Registry} for usage.
+"""
+
 
 import logging
-logger = logging.getLogger('Base.classregistry')
-
+logger = logging.getLogger('Base.klassregistry')
 
 
 class ClassWrapper:
+
+    """ Helper class that holds a class, its arguments and keyword
+    arguments.  """
+    
     def __init__(self, klass, *args, **kwargs):
         self.klass = klass
         self.args = args
@@ -39,6 +48,43 @@ class ClassWrapper:
 
 class Registry:
 
+    """    
+    Register classes and create class instances at runtime.
+
+    Create a new Registry
+
+        >>> reg = Registry('Importer')
+
+    Register new classes (with or w/o default arguments)
+
+        >>> # ImporterASCII is a class
+        >>> reg.register(ImporterASCII, 'ASCII')
+        >>> reg.register(ImporterASCII, 'ASCII/limited', limited=True)
+
+    Create instance of registered class
+
+        >>> # returns ImporterASCII()
+        >>> reg.new_instance('ASCII')
+
+        >>> # returns ImporterASCII(limited=True)
+        >>> reg.new_instance('ASCII/limited')
+
+        >>> # returns ImporterASCII('test.dat', header_lines=10)
+        >>> reg.new_instance('ASCII', 'test.dat')
+
+    Default arguments are always returned first. Keyword arguments are
+    always updated with the keyword arguments passed to new_instance.
+
+    Note the difference between classes and L{ClassWrapper}s!  If
+    e.g. you want to get a list of all available classes, use:
+
+        >>> for key, wrapper in reg.itervalues():        
+        ...     print 'Key %s yields class %s with args %s and keyword args %s'
+        ...     % (key, wrapper.klass, wrapper.args, wrapper.klass )
+        
+    """
+
+    
     def __init__(self, label="Unnamed Registry"):
         self._wrappers = {}
         self.label = label

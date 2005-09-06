@@ -18,6 +18,10 @@
 # $HeadURL$
 # $Id$
 
+"""
+Table class (list of 1d arrays)
+"""
+
 
 from Numeric import *
 

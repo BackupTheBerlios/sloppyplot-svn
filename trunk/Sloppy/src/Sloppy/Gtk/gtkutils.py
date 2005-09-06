@@ -19,6 +19,10 @@
 # $Id$
 
 
+"""
+DEPRECATED. Will be completely replaced by uihelper in the future.
+"""
+
 import logging
 logger = logging.getLogger('Gtk.gtkutils')
 
@@ -27,12 +31,12 @@ import gtk, gobject
 
 
 
-def create_buttonbox(list):
-        
-    """ A helper function that returns a gtk.HBox containing buttons
-    by providing a simple list of the form:
-    
-    [("btn1", cb_btn1), ("btn2", cb_btn2)]
+def create_buttonbox(list):        
+    """
+    A helper function that returns a gtk.HBox containing buttons.
+
+    @param list: List of 2-tuples containing the button label and the
+    button callback, e.g. C{[("btn1", cb_btn1), ("btn2", cb_btn2)]}.
     """
         
     buttonbox = gtk.HBox()

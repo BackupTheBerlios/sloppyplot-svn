@@ -7,8 +7,22 @@ import logging
 logger = logging.getLogger()
 
 #
+# set correct path to SloppyPlot
+#
+
+#import os.path
+#from Base import const
+
+#path = os.path.split(Base.__path__[0])[0]
+#logger.info("Setting SloppyPath to %s" % path)
+#const.set_path(path)
+
+
+
+#
 # add matplotlib backend ('mpl') if matplotlib is available
 #
+
 try:
     import Matplot
     __all__.append('Matplot')

@@ -18,6 +18,9 @@
 # $HeadURL$
 # $Id$
 
+"""
+DEPRECATED.  Will be replaced by pwconnect.
+"""
 
 import logging
 logging.basicConfig()

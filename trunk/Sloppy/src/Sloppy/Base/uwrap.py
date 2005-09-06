@@ -19,6 +19,11 @@
 # $Id$
 
 
+"""
+Commonly used Undo wrappers.
+"""
+
+
 import logging
 
 from Sloppy.Lib.Undo import UndoList, UndoInfo, NullUndo

@@ -19,6 +19,9 @@
 # $Id$
 
 
+"""
+"""
+
 import logging
 logger = logging.getLogger('gtk.application')
 
@@ -69,7 +72,8 @@ from Sloppy.Lib import Signals
 def register_all_png_icons(imgdir, prefix=""):
     """
     Register all svg icons in the Icons subdirectory as stock icons.
-    The prefix is the prefix for the stock_id.
+    
+    @param prefix: Prefix for the created stock_id.
     """
     logger.debug("Trying to register png icons from dir '%s'" % imgdir)
     import glob, os
@@ -88,24 +92,6 @@ def register_all_png_icons(imgdir, prefix=""):
             iconfactory.add(stock_id, iconset)
     iconfactory.add_default()
 
-
-
-class ProgressIndicator:
-    def __init__(self, pb):
-        self.pb = pb
-        self.pb.set_pulse_step(0.1)
-    def set_text(self, text):
-        self.pb.set_text(text) # TODO: encode properly
-        while gtk.events_pending():
-            gtk.main_iteration()                                        
-    def set_fraction(self, fraction):
-        self.pb.set_fraction(fraction)
-        while gtk.events_pending():
-            gtk.main_iteration()
-    def pulse(self):        
-        self.pb.pulse()
-        while gtk.events_pending():
-            gtk.main_iteration()
         
 
 
@@ -156,10 +142,13 @@ class GtkApplication(Application):
     # Project
     
     def set_project(self, project, confirm=True):
-        " Assign the given project to the Application. "
+        """
+        Assign the given project to the Application.
 
-        # ask for permission to close the project
-        # (unless there were no changes)
+        @param confirm: Ask user for permission to close the project
+        (unless there were no changes).
+        """
+
         if self._project is not None:
             if self._project.journal.can_undo() and confirm is True:        
                 msg = \
@@ -204,94 +193,6 @@ class GtkApplication(Application):
         self.window._refresh_undo_redo()
         self.window._refresh_recentfiles()
 
-    # ----------------------------------------------------------------------
-    # delete-event/destroy/quit application
-            
-    def _cb_quit_application(self, action):
-        self.quit()
-
-    def quit(self):
-        try:
-            Application.quit(self)
-            gtk.main_quit()
-        except error.UserCancel:
-            return
-        
-
-    #
-    # callbacks
-    #
-    def _cb_project_close(self,widget=None):  self.close_project()
-    def _cb_project_open(self,widget): self.load_project()
-    def _cb_project_save(self,widget):   self.save_project()            
-    def _cb_project_save_as(self,widget): self.save_project_as()                        
-    def _cb_project_new(self,widget): self.new_project()
-
-
-    #----------------------------------------------------------------------
-    
-    def _cb_edit(self, action):
-        plots, datasets = self.window.treeview.get_selected_plds()
-        if len(plots) > 0:
-            self.edit_layer(plots[0])
-        else:
-            for dataset in datasets:
-                self.edit_dataset(dataset)        
-
-                        
-    # ----------------------------------------------------------------------
-
-    def _cb_load_test_project(self,widget):
-        try:
-            filename = const.internal_path(const.PATH_EXAMPLE+'/example.spj')
-            spj = self.load_project(filename)
-        except IOError:
-            # TODO: Message Box
-            return None
-        self.set_project(spj)
-
-        
-    # --- VIEW ---------------------------------------------------------------------
-                
-    def edit_dataset(self, ds, undolist=[]):
-        assert( isinstance(ds, Dataset) )
-
-        # reuse old DatasetWindow or create new one
-        window = self.window.subwindow_match(
-            (lambda win: isinstance(win, DatasetWindow) and (win.dataset == ds))) \
-            or \
-            self.window.subwindow_add( DatasetWindow(self, self._project, ds) )
-	window.present()
-
-
-    def edit_layer(self, plot, layer=None, current_page=None):
-        """
-        Edit the given layer of the given plot.
-        If no layer is given, the method tries to edit the first Layer.
-        If there is no Layer in the plot, an error will logged.
-
-        TODO: current_page.
-        """
-        if layer is None:
-            if len(plot.layers) > 0:
-                layer = plot.layers[0]
-            else:
-                logger.error("The plot to be edited has not even a single layer!")
-                return
-            
-        win = LayerWindow(self, plot, layer, current_page=current_page)
-        win.set_modal(True)
-        win.present()
-        
-    
-    #----------------------------------------------------------------------
-
-    def _cb_new_plot(self,widget):
-        pj = self._check_project()
-        
-        plot = new_lineplot2d(key='empty plot')
-        pj.add_plots([plot])
-        
 
     def load_project(self, filename=None):
         """
@@ -346,8 +247,8 @@ class GtkApplication(Application):
 
 
 
-    def save_project_as(self, filename = None, undolist=[]):
-        " Save project under another filename -- no undo possible. "
+    def save_project_as(self, filename = None):
+        """ Save project under another filename. """
         pj = self._check_project()
 
         if not filename:
@@ -394,6 +295,84 @@ class GtkApplication(Application):
 
         self.recent_files.append(os.path.abspath(filename))
         Signals.emit(self, 'update-recent-files')
+
+
+    def quit(self):
+        """ Quit Application and gtk main loop. """
+        try:
+            Application.quit(self)
+            gtk.main_quit()
+        except error.UserCancel:
+            return
+
+
+    # ----------------------------------------------------------------------
+    # Callbacks
+    #
+    
+    # delete-event/destroy/quit application
+            
+    def _cb_quit_application(self, action): self.quit()       
+
+    def _cb_project_close(self,widget=None):  self.close_project()
+    def _cb_project_open(self,widget): self.load_project()
+    def _cb_project_save(self,widget):   self.save_project()            
+    def _cb_project_save_as(self,widget): self.save_project_as()                        
+    def _cb_project_new(self,widget): self.new_project()
+
+
+    #----------------------------------------------------------------------
+    
+    def _cb_edit(self, action):
+        plots, datasets = self.window.treeview.get_selected_plds()
+        if len(plots) > 0:
+            self.edit_layer(plots[0])
+        else:
+            for dataset in datasets:
+                self.edit_dataset(dataset)        
+
+                        
+    # --- VIEW ---------------------------------------------------------------------
+                
+    def edit_dataset(self, ds, undolist=[]):
+        assert( isinstance(ds, Dataset) )
+
+        # reuse old DatasetWindow or create new one
+        window = self.window.subwindow_match(
+            (lambda win: isinstance(win, DatasetWindow) and (win.dataset == ds))) \
+            or \
+            self.window.subwindow_add( DatasetWindow(self, self._project, ds) )
+	window.present()
+
+
+    def edit_layer(self, plot, layer=None, current_page=None):
+        """
+        Edit the given layer of the given plot.
+        If no layer is given, the method tries to edit the first Layer.
+        If there is no Layer in the plot, an error will logged.
+
+        TODO: current_page.
+        """
+        if layer is None:
+            if len(plot.layers) > 0:
+                layer = plot.layers[0]
+            else:
+                logger.error("The plot to be edited has not even a single layer!")
+                return
+            
+        win = LayerWindow(self, plot, layer, current_page=current_page)
+        win.set_modal(True)
+        win.present()
+        
+    
+    #----------------------------------------------------------------------
+
+    def _cb_new_plot(self,widget):
+        pj = self._check_project()
+        
+        plot = new_lineplot2d(key='empty plot')
+        pj.add_plots([plot])
+        
 
 
         
@@ -779,14 +758,14 @@ class GtkApplication(Application):
 
 
 
-    ###
     ### TODO: rewrite this!
-    ###
-    def _cb_export_dataset(self, widget):
+    def _cb_export_dataset(self, widget):           
         """
         Export the selected Dataset to a file.
         Currently, only the csv format is supported.
         TODO: Support for arbitrary export filters.
+
+        @attention: This needs to be written from scratch!
         """
         pj = self._check_project()
         objects = self.window.treeview.get_selected_objects()
@@ -839,7 +818,7 @@ class GtkApplication(Application):
 
 
     def _cb_new_dataset(self,widget):
-        " Create a new dataset and switch to its editing window. "
+        """ Create a new dataset and switch to its editing window. """
         pj = self._check_project()        
         ds = pj.new_dataset()
         self.edit_dataset(ds)        
@@ -933,6 +912,8 @@ class GtkApplication(Application):
                                    message_format=unicode(msg))
         dialog.run()
         dialog.destroy()
+
+
 
 
 

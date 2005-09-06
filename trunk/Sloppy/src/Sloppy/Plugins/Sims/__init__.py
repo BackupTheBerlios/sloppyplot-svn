@@ -18,6 +18,9 @@
 # $HeadURL$
 # $Id$
 
+"""
+This plugin is an experimental plugin and just for testing.
+"""
 
 from Sloppy.Base import pdict, uwrap
 from Sloppy.Gtk import plugin

@@ -19,6 +19,11 @@
 # $Id$
 
 
+"""
+Commonly used functions.
+"""
+
+
 from Sloppy.Base.plugin import PluginRegistry
 from Sloppy.Lib.Undo import UndoList, ulist
 

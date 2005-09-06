@@ -17,7 +17,11 @@
 
 # $HeadURL$
 # $Id$
- 
+
+
+"""
+Exceptions specific to SloppyPlot.
+"""
 
 class NoData(Exception):
     pass

@@ -18,6 +18,9 @@
 # $HeadURL$
 # $Id$
 
+"""
+Project class as Container for both Plots and Datasets.
+"""
 
 import os
 
