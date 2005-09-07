@@ -23,13 +23,13 @@ DEPRECATED.  Will be replaced by pwconnect.
 """
 
 import logging
-logging.basicConfig()
+logger = logging.getLogger("gtk.propwidgets")
 
 #import pygtk
 #pygtk.require('2.0')
 import gtk
 
-from Sloppy.Lib.Props import BoolProp, Container
+from Sloppy.Lib.Props import *
 from Sloppy.Lib.Undo import UndoList
 
 from Sloppy.Base import uwrap
@@ -40,6 +40,17 @@ _all__ = ["PWContainer", "PWTableBox",
           "PWToggleButton", "PWAlternateToggleButton",
           "construct_pw", "construct_pw_in_box", "construct_pw_table"]
 
+
+
+def collect_values(prop):
+    """ Collect all values of the prop specified by CheckValid. """
+    value_list = []
+    for item in prop.check.items:
+        if isinstance(item, CheckValid):
+            value_list.extend(item.values)
+    return value_list
+        
+    
 
 class PWContainer:
 
@@ -242,11 +253,12 @@ class PWComboBox(PW):
 
     def check_in(self):
         try:
-            index = self.prop.value_list.index(self.get_value())
+            value_list = collect_values(self.prop)
+            index = value_list.index(self.get_value())
+            self.widget.set_active(index)
         except:
-            print "Failed to retrieve value ", self.get_value(), self.prop.doc
-            raise
-        self.widget.set_active(index)
+            logger.info("Failed to retrieve value %s (not in list %s)." % (self.get_value(), self.prop.doc))
+            index = None
 
         self.old_value = index
 
@@ -265,7 +277,8 @@ class PWComboBox(PW):
     def fill_combo(self):
         model = self.widget.get_model()
         model.clear()
-        for value in self.prop.value_list:
+        value_list = collect_values(self.prop)
+        for value in value_list:
             model.append( (value or "<None>", value) )
         
 
@@ -396,8 +409,9 @@ class PWCheckButton(PW):
 
 def construct_pw(container, key):
     prop = container.get_prop(key)
-    
-    if prop.value_list is not None:
+
+    value_list = collect_values(prop)
+    if value_list:
         pw = PWComboBox(container, key)
     elif isinstance(prop, BoolProp):
         pw = PWAlternateToggleButton(container, key)

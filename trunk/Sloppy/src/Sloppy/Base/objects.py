@@ -28,7 +28,7 @@ from Sloppy.Base.dataset import Dataset
 
 from Sloppy.Lib import Signals
 from Sloppy.Lib.Undo import udict
-from Sloppy.Lib.Props import Container, Prop, ListProp, DictProp, BoolProp, RangeProp, KeyProp
+from Sloppy.Lib.Props import *
        
         
 
@@ -38,62 +38,64 @@ from Sloppy.Lib.Props import Container, Prop, ListProp, DictProp, BoolProp, Rang
 
 class Axis(Container):
     " A single axis for a plot. "
-    label = Prop(coerce=unicode, blurb='Label')
-    start = Prop(coerce=float, blurb='Start')
-    end = Prop(coerce=float, blurb='End')
+    label = Prop(Coerce(unicode), blurb='Label')
+    start = Prop(Coerce(float), blurb='Start')
+    end = Prop(Coerce(float), blurb='End')
 
-    scale = Prop(types=str, blurb='Scale', value_list=PV['axis.scale'])
-    format = Prop(types=str, blurb='Format')
+    scale = Prop(CheckType(str), CheckValid(PV['axis.scale']),
+                 blurb='Scale')
+    format = Prop(CheckType(str), blurb='Format')
 
 
 class Line(Container):
     " A single line or collection of points in a Plot. "
-    label = Prop(coerce=unicode)
-    cx = RangeProp(coerce=int, min=0, blurb="x-column")
-    cy = RangeProp(coerce=int, min=0, blurb="y-column")
-    row_first = RangeProp(coerce=int,min=0)
-    row_last = RangeProp(coerce=int,min=0)
-    #value_range = Prop(coerce=str)    
-    cxerr = RangeProp(coerce=int, min=0)
-    cyerr = RangeProp(coerce=int, min=0)
-    source = Prop(types=Dataset)
-    width = RangeProp(coerce=float, min=0, max=10)
-    style = Prop(value_list=PV['line.style'])
-    marker = Prop(value_list=PV['line.marker'])
-    color = Prop(coerce=str)
+    label = Prop(Coerce(unicode))
+    cx = RangeProp(Coerce(int), min=0, blurb="x-column")
+    cy = RangeProp(Coerce(int), min=0, blurb="y-column")
+    row_first = RangeProp(Coerce(int),min=0)
+    row_last = RangeProp(Coerce(int),min=0)
+    #value_range = Prop(transform=str)    
+    cxerr = RangeProp(Coerce(int), min=0)
+    cyerr = RangeProp(Coerce(int), min=0)
+    source = Prop(CheckType(Dataset))
+    width = RangeProp(Coerce(float), min=0, max=10)
+    style = Prop(CheckValid(PV['line.style']))
+    marker = Prop(CheckValid(PV['line.marker']))
+    color = Prop(Coerce(str))
     visible = BoolProp()
 
 
 class Legend(Container):
     " Plot legend. "
-    label = Prop(coerce=unicode, doc='Legend Label')
+    label = Prop(Coerce(unicode), doc='Legend Label')
     visible = BoolProp()
     border = BoolProp()
-    position = Prop(types=str, value_list=PV['legend.position'])
-    x = RangeProp(coerce=float, min=0.0, max=1.0)
-    y = RangeProp(coerce=float, min=0.0, max=1.0)
+    position = Prop(CheckType(str), value_list=PV['legend.position'])
+    x = RangeProp(Coerce(float), min=0.0, max=1.0)
+    y = RangeProp(Coerce(float), min=0.0, max=1.0)
 
 
 class Layer(Container):
-    type = Prop(types=str, value_list=PV['layer.type'])
-    title = Prop(coerce=unicode, blurb="Title")
-    axes = DictProp(types=Axis, blurb="Axes")
-    lines = ListProp(types=Line, blurb="Lines")
+    type = Prop(CheckType(str), value_list=PV['layer.type'])
+    title = Prop(Coerce(unicode), blurb="Title")
+    axes = DictProp(CheckType(Axis), blurb="Axes")
+    lines = ListProp(CheckType(Line), blurb="Lines")
     grid = BoolProp(blurb="Grid", doc="Display a grid")
     visible = BoolProp(blurb="Visible")
-    legend = Prop(types=Legend)
+    legend = Prop(CheckType(Legend))
 
-    x = RangeProp(types=float, min=0.0, max=1.0)
-    y = RangeProp(types=float, min=0.0, max=1.0)
-    width = RangeProp(types=float, min=0.0, max=1.0)
-    height = RangeProp(types=float, min=0.0, max=1.0)    
+    x = RangeProp(CheckType(float), min=0.0, max=1.0)
+    y = RangeProp(CheckType(float), min=0.0, max=1.0)
+    width = RangeProp(CheckType(float), min=0.0, max=1.0)
+    height = RangeProp(CheckType(float), min=0.0, max=1.0)    
 
-    group_colors = Prop(types=str)
-    group_styles = ListProp(types=str)
-    group_markers = ListProp(types=str)
+    group_colors = Prop(CheckType(str))
+    group_styles = ListProp(CheckType(str))
+    group_markers = ListProp(CheckType(str))
     
     def __init__(self,**kwargs):
         Container.__init__(self, **kwargs)
+        # TODO: default value?
         if self.legend is None:
             self.legend = Legend()
 
@@ -105,30 +107,30 @@ class Layer(Container):
     
 class TextLabel(Container):
     " Single text label. "
-    text = Prop(coerce=unicode)
+    text = Prop(Coerce(unicode))
     
-    x = Prop(coerce=float)
-    y = Prop(coerce=float)
+    x = Prop(Coerce(float))
+    y = Prop(Coerce(float))
 
 
 
 class View(Container):
-    start = Prop(coerce=float, blurb='Start')
-    end = Prop(coerce=float, blurb='End')
+    start = Prop(Coerce(float), blurb='Start')
+    end = Prop(Coerce(float), blurb='End')
     
 
 class Plot(Container):
     key = KeyProp(blurb="Key")
 
-    title = Prop(coerce=unicode, blurb="Title")
-    comment = Prop(coerce=unicode, blurb="Comment")
+    title = Prop(Coerce(unicode), blurb="Title")
+    comment = Prop(Coerce(unicode), blurb="Comment")
     
-    legend = Prop(types=Legend)
-    lines = ListProp(types=Line)
-    labels = ListProp(types=TextLabel)
-    layers = ListProp(types=Layer, blurb="Layers")
+    legend = Prop(CheckType(Legend))
+    lines = ListProp(CheckType(Line))
+    labels = ListProp(CheckType(TextLabel))
+    layers = ListProp(CheckType(Layer), blurb="Layers")
 
-    views = ListProp(types=View, blurb="Views")
+    views = ListProp(CheckType(View), blurb="Views")
 
     # might be used to notify the user that this
     # has been edited, e.g. by displaying a star

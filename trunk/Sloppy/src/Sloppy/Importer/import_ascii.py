@@ -44,35 +44,32 @@ class Importer(dataio.Importer):
     # Properties
     #
     
-    delimiter = Prop(blurb ="Delimiter",
-                     types=basestring,
-                     value_list=[None,',', '\t',';', '\s*'])
+    delimiter = Prop(CheckType(basestring),
+                     CheckValid([None,',', '\t',';', '\s*']),
+                     blurb ="Delimiter")
     
-    custom_delimiter = Prop(blurb="Custom delimiter used if delimiter is None.",
-                            types=basestring)
+    custom_delimiter = Prop(CheckType(basestring),
+                            blurb="Custom delimiter used if delimiter is None.")
     
-    ncols = RangeProp(blurb="Number of columns",
-                      coerce=int,
-                      min=0, steps=1,
-                      default=None)
+    ncols = RangeProp(Coerce(int), min=0, steps=1, default=None,
+                      blurb="Number of columns")
 
-    header_lines = RangeProp(blurb="Number of header lines",
-                             coerce=int,
-                             min=0, default=0)
+    header_lines = RangeProp(Coerce(int), min=0, default=0,
+                             blurb="Number of header lines")
 
-    table = Prop(types=Table)
+    table = Prop(CheckType(Table))
     
     keys = ListProp()
 
     labels = ListProp()
     
-    designations = Prop(types=list,
+    designations = Prop(CheckType(list),
                         default=None)
 
-    typecodes = Prop(types=(basestring, list),
+    typecodes = Prop(CheckType(basestring, list),
                      default='f')
 
-    growth_offset = RangeProp(coerce=int, min=10, default=100)
+    growth_offset = RangeProp(Coerce(int), min=10, default=100)
 
     public_props = ['delimiter', 'custom_delimiter', 'ncols', 'header_lines']
 

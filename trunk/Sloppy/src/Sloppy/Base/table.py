@@ -27,12 +27,14 @@ from Numeric import *
 
 
 from Sloppy.Lib import Signals
-from Sloppy.Lib.Props import Container, Prop, KeyProp
+from Sloppy.Lib.Props import *
 
 
 
-def coerce_array(_rank):
-    def do_coerce(value):
+class AsArray(Transformation):
+    def __init__(self, _rank):
+        self._rank = _rank
+    def __call__(self, value):
         # check type
         if isinstance(value, ArrayType):
             pass
@@ -42,17 +44,16 @@ def coerce_array(_rank):
             raise TypeError("ArrayProp data must be of type array/tuple/list.")
 
         # check rank
-        if rank(value) != _rank:
+        if rank(value) != self._rank:
             raise TypeError("ArrayProp data must be of rank %d but it is %d." % (_rank, rank(value)))
 
         return value
-    
-    return do_coerce
+
 
 class ArrayProp(Prop):
 
     def __init__(self, rank=1, doc=None, blurb=None):
-        Prop.__init__(self, doc=doc, blurb=blurb, coerce=coerce_array(rank))
+        Prop.__init__(self, AsArray(rank), doc=doc, blurb=blurb)
         self.rank = rank
 
         
@@ -61,10 +62,10 @@ class Column(Container):
 
     key = KeyProp()
     
-    designation = Prop(coerce=str,
-                       value_list=['X','Y','XY','XERR', 'YERR', 'LABEL'])
-    query = Prop(coerce=str)
-    label = Prop(coerce=unicode)
+    designation = Prop(Coerce(str),
+                       CheckValid(['X','Y','XY','XERR', 'YERR', 'LABEL']))
+    query = Prop(Coerce(str))
+    label = Prop(Coerce(unicode))
     data = ArrayProp(rank=1)
                                    
     def __str__(self):

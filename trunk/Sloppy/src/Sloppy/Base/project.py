@@ -69,13 +69,13 @@ about netCDF, see
 
 class Project(Container):
 
-    label = Prop(coerce=unicode)
-    comment = Prop(coerce=unicode)
+    label = Prop(Coerce(unicode))
+    comment = Prop(Coerce(unicode))
 
-    plots = ListProp(types=Plot)
-    datasets = ListProp(types=Dataset)
+    plots = ListProp(CheckType(Plot))
+    datasets = ListProp(CheckType(Dataset))
 
-    backends = ListProp(types=Backend)
+    backends = ListProp(CheckType(Backend))
     
     
     def __init__(self,*args,**kwargs):

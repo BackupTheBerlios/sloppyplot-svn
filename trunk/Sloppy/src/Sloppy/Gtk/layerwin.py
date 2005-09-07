@@ -420,10 +420,11 @@ class LinesTab(AbstractTab):
         tv.append_column(column)
 
         # self.COL_STYLE
-
+        
         # set up model with all available line styles
         linestyle_model = gtk.ListStore(str)
-        for style in Line.style.value_list:
+        value_list = collect_values(Line.style)
+        for style in value_list:
             linestyle_model.append( (style or "",) )
 
         cell = gtk.CellRendererCombo()
@@ -440,7 +441,8 @@ class LinesTab(AbstractTab):
 
         # set up model with all available markers
         marker_model = gtk.ListStore(str)
-        for marker in Line.marker.value_list:
+        value_list = collect_values(Line.marker)
+        for marker in value_list:
             marker_model.append( (marker or "",) )
 
         cell = gtk.CellRendererCombo()

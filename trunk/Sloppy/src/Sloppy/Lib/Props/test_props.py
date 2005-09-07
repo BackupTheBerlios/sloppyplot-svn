@@ -1,21 +1,89 @@
-import props
+from props import *
+import unittest
 
 
-# class MyClass:
-#     def __init__(self, value):
-#         self.value = value
+class SimpleTestCase(unittest.TestCase):
+
+    def setUp(self):
         
-# class pc(props.Container):
-#     a_reference = props.WeakRefProp(types=MyClass)
+        class Recipe(Container):
+            name = Prop(Coerce(unicode))
+            ingredients = DictProp(CheckType(str))
+            difficult = BoolProp()
+            keyword = KeyProp()
+            year_month = Prop(CheckTuple(2))
+            rating = Prop(CheckValid(['gross', 'yummy', 'soso']))
+            how_often_cooked = Prop(Coerce(int), CheckBounds(start=0))
+        
+        self.recipe = Recipe()
+
+        
+
+class TestValidity(SimpleTestCase):
+              
+    def runTest(self):
+
+        # assign valid values which
+        self.testdict = {"flour" : '500 g',
+                         "yeast" : 'one portion',
+                         "tomatoes" : 'plenty'}
+
+        self.recipe.name = 'Pizza'
+        self.recipe.ingredients = self.testdict
+        self.recipe.difficult = False
+        self.recipe.keyword = 'keyword'
+        self.recipe.year_month = (2005,9)
+        self.recipe.rating = 'yummy'
+        self.recipe.how_often_cooked = 42.1
+        
+        # name
+        self.assert_(isinstance(self.recipe.name, unicode))        
+        self.assertEqual(self.recipe.name,  u'Pizza')
+
+        # ingredients
+        self.assert_(isinstance(self.recipe.ingredients, TypedDict))
+        self.assertEqual(self.recipe.ingredients, self.testdict)
+        self.assertNotEqual(self.recipe.ingredients, {})
+
+        # difficult
+        self.assert_(isinstance(self.recipe.difficult, bool))
+        self.assertEqual(self.recipe.difficult, False)
+
+        # keyword
+        self.assert_(isinstance(self.recipe.keyword, str))
+        self.assertEqual(self.recipe.keyword, "keyword")
+        
+        # year_month
+        self.assert_(isinstance(self.recipe.year_month, tuple))
+        self.assertEqual(self.recipe.year_month, (2005,9))
+
+        # rating
+
+        # how_often_cooked
+        self.assert_(isinstance(self.recipe.how_often_cooked, int))
+        self.assertEqual(self.recipe.how_often_cooked, 42)
 
 
-# p = pc()
-# mc1 = MyClass(value = 42)
-# mc2 = MyClass(value = 84)
 
-# p.a_reference = mc1
-# print p.a_reference
-# del mc1
-# print p.a_reference
+class TestInvalidity(SimpleTestCase):
 
-# p.a_reference = mc2
+    def runTest(self):
+
+        set = self.recipe.set_value
+
+        
+        # name
+        self.assertRaises(TypeError, set('name',10))
+
+        # why does this not work?
+        ## rating
+        ##self.assertRaises(ValueError, set('rating', "don't know"))
+
+        ## how_often_cooked
+        #self.assertRaises(ValueError, set('how_often_cooked', -1))
+        
+
+if __name__ == '__main__':
+    unittest.main()
+    
+            

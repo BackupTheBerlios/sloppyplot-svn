@@ -20,7 +20,7 @@
 
 
 
-from Sloppy.Lib.Props import Container, Prop, BoolProp, RangeProp
+from Sloppy.Lib.Props import *
 
 import logging
 import os.path
@@ -49,34 +49,39 @@ class XTerminal(Terminal):
    
 class PostscriptTerminal(Terminal, Container):
 
-    mode = Prop(coerce=str,
-                value_list=['eps', 'landscape', 'portrait'],
-                blurb="mode", default='eps',
-                doc="Output mode")
-    enhanced = Prop(value_list=['enhanced', 'noenhanced'],
+    mode = Prop(Coerce(str),
+                CheckValid(['eps', 'landscape', 'portrait']),
+                default='eps',
+                blurb="mode", doc="Output mode")
+    enhanced = Prop(CheckValid(['enhanced', 'noenhanced']),
+                    default='enhanced',
                     blurb="PS mode",
                     doc="Enable subscripts, superscripts, mixed fonts")
-    color = Prop(value_list=['color','monochrome'],
+    color = Prop(CheckValid(['color','monochrome']),
+                 default='color',
                  blurb="color mode",
                  doc="Color mode")
     blacktext = BoolProp(blurb="black text only",
                          doc="all text in black, even in color mode")
-    solid = Prop(value_list=['solid', 'dashed'],
+    solid = Prop(CheckValid(['solid', 'dashed']),
+                 default='solid',
                  blurb="Line style")
-    dashlength = RangeProp(coerce=float, min=0.0,
+    dashlength = RangeProp(Coerce(float), min=0.0,
                            blurb="dash length",
                            doc = "Scales the length of dashed-line segments")
-    linewidth = RangeProp(coerce=float, min=0.0,
+    linewidth = RangeProp(Coerce(float), min=0.0,
                           blurb="line width",
                           doc = "Scales all linewidths")
-    duplexing = Prop(value_list = ['defaultplex', 'simplex', 'duplex'] )
-    rounded = Prop(value_list= ['rounded', 'butt'],
+    duplexing = Prop(CheckValid(['defaultplex', 'simplex', 'duplex']),
+                     default='defaultplex')
+    rounded = Prop(CheckValid(['rounded', 'butt']),
+                   default='rounded',
                    blurb="Cap style",
                    doc="Whether line caps and line joins should be rounded")
-    fontname = Prop(coerce=str,
+    fontname = Prop(Coerce(str),
                     blurb="font name",
                     doc="Name of a valid PostScript font")
-    fontsize = RangeProp(coerce=float, min=0.0,
+    fontsize = RangeProp(Coerce(float), min=0.0,
                     blurb="font size",
                     doc="Size of the font in PostScript points.")
 

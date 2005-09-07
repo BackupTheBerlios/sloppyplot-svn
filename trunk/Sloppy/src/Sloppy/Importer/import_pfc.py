@@ -25,7 +25,6 @@ logging.basicConfig()
 import re
 
 from Sloppy.Base import dataio
-from Sloppy.Lib.Props import Prop
 
 
 

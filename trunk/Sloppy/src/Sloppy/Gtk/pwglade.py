@@ -112,8 +112,8 @@ from Sloppy.Lib.Props import Container,Prop, BoolProp, ListProp
 # set up container
     
 class Options(Container):
-    filename = Prop(coerce=unicode)
-    mode = Prop(coerce=unicode,
+    filename = Prop(transform=unicode)
+    mode = Prop(transform=unicode,
                 value_list=[None, u'read-only', u'write-only', u'read-write'])
     include_header = BoolProp(default=None)
 

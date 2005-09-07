@@ -18,11 +18,21 @@
 # $HeadURL: svn+ssh://svn.berlios.de/svnroot/repos/sloppyplot/trunk/Sloppy/src/Sloppy/Lib/Props/props.py $
 # $Id: props.py 43 2005-08-23 11:22:14Z niklasv $
 
+"""
+@author: Niklas Volbers
+@copyright: Copyright (C) 2005 by Niklas Volbers
+@license: This program is free software; you can redistribute it
+and/or modify it under the terms of the GNU General Public License as
+published by the Free Software Foundation; either version 2 of the
+License, or (at your option) any later version.
+"""
 
 import weakref
 import re
 
 
+
+__extra_epydoc_fields__ = [('prop', 'Prop', 'Props')]
 
 #------------------------------------------------------------------------------
 # Helper Methods
@@ -37,61 +47,6 @@ def as_list(o):
     else:
         return [o]
             
-          
-def _coerce(_type):
-    def do_coerce(value):
-        try:
-            if value is not None:
-                return _type(value)
-            else:
-                return None
-        except:
-            raise TypeError("Could not coerce value '%s' to %s" % (value, _type))
-    return do_coerce
-
-def generic_value_check(value, types=(), coerce=None, values=()):
-
-    # Coercion should be _after_ type checking.
-    # If you need to check before coercion, then
-    # put the type checking manually into the coercion method.
-
-    # Only one of the types must match.
-
-    #
-    # type checking
-    #
-    def require_one(value, items):
-        # 'One of the listed types/methods should be successful'
-        for item in items:
-            if isinstance(item, type):
-                if isinstance(value, item): break
-                else: continue
-            else:
-                try: item(value)
-                except TypeError, ValueError:continue
-                else: break
-        else:
-            raise TypeError("Not a valid type %s." % type(value))
-        
-    if len(types) > 0 and value is not None:
-        require_one(value, types)
-
-    #
-    # coercion
-    #
-    if coerce is not None:
-        value = coerce(value)
-
-    #
-    # value checking (only if value is not None)
-    #
-    if value is not None and len(values) > 0:
-        for item in values:
-            item(value)
-
-    return value
-
-
 
 #------------------------------------------------------------------------------
 # Helper Types
@@ -99,20 +54,12 @@ def generic_value_check(value, types=(), coerce=None, values=()):
 
 class TypedList:
 
-    def __init__(self, initlist=None, types=(),coerce=None,values=()):
-        """
-        Note that there is no type checking for types, coerce and
-        values as in Prop.__init__ !
-        """ 
-
+    def __init__(self, _list=None, check=None):
+        self.check = check or CheckAll()
+        self.metadata = {'check' : self.check}
         self.data = []
-
-        self.types = types
-        self.coerce = coerce
-        self.values = values
-        
-        if initlist is not None:
-            self.data = self.check_list(initlist)
+        if _list is not None:
+            self.data = self.check_list(_list)
 
 
     #------------------------------------------------------------------------------
@@ -144,9 +91,9 @@ class TypedList:
         del self.data[i:j]
 
     def __add__(self, other):
-        return self.__class__(self.data + self.check_list(other), **self.metadata())
+        return self.__class__(self.data + self.check_list(other), **self.metadata)
     def __radd__(self, other):
-        return self.__class__(self.check_list(other) + self.data, **self.metadata())
+        return self.__class__(self.check_list(other) + self.data, **self.metadata)
     def __iadd__(self, other):
         self.data += self.check_list(other)
         return self
@@ -175,8 +122,7 @@ class TypedList:
     #------------------------------------------------------------------------------
     def check_item(self, item):
         try:
-            value = generic_value_check(item,**self.metadata())
-            return value
+            return self.check(item)
         except TypeError, msg:
             raise TypeError("Item '%s' added to TypedList '%s' is invalid:\n %s" %
                             (item, repr(self), msg))
@@ -196,31 +142,21 @@ class TypedList:
         else:
             raise TypeError("List required, got %s instead." % type(alist))
 
-    def metadata(self):
-        """
-        Use **self.metadata() as shortcut for
-           types=self.types,coerce=self.coerce,values=self.values
-        in function calls.
-        """
-        return {'types':self.types,'coerce':self.coerce,'values':self.values}
 
 
     
 class TypedDict:
 
-    def __init__(self, dict=None, types=(),coerce=None,values=()):
+    def __init__(self, _dict=None, check=None):
+        self.check = check or CheckAll()
+        self.metadata = {'check' : self.check}        
         self.data = {}
-        
-        self.types = types
-        self.coerce = coerce
-        self.values = values
-
-        if dict is not None:
-            self.update(dict)
+        if _dict is not None:
+            self.update(_dict)
                 
     def __repr__(self): return repr(self.data)
-    def __cmp__(self, dict):
-        return cmp(self.data, self.__cast(dict))
+    def __cast(self, other): return self.check_dict(other)
+    def __cmp__(self, other): return cmp(self.data, self.__cast(other))
     def __len__(self): return len(self.data)
     def __getitem__(self, key): return self.data[key]
     def __setitem__(self, key, item):
@@ -229,7 +165,7 @@ class TypedDict:
     def clear(self): self.data.clear()
     def copy(self):
         if self.__class__ is TypedDict:
-            return TypedDict(self.data.copy(), **self.metadata())
+            return TypedDict(self.data.copy(), **self.metadata)
         # OK ?
         import copy
         data = self.data
@@ -282,8 +218,7 @@ class TypedDict:
     #------------------------------------------------------------------------------
     def check_item(self, item):
         try:
-            value = generic_value_check(item,**self.metadata())
-            return value
+            return self.check(item)
         except TypeError, msg:
             raise TypeError("Item '%s' added to TypedDict '%s' is invalid:\n %s" %
                             (item, repr(self), msg))
@@ -301,14 +236,6 @@ class TypedDict:
             return adict
         else:
             raise TypeError("Dict required, got %s instead." % type(adict))
-
-    def metadata(self):
-        """
-        Use **self.metadata() as shortcut for
-           types=self.types,coerce=self.coerce,values=self.values
-        in function calls.
-        """
-        return {'types':self.types,'coerce':self.coerce,'values':self.values}
 
 
 
@@ -361,70 +288,152 @@ class MetaAttribute(object):
 
 
 #------------------------------------------------------------------------------
-# Check Type, Coerce and Check Value Methods and Classes
-#
+
+class Check:
+    """ Abstract base class for all value check.
+
+    In a derived class, implement __call__(self, value).
+
+    @raise TypeError:
+    @raise ValueError:
+    """
+    pass
 
 
-class ct_tuple:
-    def __init__(self, length):
-        self.length = length
+class Transformation(Check):
+    """ Abstract base class for all value transformations.
+
+    In a derived class, implement __call__(self, value).
+
+    @raise ValueError:
+    @raise TypeError:
+    """
+    pass
+
+
+class Coerce(Transformation):
+
+    def __init__(self, _type):
+        self._type = _type
+
     def __call__(self, value):
-        if isinstance(value, tuple) and len(value) == self.length: return
-        else: raise TypeError("Value must be tuple of length %d!" % self.length )
-
-
-
-def coerce_bool(value):
-    if isinstance(value, basestring):
-        if value == "False": return False
-        elif value == "True": return True
+        if value is None:
+            return None
         else:
-            raise ValueError("Unknown boolean string '%s'. Use either 'False' or 'True' or a real bool." % value)
-    else:
-        return bool(value)
+            return self._type(value)
 
 
+class CheckRegexp(Check):
+    
+    """ Check value against a given regular expression. """
+    
+    def __init__(self, regexp):
+        self._regexp=regexp
+        self._expression = re.compile(regexp)
 
-class cv_valid:
-    def __init__(self, alist):
-        self.alist = as_list(alist)        
     def __call__(self, value):
-        if (value in self.alist) is False:
-            raise ValueError("Value %s is in the list of valid values: %s" % (value, self.alist))
+        match = self._expression.match(value)
+        if match is None:
+            raise ValueError("Value %s does not match the regular expression %s" % (value,self._regexp))
 
-class cv_invalid:
-    def __init__(self, alist):
-        self.alist = as_list(alist)        
+
+class CheckType(Check):
+
+    """ One of the given types must match the given value. """
+
+    def __init__(self, *_types):
+        self._types = as_list(_types)
+
     def __call__(self, value):
-        if value in self.alist:
-            raise ValueError("Value %s in in the list of invalid values: %s" % (value, self.alist))    
+        if value is None:
+            return
+        
+        for _type in self._types:                   
+            if isinstance(value, _type):
+                return
+        else:
+            raise TypeError("Invalid type '%s', must be one of '%s'" % (type(value), self._types))
+
+
+class CheckTuple(Check):
+    def __init__(self, length):
+        self._length = length
+    def __call__(self, value):
+        if isinstance(value, tuple) and len(value) == self._length:
+            return
+        else:
+            raise TypeError("Value must be tuple of length %d!" % self._length )
+    
+        
+class CheckAll(Transformation):
+    
+    def __init__(self, clist=None):
+        # Make sure that the given list of Check instances are valid.
+        self.items = []
+
+        if clist is not None:
+            for item in clist:
+                if not isinstance(item, Check):
+                    raise TypeError("Invalid Check specified: %s of %s" % (item, type(item)))
+                self.items.append(item)
+        
+    def __call__(self, value):
+        for item in self.items:
+            if isinstance(item, Transformation):
+                value = item(value)
+            else:
+                item(value)
+        return value
+
+    def __len__(self):
+        return len(self.items)
 
 
 
-class cv_bounds:
-    def __init__(self,start,end,steps=None):
-        self.start=start
-        self.end=end
+class CheckValid(Check):
+    def __init__(self, values):
+        self.values = as_list(values)        
+    def __call__(self, value):
+        if (value in self.values) is False:
+            raise ValueError("Value %s is not in the list of valid values: %s" % (value, self.values))
+
+
+class CheckInvalid(Check):
+    def __init__(self, values):
+        self.values = as_list(values)        
+    def __call__(self, value):
+        if value in self.values:
+            raise ValueError("Value %s in in the list of invalid values: %s" % (value, self.values))    
+
+                
+                
+class CheckBounds(Check):
+    """
+    Check if the given value is in between the given bounds [min:max].
+
+    If min or max is None, then the appropriate direction is unbound.
+    If steps is given, then a min must be given as well.
+    A value of None is always valid.    
+    """
+    def __init__(self, min=None, max=None, steps=None):
+        self.min=min
+        self.max=max
         self.steps=steps        
+
     def __call__(self,value):
-        if (self.start is not None and value < self.start) \
-           or (self.end is not None and value > self.end):
-            raise ValueError("Value %s should be in between [%s:%s]" % (value, self.start or "", self.end or ""))
+        if value is None:
+            return None
+        
+        if (self.min is not None and value < self.min) \
+               or (self.max is not None and value > self.max):
+            raise ValueError("Value %s should be in between [%s:%s]" % (value, self.min, self.max))
 
         if self.steps is not None:
-            remainder = (value - self.start) % self.steps
+            remainder = (value - self.min) % self.steps
             if remainder != 0.0:
-                raise ValueError("Value %s must .... Remainder %s" % (value, remainder) ) # TODO: how to word this?
+                # TODO: how to word this?                
+                raise ValueError("Value %s must .... Remainder %s" % (value, remainder) ) 
 
-
-class cv_regexp:
-    def __init__(self, regexp):
-        self.regexp=regexp
-        self.expression = re.compile(regexp)
-    def __call__(self, value):
-        match = self.expression.match(value)
-        if match is None:
-            raise ValueError("Value %s does not match the regular expression %s" % (value,self.regexp))
 
 
 
@@ -436,43 +445,34 @@ class cv_regexp:
 
 class Prop:
 
-    def __init__(self, types=None, coerce=None,
-                 values=None, value_list=None,
-                 default=None,
-                 blurb=None, doc=None):
+    def __init__(self, *check, **kwargs):
+        """
+        @keyword default: (None)
+        @keyword blurb: (None)
+        @keyword doc: (None)
+        """
 
-        if isinstance(coerce, type):
-            coerce = _coerce(coerce)                
-        self.coerce = coerce
+        self.blurb = kwargs.get('blurb', None)
+        self.doc = kwargs.get('doc', None)
         
-        self.types = as_list(types or [])
-        self.values = as_list(values or [])
+        self.check = CheckAll(check or [])
 
-        # value_list is just a shorthand for
-        #  values=cv_valid(...), default=first_value_of_the_list
-        # 
-        self.value_list = value_list
-        if value_list is not None:
-            self.values.append(cv_valid(self.value_list))
-            if default is None and len(value_list) > 0:
-                default = value_list[0]
-
+        default = kwargs.get('default', None)        
         if default is not None:
             default = self.check_value(default)
         self.default = default
         
-        self.blurb = blurb        
-        self.doc = doc
-    
+
     def check_value(self, value):
-        return generic_value_check(value, types=self.types, coerce=self.coerce, values=self.values)
+        return self.check(value)
 
     def reset_value(self):
-        " Reset value is requested upon first initialization and when using Container.reset. "
+        """ Requested upon first initialization and when using
+        Container.reset. """
         return None
         
     def default_value(self):
-        " Default value is requested if value is None. "
+        """ Requested if value is None. """
         return self.default
             
     def meta_attribute(self, key):
@@ -485,96 +485,84 @@ class Prop:
 #
 
 class ListProp(Prop):
-
-    def __init__(self, types=None, coerce=None, values=None,
-                 blurb=None, doc=None):
-        Prop.__init__(self, types=types, coerce=coerce, values=values,
-                      blurb=blurb, doc=doc)
-        
+       
     def check_value(self, value):
         if isinstance(value, TypedList):
             return value
         elif isinstance(value, list):
-            return TypedList(value,types=self.types,coerce=self.coerce,values=self.values)
+            return TypedList(value, self.check)
         elif isinstance(value, tuple):
-            return TypedList(list(value),types=self.types,coerce=self.coerce,values=self.values)
+            return TypedList(list(value),self.check)
         else:
             raise TypeError("The value '%s' has %s while it should be a list/tuple." %
                             (value, type(value)))
 
     def reset_value(self):
-        return TypedList(types=self.types,coerce=self.coerce,values=self.values)
+        return TypedList(check=self.check)
     
 
                 
 class DictProp(Prop):
 
-    def __init__(self, types=None, coerce=None, values=None,
-                 blurb=None, doc=None):
-        Prop.__init__(self, types=types, coerce=coerce, values=values,
-                      blurb=blurb, doc=doc)
-
     def check_value(self, value):
         if isinstance(value, TypedDict):
             return value
         elif isinstance(value, dict):
-            return TypedDict(value, types=self.types,coerce=self.coerce,values=self.values)
+            return TypedDict(value, self.check)
         else:            
             raise TypeError("The value '%s' has %s while it should be a dict." %
                             (value, type(value)))
 
     def reset_value(self):
-        return TypedDict(types=self.types,coerce=self.coerce,values=self.values)
+        return TypedDict(check=self.check)
 
 
-# #
+class BoolProp(Prop):
+    def __init__(self, **kwargs):
+        Prop.__init__(self, Coerce(bool), **kwargs)
+
+
+class KeyProp(Prop):
+    def __init__(self, **kwargs):
+        Prop.__init__(self,
+                      CheckType(basestring),
+                      CheckRegexp('^\w*$'),
+                      **kwargs)
+        
+    
+class RangeProp(Prop):
+
+    def __init__(self, *check, **kwargs):
+        min = kwargs.get('min', None)
+        max = kwargs.get('max', None)
+        steps = kwargs.get('steps', None)
+        
+        self.min = min
+        self.max = max
+        if steps is not None and self.min is None:
+            raise RuntimeError("Keyword `steps` may only provided along with a minimum value.")
+        self.steps = steps
+
+        check = list(check)
+        check.append(CheckBounds(min,max,steps))
+        Prop.__init__(self, *check, **kwargs)
+
+
+
+
+    # #
 # # UNTESTED!
 # #
 # class WeakRefProp(Prop):
 
-#     def __init__(self, types=None, coerce=None, values=None,
+#     def __init__(self, types=None, transform=None, values=None,
 #                  doc=None, blurb=None):
-#         Prop.__init__(self, types=types, coerce=coerce, values=values,
+#         Prop.__init__(self, types=types, transform=transform, values=values,
 #                       doc=doc, blurb=blurb)
 
 #     def meta_attribute(self, key):
 #         return WeakMetaAttribute(self, key)
 
-
-    
-class BoolProp(Prop):
-
-    def __init__(self, default=None, doc=None, blurb=None):
-        Prop.__init__(self, types=(bool,str), coerce=coerce_bool,
-                      default=default, doc=doc, blurb=blurb)
-
-    
-class RangeProp(Prop):
-
-    def __init__(self, types=None, coerce=None,
-                 default=None,
-                 doc=None, blurb=None,
-                 min=None, max=None, steps=None):
-        
-        Prop.__init__(self, types=types, coerce=coerce, values=cv_bounds(min,max,steps),
-                      default=default,
-                      doc=doc, blurb=blurb)
-
-        self.min = min
-        self.max = max
-
-        if steps is not None and self.min is None:
-            raise RuntimeError("Keyword `steps` may only provided along with a minimum value.")
-        self.steps = steps
-
-class KeyProp(Prop):
-
-    def __init__(self, default=None, blurb=None, doc=None):
-        Prop.__init__(self, types=(basestring,None), values=cv_regexp('^\w*$'),
-                      default=default, doc=doc, blurb=blurb)
-
-
-    
 #------------------------------------------------------------------------------
 # Container
 #
@@ -696,118 +684,3 @@ class Container(object):
     def copy(self, include=None,exclude=None):
         kw = self.get_values(include=include,exclude=exclude)                
         return self.__class__(**kw)
-
-
-
-
-
-#------------------------------------------------------------------------------
-# Testing
-
-
-if __name__ == "__main__":
-
-    class CBaseContainer(Container):
-        myinherited = Prop(types=float)
-        
-    class NC(CBaseContainer):
-        myint = Prop(types=(int,None),
-                     default=5)
-
-        mynumber = Prop(coerce=int,
-                        values=(cv_valid([1,2,3,4,17,18]))
-                        )
-
-        myfloat = Prop(types=float)
-        
-        myvalue = Prop(types=(int,float,str),
-                       coerce=float)
-
-        mytuple = Prop(types=ct_tuple(2))
-        
-        mylistvalue = Prop(types=str,
-                           value_list=['Anne','Niklas'])
-
-        mybounded = Prop(types=int,
-                       values=(cv_bounds(0,20),
-                               cv_invalid(10)))
-
-        mylist = ListProp(types=int,
-                          values=(cv_bounds(0,100)))
-
-        mydict = DictProp(types=str,
-                          values=(cv_regexp("^\w*$")))
-
-        mybool = BoolProp()
-
-        myrange = RangeProp(coerce=int, min=0, max=10, steps=2)
-        #myinherited = BoolProp()
-        
-    nc = NC(myrange='4')
-    print nc.myrange, type(nc.myrange)
-
-
-    nc.myint=None
-    print nc.myint
-    #nc.myint=5.3 # fails
-    nc.mynumber = 17
-    print "Should be 17: ", nc.mynumber
-    nc.mynumber = 17.4
-    print "Should still be 17: ", nc.mynumber
-    nc.mynumber = '18'
-    #nc.mynumber = None
-    print "Should be 18: ", nc.mynumber
-    nc.myfloat = 27.5
-    print nc.myfloat, type(nc.myfloat)
-
-    nc.myvalue = 5.2
-    print nc.myvalue
-    nc.myvalue = '5.2'
-    print nc.myvalue
-    #nc.myvalue = (10,5) #fails
-
-    nc.mytuple = (4,3)
-    #nc.mytuple = 'Hallo' # fails
-    print nc.mytuple
-    
-    nc.mylistvalue = 'Anne'
-    #nc.mylistvalue = 'Anne2'
-
-    nc.mybounded = 9
-    #nc.mybounded = 10
-    #nc.mybounded = 22 # fails
-
-
-    print "List"
-    nc.mylist.append(5)#
-    print nc.mylist
-    nc.mylist = (10,5)
-    #nc.mylist = [5,10.4] # fails
-    print nc.mylist
-
-    nc.mylist.insert(0,100)
-    print nc.mylist
-
-    nc.mydict.update( {'Author':'Niklas_Volbers', 'Version': 'a'} )
-    print nc.mydict
-    
-
-    nc.mybool = False
-    print nc.mybool
-    nc.mybool = True
-    print nc.mybool
-    nc.mybool = "True"
-    print nc.mybool
-    nc.mybool = "False"
-    print nc.mybool
-    
-    #nc.mybool = "Tru" # fails
-    #nc.mybool = 52 # fails
-
-    nc.myrange = 0
-    nc.myrange = '4'
-    print nc.myrange, type(nc.myrange)
-    #nc.mylist.append(None)
-
-    nc.myinherited = 4.2
-    print nc.myinherited, type(nc.myinherited)

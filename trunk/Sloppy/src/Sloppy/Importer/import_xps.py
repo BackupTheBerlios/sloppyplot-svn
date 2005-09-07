@@ -39,7 +39,7 @@ logging.basicConfig()
 import re
 
 from Sloppy.Base import dataio
-from Sloppy.Lib.Props import Prop, BoolProp
+from Sloppy.Lib.Props import *
 
 import import_ascii
 
@@ -50,9 +50,9 @@ class Importer(import_ascii.Importer):
     extensions = ["xps"]
     author = "Niklas Volbers"
 
-    ranges = Prop(coerce=int, default=2)    
+    ranges = Prop(Coerce(int), default=2)    
     split_ranges = BoolProp(default=False)
-    sample = Prop(types=basestring, default="")
+    sample = Prop(CheckType(basestring), default="")
     
     public_props = []
     
