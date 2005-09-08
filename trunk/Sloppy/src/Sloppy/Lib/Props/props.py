@@ -257,33 +257,32 @@ class MetaAttribute(object):
         else:
             return self.prop.default_value()
 
-    def __set__(self, inst, value):
+    def __set__(self, owner, value):
         try:
             value = self.prop.check_value(value)            
-            inst._values[self.key] = value
+            owner._values[self.key] = value
         except TypeError, msg:
             raise TypeError("Failed to set property '%s' of container '%s' to '%s':\n  %s" %
-                            (self.key, repr(inst), value, msg))
+                            (self.key, repr(owner), value, msg))
         except ValueError, msg:
             raise ValueError("Failed to set property '%s' of container '%s' to '%s':\n %s" %
-                             (self.key, repr(inst), value, msg))
+                             (self.key, repr(owner), value, msg))
 
 
-# untested, therefore commented out
-# class WeakMetaAttribute(MetaAttribute):
+class WeakMetaAttribute(MetaAttribute):
     
-#     def __get__(self, inst, cls=None):
-#         value = MetaAttribute.__get__(inst,cls)
-#         if value is not None:
-#             return value()
-#         else:
-#             return value
+    def __get__(self, owner, cls=None):
+        value = MetaAttribute.__get__(self, owner,cls)
+        if value is not None:
+            return value()
+        else:
+             return value
 
-#     def __set__(self, inst, value):
-#         value = self.prop.check_value(value)
-#         if value is not None:
-#             value = weakref.ref(value)
-#         inst.set_value(self.key, value)
+    def __set__(self, owner, value):
+        value = self.prop.check_value(value)
+        if value is not None:
+            value = weakref.ref(value)
+        owner._values[self.key] = value
 
 
 
@@ -420,7 +419,7 @@ class CheckBounds(Check):
         self.max=max
         self.steps=steps        
 
-    def __call__(self,value):
+    def __call__(self, value):
         if value is None:
             return None
         
@@ -436,6 +435,21 @@ class CheckBounds(Check):
 
 
 
+class MapValue(Transformation):
+    """ Map the given value according to the dict. """
+    
+    def __init__(self, mapping):
+        self.mapping = mapping
+        self.values = mapping.values()
+
+    def __call__(self, value):
+        if value in self.values:
+            return value
+        try:
+            return self.mapping[value]
+        except KeyError:
+            raise ValueError("Could not find value '%s' in the list of mappings '%s'" % (value, self.mapping))
+    
 
 
 
@@ -549,19 +563,14 @@ class RangeProp(Prop):
 
 
 
+class WeakRefProp(Prop):
 
-    # #
-# # UNTESTED!
-# #
-# class WeakRefProp(Prop):
+    def __init__(self, *check, **kwargs):
+        Prop.__init__(self, *check, **kwargs)
+        
+    def meta_attribute(self, key):
+        return WeakMetaAttribute(self, key)
 
-#     def __init__(self, types=None, transform=None, values=None,
-#                  doc=None, blurb=None):
-#         Prop.__init__(self, types=types, transform=transform, values=values,
-#                       doc=doc, blurb=blurb)
-
-#     def meta_attribute(self, key):
-#         return WeakMetaAttribute(self, key)
 
 #------------------------------------------------------------------------------
 # Container

@@ -64,13 +64,13 @@ class Dataset(Container):
     its key is unique.  The best way to do so is to use the Project's
     add methods.   
 
-    @cvar key: KeyProp that identifies the Dataset
+    @prop key: KeyProp that identifies the Dataset
 
-    @cvar label: descriptive label
+    @prop label: descriptive label
 
-    @cvar metadata: additional meta info
+    @prop metadata: additional meta info
 
-    @cvar data: the actual data, either a Table or a numeric array.  Note
+    @prop data: the actual data, either a Table or a numeric array.  Note
     that the numeric array should be 2-dimensional, even though this
     is not checked.
 
