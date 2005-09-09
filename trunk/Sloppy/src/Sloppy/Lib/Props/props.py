@@ -460,8 +460,13 @@ class MapValue(Transformation):
 class Prop:
 
     def __init__(self, *check, **kwargs):
-        """
+        """        
         @keyword default: (None)
+        @keyword default_value: (None)
+        
+        @keyword reset: function that will be called on initialization
+        @keyword reset_value: (None)
+        
         @keyword blurb: (None)
         @keyword doc: (None)
         """
@@ -475,15 +480,20 @@ class Prop:
         if default is not None:
             default = self.check_value(default)
         self.default = default
+
+        self.reset = kwargs.get('reset', None)
         
 
     def check_value(self, value):
         return self.check(value)
 
-    def reset_value(self):
+    def do_reset(self):
         """ Requested upon first initialization and when using
-        Container.reset. """
-        return None
+        HasProps.reset. """
+        if self.reset is None:
+            return None
+        else:
+            return self.reset()
         
     def default_value(self):
         """ Requested if value is None. """
@@ -511,7 +521,7 @@ class ListProp(Prop):
             raise TypeError("The value '%s' has %s while it should be a list/tuple." %
                             (value, type(value)))
 
-    def reset_value(self):
+    def do_reset(self):
         return TypedList(check=self.check)
     
 
@@ -527,7 +537,7 @@ class DictProp(Prop):
             raise TypeError("The value '%s' has %s while it should be a dict." %
                             (value, type(value)))
 
-    def reset_value(self):
+    def do_reset(self):
         return TypedDict(check=self.check)
 
 
@@ -542,6 +552,11 @@ class KeyProp(Prop):
                       CheckType(basestring),
                       CheckRegexp('^\w*$'),
                       **kwargs)
+
+class StringProp(Prop):
+    """ Coerce to unicode. """
+    def __init__(self, *check, **kwargs):
+        Prop.__init__(self, Coerce(unicode), *check, **kwargs)
         
     
 class RangeProp(Prop):
@@ -573,10 +588,14 @@ class WeakRefProp(Prop):
 
 
 #------------------------------------------------------------------------------
-# Container
+# HasProps
 #
 
-class Container(object):
+class HasProps(object):
+
+    """
+    Base class for any class that uses Props.
+    """
 
     def __init__(self, **kwargs):
         
@@ -597,7 +616,7 @@ class Container(object):
                     if self._props.has_key(key):
                         raise KeyError("%s defines Prop '%s', which has already been defined by a base class!" % (klass,key)  )
                     self._props[key] = value
-                    self._values[key] = value.reset_value()
+                    self._values[key] = value.do_reset()
                     kwvalue = kwargs.pop(key,None)
                     if kwvalue is not None:
                         self.__setattr__(key,kwvalue)
@@ -613,7 +632,7 @@ class Container(object):
     
     def __setattr__(self, key, value):
         if key in ('_props','_values'):
-            raise RuntimeError("Attributes '_props' and '_values' cannot be altered for Container objects.")
+            raise RuntimeError("Attributes '_props' and '_values' cannot be altered for HasProps objects.")
         
         prop = object.__getattribute__(self, '_props').get(key,None)
         if prop is not None and isinstance(prop, Prop):
@@ -693,3 +712,9 @@ class Container(object):
     def copy(self, include=None,exclude=None):
         kw = self.get_values(include=include,exclude=exclude)                
         return self.__class__(**kw)
+
+
+
+
+# for compatibility, will be deprecated.
+Container = HasProps

@@ -38,7 +38,7 @@ from Sloppy.Lib.Props import *
 
 class Axis(Container):
     " A single axis for a plot. "
-    label = Prop(Coerce(unicode), blurb='Label')
+    label = StringProp(blurb='Label')
     start = Prop(Coerce(float), blurb='Start')
     end = Prop(Coerce(float), blurb='End')
 
@@ -49,7 +49,7 @@ class Axis(Container):
 
 class Line(Container):
     " A single line or collection of points in a Plot. "
-    label = Prop(Coerce(unicode))
+    label = StringProp()
     cx = RangeProp(Coerce(int), min=0, blurb="x-column")
     cy = RangeProp(Coerce(int), min=0, blurb="y-column")
     row_first = RangeProp(Coerce(int),min=0)
@@ -67,7 +67,7 @@ class Line(Container):
 
 class Legend(Container):
     " Plot legend. "
-    label = Prop(Coerce(unicode), doc='Legend Label')
+    label = StringProp(doc='Legend Label')
     visible = BoolProp()
     border = BoolProp()
     position = Prop(CheckType(str), value_list=PV['legend.position'])
@@ -77,12 +77,13 @@ class Legend(Container):
 
 class Layer(Container):
     type = Prop(CheckType(str), value_list=PV['layer.type'])
-    title = Prop(Coerce(unicode), blurb="Title")
+    title = StringProp(blurb="Title")
     axes = DictProp(CheckType(Axis), blurb="Axes")
     lines = ListProp(CheckType(Line), blurb="Lines")
     grid = BoolProp(blurb="Grid", doc="Display a grid")
     visible = BoolProp(blurb="Visible")
-    legend = Prop(CheckType(Legend))
+    legend = Prop(CheckType(Legend),
+                  reset=Legend)
 
     x = RangeProp(CheckType(float), min=0.0, max=1.0)
     y = RangeProp(CheckType(float), min=0.0, max=1.0)
@@ -92,12 +93,6 @@ class Layer(Container):
     group_colors = Prop(CheckType(str))
     group_styles = ListProp(CheckType(str))
     group_markers = ListProp(CheckType(str))
-    
-    def __init__(self,**kwargs):
-        Container.__init__(self, **kwargs)
-        # TODO: default value?
-        if self.legend is None:
-            self.legend = Legend()
 
     def request_axis(self, key, undolist=[]):
         if self.axes.has_key(key) is False:            
@@ -107,7 +102,7 @@ class Layer(Container):
     
 class TextLabel(Container):
     " Single text label. "
-    text = Prop(Coerce(unicode))
+    text = StringProp()
     
     x = Prop(Coerce(float))
     y = Prop(Coerce(float))
@@ -122,8 +117,8 @@ class View(Container):
 class Plot(Container):
     key = KeyProp(blurb="Key")
 
-    title = Prop(Coerce(unicode), blurb="Title")
-    comment = Prop(Coerce(unicode), blurb="Comment")
+    title = StringProp(blurb="Title")
+    comment = StringProp(blurb="Comment")
     
     legend = Prop(CheckType(Legend))
     lines = ListProp(CheckType(Line))
@@ -137,8 +132,7 @@ class Plot(Container):
     # in a treeview.
     edit_mark = BoolProp()
     
-    def __init__(self,**kwargs):
-        Container.__init__(self, **kwargs)
+
     
     def close(self):
         Signals.emit(self, 'closed')
