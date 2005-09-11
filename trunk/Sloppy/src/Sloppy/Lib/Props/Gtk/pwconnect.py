@@ -30,7 +30,7 @@ callbacks!
 """
 
 import logging
-logger = logging.getLogger('Gtk.pwconnect')
+logger = logging.getLogger('pwconnect')
 
 try:
     import pygtk
@@ -40,18 +40,6 @@ except ImportError:
 
 import gtk
 
-from Sloppy.Base import klassregistry
-
-
-
-# TODO: move this to Props library
-def collect_values(prop):
-    """ Collect all values of the prop specified by CheckValid. """
-    value_list = []
-    for item in prop.check.items:
-        if isinstance(item, CheckValid):
-            value_list.extend(item.values)
-    return value_list
 
 
 class Connector(object):
@@ -109,7 +97,7 @@ class Connector(object):
         self.check_widget_type(widget)
         self.widget = widget
 
-Registry = klassregistry.Registry("Connectors")
+connectors = {}
 
 
 
@@ -131,7 +119,7 @@ class Entry(Connector):
     def on_focus_out_event(self, widget, event):
         value = self.widget.get_text()
         try:
-            self.prop.check_value(value)
+            self.prop.check(value)
         except (TypeError, ValueError):
             print "Entry Value is wrong, resetting."
             self.widget.set_text(self.last_value)
@@ -150,11 +138,12 @@ class Entry(Connector):
     def check_out(self):
         value = self.widget.get_text()
         if len(value) == 0: value = None
-        else: value = self.prop.check_value(value)
+        else: value = self.prop.check(value)
 
         self.set_value(value)
 
-Registry.register('Entry', Entry)
+connectors['Entry'] = Entry
+
 
 
 class ComboBox(Connector):
@@ -173,7 +162,7 @@ class ComboBox(Connector):
 
         # fill combo
         model.clear()
-        value_list = collect_values(self.prop)
+        value_list = self.prop.valid_values()
         for value in value_list:
             model.append((value or "<None>", value) )
 
@@ -183,11 +172,12 @@ class ComboBox(Connector):
     
     def check_in(self):
         try:
+            print self.prop.description(), self.prop.name
             value = self.get_value()
-            value_list = collect_values(self.prop)
+            value_list = self.prop.valid_values()
             index = value_list.index(self.get_value())
         except:
-            raise ValueError("Failed to retrieve prop value %s in list of available values %s" % (self.get_value(), value_list))
+            raise ValueError("Failed to retrieve prop value '%s' in list of available values '%s'" % (self.get_value(), value_list))
 
         model = self.widget.get_model()
         iter = model.get_iter((index,))
@@ -205,7 +195,7 @@ class ComboBox(Connector):
 
         self.set_value(value)        
 
-Registry.register('ComboBox', ComboBox)
+connectors['ComboBox'] = ComboBox
 
 
 
@@ -240,7 +230,7 @@ class CheckButton(Connector):
 
         self.set_value(value)
 
-Registry.register('CheckButton', CheckButton)
+connectors['CheckButton'] = CheckButton
 
 
 

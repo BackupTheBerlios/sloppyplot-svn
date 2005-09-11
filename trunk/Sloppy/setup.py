@@ -69,7 +69,8 @@ setup(name=NAME,
                 'Sloppy.Lib.ElementTree',
                 'Sloppy.Lib.Signals',
                 'Sloppy.Lib.Undo',
-                'Sloppy.Lib.Props'
+                'Sloppy.Lib.Props',
+		'Sloppy.Lib.Props.Gtk'
                 ],
       package_data = {'Sloppy.Gtk' :
                        [join('Data', 'explorer.xml'),

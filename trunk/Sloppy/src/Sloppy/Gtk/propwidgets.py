@@ -209,7 +209,7 @@ class PWString(PW):
         if len(val) == 0:
             val = None
         else:
-            val = self.prop.check_value(val)
+            val = self.prop.check(val)
 
         if val != self.old_value:
             uwrap.set(self.container, self.key, val, undolist=undolist)
@@ -223,7 +223,7 @@ class PWString(PW):
         val = self.widget.get_text()
         if len(val) == 0: val = None
         try:
-            self.prop.check_value(val)
+            self.prop.check(val)
         except (TypeError, ValueError):
             print "Value is wrong, resetting"
             self.widget.set_text(self.last_value)

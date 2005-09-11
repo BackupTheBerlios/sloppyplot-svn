@@ -81,7 +81,7 @@ class Layer(HasProps):
     lines = pList(CheckType(Line), blurb="Lines")
     grid = pBoolean(blurb="Grid", doc="Display a grid")
     visible = pBoolean(blurb="Visible")
-    legend = Prop(CheckType(Legend), reset=Legend)
+    legend = Prop(CheckType(Legend), reset=(lambda: Legend()))
 
     x = pFloat(CheckBounds(min=0.0, max=1.0))
     y = pFloat(CheckBounds(min=0.0, max=1.0))

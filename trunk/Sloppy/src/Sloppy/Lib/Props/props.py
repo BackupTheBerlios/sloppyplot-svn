@@ -19,20 +19,33 @@
 # $Id: props.py 43 2005-08-23 11:22:14Z niklasv $
 
 """
+@group props: pList, pDictionary, pBoolean, pKeyword, pString,
+pUnicode, pInteger, pFloat, pWeakref
+
+@group checks: Coerce, CheckRegexp, CheckType, CheckTuple, CheckAll,
+CheckBounds, CheckValid, CheckInvalid, MapValue
+
 @author: Niklas Volbers
+
 @copyright: Copyright (C) 2005 by Niklas Volbers
+
 @license: This program is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the
 License, or (at your option) any later version.
+
+@version: 0.9
+
+@contact: mithrandir42@web.de
 """
 
 import weakref
 import re
-
+import inspect
 
 
 __extra_epydoc_fields__ = [('prop', 'Prop', 'Props')]
+
 
 #------------------------------------------------------------------------------
 # Helper Methods
@@ -255,11 +268,11 @@ class MetaAttribute(object):
         if rv is not None:
             return rv
         else:
-            return self.prop.default_value()
+            return self.prop.on_default()
 
     def __set__(self, owner, value):
         try:
-            value = self.prop.check_value(value)            
+            value = self.prop.check(value)
             owner._values[self.key] = value
         except TypeError, msg:
             raise TypeError("Failed to set property '%s' of container '%s' to '%s':\n  %s" %
@@ -279,7 +292,7 @@ class WeakMetaAttribute(MetaAttribute):
              return value
 
     def __set__(self, owner, value):
-        value = self.prop.check_value(value)
+        value = self.prop.check(value)
         if value is not None:
             value = weakref.ref(value)
         owner._values[self.key] = value
@@ -291,21 +304,21 @@ class WeakMetaAttribute(MetaAttribute):
 class Check:
     """ Abstract base class for all value check.
 
-    In a derived class, implement __call__(self, value).
+    In a derived class, implement __call__(self, value, owner).
 
     @raise TypeError:
     @raise ValueError:
     """
 
     def description(self):
-        return "- no description for %s" % str(self)
+        return "No description for %s" % str(self)
 
 
 
 class Transformation(Check):
     """ Abstract base class for all value transformations.
 
-    In a derived class, implement __call__(self, value).
+    In a derived class, implement __call__(self, value, owner).
 
     @raise ValueError:
     @raise TypeError:
@@ -313,16 +326,21 @@ class Transformation(Check):
     pass
 
 
+
 class Coerce(Transformation):
 
     def __init__(self, _type):
-        self._type = _type
+        self.type = _type
 
     def __call__(self, value):
         if value is None:
             return None
         else:
-            return self._type(value)
+            return self.type(value)
+
+    def description(self):
+        return "Coerce to: %s" % self.type
+
 
 
 class CheckRegexp(Check):
@@ -330,46 +348,65 @@ class CheckRegexp(Check):
     """ Check value against a given regular expression. """
     
     def __init__(self, regexp):
-        self._regexp=regexp
+        self.regexp=regexp
         self._expression = re.compile(regexp)
 
     def __call__(self, value):
         match = self._expression.match(value)
         if match is None:
-            raise ValueError("Value %s does not match the regular expression %s" % (value,self._regexp))
+            raise ValueError("Value %s does not match the regular expression %s" % (value,self.regexp))
 
+    def description(self):
+        return "Must match regular expression: '%s'" % self.regexp
+
+    
 
 class CheckType(Check):
 
-    """ One of the given types must match the given value. """
+    """ Check value against a single type or a list of types. """
 
-    def __init__(self, *_types):
-        self._types = as_list(_types)
+    def __init__(self, *types):
+        self.types = as_list(types)
 
     def __call__(self, value):
         if value is None:
             return
         
-        for _type in self._types:                   
+        for _type in self.types:                   
             if isinstance(value, _type):
                 return
         else:
-            raise TypeError("Invalid type '%s', must be one of '%s'" % (type(value), self._types))
+            raise TypeError("Invalid type '%s', must be one of '%s'" % (type(value), self.types))
+
+    def description(self):
+        return "Require type(s): %s." % self.types
+
 
 
 class CheckTuple(Check):
+
+    """ Check that the value is a tuple of a given length. """
+
     def __init__(self, length):
-        self._length = length
+        self.length = length
+        
     def __call__(self, value):
-        if isinstance(value, tuple) and len(value) == self._length:
+        if isinstance(value, tuple) and len(value) == self.length:
             return
         else:
-            raise TypeError("Value must be tuple of length %d!" % self._length )
+            raise TypeError("Value must be tuple of length %d!" % self.length )
+
+    def description(self):
+        return "Require tuple of length %d." % self.length
+
     
         
 class CheckAll(Transformation):
+
+    """ Apply all given Check's to the value. """
     
     def __init__(self, clist=None):
+
         # Make sure that the given list of Check instances are valid.
         self.items = []
 
@@ -394,25 +431,40 @@ class CheckAll(Transformation):
     def description(self):
         rv = ["Check all of the following:"]
         for item in self.items:
-            rv.append(item.description())
+            rv.append("  " + item.description())
         return "\n".join(rv)
         
 
 
 class CheckValid(Check):
+
+    """ Require value to be in the list of valid values. """
+    
     def __init__(self, values):
-        self.values = as_list(values)        
+        self.values = as_list(values)
+        
     def __call__(self, value):
         if (value in self.values) is False:
             raise ValueError("Value %s is not in the list of valid values: %s" % (value, self.values))
 
+    def description(self):
+        return "Valid values: '%s'" % self.values
+
+    
 
 class CheckInvalid(Check):
+
+    """ Make sure value is not in the list of invalid values. """
+
     def __init__(self, values):
-        self.values = as_list(values)        
+        self.values = as_list(values)       
+
     def __call__(self, value):
         if value in self.values:
             raise ValueError("Value %s in in the list of invalid values: %s" % (value, self.values))    
+
+    def description(self):
+        return "Invalid values: '%s'" % self.values
 
                 
                 
@@ -435,9 +487,21 @@ class CheckBounds(Check):
                or (self.max is not None and value > self.max):
             raise ValueError("Value %s should be in between [%s:%s]" % (value, self.min, self.max))
 
+    def description(self):
+        return "Valid range: %s:%s" % (self.min or "", self.max or "")
+
+
+
+#------------------------------------------------------------------------------
+# TESTING AREA
+#
 
 class MapValue(Transformation):
-    """ Map the given value according to the dict. """
+
+    """ Map the given value according to the dict.
+
+    @todo: Not yet finished.
+    """
     
     def __init__(self, mapping):
         self.mapping = mapping
@@ -450,7 +514,8 @@ class MapValue(Transformation):
             return self.mapping[value]
         except KeyError:
             raise ValueError("Could not find value '%s' in the list of mappings '%s'" % (value, self.mapping))
-    
+
+
 
 
 
@@ -462,47 +527,43 @@ class Prop:
 
     def __init__(self, *check, **kwargs):
         """        
-        @keyword default: (None)
-        @keyword default_value: (None)
+
+        @keyword default: value/ function that will be
+        assigned/called if prop value is requested but is None.
         
-        @keyword reset: function that will be called on initialization
-        @keyword reset_value: (None)
+        @keyword reset: value/function that will be assigned/called on
+        initialization
         
-        @keyword blurb: (None)
-        @keyword doc: (None)
+        @keyword blurb: Short description.
+        @keyword doc: Longer description.
         """
 
-        self.blurb = kwargs.get('blurb', None)
-        self.doc = kwargs.get('doc', None)
-        
+        self.blurb = kwargs.pop('blurb', None)
+        self.doc = kwargs.pop('doc', None)
+
         self.check = CheckAll(check or [])
 
-        default = kwargs.get('default', None)        
-        if default is not None:
-            default = self.check_value(default)
-        self.default = default
-
-        self.reset = kwargs.get('reset', None)
-        
-
-    def check_value(self, value):
-        return self.check(value)
-
-    def do_reset(self):
-        """ Requested upon first initialization and when using
-        HasProps.reset. """
-        if self.reset is None:
-            return None
+        default = kwargs.pop('default', None)
+        if inspect.isfunction(default) or inspect.ismethod(default):
+            self.on_default = default
         else:
-            return self.reset()
+            if default is not None:
+                default = self.check(default)
+            self.on_default = (lambda: default)
+
+        reset = kwargs.pop('reset', None)
+        if inspect.isfunction(reset) or inspect.ismethod(reset):
+            self.on_reset = reset
+        else:
+            if reset is not None:
+                reset = self.check(reset)
+            self.on_reset = (lambda: reset)
+
+        self.name = None # set by the owning HasProps class
         
-    def default_value(self):
-        """ Requested if value is None. """
-        return self.default
-            
+
     def meta_attribute(self, key):
         return MetaAttribute(self, key)
-
 
     def description(self):
         if self.check is not None:
@@ -545,37 +606,57 @@ class Prop:
 # Extended Props
 #
 
-class pList(Prop):
-       
-    def check_value(self, value):
-        if isinstance(value, TypedList):
-            return value
-        elif isinstance(value, list):
-            return TypedList(value, self.check)
-        elif isinstance(value, tuple):
-            return TypedList(list(value),self.check)
-        else:
-            raise TypeError("The value '%s' has %s while it should be a list/tuple." %
-                            (value, type(value)))
 
+class pList(Prop):
+
+    def __init__(self, *check, **kwargs):
+        kwargs.update({'reset' : self.do_reset})
+        Prop.__init__(self, *check, **kwargs)
+        self.item_check = self.check
+        self.check = self.DoCheck(self.item_check)
+
+    class DoCheck(Transformation):
+
+        def __init__(self, check):
+            self.check = check
+
+        def __call__(self, value):
+            if isinstance(value, TypedList):
+                return value
+            elif isinstance(value, list):
+                return TypedList(value, self.check)
+            else:            
+                raise TypeError("The value '%s' has %s while it should be a list." %
+                                (value, type(value)))
+        
     def do_reset(self):
-        return TypedList(check=self.check)
-    
+        return TypedList(check=self.item_check)
 
                 
 class pDictionary(Prop):
 
-    def check_value(self, value):
-        if isinstance(value, TypedDict):
-            return value
-        elif isinstance(value, dict):
-            return TypedDict(value, self.check)
-        else:            
-            raise TypeError("The value '%s' has %s while it should be a dict." %
-                            (value, type(value)))
+    def __init__(self, *check, **kwargs):
+        kwargs.update({'reset' : self.do_reset})
+        Prop.__init__(self, *check, **kwargs)
+        self.item_check = self.check
+        self.check = self.DoCheck(self.item_check)
+
+    class DoCheck(Transformation):
+
+        def __init__(self, check):
+            self.check = check
+
+        def __call__(self, value):
+            if isinstance(value, TypedDict):
+                return value
+            elif isinstance(value, dict):
+                return TypedDict(value, self.check)
+            else:            
+                raise TypeError("The value '%s' has %s while it should be a dictionary." %
+                                (value, type(value)))
 
     def do_reset(self):
-        return TypedDict(check=self.check)
+        return TypedDict(check=self.item_check)
 
 pDict = pDictionary
 
@@ -590,7 +671,7 @@ pBool = pBoolean
 class pKeyword(Prop):
     def __init__(self, **kwargs):
         Prop.__init__(self,
-                      CheckType(basestring),
+                      CheckType(basestring), #
                       CheckRegexp('^\w*$'),
                       **kwargs)
 
@@ -625,6 +706,7 @@ class pWeakref(Prop):
         return WeakMetaAttribute(self, key)
 
 
+
 #------------------------------------------------------------------------------
 # HasProps
 #
@@ -654,10 +736,11 @@ class HasProps(object):
                     if self._props.has_key(key):
                         raise KeyError("%s defines Prop '%s', which has already been defined by a base class!" % (klass,key)  )
                     self._props[key] = value
-                    self._values[key] = value.do_reset()
+                    self._values[key] = value.on_reset()
                     kwvalue = kwargs.pop(key,None)
                     if kwvalue is not None:
                         self.__setattr__(key,kwvalue)
+                    value.name = key
 
         # complain if there are unused keyword arguments
         if len(kwargs) > 0:

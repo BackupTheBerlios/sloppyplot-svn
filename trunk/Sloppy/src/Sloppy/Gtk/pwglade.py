@@ -30,7 +30,7 @@ callbacks!
 """
 
 import logging
-logger = logging.getLogger('Gtk.pwglade')
+logger = logging.getLogger('pwglade')
 
 try:
     import pygtk
@@ -40,22 +40,13 @@ except ImportError:
 
 import gtk
 
-import pwconnect
+from Sloppy.Lib.Props.Gtk import pwconnect
 
 
 
 #------------------------------------------------------------------------------
 
 class ConnectorFactory:
-
-    def __init__(self):
-
-        # create mapping of available Connectors
-        available = {}
-        for key, classwrapper in pwconnect.Registry.iteritems():
-            available[key] = classwrapper.klass
-        self.available = available
-
 
     def create_from_glade_tree(self, container, tree):
         
@@ -72,7 +63,7 @@ class ConnectorFactory:
                 logger.error("No widget found for prop '%s'" % key)
                 continue
             try:
-                connector = self.available[widget.__class__.__name__](container, key)
+                connector = pwconnect.connectors[widget.__class__.__name__](container, key)
             except KeyError:
                 raise RuntimeError("No matching Connector available for widget '%s' of %s" % (widget_key, widget.__class__.__name__))
             connector.use_widget(widget)
@@ -107,14 +98,13 @@ def create_changeset(container, working_copy):
 # Testing Area
 #
 
-from Sloppy.Lib.Props import HasProps,Prop, pBoolean
+from Sloppy.Lib.Props import HasProps,Prop, pBoolean, pUnicode, CheckValid
 
 # set up container
     
 class Options(HasProps):
-    filename = Prop(transform=unicode)
-    mode = Prop(transform=unicode,
-                value_list=[None, u'read-only', u'write-only', u'read-write'])
+    filename = pUnicode()
+    mode = pUnicode(CheckValid([None, u'read-only', u'write-only', u'read-write']))
     include_header = pBoolean(default=None)
 
 

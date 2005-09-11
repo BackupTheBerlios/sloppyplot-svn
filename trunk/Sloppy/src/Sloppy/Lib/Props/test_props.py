@@ -69,7 +69,6 @@ class TestValidity(SimpleTestCase):
         self.assertEqual(self.recipe.how_often_cooked, 42)
         p = self.recipe.get_prop('how_often_cooked')
         self.assertEqual(p.boundaries(), (0, None))
-        print p.description()
 
         # weak_reference
         self.recipe.weak_reference = self.dc

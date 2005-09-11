@@ -668,7 +668,7 @@ class LinesTab(AbstractTab):
         prop = Line().get_prop(prop_key)
         try:
             if new_text == "": new_text = None
-            new_text = prop.check_value(new_text)
+            new_text = prop.check(new_text)
         except (TypeError, ValueError):
             print "Invalid value"
         else:

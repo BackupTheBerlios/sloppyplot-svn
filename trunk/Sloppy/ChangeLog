@@ -1,6 +1,24 @@
 CHANGELOG
 =========
 
+
+2005-09-11 SloppyPlot 0.4.2
+===========================
+	
+  * Replaced types,transform,values by check approach. This is so much more powerful and simpler.
+  * Re-implemented WeakRefProp/WeakRefMetaAttribute.
+  * created simple TestSuite
+  * renamed most Props, e.g. StringProp became pString
+  * Initial version of MapValue
+  * Via default, all checks except pure value Checks should accept None as valid.  If None should not be allowed, use CheckInvalid(None).
+  * you can now specify either a value or a function/method for keyword parameters 'check' and 'reset'
+  * Prop.check_value has been replaced by Prop.check
+  * Added epydoc extra field for props.
+  * Added epydoc version information, at least to Sloppy, so that one can check the api documentation version.
+  * Removed RangeProp
+  * Moved Gtk.pwconnect to Props.Gtk to make it a more integrated part of Props.
+
+	
 2005-09-06 SloppyPlot 0.4.1
 ===========================
 	

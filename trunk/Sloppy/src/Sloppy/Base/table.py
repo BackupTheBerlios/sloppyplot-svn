@@ -32,9 +32,11 @@ from Sloppy.Lib.Props import *
 
 
 class AsArray(Transformation):
+
     def __init__(self, _rank):
         self._rank = _rank
-    def __call__(self, value):
+
+    def __call__(self, value, owner=None):
         # check type
         if isinstance(value, ArrayType):
             pass
