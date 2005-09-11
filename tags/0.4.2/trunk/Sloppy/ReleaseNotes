@@ -1,0 +1,40 @@
+
+Release Notes for SloppyPlot 0.4.2 (released 2005-09-11)
+========================================================
+
+This release is the second one in the 0.4.x series that will focus on
+code cleanup and api documentation.  There are _no_ user visible
+changes, _but_ the Props system (similar to basicproperty or to the
+traits system) has been reworked, restructured and is even documented!
+
+
+Release Notes for SloppyPlot 0.4.1 (released 2005-09-06)
+========================================================
+
+This release is the first one in the 0.4.x series that will focus on
+code cleanup and api documentation. The only real visible feature will
+probably be the gradual improvement of the ASCII import dialog, which
+has already started with this release. 
+
+
+
+Release Notes for SloppyPlot 0.4 (released 2005-08-28)
+======================================================
+
+This release features once again many stability fixes.  Most
+importantly, I decided to settle on the current file format: Using an
+old .spj file will not be a problem in future releases. The location
+of the config file has changed according the freedesktop
+specifications.
+
+
+
+Release Notes for SloppyPlot 0.3 (released 2005-08-24)
+======================================================
+
+This release features a lot of bug fixes and little improvements to
+the user interface.  The biggest visible change is the addition of a
+dialog to modify the dataset columns (add/remove/move/edit).
+
+It is recommended to update matplotlib to the newest version (0.83.1)
+
