@@ -50,9 +50,9 @@ class Importer(import_ascii.Importer):
     extensions = ["xps"]
     author = "Niklas Volbers"
 
-    ranges = Prop(Coerce(int), default=2)    
-    split_ranges = BoolProp(default=False)
-    sample = Prop(CheckType(basestring), default="")
+    ranges = pInteger(default=2)    
+    split_ranges = pBoolean(default=False)
+    sample = pString(default="")
     
     public_props = []
     

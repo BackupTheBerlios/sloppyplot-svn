@@ -29,7 +29,7 @@ logger = logging.getLogger("gtk.propwidgets")
 #pygtk.require('2.0')
 import gtk
 
-from Sloppy.Lib.Props import *
+from Sloppy.Lib.Props import pBoolean, HasProps, CheckValid
 from Sloppy.Lib.Undo import UndoList
 
 from Sloppy.Base import uwrap
@@ -413,7 +413,7 @@ def construct_pw(container, key):
     value_list = collect_values(prop)
     if value_list:
         pw = PWComboBox(container, key)
-    elif isinstance(prop, BoolProp):
+    elif isinstance(prop, pBoolean):
         pw = PWAlternateToggleButton(container, key)
     else:
         pw = PWString(container, key)
@@ -461,8 +461,8 @@ import uihelper
 
 def test():
 
-    class TestContainer(Container):
-        test = BoolProp()
+    class TestContainer(HasProps):
+        test = pBoolean()
 
     tc = TestContainer(test=True)
 

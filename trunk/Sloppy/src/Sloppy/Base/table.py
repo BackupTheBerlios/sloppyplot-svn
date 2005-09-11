@@ -41,16 +41,16 @@ class AsArray(Transformation):
         elif isinstance(value, (tuple,list)):
             value = array(value)
         else:
-            raise TypeError("ArrayProp data must be of type array/tuple/list.")
+            raise TypeError("pArray data must be of type array/tuple/list.")
 
         # check rank
         if rank(value) != self._rank:
-            raise TypeError("ArrayProp data must be of rank %d but it is %d." % (_rank, rank(value)))
+            raise TypeError("pArray data must be of rank %d but it is %d." % (_rank, rank(value)))
 
         return value
 
 
-class ArrayProp(Prop):
+class pArray(Prop):
 
     def __init__(self, rank=1, doc=None, blurb=None):
         Prop.__init__(self, AsArray(rank), doc=doc, blurb=blurb)
@@ -58,15 +58,14 @@ class ArrayProp(Prop):
 
         
         
-class Column(Container):
+class Column(HasProps):
 
-    key = KeyProp()
+    key = pKeyword()
     
-    designation = Prop(Coerce(str),
-                       CheckValid(['X','Y','XY','XERR', 'YERR', 'LABEL']))
-    query = Prop(Coerce(str))
-    label = Prop(Coerce(unicode))
-    data = ArrayProp(rank=1)
+    designation = pString(CheckValid(['X','Y','XY','XERR', 'YERR', 'LABEL']))
+    query = pString()
+    label = pUnicode()
+    data = pArray(rank=1)
                                    
     def __str__(self):
         return "%s (%s): %s" % (self.key, self.designation, self.label)

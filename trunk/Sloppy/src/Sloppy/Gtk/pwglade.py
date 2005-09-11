@@ -107,15 +107,15 @@ def create_changeset(container, working_copy):
 # Testing Area
 #
 
-from Sloppy.Lib.Props import Container,Prop, BoolProp, ListProp
+from Sloppy.Lib.Props import HasProps,Prop, pBoolean
 
 # set up container
     
-class Options(Container):
+class Options(HasProps):
     filename = Prop(transform=unicode)
     mode = Prop(transform=unicode,
                 value_list=[None, u'read-only', u'write-only', u'read-write'])
-    include_header = BoolProp(default=None)
+    include_header = pBoolean(default=None)
 
 
 

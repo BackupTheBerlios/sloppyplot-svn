@@ -37,7 +37,7 @@ from Numeric import ArrayType
 
 #------------------------------------------------------------------------------
 
-class Dataset(Container):
+class Dataset(HasProps):
 
     """
     A Dataset is a wrapper for any data used for plotting.
@@ -76,14 +76,14 @@ class Dataset(Container):
 
     """
     
-    key = KeyProp()
+    key = pKeyword()
 
-    label = Prop(Coerce(unicode))
-    metadata = DictProp(Coerce(unicode))
+    label = pUnicode()
+    metadata = pDictionary(Coerce(unicode))
     data = Prop(CheckType(Table, ArrayType,None))
 
     def __init__(self, **kwargs):
-        Container.__init__(self, **kwargs)
+        HasProps.__init__(self, **kwargs)
         self.change_counter = 0
         self.__is_valid = True
         self._table_import = None

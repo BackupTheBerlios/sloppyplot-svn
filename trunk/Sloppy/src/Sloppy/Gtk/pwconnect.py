@@ -41,7 +41,17 @@ except ImportError:
 import gtk
 
 from Sloppy.Base import klassregistry
-from Sloppy.Lib.Props import Container,Prop, BoolProp
+
+
+
+# TODO: move this to Props library
+def collect_values(prop):
+    """ Collect all values of the prop specified by CheckValid. """
+    value_list = []
+    for item in prop.check.items:
+        if isinstance(item, CheckValid):
+            value_list.extend(item.values)
+    return value_list
 
 
 class Connector(object):
@@ -163,7 +173,8 @@ class ComboBox(Connector):
 
         # fill combo
         model.clear()
-        for value in self.prop.value_list:
+        value_list = collect_values(self.prop)
+        for value in value_list:
             model.append((value or "<None>", value) )
 
             
@@ -173,9 +184,10 @@ class ComboBox(Connector):
     def check_in(self):
         try:
             value = self.get_value()
-            index = self.prop.value_list.index(self.get_value())
+            value_list = collect_values(self.prop)
+            index = value_list.index(self.get_value())
         except:
-            raise ValueError("Failed to retrieve prop value %s in list of available values %s" % (self.get_value(), self.value_list))
+            raise ValueError("Failed to retrieve prop value %s in list of available values %s" % (self.get_value(), value_list))
 
         model = self.widget.get_model()
         iter = model.get_iter((index,))

@@ -36,63 +36,61 @@ from Sloppy.Lib.Props import *
 # BASE OBJECTS
 #
 
-class Axis(Container):
+class Axis(HasProps):
     " A single axis for a plot. "
-    label = StringProp(blurb='Label')
-    start = Prop(Coerce(float), blurb='Start')
-    end = Prop(Coerce(float), blurb='End')
+    label = pUnicode(blurb='Label')
+    start = pFloat(blurb='Start')
+    end = pFloat(blurb='End')
 
-    scale = Prop(CheckType(str), CheckValid(PV['axis.scale']),
-                 blurb='Scale')
-    format = Prop(CheckType(str), blurb='Format')
+    scale = pString(CheckValid(PV['axis.scale']), blurb='Scale')
+    format = pString(blurb='Format')
 
 
-class Line(Container):
+class Line(HasProps):
     " A single line or collection of points in a Plot. "
-    label = StringProp()
-    cx = RangeProp(Coerce(int), min=0, blurb="x-column")
-    cy = RangeProp(Coerce(int), min=0, blurb="y-column")
-    row_first = RangeProp(Coerce(int),min=0)
-    row_last = RangeProp(Coerce(int),min=0)
+    label = pUnicode()
+    cx = pInteger(CheckBounds(min=0), blurb="x-column")
+    cy = pInteger(CheckBounds(min=0), blurb="y-column")
+    row_first = pInteger(CheckBounds(min=0))
+    row_last = pInteger(CheckBounds(min=0))
     #value_range = Prop(transform=str)    
-    cxerr = RangeProp(Coerce(int), min=0)
-    cyerr = RangeProp(Coerce(int), min=0)
+    cxerr = pInteger(CheckBounds(min=0))
+    cyerr = pInteger(CheckBounds(min=0))
     source = Prop(CheckType(Dataset))
-    width = RangeProp(Coerce(float), min=0, max=10)
+    width = pFloat(CheckBounds(min=0, max=10))
     style = Prop(CheckValid(PV['line.style']))
     marker = Prop(CheckValid(PV['line.marker']))
-    color = Prop(Coerce(str))
-    visible = BoolProp()
+    color = pString()
+    visible = pBoolean()
 
 
-class Legend(Container):
+class Legend(HasProps):
     " Plot legend. "
-    label = StringProp(doc='Legend Label')
-    visible = BoolProp()
-    border = BoolProp()
-    position = Prop(CheckType(str), value_list=PV['legend.position'])
-    x = RangeProp(Coerce(float), min=0.0, max=1.0)
-    y = RangeProp(Coerce(float), min=0.0, max=1.0)
+    label = pUnicode(doc='Legend Label')
+    visible = pBoolean()
+    border = pBoolean()
+    position = pString(value_list=PV['legend.position'])
+    x = pFloat(CheckBounds(min=0.0, max=1.0))
+    y = pFloat(CheckBounds(min=0.0, max=1.0))
 
 
-class Layer(Container):
-    type = Prop(CheckType(str), value_list=PV['layer.type'])
-    title = StringProp(blurb="Title")
-    axes = DictProp(CheckType(Axis), blurb="Axes")
-    lines = ListProp(CheckType(Line), blurb="Lines")
-    grid = BoolProp(blurb="Grid", doc="Display a grid")
-    visible = BoolProp(blurb="Visible")
-    legend = Prop(CheckType(Legend),
-                  reset=Legend)
+class Layer(HasProps):
+    type = pString(CheckValid(PV['layer.type']))
+    title = pUnicode(blurb="Title")
+    axes = pDictionary(CheckType(Axis), blurb="Axes")
+    lines = pList(CheckType(Line), blurb="Lines")
+    grid = pBoolean(blurb="Grid", doc="Display a grid")
+    visible = pBoolean(blurb="Visible")
+    legend = Prop(CheckType(Legend), reset=Legend)
 
-    x = RangeProp(CheckType(float), min=0.0, max=1.0)
-    y = RangeProp(CheckType(float), min=0.0, max=1.0)
-    width = RangeProp(CheckType(float), min=0.0, max=1.0)
-    height = RangeProp(CheckType(float), min=0.0, max=1.0)    
+    x = pFloat(CheckBounds(min=0.0, max=1.0))
+    y = pFloat(CheckBounds(min=0.0, max=1.0))
+    width = pFloat(CheckBounds(min=0.0, max=1.0))
+    height = pFloat(CheckBounds(min=0.0, max=1.0))
 
-    group_colors = Prop(CheckType(str))
-    group_styles = ListProp(CheckType(str))
-    group_markers = ListProp(CheckType(str))
+    group_colors = pString()
+    group_styles = pList(CheckType(str))
+    group_markers = pList(CheckType(str))
 
     def request_axis(self, key, undolist=[]):
         if self.axes.has_key(key) is False:            
@@ -100,37 +98,37 @@ class Layer(Container):
         return self.axes[key]        
     
     
-class TextLabel(Container):
+class TextLabel(HasProps):
     " Single text label. "
-    text = StringProp()
+    text = pUnicode()
     
-    x = Prop(Coerce(float))
-    y = Prop(Coerce(float))
+    x = pFloat()
+    y = pFloat()
 
 
 
-class View(Container):
-    start = Prop(Coerce(float), blurb='Start')
-    end = Prop(Coerce(float), blurb='End')
+class View(HasProps):
+    start = pFloat(blurb='Start')
+    end = pFloat(blurb='End')
     
 
-class Plot(Container):
-    key = KeyProp(blurb="Key")
+class Plot(HasProps):
+    key = pKeyword(blurb="Key")
 
-    title = StringProp(blurb="Title")
-    comment = StringProp(blurb="Comment")
+    title = pUnicode(blurb="Title")
+    comment = pUnicode(blurb="Comment")
     
     legend = Prop(CheckType(Legend))
-    lines = ListProp(CheckType(Line))
-    labels = ListProp(CheckType(TextLabel))
-    layers = ListProp(CheckType(Layer), blurb="Layers")
+    lines = pList(CheckType(Line))
+    labels = pList(CheckType(TextLabel))
+    layers = pList(CheckType(Layer), blurb="Layers")
 
-    views = ListProp(CheckType(View), blurb="Views")
+    views = pList(CheckType(View), blurb="Views")
 
     # might be used to notify the user that this
     # has been edited, e.g. by displaying a star
     # in a treeview.
-    edit_mark = BoolProp()
+    edit_mark = pBoolean()
     
 
     

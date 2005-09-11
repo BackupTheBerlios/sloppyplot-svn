@@ -47,12 +47,11 @@ class XTerminal(Terminal):
         return cmd_list
 
    
-class PostscriptTerminal(Terminal, Container):
+class PostscriptTerminal(Terminal, HasProps):
 
-    mode = Prop(Coerce(str),
-                CheckValid(['eps', 'landscape', 'portrait']),
-                default='eps',
-                blurb="mode", doc="Output mode")
+    mode = pString(CheckValid(['eps', 'landscape', 'portrait']),
+                   default='eps',
+                   blurb="mode", doc="Output mode")
     enhanced = Prop(CheckValid(['enhanced', 'noenhanced']),
                     default='enhanced',
                     blurb="PS mode",
@@ -61,15 +60,15 @@ class PostscriptTerminal(Terminal, Container):
                  default='color',
                  blurb="color mode",
                  doc="Color mode")
-    blacktext = BoolProp(blurb="black text only",
+    blacktext = pBoolean(blurb="black text only",
                          doc="all text in black, even in color mode")
     solid = Prop(CheckValid(['solid', 'dashed']),
                  default='solid',
                  blurb="Line style")
-    dashlength = RangeProp(Coerce(float), min=0.0,
+    dashlength = pFloat(CheckBounds(min=0.0),
                            blurb="dash length",
                            doc = "Scales the length of dashed-line segments")
-    linewidth = RangeProp(Coerce(float), min=0.0,
+    linewidth = pFloat(CheckBounds(min=0.0),
                           blurb="line width",
                           doc = "Scales all linewidths")
     duplexing = Prop(CheckValid(['defaultplex', 'simplex', 'duplex']),
@@ -78,15 +77,14 @@ class PostscriptTerminal(Terminal, Container):
                    default='rounded',
                    blurb="Cap style",
                    doc="Whether line caps and line joins should be rounded")
-    fontname = Prop(Coerce(str),
-                    blurb="font name",
-                    doc="Name of a valid PostScript font")
-    fontsize = RangeProp(Coerce(float), min=0.0,
-                    blurb="font size",
-                    doc="Size of the font in PostScript points.")
+    fontname = pString(blurb="font name",
+                       doc="Name of a valid PostScript font")
+    fontsize = pFloat(CheckBounds(min=0.0),
+                      blurb="font size",
+                      doc="Size of the font in PostScript points.")
 
     # additional information: timestamp
-    timestamp = BoolProp(blurb="add timestamp",
+    timestamp = pBoolean(blurb="add timestamp",
                          doc="Whether to add a timestamp")
 
 

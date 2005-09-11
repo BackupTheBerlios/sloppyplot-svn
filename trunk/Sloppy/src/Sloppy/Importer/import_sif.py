@@ -29,7 +29,7 @@ from Numeric import *
 from Sloppy.Base.dataset import *
 from Sloppy.Base import dataio
 from Sloppy.Base.table import Table, array_to_table, Column
-from Sloppy.Lib.Props import ListProp
+from Sloppy.Lib.Props import pList
 
 
 class Importer(dataio.Importer):
@@ -39,7 +39,7 @@ class Importer(dataio.Importer):
     blurb = "SloppyPlot Internal Format"
     filemode = 'b'
 
-    column_props = ListProp(types=dict)
+    column_props = pList(types=dict)
     
     def read_table_from_stream(self, fd):
         raise RuntimeError("Please call 'read_table_from_file'.")

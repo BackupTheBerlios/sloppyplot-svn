@@ -25,7 +25,6 @@ logging.basicConfig()
 import gtk
 
 
-from Sloppy.Lib.Props import BoolProp
 from Sloppy.Lib.Undo import UndoList, UndoInfo, FakeUndoInfo, NullUndo, ulist
 from Sloppy.Lib import Signals
 

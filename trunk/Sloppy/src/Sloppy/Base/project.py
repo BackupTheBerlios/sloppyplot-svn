@@ -67,19 +67,19 @@ about netCDF, see
 
 
 
-class Project(Container):
+class Project(HasProps):
 
-    label = Prop(Coerce(unicode))
-    comment = Prop(Coerce(unicode))
+    label = pUnicode()
+    comment = pUnicode()
 
-    plots = ListProp(CheckType(Plot))
-    datasets = ListProp(CheckType(Dataset))
+    plots = pList(CheckType(Plot))
+    datasets = pList(CheckType(Dataset))
 
-    backends = ListProp(CheckType(Backend))
+    backends = pList(CheckType(Backend))
     
     
     def __init__(self,*args,**kwargs):
-        Container.__init__(self, **kwargs)       
+        HasProps.__init__(self, **kwargs)       
         self.journal = UndoRedo()
         self._archive = None
         self.app = None

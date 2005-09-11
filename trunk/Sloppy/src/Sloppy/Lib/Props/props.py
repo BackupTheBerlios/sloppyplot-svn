@@ -296,7 +296,10 @@ class Check:
     @raise TypeError:
     @raise ValueError:
     """
-    pass
+
+    def description(self):
+        return "- no description for %s" % str(self)
+
 
 
 class Transformation(Check):
@@ -388,6 +391,13 @@ class CheckAll(Transformation):
         return len(self.items)
 
 
+    def description(self):
+        rv = ["Check all of the following:"]
+        for item in self.items:
+            rv.append(item.description())
+        return "\n".join(rv)
+        
+
 
 class CheckValid(Check):
     def __init__(self, values):
@@ -411,13 +421,11 @@ class CheckBounds(Check):
     Check if the given value is in between the given bounds [min:max].
 
     If min or max is None, then the appropriate direction is unbound.
-    If steps is given, then a min must be given as well.
     A value of None is always valid.    
     """
-    def __init__(self, min=None, max=None, steps=None):
+    def __init__(self, min=None, max=None):
         self.min=min
         self.max=max
-        self.steps=steps        
 
     def __call__(self, value):
         if value is None:
@@ -426,13 +434,6 @@ class CheckBounds(Check):
         if (self.min is not None and value < self.min) \
                or (self.max is not None and value > self.max):
             raise ValueError("Value %s should be in between [%s:%s]" % (value, self.min, self.max))
-
-        if self.steps is not None:
-            remainder = (value - self.min) % self.steps
-            if remainder != 0.0:
-                # TODO: how to word this?                
-                raise ValueError("Value %s must .... Remainder %s" % (value, remainder) ) 
-
 
 
 class MapValue(Transformation):
@@ -502,13 +503,49 @@ class Prop:
     def meta_attribute(self, key):
         return MetaAttribute(self, key)
 
+
+    def description(self):
+        if self.check is not None:
+            return self.check.description()
+    
+
+    #----------------------------------------------------------------------
+    # Helper methods for introspection
+    #
+
+    def valid_values(self):
+        """ Collect all values of the prop specified by CheckValid. """
+        values = []
+        for item in self.check.items:
+            if isinstance(item, CheckValid):
+                values.extend(item.values)
+        return values
+
+    def invalid_values(self):
+        """ Collect all values of the prop specified by CheckInvalid. """
+        values = []
+        for item in self.check.items:
+            if isinstance(item, CheckValid):
+                values.extend(item.values)
+        return values
+
+    def boundaries(self):
+        """ Return the min, max boundary values given by the first
+        instance of CheckBounds. """
+        minimum, maximum = None, None
+        for item in self.check.items:
+            if isinstance(item, CheckBounds):
+                return item.min, item.max
+        
+
+
                       
 
 #------------------------------------------------------------------------------
 # Extended Props
 #
 
-class ListProp(Prop):
+class pList(Prop):
        
     def check_value(self, value):
         if isinstance(value, TypedList):
@@ -526,7 +563,7 @@ class ListProp(Prop):
     
 
                 
-class DictProp(Prop):
+class pDictionary(Prop):
 
     def check_value(self, value):
         if isinstance(value, TypedDict):
@@ -540,45 +577,46 @@ class DictProp(Prop):
     def do_reset(self):
         return TypedDict(check=self.check)
 
+pDict = pDictionary
 
-class BoolProp(Prop):
+
+class pBoolean(Prop):
     def __init__(self, **kwargs):
         Prop.__init__(self, Coerce(bool), **kwargs)
 
+pBool = pBoolean
 
-class KeyProp(Prop):
+
+class pKeyword(Prop):
     def __init__(self, **kwargs):
         Prop.__init__(self,
                       CheckType(basestring),
                       CheckRegexp('^\w*$'),
                       **kwargs)
 
-class StringProp(Prop):
-    """ Coerce to unicode. """
+class pString(Prop):
+    """ Coerce to regular string. """
+    def __init__(self, *check, **kwargs):
+        Prop.__init__(self, Coerce(str), *check, **kwargs)
+
+        
+class pUnicode(Prop):
+    """ Coerce to regular string. """
     def __init__(self, *check, **kwargs):
         Prop.__init__(self, Coerce(unicode), *check, **kwargs)
         
-    
-class RangeProp(Prop):
 
+class pInteger(Prop):
     def __init__(self, *check, **kwargs):
-        min = kwargs.get('min', None)
-        max = kwargs.get('max', None)
-        steps = kwargs.get('steps', None)
+        Prop.__init__(self, Coerce(int), *check, **kwargs)
+
+
+class pFloat(Prop):
+    def __init__(self, *check, **kwargs):
+        Prop.__init__(self, Coerce(float), *check, **kwargs)
+
         
-        self.min = min
-        self.max = max
-        if steps is not None and self.min is None:
-            raise RuntimeError("Keyword `steps` may only provided along with a minimum value.")
-        self.steps = steps
-
-        check = list(check)
-        check.append(CheckBounds(min,max,steps))
-        Prop.__init__(self, *check, **kwargs)
-
-
-
-class WeakRefProp(Prop):
+class pWeakref(Prop):
 
     def __init__(self, *check, **kwargs):
         Prop.__init__(self, *check, **kwargs)
@@ -716,5 +754,3 @@ class HasProps(object):
 
 
 
-# for compatibility, will be deprecated.
-Container = HasProps

@@ -7,15 +7,15 @@ class DummyClass:
     " Used for testing recipe.weak_reference. "
     pass
 
-class Recipe(Container):
+class Recipe(HasProps):
     name = Prop(Coerce(unicode))
-    ingredients = DictProp(CheckType(str))
-    difficult = BoolProp()
-    keyword = KeyProp()
+    ingredients = pDict(CheckType(str))
+    difficult = pBoolean()
+    keyword = pKeyword()
     year_month = Prop(CheckTuple(2))
     rating = Prop(CheckValid(['gross', 'yummy', 'soso']))
     how_often_cooked = Prop(Coerce(int), CheckBounds(min=0))
-    weak_reference = WeakRefProp(CheckType(DummyClass))
+    weak_reference = pWeakref(CheckType(DummyClass))
     units = Prop(MapValue({'g':'gramm', 'l':'litre'}))
 
 class SimpleTestCase(unittest.TestCase):  
@@ -67,6 +67,9 @@ class TestValidity(SimpleTestCase):
         self.recipe.how_often_cooked = 42.1
         self.assert_(isinstance(self.recipe.how_often_cooked, int))
         self.assertEqual(self.recipe.how_often_cooked, 42)
+        p = self.recipe.get_prop('how_often_cooked')
+        self.assertEqual(p.boundaries(), (0, None))
+        print p.description()
 
         # weak_reference
         self.recipe.weak_reference = self.dc

@@ -44,24 +44,22 @@ class Importer(dataio.Importer):
     # Properties
     #
     
-    delimiter = Prop(CheckType(basestring),
-                     CheckValid([None,',', '\t',';', '\s*']),
-                     blurb ="Delimiter")
+    delimiter = pString(CheckValid([None,',', '\t',';', '\s*']),
+                        blurb ="Delimiter")
     
-    custom_delimiter = Prop(CheckType(basestring),
-                            blurb="Custom delimiter used if delimiter is None.")
+    custom_delimiter = pString(blurb="Custom delimiter used if delimiter is None.")
     
-    ncols = RangeProp(Coerce(int), min=0, steps=1, default=None,
+    ncols = pInteger(CheckBounds(min=0), default=None,
                       blurb="Number of columns")
 
-    header_lines = RangeProp(Coerce(int), min=0, default=0,
-                             blurb="Number of header lines")
+    header_lines = pInteger(CheckBounds(min=0), default=0,
+                            blurb="Number of header lines")
 
     table = Prop(CheckType(Table))
     
-    keys = ListProp()
+    keys = pList()
 
-    labels = ListProp()
+    labels = pList()
     
     designations = Prop(CheckType(list),
                         default=None)
@@ -69,7 +67,7 @@ class Importer(dataio.Importer):
     typecodes = Prop(CheckType(basestring, list),
                      default='f')
 
-    growth_offset = RangeProp(Coerce(int), min=10, default=100)
+    growth_offset = pInteger(CheckBounds(min=10), default=100)
 
     public_props = ['delimiter', 'custom_delimiter', 'ncols', 'header_lines']
 

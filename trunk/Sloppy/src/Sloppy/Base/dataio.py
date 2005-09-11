@@ -41,7 +41,7 @@ class ExportError(Exception):
 
 
 
-class Importer(Container):
+class Importer(HasProps):
 
     """
 
@@ -111,7 +111,7 @@ class Importer(Container):
 
 
 
-class Exporter(Container):
+class Exporter(HasProps):
 
     filemode = '' # set to 'b' for binary objects
     
