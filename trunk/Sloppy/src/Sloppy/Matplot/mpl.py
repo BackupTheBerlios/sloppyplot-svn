@@ -31,6 +31,7 @@ import gtk
 import logging
 logger = logging.getLogger('Backends.mpl')
 
+import matplotlib
 from matplotlib import *
 
 from matplotlib.figure import Figure
@@ -312,30 +313,23 @@ class Backend( backend.Backend ):
 
 
         #:layer.labels
-
-        ## testing
-        ##labels = layer.labels
-        #labels = [objects.TextLabel(x=0.0,y=0.0,text="(0,0)",system=0),
-        #          objects.TextLabel(x=2.0,y=-2.0,text="(2,-2)",system=0),
-        #          objects.TextLabel(x=0.5,y=0.5,text="g(0.5,0.5)",system=1)]
-
         ax.texts = []
         for label in layer.labels:
-            
+
+            if label.system == 0:
+                transform = ax.transData
+            elif label.system == 1:
+                transform = ax.transAxes
+            elif label.system == 2:
+                transform = self.figure.transFigure
+            elif label.system == 3:
+                transform = matplotlib.transforms.identity_transform()
+
             t = Text(x=label.x, y=label.y, text=label.text,
                      horizontalalignment='center',
-                     verticalalignment='center')
-                        
-            if label.system == 0: # 0: data
-                t.set_transform(ax.transData)
-            elif label.system == 1: # 1: graph
-                logger.error("Graph coordinates not supported. Text skipped.")
-                continue
-            
+                     verticalalignment='center',
+                     transform=transform)                                    
             ax.texts.append(t)
-
-
-
             
 
 

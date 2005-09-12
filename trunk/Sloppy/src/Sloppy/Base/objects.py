@@ -31,7 +31,7 @@ from Sloppy.Lib.Undo import udict
 from Sloppy.Lib.Props import *
        
         
-map_system = {'data' : 0, 'graph': 1, 'screen': 2}
+map_system = {'data' : 0, 'graph': 1, 'screen': 2, 'display': 3}
 map_valign = {'center':0, 'top':1, 'bottom':2}
 map_halign = {'center':0, 'left':1, 'right': 2}
 

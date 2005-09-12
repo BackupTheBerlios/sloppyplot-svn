@@ -17,10 +17,8 @@ class GenericTool(gtk.VBox):
 
 class LabelsTool(GenericTool):
 
-    def __init__(self):
-        
-        GenericTool.__init__(self)
-        
+    def __init__(self):    
+        GenericTool.__init__(self)        
         self.layer = None
 
         # construct GUI
@@ -34,7 +32,13 @@ class LabelsTool(GenericTool):
         
         cell = gtk.CellRendererText()
         column = gtk.TreeViewColumn('label', cell)
+
+        def render_label(column, cell, model, iter):
+            label = model.get_value(iter, 0)
+            text = "'%s': (%f,%f) %s" % (label.text, label.x, label.y, label.align)
+            cell.set_property('text', text)
         column.set_cell_data_func(cell, self.render_label)
+        
         treeview.append_column(column)
         treeview.show()
         frame.add(treeview)       
@@ -46,14 +50,12 @@ class LabelsTool(GenericTool):
         self.add_buttons(buttons)
 
 
+        # save variables for reference and update view
         self.treeview = treeview        
         self.update()
 
 
-    def render_label(self, column, cell, model, iter):
-        label = model.get_value(iter, 0)
-        text = "'%s': (%f,%f) %s" % (label.text, label.x, label.y, label.align)
-        cell.set_property('text', text)
+
         
     def set_layer(self, layer):
         if layer == self.layer:
@@ -68,12 +70,11 @@ class LabelsTool(GenericTool):
         if self.layer is None:
             self.treeview.set_sensitive(False)
             return
-
         self.treeview.set_sensitive(True)
 
-        model = self.treeview.get_model()
 
         # check_in
+        model = self.treeview.get_model()        
         model.clear()
         for label in self.layer.labels:
             print ":added ", label
@@ -84,27 +85,33 @@ class LabelsTool(GenericTool):
 
     
 
-win = gtk.Window()
-win.connect("destroy", gtk.main_quit)
-win.set_size_request(320,200)
 
-class PseudoLabel:
-    def __init__(self, text,x,y,align):
-        self.text = text
-        self.x, self.y = x,y
-        self.align = align
-        
-class PseudoLayer:
-    def __init__(self):
-        self.labels = [PseudoLabel('x',0.2,0.3,1)]
-        
-l = PseudoLayer()
+def test():
+    win = gtk.Window()
+    win.connect("destroy", gtk.main_quit)
+    win.set_size_request(320,200)
 
-lt = LabelsTool()
-lt.set_layer(l)
-lt.show()
+    class PseudoLabel:
+        def __init__(self, text,x,y,align):
+            self.text = text
+            self.x, self.y = x,y
+            self.align = align
 
-win.add(lt)
+    class PseudoLayer:
+        def __init__(self):
+            self.labels = [PseudoLabel('x',0.2,0.3,1)]
 
-win.show()
-gtk.main()
+    l = PseudoLayer()
+
+    lt = LabelsTool()
+    lt.set_layer(l)
+    lt.show()
+
+    win.add(lt)
+
+    win.show()
+    gtk.main()
+
+
+if __name__ == "__main__":
+    test()
