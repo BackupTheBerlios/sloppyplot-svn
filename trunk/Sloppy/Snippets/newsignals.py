@@ -15,8 +15,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-# $HeadURL: svn+ssh://svn.berlios.de/svnroot/repos/sloppyplot/trunk/Sloppy/src/Sloppy/Lib/Signals/signals.py $
-# $Id: signals.py 10 2005-08-14 20:32:35Z niklasv $
+# $HeadURL$
+# $Id$
 
 
 import weakref

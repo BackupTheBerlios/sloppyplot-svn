@@ -1,4 +1,4 @@
-#!/usr/bin/sh
+#!/bin/sh
 
 echo "Setting SVN properties..."
 for f in `find . -iname "*.py"`; do
