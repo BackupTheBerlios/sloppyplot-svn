@@ -20,7 +20,7 @@
 
 """
 @group props: pList, pDictionary, pBoolean, pKeyword, pString,
-pUnicode, pInteger, pFloat, pWeakref
+pUnicode, pInteger, pFloat, pWeakref, pDict
 
 @group checks: Coerce, CheckRegexp, CheckType, CheckTuple, CheckAll,
 CheckBounds, CheckValid, CheckInvalid, MapValue
@@ -38,7 +38,9 @@ __extra_epydoc_fields__ = [('prop', 'Prop', 'Props')]
 __all__ = ["HasProps",
            #
            "Prop", "pInteger", "pFloat", "pWeakref", "pKeyword", "pString",
-           "pBoolean", "pList", "pDictionary", "pUnicode",
+           "pBoolean", "pList", "pDictionary", "pDict", "pUnicode",
+           #
+           "MapValue", # experimental
            #
            "Check", "Transformation", "Coerce", "CheckRegexp", "CheckType",
            "CheckTuple", "CheckAll", "CheckBounds", "CheckValid", "CheckInvalid"
@@ -113,7 +115,7 @@ class WeakMetaAttribute(MetaAttribute):
 class Check:
     """ Abstract base class for all value check.
 
-    In a derived class, implement __call__(self, value, owner).
+    In a derived class, implement __call__(self, value).
 
     @raise TypeError:
     @raise ValueError:
@@ -127,7 +129,7 @@ class Check:
 class Transformation(Check):
     """ Abstract base class for all value transformations.
 
-    In a derived class, implement __call__(self, value, owner).
+    In a derived class, implement __call__(self, value).
 
     @raise ValueError:
     @raise TypeError:
