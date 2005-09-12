@@ -113,6 +113,26 @@ def setup_test_window(widget):
     win.show()
     return win
 
+
+def construct_buttonbox(buttons, horizontal=True):
+    if horizontal is True:
+        btnbox = gtk.HButtonBox()
+    else:
+        btnbox = gtk.VButtonBox()
+
+    for label, stock, callback in buttons:
+        if label is not None:
+            button = gtk.Button(label)
+        else:
+            button = gtk.Button(stock=stock)
+        button.show()
+
+        button.connect('clicked', callback)
+        btnbox.pack_end(button)
+
+    return btnbox
+
+        
 # DEPRECATED?
 # def set_actions(uimanager, action_names_list, state=True):
 #     for action_name in action_names_list:
