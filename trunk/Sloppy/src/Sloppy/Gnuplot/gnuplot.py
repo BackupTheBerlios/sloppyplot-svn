@@ -300,6 +300,18 @@ class Backend(backend.Backend):
             else:
                 logger.error("Axis scale '%s' not supported by this backend." % scale)
 
+        #:layer.labels
+        for label in layer.labels:                                    
+            if label.system == 0: # 0: data
+                coords = "at first %.2f, first %.2f" % (label.x, label.y)
+            elif label.system == 1: # 1: graph
+                coords = "at graph %.2f, graph %.2f" % (label.x, label.y)
+
+            map_align = {0:'center', 1:'left', 2:'right'}
+            align = map_align[label.halign]
+            rv.append('set label "%s" %s %s' % (label.text, coords, align) )
+
+
         # lines
         line_cache = []
         for line in layer.lines:
@@ -341,6 +353,7 @@ class Backend(backend.Backend):
             else:
                 # merge all of the above into a nice gnuplot command
                 line_cache.append( " ".join([source,using,with,width,title]) )
+
 
 
         # construct plot command from line_cache

@@ -265,7 +265,7 @@ class GnuplotWindow( gtk.Window ):
         cv = regexp.search(result).groupdict()
         new_value = 'set xrange [ %(xstart)s : %(xend)s ]' % cv        
 
-        xaxis = layer.request_axis('x', undolist=ul)
+        xaxis = layer.xaxis
         xstart = cv['xstart']
         if xstart == '*':
             xstart = None
@@ -283,7 +283,7 @@ class GnuplotWindow( gtk.Window ):
         cv = regexp.search(result).groupdict()
         new_value = 'set yrange [ %(ystart)s : %(yend)s ]' % cv
 
-        yaxis = layer.request_axis('y', undolist=ul)
+        yaxis = layer.yaxis
         ystart = cv['ystart']
         if ystart == '*':
             ystart = None
@@ -305,11 +305,11 @@ class GnuplotWindow( gtk.Window ):
 
         ul = UndoList()
 
-        xaxis = layer.request_axis('x', undolist=ul)        
+        xaxis = layer.xaxis
         uwrap.set(xaxis,'start', None, undolist=ul)
         uwrap.set(xaxis,'end', None, undolist=ul)
 
-        yaxis = layer.request_axis('y', undolist=ul)        
+        yaxis = layer.yaxis
         uwrap.set(yaxis,'start', None, undolist=ul)
         uwrap.set(yaxis,'end', None, undolist=ul)
 

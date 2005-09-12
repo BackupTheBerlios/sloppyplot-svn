@@ -280,7 +280,7 @@ class AxisTab(AbstractTab):
 
     def __init__(self, app, layer, axis_key):
         self.layer = layer
-        self.axis = layer.request_axis(axis_key)
+        self.axis = layer.axes[axis_key]
         self.axis_key = axis_key
 
         AbstractTab.__init__(self, app, layer)

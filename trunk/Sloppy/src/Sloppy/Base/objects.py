@@ -31,10 +31,24 @@ from Sloppy.Lib.Undo import udict
 from Sloppy.Lib.Props import *
        
         
+map_system = {'data' : 0, 'graph': 1, 'screen': 2}
+map_valign = {'center':0, 'top':1, 'bottom':2}
+map_halign = {'center':0, 'left':1, 'right': 2}
 
 #------------------------------------------------------------------------------
 # BASE OBJECTS
 #
+
+class TextLabel(HasProps):
+    " Single text label. "
+    text = pUnicode()
+    x = pFloat()
+    y = pFloat()
+    system = pInteger(MapValue(map_system), default=0)    
+    valign = pInteger(MapValue(map_valign), default=0)
+    halign = pInteger(MapValue(map_halign), default=0)
+    
+
 
 class Axis(HasProps):
     " A single axis for a plot. "
@@ -77,7 +91,6 @@ class Legend(HasProps):
 class Layer(HasProps):
     type = pString(CheckValid(PV['layer.type']))
     title = pUnicode(blurb="Title")
-    axes = pDictionary(CheckType(Axis), blurb="Axes")
     lines = pList(CheckType(Line), blurb="Lines")
     grid = pBoolean(blurb="Grid", doc="Display a grid")
     visible = pBoolean(blurb="Visible")
@@ -92,20 +105,16 @@ class Layer(HasProps):
     group_styles = pList(CheckType(str))
     group_markers = pList(CheckType(str))
 
-    def request_axis(self, key, undolist=[]):
-        if self.axes.has_key(key) is False:            
-            udict.setitem( self.axes, key, Axis(), undolist=undolist)
-        return self.axes[key]        
-    
-    
-class TextLabel(HasProps):
-    " Single text label. "
-    text = pUnicode()
-    
-    x = pFloat()
-    y = pFloat()
+    labels = pList(CheckType(TextLabel))
 
-
+    # axes
+    xaxis = Prop(CheckType(Axis), reset=(lambda:Axis()))
+    yaxis = Prop(CheckType(Axis), reset=(lambda:Axis()))
+    
+    def get_axes(self):
+        return {'x':self.xaxis, 'y':self.yaxis}
+    axes = property(get_axes)
+    
 
 class View(HasProps):
     start = pFloat(blurb='Start')

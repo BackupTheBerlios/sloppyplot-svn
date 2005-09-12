@@ -447,8 +447,7 @@ class MatplotlibWidget(gtk.VBox):
             ul.append( NullUndo() )
             return          
 
-        def set_axis(key, start, end):
-            axis = layer.request_axis(key, undolist=ul)            
+        def set_axis(axis, start, end):
             if axis.start is not None and axis.end is not None:
                 swap_axes = axis.start > axis.end
             else:
@@ -461,8 +460,8 @@ class MatplotlibWidget(gtk.VBox):
                 
             uwrap.set(axis, start=_start, end=_end, undolist=ul)
 
-        set_axis('x', x0, x1)
-        set_axis('y', y0, y1)
+        set_axis(layer.xaxis, x0, x1)
+        set_axis(layer.yaxis, y0, y1)
         
         uwrap.emit_last( self.plot, "plot-changed", undolist=ul )
         

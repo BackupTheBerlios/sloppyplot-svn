@@ -35,6 +35,7 @@ from matplotlib import *
 
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_gtk import FigureCanvasGTK as FigureCanvas
+from matplotlib.text import Text
 
 from Sloppy.Base import backend
 from Sloppy.Base import objects
@@ -248,14 +249,7 @@ class Backend( backend.Backend ):
 
             line_count += 1
 
-#         #
-#         # additional lines
-#         #
-#         p = len(xdata)
-#         if p > 2: p = p/2
-#         atpoint = xdata[max(p-1,0)]
-#         print "Printing vertical line at ", atpoint
-#         ax.axvline(atpoint)
+
         
         #:layer.legend
         legend = uwrap.get(layer, 'legend')
@@ -317,6 +311,32 @@ class Backend( backend.Backend ):
             if end is not None: set_end(end)  
 
 
+        #:layer.labels
+
+        ## testing
+        ##labels = layer.labels
+        #labels = [objects.TextLabel(x=0.0,y=0.0,text="(0,0)",system=0),
+        #          objects.TextLabel(x=2.0,y=-2.0,text="(2,-2)",system=0),
+        #          objects.TextLabel(x=0.5,y=0.5,text="g(0.5,0.5)",system=1)]
+
+        ax.texts = []
+        for label in layer.labels:
+            
+            t = Text(x=label.x, y=label.y, text=label.text,
+                     horizontalalignment='center',
+                     verticalalignment='center')
+                        
+            if label.system == 0: # 0: data
+                t.set_transform(ax.transData)
+            elif label.system == 1: # 1: graph
+                logger.error("Graph coordinates not supported. Text skipped.")
+                continue
+            
+            ax.texts.append(t)
+
+
+
+            
 
 
     def draw(self):
@@ -337,6 +357,7 @@ class Backend( backend.Backend ):
             self.draw_layer(layer, group_info)
        
         self.canvas.draw()
+
 
 
 #------------------------------------------------------------------------------

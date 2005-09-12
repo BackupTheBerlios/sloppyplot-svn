@@ -137,7 +137,10 @@ def new_layer(spj, element):
     for eAxis in element.findall('Axis'):
         key = eAxis.attrib.pop('key', 'x')
         a = Axis(**eAxis.attrib)
-        layer.axes[key] = a
+        if key == 'x':
+            layer.xaxis = a
+        elif key == 'y':
+            layer.yaxis = a
 
     eLegend = element.find('Legend')
     if eLegend is not None:
