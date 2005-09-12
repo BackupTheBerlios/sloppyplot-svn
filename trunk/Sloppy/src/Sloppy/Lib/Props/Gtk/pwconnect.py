@@ -18,15 +18,8 @@
 # $HeadURL$
 # $Id$
 
-""" I have been using the propwidgets.py module to automate the
-creation of widgets and corresponding labels for Props.  From a user's
-point of view, this worked fine, even though it did not look so nice.
-This module aims to be a reimplementation of such a mechanism, but it
-needs to be different in some ways.  We need to be able to use a UI
-designed by a glade file, specify a Container and its Props, and have
-this module automagically find the corresponding input widgets, fill
-in the data (e.g. the Prop's value_list for a ComboBox and attach
-callbacks!
+"""
+Create widgets (or use existing widgets) to enter values for Props.
 """
 
 import logging
@@ -40,6 +33,11 @@ except ImportError:
 
 import gtk
 
+
+__all__ = ['Connector', 'connectors',
+           #
+           'Entry', 'ComboBox', 'CheckButton'
+           ]
 
 
 class Connector(object):
