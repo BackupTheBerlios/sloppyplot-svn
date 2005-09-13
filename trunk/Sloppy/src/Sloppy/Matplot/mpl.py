@@ -43,6 +43,7 @@ from Sloppy.Base import objects
 from Sloppy.Base import utils, uwrap
 from Sloppy.Base.dataset import Dataset
 
+from Sloppy.Lib import Signals
 
 
 linestyle_mappings = \
@@ -86,12 +87,14 @@ linemarker_mappings = \
 class Backend( backend.Backend ):
 
     def init(self):
-        # line_cache: key = id(Curve), value=mpl line object
-        self.line_cache = dict()
         
-        self.layer_to_axes = dict()
-        self.axes_to_layer = dict()
-        self.layers_cache = list() # copy of self.plot.layers
+        self.layer_to_axes = {}
+        self.axes_to_layer = {}
+        self.layers_cache = [] # copy of self.plot.layers
+
+        self.line_caches = {}
+        self.omaps = {}
+        
         
     def connect(self):
         logger.debug("Opening matplotlib session.")        
@@ -100,12 +103,19 @@ class Backend( backend.Backend ):
         self.canvas = FigureCanvas(self.figure)
         self.canvas.show()
 
-        self.line_cache.clear()
+        self.line_caches = {}
         self.layer_to_axes.clear()
         self.axes_to_layer.clear()
 
         backend.Backend.connect(self)
         logger.debug("Init finished")
+
+
+    def set(self, project,plot):
+        backend.Backend.set(self, project, plot)
+        if self.project is not None:
+            self.Signals['update-sobject'] = Signals.connect(
+                self.project, 'update-sobject', self.on_update_sobject)
 
 
     def disconnect(self):
@@ -119,6 +129,8 @@ class Backend( backend.Backend ):
         
         backend.Backend.disconnect(self)
 
+
+        
 
     #----------------------------------------------------------------------
 
@@ -152,135 +164,22 @@ class Backend( backend.Backend ):
     def draw_layer(self, layer, group_info):
 
         ax = self.layer_to_axes[layer]
+        logging.info ("drawing layer %s (axes %s)" % (layer, ax))
 
-        print "DRAWING AXES ", ax
+        omap = self.omaps[layer]
+        
         ax.lines = []
 
-        line_cache = []
-        line_count = 0
+        line_cache = self.line_caches[layer] = []
         last_cx = -1
 
         # Default values come in two flavors:
         # group-wise and single default values        
-        group_colors = uwrap.get(layer, 'group_colors')
         group_styles = uwrap.get(layer, 'group_styles')
-        group_markers = uwrap.get(layer, 'group_markers')
-
-        #default_color = 'r'
-        default_color = None
-        default_style = 'solid'
-        default_marker = 'None'
-        
-
-        #:layer.visible
-        if uwrap.get(layer, 'visible') is False:
-            return
-
-        #:layer.title
-        title = uwrap.get(layer, 'title', None)
-        if title is not None:
-            ax.set_title(title)        
-
-        #:layer.grid
-        grid = uwrap.get(layer, 'grid')
-        ax.grid(grid)                         
-
-        #:layer.lines
-        for line in layer.lines:
-            data_to_plot = []
-            
-            #:line.visible
-            if uwrap.get(line, 'visible') is False:
-                if line in ax.lines:
-                    ax.lines.remove(line)
-                continue
-
-            ds = self.get_line_source(line)
-            table = self.get_table(ds)
-            cx, cy = self.get_column_indices(line)
-            xdata, ydata = self.get_table_data(table, cx, cy)
-
-            #:line.row_first
-            #:line.row_last
-            def limit_data(data, start, end):
-                try:
-                    return data[start:end]
-                except IndexError:
-                    backend.BackendError("Index range '%s'out of bounds!" % (start,end) )
-
-            start, end = line.row_first, line.row_last
-            xdata = limit_data(xdata, start, end)
-            ydata = limit_data(ydata, start, end)
-            
-
-            #:line.style
-            global linestyle_mappings
-            default = default_style or group_styles[line_count % len(group_styles)]
-            style = uwrap.get(line, 'style', default)
-            style = linestyle_mappings[style]
+        group_markers = uwrap.get(layer, 'group_markers')        
 
 
-            #:line.marker
-            global linemarker_mappings
-            default = default_marker or group_markers[line_count % len(group_markers)]
-            marker = uwrap.get(line, 'marker', default)
-            marker = linemarker_mappings[marker]
-
-
-            #:line.width
-            width = uwrap.get(line, 'width')
-
-            
-            #:line.color
-            default = default_color or group_colors[line_count % len(group_colors)]
-            color = uwrap.get(line, 'color', default)
-
-
-            #--- PLOT LINE ---
-            l, = ax.plot( xdata, ydata,
-                          linewidth=width,
-                          linestyle=style,
-                          marker=marker,
-                          color=color)
-            line_cache.append(l)
-
-
-            label = self.get_line_label(line, table=table, cy=cy)
-            l.set_label(label)
-
-            line_count += 1
-
-
-        
-        #:layer.legend
-        legend = uwrap.get(layer, 'legend')
-        if legend is not None and line_count > 0:
-            visible = uwrap.get(legend, 'visible')
-            if visible is True:
-                #:legend.label:TODO
-                label = uwrap.get(legend, 'visible')
-                if label is not None:
-                    pass
-
-                #:legend.border:OK
-                # (see below but keep it here!)
-                border = uwrap.get(legend, 'border')
-                                                
-                #:legend.position TODO
-                position = uwrap.get(legend, 'position', 'best')
-                if position == 'at position':
-                    position = (uwrap.get(legend, 'x'), uwrap.get(legend, 'y'))
-
-                # create legend entries from line labels
-                labels = [l.get_label() for l in line_cache]                
-                
-                legend = ax.legend(line_cache, labels, loc=position)
-                legend.draw_frame(border)
-
-            else:
-                ax.legend_ = None
-        else:
-            ax.legend_ = None
+   # def update_layer(self, layer):
 
         #:layer.axes
         for (key, axis) in layer.axes.iteritems():
@@ -309,48 +208,237 @@ class Backend( backend.Backend ):
             if label is not None: set_label(label)
             if scale is not None: set_scale(scale)
             if start is not None: set_start(start)
-            if end is not None: set_end(end)  
+            if end is not None: set_end(end)
+
+            
+        #:layer.visible
+        if uwrap.get(layer, 'visible') is False:
+            return
+
+        # TODO
+        #:layer.title
+        title = uwrap.get(layer, 'title', None)
+        if title is not None:
+            ax.set_title(title)        
+
+        # TODO
+        #:layer.grid
+        grid = uwrap.get(layer, 'grid')        
+        ax.grid(grid)                         
 
 
-        #:layer.labels
+        #:layer.lines:OK
+        for line in layer.lines:
+            self.update_line(line, layer, axes=ax)
+                    
+        #:layer.legend:OK
+        self.update_legend(layer.legend, layer)
+
+        #:layer.labels:OK
         ax.texts = []
         for label in layer.labels:
-
-            if label.system == 0:
-                transform = ax.transData
-            elif label.system == 1:
-                transform = ax.transAxes
-            elif label.system == 2:
-                transform = self.figure.transFigure
-            elif label.system == 3:
-                transform = matplotlib.transforms.identity_transform()
-
-            t = Text(x=label.x, y=label.y, text=label.text,
-                     horizontalalignment='center',
-                     verticalalignment='center',
-                     transform=transform)                                    
-            ax.texts.append(t)
-            
+            self.update_textlabel(label, layer)
 
 
     def draw(self):
-        logger.debug("Matplotlib: draw()")
-        
         self.check_connection()
-               
-        # plot all curves together in one plot
-        legend_list = [] # for legend later on
-        curve_count = 0
-       
-        #
+        logger.debug("Matplotlib: draw()")                
+             
         if self.plot.layers != self.layers_cache:
             self.arrange()
 
+        self.omaps = {}
         for layer in self.plot.layers:
+            self.omaps[layer] = {}
+            self.line_caches[layer] = {}
             group_info = {}
             self.draw_layer(layer, group_info)
-       
         self.canvas.draw()
+
+
+
+    #----------------------------------------------------------------------
+        
+    def on_update_sobject(self, sender, sobject, *args):
+        logger.debug("Updating %s" % sobject)
+
+        if isinstance(sobject, objects.TextLabel):
+            self.update_textlabel(sobject, *args[:1])
+        elif isinstance(sobject, objects.Legend):
+            self.update_legend(sobject, *args[:1])
+        elif isinstance(sobject, objects.Line):
+            self.update_line(sobject, *args[:1])
+            self.update_legend(sobject, *args[:1])
+
+
+        self.canvas.draw()
+        
+       
+    #----------------------------------------------------------------------
+    # Line
+    #
+    
+    def update_line(self, line, layer, axes=None):
+
+        axes = axes or self.layer_to_axes[layer]
+        omap = self.omaps[layer]
+        line_cache = self.line_caches[layer]
+
+        data_to_plot = []
+
+        #:line.visible
+        if uwrap.get(line, 'visible') is False:
+            if line in axes.lines:
+                axes.lines.remove(line)
+                line_cache.remove(line)
+            omap[line] = None                    
+            return
+
+        ds = self.get_line_source(line)
+        table = self.get_table(ds)
+        cx, cy = self.get_column_indices(line)
+        xdata, ydata = self.get_table_data(table, cx, cy)
+
+        #:line.row_first
+        #:line.row_last
+        def limit_data(data, start, end):
+            try:
+                return data[start:end]
+            except IndexError:
+                backend.BackendError("Index range '%s'out of bounds!" % (start,end) )
+
+        start, end = line.row_first, line.row_last
+        xdata = limit_data(xdata, start, end)
+        ydata = limit_data(ydata, start, end)
+
+
+        #:line.style
+        global linestyle_mappings
+        style = uwrap.get(line, 'style', 'solid')
+        style = linestyle_mappings[style]
+
+
+        #:line.marker
+        global linemarker_mappings
+        marker = uwrap.get(line, 'marker', 'None')
+        marker = linemarker_mappings[marker]
+
+        #:line.width:OK
+
+        #:line.color
+        index = layer.lines.index(line)
+        color = uwrap.get(line, 'color', layer.group_colors[index])
+
+
+        #--- PLOT LINE ---
+        l, = axes.plot( xdata, ydata,
+                        linewidth=line.width,
+                        linestyle=style,
+                        marker=marker,
+                        color=color)
+        line_cache.append(l)
+        omap[line] = l        
+
+        label = self.get_line_label(line, table=table, cy=cy)
+        l.set_label(label)
+
+    
+    #----------------------------------------------------------------------
+    # TextLabel
+    #
+    
+    def update_textlabel(self, label, layer, axes=None):
+        axes = axes or self.layer_to_axes[layer]        
+        kwargs = self.label_kwargs(axes, label)
+        transform = kwargs.pop('transform')
+
+        try:
+            mpl_label = self.omaps[layer][label]
+        except KeyError:
+            mpl_label = Text(**kwargs)
+            self.omaps[layer][label] = mpl_label
+            axes.texts.append(mpl_label)
+        else:
+            mpl_label.update(kwargs)
+
+        mpl_label.set_transform(transform)
+        print "Updated textlabel"
+
+        
+    def label_kwargs(self, axes, label):            
+        if label.x is None or label.y is None:
+            logger.info("Label coordinates contains empty value. Skipped.")
+            return None
+
+        if label.system == 0:
+            transform = axes.transData
+        elif label.system == 1:
+            transform = axes.transAxes
+        elif label.system == 2:
+            transform = self.figure.transFigure
+        elif label.system == 3:
+            transform = matplotlib.transforms.identity_transform()
+
+        return {'x': label.x, 'y': label.y, 'text' : label.text,
+                'horizontalalignment': 'center',
+                'verticalalignment' : 'center',
+                'transform' : transform}
+
+
+    #----------------------------------------------------------------------
+    # Legend
+    #
+    
+    def update_legend(self, legend, layer, axes=None):
+        axes = axes or self.layer_to_axes[layer]
+        if legend is None:
+            if axes.legend_ is not None:
+                axes.legend_ = None
+            self.omaps[layer][legend] = None
+        else:                         
+            kw = self.legend_kwargs(legend, layer)
+            border = kw.pop('border')
+            visible = kw.pop('visible')
+            handles, labels = kw.pop('handles'), kw.pop('labels')
+            _legend = axes.legend(handles, labels, **kw)
+            self.omaps[layer][legend] = _legend
+            _legend.draw_frame(border)
+            _legend.set_visible(visible)
+
+        self.omaps[layer][legend] = axes.legend_
+
+    
+    def legend_kwargs(self, legend, layer):
+        """
+        'border' must be popped and set via legend.draw_frame
+        'visible' must be popped and set via set_visible
+        """
+
+        visible = uwrap.get(legend, 'visible')
+                    
+        #:legend.label:TODO
+        label = uwrap.get(legend, 'visible')
+        if label is not None:
+            pass
+
+        #:legend.border:OK
+        # (see below but keep it here!)
+        border = uwrap.get(legend, 'border')
+
+        #:legend.position TODO
+        position = uwrap.get(legend, 'position', 'best')
+        if position == 'at position':
+            position = (uwrap.get(legend, 'x'), uwrap.get(legend, 'y'))
+
+        # create legend entries from line labels
+        line_cache = self.line_caches[layer]
+        labels = [l.get_label() for l in line_cache]
+
+        return {'handles' : line_cache,
+                'labels' : labels,
+                'loc' : position,
+                'border' : border,
+                'visible' : visible}
 
 
 

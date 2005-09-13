@@ -128,7 +128,7 @@ default_params = {
     'line.marker'    : 'None', #
     'line.color'     : 'g',
     'line.source'    : None,
-    'line.width'     : 1,
+    'line.width'     : 1,            ###
     'line.cx'        : 1,
     'line.cy'        : 2,
     'line.cxerr'     : None,
@@ -141,7 +141,7 @@ default_params = {
     'layer.width'    : 0.775,
     'layer.height'   : 0.79,
     'layer.visible'  : True,
-    'layer.group_colors' : 'bgrcmyk',
+    'layer.group_colors' : 'bgrcmyk',  ###
     'layer.group_styles' : ['solid', 'dashed'],
     'layer.group_markers' : ['points'],
     'dataset.label'  : None

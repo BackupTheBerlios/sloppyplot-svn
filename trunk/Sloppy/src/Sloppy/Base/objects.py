@@ -25,6 +25,8 @@ Collection of all basic data objects used for SloppyPlot.
  
 from Sloppy.Base.const import PV
 from Sloppy.Base.dataset import Dataset
+from Sloppy.Base import const
+
 
 from Sloppy.Lib import Signals
 from Sloppy.Lib.Undo import udict
@@ -34,6 +36,8 @@ from Sloppy.Lib.Props import *
 map_system = {'data' : 0, 'graph': 1, 'screen': 2, 'display': 3}
 map_valign = {'center':0, 'top':1, 'bottom':2}
 map_halign = {'center':0, 'left':1, 'right': 2}
+
+
 
 #------------------------------------------------------------------------------
 # BASE OBJECTS
@@ -71,7 +75,7 @@ class Line(HasProps):
     cxerr = pInteger(CheckBounds(min=0))
     cyerr = pInteger(CheckBounds(min=0))
     source = Prop(CheckType(Dataset))
-    width = pFloat(CheckBounds(min=0, max=10))
+    width = pFloat(CheckBounds(min=0, max=10), default=const.default_params['line.width'])
     style = Prop(CheckValid(PV['line.style']))
     marker = Prop(CheckValid(PV['line.marker']))
     color = pString()
@@ -101,7 +105,7 @@ class Layer(HasProps):
     width = pFloat(CheckBounds(min=0.0, max=1.0))
     height = pFloat(CheckBounds(min=0.0, max=1.0))
 
-    group_colors = pString()
+    group_colors = pString(default=const.default_params['layer.group_colors'])
     group_styles = pList(CheckType(str))
     group_markers = pList(CheckType(str))
 
