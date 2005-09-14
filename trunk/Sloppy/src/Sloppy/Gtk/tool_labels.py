@@ -12,30 +12,25 @@ import gtk
 import uihelper
 
 from Sloppy.Lib import Signals
+from dock import *
 
-class GenericTool(gtk.VBox):
+
+class LayerTool(gtk.VBox):
 
     def __init__(self, project):
         gtk.VBox.__init__(self)
         self.project = project
 
-    def add_buttons(self, buttons):
-        btnbox = uihelper.construct_buttonbox(buttons)
-        btnbox.show()        
-        self.pack_end(btnbox,False,True)
 
-
-class LabelsTool(GenericTool):
+class LabelsTool(LayerTool):
 
     def __init__(self, project):
-        GenericTool.__init__(self, project)
+        LayerTool.__init__(self, project)
         self.layer = None
 
-        # construct GUI
-        frame = gtk.Frame("Labels")
-        frame.show()
-        self.add(frame)
-
+        #
+        # treeview
+        #
         model = gtk.ListStore(object)
         treeview = gtk.TreeView(model)
         treeview.set_headers_visible(False)
@@ -52,14 +47,20 @@ class LabelsTool(GenericTool):
         treeview.append_column(column)
         treeview.connect("row-activated", (lambda a,b,c:self.on_edit(a)))
         treeview.show()
-        frame.add(treeview)       
 
+        #
         # buttons
+        #
         buttons = [(None, gtk.STOCK_EDIT, self.on_edit),
                    (None, gtk.STOCK_REMOVE, (lambda sender: self.on_remove())),
                    (None, gtk.STOCK_NEW, self.on_new)]
-        self.add_buttons(buttons)
 
+        btnbox = uihelper.construct_buttonbox(buttons)
+        btnbox.show()        
+
+        # put everything together
+        self.pack_start(treeview,True,True)
+        self.pack_end(btnbox, False, True)        
 
         # save variables for reference and update view
         self.treeview = treeview        
@@ -181,6 +182,7 @@ class ModifyHasPropsDialog(gtk.Dialog):
 import Sloppy
 from Sloppy.Base import const, objects
 import application
+from dock import *
 
 def test():
     win = gtk.Window()
@@ -192,16 +194,35 @@ def test():
     app = application.GtkApplication(filename)
     plot = app.project.get_plot(0)
 
-
     l = plot.layers[0]
     l.labels.append(objects.TextLabel(text='x', x=0.2, y=0.3, halign=1))
 
     lt = LabelsTool(app.project)
     lt.set_layer(l)
-    lt.show()
+    lt.show()  
 
-    win.add(lt)
+    lt2 = LabelsTool(app.project)
+    lt2.set_layer(l)
+    lt2.show()
+    
+    dockable = Dockable("Label", gtk.STOCK_EDIT)
+    dockable.add(lt)
+    dockable.show()
 
+    dockable2 = Dockable("Label2", gtk.STOCK_EDIT)
+    dockable2.add(lt2)
+    dockable2.show()
+
+    dockbook = Dockbook()
+    dockbook.add(dockable)
+    dockbook.add(dockable2)    
+    dockbook.show()
+
+    dock = Dock()
+    dock.show()
+    dock.add_book(dockbook)
+    win.add(dock)
+    
     win.show()
     gtk.main()
 

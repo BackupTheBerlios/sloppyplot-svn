@@ -25,8 +25,8 @@ pygtk.require('2.0') # TBR
 import gtk
 import gobject
 
-from Sloppy.Base import classregistry
 
+DockRegistry = []
 
 
 class Dockable( gtk.VBox ):
@@ -309,7 +309,7 @@ class Dock( gtk.VBox ):
         self.dockbooks.insert(index, dockbook)
 
         if old_length == 0:
-            self.pack_start(dockbook, False, False)
+            self.pack_start(dockbook, True, True) # was False,False
             separator = self.separator_new()
             self.pack_end(separator, False, False)
             separator.show()
@@ -331,18 +331,17 @@ class Dock( gtk.VBox ):
 
             paned = gtk.VPaned()
             if isinstance(parent, gtk.VPaned):
-                #parent.pack1(paned, True, False)
-                parent.pack1(paned, False, False)
+                parent.pack1(paned, True, True)#was False,False
             else:
-                parent.pack_start(paned, False, True)
+                parent.pack_start(paned, True, True) # was False, True
             paned.show()
 
             if index == 0:
-                paned.pack1(dockbook, False, False)
-                paned.pack2(old_book, False, False)
+                paned.pack1(dockbook, True,True)# was False,False
+                paned.pack2(old_book, True,True)# was False,False
             else:
-                paned.pack1(old_book, False, False)
-                paned.pack2(dockbook, False, False)
+                paned.pack1(old_book, True,True)# was False,False
+                paned.pack2(dockbook, True,True)# was False,False
 
         dockbook.show()
 
@@ -472,9 +471,6 @@ class DockWindow(gtk.Window):
         gtk.Window.add(self, dock)
         dock.show()
 
-
-
-Registry = classregistry.Registry('Docks')
 
 
 #==============================================================================
