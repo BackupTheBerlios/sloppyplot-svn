@@ -464,7 +464,7 @@ class LinesTab(AbstractTab):
             for ds in self.app.project.datasets:
                 model.append( (ds.key,) )
         refresh_dataset_model(self, self.app.project, dataset_model)
-        Signals.connect(self.app.project.datasets, "changed", refresh_dataset_model,
+        Signals.connect(self.app.project.datasets, "notify", refresh_dataset_model,
                         self.app.project, dataset_model)        
         
         cell = gtk.CellRendererCombo()

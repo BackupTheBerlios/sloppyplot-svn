@@ -224,11 +224,9 @@ class DatasetWindow( gtk.Window ):
             Signals.disconnect(signal)
 
         self._signals += [
-            Signals.connect(table,
-                            'update-columns',
+            Signals.connect(table, 'update-columns',
                             (lambda sender: self.tableview.setup_columns())),
-            Signals.connect(dataset,
-                            'changed',
+            Signals.connect(dataset,'notify',
                             (lambda sender: self.tableview.queue_draw()))
             ]
 

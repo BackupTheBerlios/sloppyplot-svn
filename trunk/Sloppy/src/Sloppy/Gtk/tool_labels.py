@@ -1,4 +1,22 @@
+# This file is part of SloppyPlot, a scientific plotting tool.
+# Copyright (C) 2005 Niklas Volbers
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+# $HeadURL: svn+ssh://svn.berlios.de/svnroot/repos/sloppyplot/trunk/Sloppy/src/Sloppy/Gtk/dock.py $
+# $Id: dock.py 137 2005-09-18 22:07:32Z niklasv $
 
 
 try:
@@ -14,14 +32,11 @@ import uihelper
 from Sloppy.Lib import Signals
 from dock import *
 
-# TODO
-# - remove labels from buttonbox (OK)
-# - class Tool should only require the project -- the app can be retrieved from project.app
-# - the "Dock" is the object that distributes the current plot object,
-#   i.e. that call 'set_plot' for each Tool.
 
-# app = project.app !
 
+#------------------------------------------------------------------------------
+# ToolWindow
+#
 
 class ToolWindow(gtk.Window):
 
@@ -59,8 +74,9 @@ class ToolWindow(gtk.Window):
         combobox.show()
 
         self.combobox = combobox
-        # TODO: this needs to be done whenever project.plots changes        
         self.update_combobox()
+        Signals.connect(project.plots, 'notify',
+                        (lambda sender: self.update_combobox()))
 
         dock = Dock()
         dock.show()
@@ -97,19 +113,42 @@ class ToolWindow(gtk.Window):
             self.combobox.set_active(index)
 
     def update_plot(self):
-        if self.plot.current_layer is None and len(self.plot.layers) > 0:
+        if self.plot is not None and \
+               (self.plot.current_layer is None and len(self.plot.layers) > 0):
             self.plot.current_layer = self.plot.layers[0]
         self.dock.foreach((lambda tool: tool.set_plot(self.plot)))
 
     def update_combobox(self):
         model = self.combobox.get_model()
+
+        # remember last selected Plot in combobox
+        index = self.combobox.get_active()
+        if index == -1:
+            old_object = None
+        else:
+            iter = model.get_iter((index,))
+            old_object = model.get_value(iter,0)
+
+        # fill model with Plot objects and their keys
         model.clear()
         for plot in self.project.plots:
-            model.append((plot,plot.title))
+            model.append((plot, plot.key))
+
+        # reset old Plot object
+        try:
+            index = self.project.plots.index(old_object)
+            self.combobox.set_active(index)                
+        except ValueError:
+            self.combobox.set_active(-1)
+            
+
 
 
         
-        
+#------------------------------------------------------------------------------
+# Tool and derived classes
+#
+
 class Tool(Dockable):
 
     """
@@ -130,12 +169,21 @@ class Tool(Dockable):
             return        
         self.plot = plot
 
+        if plot is not None:
+            self.layer = plot.current_layer
+            Signals.connect(plot, "notify::current_layer", self.on_notify_layer)
+        else:
+            self.layer = None
+
         # TODO: connect properly on change of plot
-        self.update()
+        self.update_plot()
        
 
-    def update(self):
-        raise RuntimeError("update() needs to be implemented!")
+    def update_plot(self):
+        self.update_layer()
+
+    def update_layer(self):
+        pass
 
     
 
@@ -172,7 +220,7 @@ class LayerTool(Tool):
         # mark active layer
 
         
-    def update(self):
+    def update_plot(self):
         if self.plot is None:
             self.treeview.set_sensitive(False)
             return
@@ -192,9 +240,8 @@ class LabelsTool(Tool):
 
     def __init__(self, project):
         Tool.__init__(self, project, "Labels", gtk.STOCK_EDIT)
-
-        self.layer = None
-        
+        self.set_size_request(-1,200)
+       
         #
         # treeview
         #
@@ -232,26 +279,12 @@ class LabelsTool(Tool):
 
         # save variables for reference and update view
         self.treeview = treeview        
-        self.update()
+        self.update_plot()
         
 
     #------------------------------------------------------------------------------
-
-    def set_plot(self, plot):
-        if plot == self.plot:
-            return        
-        self.plot = plot
-
-        # TODO: disconnect properly on change of plot
-        if plot is not None:
-            self.layer = plot.current_layer
-            Signals.connect(plot, "notify::current_layer", self.on_notify_layer)
-        else:
-            self.layer = None
         
-        self.update()
-        
-    def update(self):
+    def update_layer(self):
         if self.layer is None:
             self.treeview.set_sensitive(False)
             return
@@ -306,7 +339,7 @@ class LabelsTool(Tool):
         if layer == self.layer:
             return
         self.layer = layer
-        self.update()
+        self.update_layer()
 
         
 

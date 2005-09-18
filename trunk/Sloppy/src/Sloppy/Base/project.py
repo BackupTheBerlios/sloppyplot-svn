@@ -150,7 +150,7 @@ class Project(HasProps):
                 uwrap.set(dataset, 'key', new_key, undolist=ul)
             ulist.append( self.datasets, dataset, undolist=ul )
 
-        uwrap.emit_last(self.datasets, "changed", undolist=ul)            
+        uwrap.emit_last(self.datasets, "notify", undolist=ul)            
         undolist.append(ul)
         
         cli_logger.info("Added %d dataset(s)." % len(datasets) )
@@ -176,7 +176,7 @@ class Project(HasProps):
                 uwrap.set(plot, 'key', new_key, undolist=ul)
             ulist.append(self.plots, plot, undolist=ul)
 
-        uwrap.emit_last(self.plots, "changed", undolist=ul)
+        uwrap.emit_last(self.plots, "notify", undolist=ul)
         undolist.append(ul)
 
         cli_logger.info("Added %d plot(s)." % len(plots) )
@@ -203,7 +203,7 @@ class Project(HasProps):
                 removed_datasets.append(dataset)
                 
         undolist.append( UndoInfo(self.add_datasets, removed_datasets).describe("Remove Dataset") )
-        Signals.emit(self.datasets, "changed")
+        Signals.emit(self.datasets, "notify") 
 
 
     def remove_dataset(self, dataset, undolist=None):
@@ -228,7 +228,7 @@ class Project(HasProps):
                 removed_plots.append(plot)
 
         undolist.append( UndoInfo(self.add_plots, removed_plots).describe("Remove Plot") )
-        Signals.emit(self.plots, "changed")
+        Signals.emit(self.plots, "notify")
 
 
     def remove_plot(self, plot, undolist=None):
@@ -385,7 +385,7 @@ class Project(HasProps):
         ds.data = Table(nrows=1,ncols=2)
         ds.data.column(0).designation = 'X'
         ds.data.column(1).designation = 'Y'        
-        Signals.emit(self.datasets, "changed")
+        Signals.emit(self.datasets, "notify")
 
         ui = UndoInfo(self.remove_objects, [ds], False)
         ui.describe("Create new Dataset '%s'" % key)
@@ -406,7 +406,7 @@ class Project(HasProps):
         ui = UndoInfo(self.remove_plot, new_plot).describe("New Plot")
         undolist.append(ui)
 
-        Signals.emit(self.plots, "changed")
+        Signals.emit(self.plots, "notify")
         
         return new_plot    
 

@@ -164,8 +164,9 @@ class ProjectTreeView( gtk.TreeView ):
 
         # TODO: remove old signals
         if self.project is not None:
-            Signals.connect(self.project.datasets, "changed", self.populate_treeview)
-            Signals.connect(self.project.plots, "changed", self.populate_treeview)
+            Signals.connect(self.project.datasets, "notify", self.populate_treeview)
+            Signals.connect(self.project.plots, "notify", self.populate_treeview)
+            
         
     project = property(get_project,set_project)
 
@@ -267,6 +268,7 @@ class ProjectTreeView( gtk.TreeView ):
                 self.set_cursor(path, self.get_column(self.COL_KEY), start_editing=True)
             finally:
                 self.text_renderer.set_property('editable', False)
+
         
     def cb_edited_key(self, cell, path, new_text):
         """
@@ -281,12 +283,12 @@ class ProjectTreeView( gtk.TreeView ):
             if new_text not in [dataset.key for dataset in self.project.datasets]:
                 ul.describe("Edit Dataset key")
                 uwrap.set(object, key=new_text, undolist=ul)
-                uwrap.emit_last(self.project.plots, "changed", undolist=ul)
+                uwrap.emit_last(self.project.datasets, "notify", undolist=ul)
         elif isinstance(object, Plot):
             if new_text not in [plot.key for plot in self.project.plots]:
                 ul.describe("Edit Plot key")
                 uwrap.set(object, key=new_text, undolist=ul)
-                uwrap.emit_last(self.project.datasets, "changed", undolist=ul)
+                uwrap.emit_last(self.project.plots, "notify", undolist=ul)
 
         if len(ul) > 0:
             self.project.journal.append(ul)        

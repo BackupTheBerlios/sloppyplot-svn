@@ -121,6 +121,6 @@ def emit(sender, name, *args, **kwargs):
     undolist.append(UndoInfo(emit, sender, name, *args, **kwargs))
 
 def emit_last(sender, name, *args, **kwargs):
-    ul = kwargs.pop('undolist', [])    
+    ul = kwargs.pop('undolist', [])
     Signals.emit(sender, name, *args, **kwargs)
     ul.insert(0, UndoInfo(emit_last, sender, name, *args, **kwargs))
