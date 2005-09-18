@@ -114,7 +114,8 @@ class GtkApplication(Application):
         
         self.window = AppWindow(self)
         self._clipboard = gtk.Clipboard()  # not implemented yet
-
+        self._current_plot = None
+        
 
     def init_plugins(self):
         Application.init_plugins(self)
@@ -306,6 +307,21 @@ class GtkApplication(Application):
             return
 
 
+    #------------------------------------------------------------------------------
+    # Current plot
+    #
+
+    def set_current_plot(self, plot):
+        print "APP: set_current_plto to ", plot
+        self._current_plot = plot
+        Signals.emit(self, "notify::current_plot", plot)
+
+    def get_current_plot(self):
+        return self._current_plot
+
+    current_plot = property(get_current_plot, set_current_plot)
+
+    
     # ----------------------------------------------------------------------
     # Callbacks
     #

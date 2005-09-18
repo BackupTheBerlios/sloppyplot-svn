@@ -19,11 +19,28 @@
 # $Id$
 
 
-import pygtk # TBR
-pygtk.require('2.0') # TBR
+"""
+Provides class for docking functionality.
+
+Dock - a container for dockbooks
+Dockbook - a container for dockables
+Dockable - a VBox that can be docked
+
+@note: For an implementation of this package with resizable dockbooks,
+take a look at SVN revision 135.
+"""
+
+
+
+try:
+    import pygtk
+    pygtk.require('2.0')
+except ImportError:
+    pass
 
 import gtk
 import gobject
+
 
 
 DockRegistry = []
@@ -96,9 +113,9 @@ class Dockable( gtk.VBox ):
         self.event_box = event_box
         
 
-    def add(self, widget):
+    def add(self, widget,expand=True,fill=True):
         if len(self.get_children()) == 1:
-            gtk.VBox.pack_start(self, widget, True, True)
+            gtk.VBox.pack_start(self, widget, expand, fill)
         else:
             raise RuntimeError("Can't add more than one non-internal object to a Dockable.")
         
@@ -309,39 +326,14 @@ class Dock( gtk.VBox ):
         self.dockbooks.insert(index, dockbook)
 
         if old_length == 0:
-            self.pack_start(dockbook, True, True) # was False,False
-            separator = self.separator_new()
-            self.pack_end(separator, False, False)
+            separator = self.separator_new()            
+            self.pack_end(separator, False, False)            
+            self.pack_end(dockbook, True, True)
             separator.show()
         else:
-            if index == 0:
-                old_book = self.dockbooks[index+1]
-            else:
-                old_book = self.dockbooks[index-1]
+            gtk.VBox.add(self, dockbook)
+            self.reorder_child(dockbook, index)
 
-            parent = old_book.parent
-
-            if (old_length > 1) and (index > 0):
-                grandparent = parent.parent
-
-                old_book = parent
-                parent = grandparent
-
-            parent.remove(old_book)
-
-            paned = gtk.VPaned()
-            if isinstance(parent, gtk.VPaned):
-                parent.pack1(paned, True, True)#was False,False
-            else:
-                parent.pack_start(paned, True, True) # was False, True
-            paned.show()
-
-            if index == 0:
-                paned.pack1(dockbook, True,True)# was False,False
-                paned.pack2(old_book, True,True)# was False,False
-            else:
-                paned.pack1(old_book, True,True)# was False,False
-                paned.pack2(dockbook, True,True)# was False,False
 
         dockbook.show()
 
@@ -361,24 +353,10 @@ class Dock( gtk.VBox ):
             gtk.VBox.remove(self, separator)
             gtk.VBox.remove(self, dockbook)
         else:
-            parent = dockbook.parent
-            grandparent = parent.parent
-
-            if index == 0:
-                other_book = parent.get_child2()
-            else:
-                other_book = parent.get_child1()
-
-            parent.remove( other_book )
-            parent.remove( dockbook )
-
-            grandparent.remove( parent )
-
-            if isinstance(grandparent, gtk.VPaned):
-                grandparent.pack1(other_book, True, False)
-            else:
-                self.pack_start(other_book, True, True)                
-
+            self.remove(dockbook)
+            children = self.get_children()
+            if len(children) == 2:
+                self.remove(children[-1])
         self.emit('book-removed', dockbook)
 
 
@@ -431,8 +409,9 @@ class Dock( gtk.VBox ):
         self.add_book(book, index)        
 
     def foreach(self, callback, *args, **kwargs):
-        for child in self.dockbooks:
-            callback(child, *args, **kwargs)
+        for dockbook in self.dockbooks:
+            for child in dockbook.get_children():
+                callback(child, *args, **kwargs)
 
     def get_positions(self):
         def do_loop(item):
@@ -456,22 +435,7 @@ class Dock( gtk.VBox ):
 gobject.type_register(Dock)
 
 
-
-class Dockbox(gtk.HBox):
-
-    def __init__(self):
-        gtk.HBox.__init__(self)
-        
-
-class DockWindow(gtk.Window):
-
-    def __init__(self):
-        gtk.Window.__init__(self)
-        dock = self.dock = Dock()
-        gtk.Window.add(self, dock)
-        dock.show()
-
-
+       
 
 #==============================================================================
 
@@ -491,6 +455,9 @@ def test():
     dockable.pack_end(b)
     dockbook.add(dockable)
     b1 = b
+
+    # size test: set minium size of a dockable
+    dockable.set_size_request(200,120)
     
     dockable = Dockable('d2', gtk.STOCK_REDO)
     b = gtk.Button("Zwei")
@@ -498,6 +465,9 @@ def test():
     dockable.pack_end(b)
     dockbook.add(dockable)
     b2 = b
+
+    # size test: set minium size of a dockable
+    dockable.set_size_request(200,120)
     
     dockbook = Dockbook()
     dock.add_book(dockbook)

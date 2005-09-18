@@ -421,7 +421,7 @@ class Prop:
 class pList(Prop):
 
     def __init__(self, *check, **kwargs):
-        kwargs.update({'reset' : self.do_reset})
+        kwargs.update({'reset' : self.do_reset})        
         Prop.__init__(self, *check, **kwargs)
         self.item_check = self.check
         self.check = self.DoCheck(self.item_check)

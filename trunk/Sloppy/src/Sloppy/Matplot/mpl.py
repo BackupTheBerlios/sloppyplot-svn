@@ -227,6 +227,8 @@ class Backend( backend.Backend ):
         ax.grid(grid)                         
 
 
+
+
         #:layer.lines:OK
         for line in layer.lines:
             self.update_line(line, layer, axes=ax)
@@ -269,7 +271,6 @@ class Backend( backend.Backend ):
         elif isinstance(sobject, objects.Line):
             self.update_line(sobject, *args[:1])
             self.update_legend(sobject, *args[:1])
-
 
         self.canvas.draw()
         

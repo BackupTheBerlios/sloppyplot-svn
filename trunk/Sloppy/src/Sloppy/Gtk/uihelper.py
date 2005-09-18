@@ -114,21 +114,31 @@ def setup_test_window(widget):
     return win
 
 
-def construct_buttonbox(buttons, horizontal=True):
+def construct_buttonbox(buttons,
+                        horizontal=True,
+                        show_stock_labels=True,
+                        layout=gtk.BUTTONBOX_END):
     if horizontal is True:
         btnbox = gtk.HButtonBox()
     else:
         btnbox = gtk.VButtonBox()
+    btnbox.set_layout(layout)
 
     for label, stock, callback in buttons:
         if label is not None:
             button = gtk.Button(label)
         else:
             button = gtk.Button(stock=stock)
+            if show_stock_labels is False:
+                alignment = button.get_children()[0]
+                hbox = alignment.get_children()[0]
+                image, label = hbox.get_children()
+                label.set_text('')                
+
         button.show()
 
         button.connect('clicked', callback)
-        btnbox.pack_end(button)
+        btnbox.pack_end(button,False,False)
 
     return btnbox
 

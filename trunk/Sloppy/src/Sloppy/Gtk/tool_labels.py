@@ -7,27 +7,194 @@ try:
 except ImportError:
     pass
 
-
 import gtk
-import uihelper
 
+
+import uihelper
 from Sloppy.Lib import Signals
 from dock import *
 
+# TODO
+# - remove labels from buttonbox (OK)
+# - class Tool should only require the project -- the app can be retrieved from project.app
+# - the "Dock" is the object that distributes the current plot object,
+#   i.e. that call 'set_plot' for each Tool.
 
-class LayerTool(gtk.VBox):
+# app = project.app !
+
+
+class ToolWindow(gtk.Window):
+
+    """
+    A window containing a combo box to indicate and select the active plot,
+    along with a Dock that holds the tools to manipulate the plot or its
+    active layer.
+
+    @ivar project: project.
+    @ivar plot: currently active plot as displayed in the ToolWindow combo.
+    """
 
     def __init__(self, project):
-        gtk.VBox.__init__(self)
+        gtk.Window.__init__(self)
+       
+        self.plot = None
         self.project = project
 
+        model = gtk.ListStore(object, str) # object := Plot, Plot.title
+        combobox = gtk.ComboBox(model)
+        cell = gtk.CellRendererText()
+        combobox.pack_start(cell, True)
+        combobox.add_attribute(cell, 'text', 1)
 
-class LabelsTool(LayerTool):
+        def changed_cb(entry):
+            index = entry.get_active()
+            if index == -1:                
+                self.set_plot(None)
+            else:
+                model = entry.get_model()
+                iter = model.get_iter((index,))
+                plot = model.get_value(iter, 0)
+                self.set_plot(plot)                
+        combobox.connect('changed', changed_cb)
+        combobox.show()
+
+        self.combobox = combobox
+        # TODO: this needs to be done whenever project.plots changes        
+        self.update_combobox()
+
+        dock = Dock()
+        dock.show()
+        
+        vbox = gtk.VBox()
+        vbox.pack_start(combobox,False,True)
+        vbox.pack_end(dock,True,True)
+        vbox.show()
+        self.add(vbox)
+
+        lt = LabelsTool(project)
+        lt.set_plot(project.plots[0])
+        lt.show()
+
+        dock.add(lt)
+
+        Signals.connect(project.app, 'notify::current_plot',
+                        (lambda sender, plot: self.set_plot(plot)))
+        
+        # for reference
+        self.dock = dock
+                      
+
+    def set_plot(self, plot):
+        if self.plot != plot:
+            self.plot = plot
+            self.update_plot()
+
+            if self.plot is None:
+                index = -1
+            else:
+                model = self.combobox.get_model()
+                index = self.project.plots.index(plot)
+            self.combobox.set_active(index)
+
+    def update_plot(self):
+        if self.plot.current_layer is None and len(self.plot.layers) > 0:
+            self.plot.current_layer = self.plot.layers[0]
+        self.dock.foreach((lambda tool: tool.set_plot(self.plot)))
+
+    def update_combobox(self):
+        model = self.combobox.get_model()
+        model.clear()
+        for plot in self.project.plots:
+            model.append((plot,plot.title))
+
+
+        
+        
+class Tool(Dockable):
+
+    """
+    Dockable base class for any tool that edits part of a Plot.
+    """
+    
+    
+    def __init__(self, project, label, stock_id):
+        Dockable.__init__(self, label, stock_id)
+
+        self.project = project
+        self.layer = None
+        self.plot = None        
+
+
+    def set_plot(self, plot):
+        if plot == self.plot:
+            return        
+        self.plot = plot
+
+        # TODO: connect properly on change of plot
+        self.update()
+       
+
+    def update(self):
+        raise RuntimeError("update() needs to be implemented!")
+
+    
+
+class LayerTool(Tool):
 
     def __init__(self, project):
-        LayerTool.__init__(self, project)
-        self.layer = None
+        Tool.__init__(self, project, "Layers", gtk.STOCK_EDIT)
+       
+        # model: (object) = (layer object)
+        model = gtk.ListStore(object)        
+        treeview = gtk.TreeView(model)
+        treeview.set_headers_visible(False)
 
+        cell = gtk.CellRendererText()
+        column = gtk.TreeViewColumn('label', cell)
+
+        def render_label(column, cell, model, iter):
+            layer = model.get_value(iter, 0)
+            cell.set_property('text', layer.title)
+        column.set_cell_data_func(cell, render_label)
+        
+        treeview.append_column(column)
+        #treeview.connect("row-activated", (lambda a,b,c:self.on_edit(a)))
+        treeview.show()
+        self.add(treeview)
+
+        
+        # remember for further reference
+        self.treeview = treeview
+
+
+    def on_notify_layer(self, sender, layer):
+        print "Change combo to ..."
+        # mark active layer
+
+        
+    def update(self):
+        if self.plot is None:
+            self.treeview.set_sensitive(False)
+            return
+        self.treeview.set_sensitive(True)
+
+        # check_in
+        model = self.treeview.get_model()
+        model.clear()
+        for layer in self.plot.layers:
+            model.append((layer,))
+
+        # mark active layer
+
+            
+        
+class LabelsTool(Tool):
+
+    def __init__(self, project):
+        Tool.__init__(self, project, "Labels", gtk.STOCK_EDIT)
+
+        self.layer = None
+        
         #
         # treeview
         #
@@ -51,11 +218,12 @@ class LabelsTool(LayerTool):
         #
         # buttons
         #
+
         buttons = [(None, gtk.STOCK_EDIT, self.on_edit),
                    (None, gtk.STOCK_REMOVE, (lambda sender: self.on_remove())),
                    (None, gtk.STOCK_NEW, self.on_new)]
 
-        btnbox = uihelper.construct_buttonbox(buttons)
+        btnbox = uihelper.construct_buttonbox(buttons, show_stock_labels=False)
         btnbox.show()        
 
         # put everything together
@@ -65,32 +233,37 @@ class LabelsTool(LayerTool):
         # save variables for reference and update view
         self.treeview = treeview        
         self.update()
-
-
-
         
-    def set_layer(self, layer):
-        if layer == self.layer:
-            return
+
+    #------------------------------------------------------------------------------
+
+    def set_plot(self, plot):
+        if plot == self.plot:
+            return        
+        self.plot = plot
+
+        # TODO: disconnect properly on change of plot
+        if plot is not None:
+            self.layer = plot.current_layer
+            Signals.connect(plot, "notify::current_layer", self.on_notify_layer)
+        else:
+            self.layer = None
         
-        self.layer = layer
         self.update()
-
-
+        
     def update(self):
-
         if self.layer is None:
             self.treeview.set_sensitive(False)
             return
-        self.treeview.set_sensitive(True)
-
+        else:
+            self.treeview.set_sensitive(True)            
 
         # check_in
         model = self.treeview.get_model()        
         model.clear()
         for label in self.layer.labels:
-            print ":added ", label
             model.append((label,))
+
 
     def edit(self, label):
         dialog = ModifyHasPropsDialog(label)
@@ -120,13 +293,22 @@ class LabelsTool(LayerTool):
         self.treeview.grab_focus()
                 
 
-    def on_new(self, sender):
+    def on_new(self, sender):        
         label = objects.TextLabel(text='newlabel')
         self.layer.labels.append(label)
         self.treeview.get_model().append((label,))
         self.edit(label)
         self.treeview.grab_focus()
 
+
+    def on_notify_layer(self, sender, layer):
+        # no change ?        
+        if layer == self.layer:
+            return
+        self.layer = layer
+        self.update()
+
+        
 
 
 
@@ -182,50 +364,19 @@ class ModifyHasPropsDialog(gtk.Dialog):
 import Sloppy
 from Sloppy.Base import const, objects
 import application
-from dock import *
 
-def test():
-    win = gtk.Window()
-    win.connect("destroy", gtk.main_quit)
-    win.set_size_request(320,200)
 
+def test2():
     const.set_path(Sloppy.__path__[0])
     filename = const.internal_path(const.PATH_EXAMPLE, 'example.spj')
     app = application.GtkApplication(filename)
     plot = app.project.get_plot(0)
 
-    l = plot.layers[0]
-    l.labels.append(objects.TextLabel(text='x', x=0.2, y=0.3, halign=1))
+    win = ToolWindow(app.project)
+    win.connect("destroy", gtk.main_quit)
 
-    lt = LabelsTool(app.project)
-    lt.set_layer(l)
-    lt.show()  
-
-    lt2 = LabelsTool(app.project)
-    lt2.set_layer(l)
-    lt2.show()
-    
-    dockable = Dockable("Label", gtk.STOCK_EDIT)
-    dockable.add(lt)
-    dockable.show()
-
-    dockable2 = Dockable("Label2", gtk.STOCK_EDIT)
-    dockable2.add(lt2)
-    dockable2.show()
-
-    dockbook = Dockbook()
-    dockbook.add(dockable)
-    dockbook.add(dockable2)    
-    dockbook.show()
-
-    dock = Dock()
-    dock.show()
-    dock.add_book(dockbook)
-    win.add(dock)
-    
     win.show()
     gtk.main()
 
-
 if __name__ == "__main__":
-    test()
+    test2()
