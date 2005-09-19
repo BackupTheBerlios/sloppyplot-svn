@@ -53,8 +53,11 @@ class ToolWindow(gtk.Window):
         gtk.Window.__init__(self)
        
         self.plot = None
-        self.project = project
+        self.project = -1 
 
+        #
+        # create gui
+        #
         model = gtk.ListStore(object, str) # object := Plot, Plot.title
         combobox = gtk.ComboBox(model)
         cell = gtk.CellRendererText()
@@ -74,11 +77,8 @@ class ToolWindow(gtk.Window):
         combobox.show()
 
         self.combobox = combobox
-        self.update_combobox()
-        Signals.connect(project.plots, 'notify',
-                        (lambda sender: self.update_combobox()))
 
-        dock = Dock()
+        self.dock = dock = Dock()
         dock.show()
         
         vbox = gtk.VBox()
@@ -88,17 +88,30 @@ class ToolWindow(gtk.Window):
         self.add(vbox)
 
         lt = LabelsTool(project)
-        lt.set_plot(project.plots[0])
         lt.show()
 
         dock.add(lt)
 
-        Signals.connect(project.app, 'notify::current_plot',
-                        (lambda sender, plot: self.set_plot(plot)))
-        
-        # for reference
-        self.dock = dock
+        self.set_project(project)
+
+
                       
+
+    def set_project(self, project):
+        if project == self.project:
+            return
+
+        if project is not None:
+            # update combobox again if plots change
+            Signals.connect(project.plots, 'notify',
+                            (lambda sender: self.update_combobox()))
+            Signals.connect(project.app, 'notify::current_plot',
+                            (lambda sender, plot: self.set_plot(plot)))
+
+        self.project = project
+        self.update_combobox()
+        self.update_plot()
+
 
     def set_plot(self, plot):
         if self.plot != plot:
@@ -131,15 +144,21 @@ class ToolWindow(gtk.Window):
 
         # fill model with Plot objects and their keys
         model.clear()
-        for plot in self.project.plots:
-            model.append((plot, plot.key))
+        if self.project is not None:
+            for plot in self.project.plots:
+                model.append((plot, plot.key))
+            self.combobox.set_sensitive(True)
+            
+            # reset old Plot object
+            try:
+                index = self.project.plots.index(old_object)
+                self.combobox.set_active(index)                
+            except ValueError:
+                self.combobox.set_active(-1)
+            
+        else:
+            self.combobox.set_sensitive(False)
 
-        # reset old Plot object
-        try:
-            index = self.project.plots.index(old_object)
-            self.combobox.set_active(index)                
-        except ValueError:
-            self.combobox.set_active(-1)
             
 
 
@@ -160,8 +179,8 @@ class Tool(Dockable):
         Dockable.__init__(self, label, stock_id)
 
         self.project = project
-        self.layer = None
-        self.plot = None        
+        self.layer = -1
+        self.plot = -1
 
 
     def set_plot(self, plot):
@@ -174,6 +193,8 @@ class Tool(Dockable):
             Signals.connect(plot, "notify::current_layer", self.on_notify_layer)
         else:
             self.layer = None
+
+        self.set_sensitive(plot is not None)
 
         # TODO: connect properly on change of plot
         self.update_plot()
@@ -209,7 +230,6 @@ class LayerTool(Tool):
         #treeview.connect("row-activated", (lambda a,b,c:self.on_edit(a)))
         treeview.show()
         self.add(treeview)
-
         
         # remember for further reference
         self.treeview = treeview
@@ -279,7 +299,7 @@ class LabelsTool(Tool):
 
         # save variables for reference and update view
         self.treeview = treeview        
-        self.update_plot()
+        #self.update_plot()
         
 
     #------------------------------------------------------------------------------

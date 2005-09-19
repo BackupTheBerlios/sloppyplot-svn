@@ -99,10 +99,10 @@ class Application(object):
     
     def set_project(self, project, confirm=True):
 
-        # if project changes, then close the Project properly!
-        if self._project is not None and id(project) != id(self._project):
+        has_changed = (id(self._project) != id(project))        
+        if self._project is not None and has_changed:
             self._project.close()
-            
+
         self._project = project
         if project is not None:
             project.app = self
@@ -113,6 +113,10 @@ class Application(object):
                     
             # TODO: connect_once would be nice.
             Signals.connect(project, 'close', detach_project)
+
+        if has_changed is True:
+            Signals.emit(self, 'notify::project', self._project)
+        
 
 
     # be careful when redefining get_project in derived classes -- it will

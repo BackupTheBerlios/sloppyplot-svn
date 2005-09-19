@@ -45,8 +45,11 @@ from Numeric import *
 DEFAULT_FF = "SIF"
 FILEFORMAT = "0.4"
 
-
-# changes from 0.3->0.4: Table.cols -> Table.ncols
+"""
+File format history:
+  - 0.3 -> 0.4: Table.cols -> Table.ncols
+  -
+"""
 
 class ParseError(Exception):
     pass
@@ -104,6 +107,11 @@ def new_dataset(spj, element):
     return ds
 
 
+def new_label(spj, element):
+    text = element.text
+    element.attrib['text'] = text
+    label = Label(**element.attrib)
+    return label
 
 def new_line(spj, element):
     source = element.attrib.get('source', None)
@@ -154,7 +162,10 @@ def new_plot(spj, element):
 
     for eLayer in element.findall('Layers/Layer'):
         plot.layers.append(new_layer(spj, eLayer))
-       
+
+    for eLabel in element.findall('Labels/Label'):
+        plot.labels.append(new_label(spj, eLabel))
+        
     eComment = element.find('comment')
     if eComment is not None:
         plot.comment = unicode(eComment.text)
@@ -319,12 +330,20 @@ def toElement(project):
                 safe_set(eLine, 'cy', line.cy)
                 safe_set(eLine, 'row_first', line.row_first)
                 safe_set(eLine, 'row_last', line.row_last)
-
                 #safe_set(eLine, 'value_range', line.value_range)
                 
                 safe_set(eLine, 'cxerr', line.cxerr)                
                 safe_set(eLine, 'cyerr', line.cyerr)
-            
+
+        eLabels = SubElement(ePlot, "Labels")
+        for label in plot.labels:
+            eLabel = SubElement(eLabel, "Label")
+            safe_set(eLabel, 'x', label.x)
+            safe_set(eLabel, 'y', label.y)
+            safe_set(eLabel, 'system', label.system)
+            safe_set(eLabel, 'valign', label.valign)
+            safe_set(eLabel, 'halign', label.halign)
+            eLabel.text = text                              
 
     # beautify the XML output by inserting some newlines
     def insert_newlines(element):

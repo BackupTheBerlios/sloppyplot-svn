@@ -26,6 +26,8 @@ from logwin import LogWindow
 from treeview import ProjectTreeView
 import uihelper
 
+import tools
+
 import gtkutils
 
 import Sloppy
@@ -67,6 +69,7 @@ class AppWindow( gtk.Window ):
 
         self.uimanager = self._construct_uimanager()
         self._construct_logwindow()
+        self._construct_toolwindow()
 
         # and build ui
         self.uimanager.add_ui_from_string(self.ui_string)
@@ -167,11 +170,40 @@ class AppWindow( gtk.Window ):
         return statusbar
 
 
+    def _construct_toolwindow(self):
+
+        window = tools.ToolWindow(None)
+        window.set_transient_for(self)
+        window.set_destroy_with_parent(True)
+        window.hide()
+
+        def cb_toggle_window(action, window):
+            if action.get_active() is True: window.show()
+            else: window.hide()        
+        t = gtk.ToggleAction('ToggleToolWindow', 'Show tools window', None, None)
+        t.connect("toggled", cb_toggle_window, window)
+        uihelper.get_action_group(self.uimanager, 'Application').add_action(t)
+
+        def cb_window_hideshow(window):
+            action = self.uimanager.get_action('/MainMenu/ViewMenu/ToggleToolWindow')
+            action.set_active(window.get_property('visible'))
+        window.connect('hide', cb_window_hideshow)
+        window.connect('show', cb_window_hideshow)
+
+        def on_notify_project(sender, project, toolwin):
+            print "==> project = ", project
+            print "==> toolwin = ", toolwin
+            toolwin.set_project(project)
+        Signals.connect(self.app, 'notify::project', on_notify_project, window)
+        
+        return window
+
+    
     def _construct_logwindow(self):
 
-        def cb_logwindow_hideshow(logwindow):
+        def cb_logwindow_hideshow(window):
             action = self.uimanager.get_action('/MainMenu/ViewMenu/ToggleLogwindow')
-            action.set_active(logwindow.get_property('visible'))
+            action.set_active(window.get_property('visible'))
 
         # logwindow is hidden by default. See _construct_uimanager if
         # you want to change this default
@@ -604,7 +636,9 @@ class AppWindow( gtk.Window ):
           <menuitem action='ExperimentalPlot'/>
         </menu>
         <menu action='ViewMenu'>
-          <menuitem action='ToggleLogwindow'/>
+          <menuitem action='ToggleToolWindow'/>
+          <separator/>
+          <menuitem action='ToggleLogwindow'/>          
           <separator/>
         </menu>        
         <menu action='HelpMenu'>
