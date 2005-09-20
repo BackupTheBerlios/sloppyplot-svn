@@ -23,7 +23,7 @@
 from Sloppy.Base.dataset import Dataset
 from Sloppy.Base.project import Project
 from Sloppy.Base import utils
-from Sloppy.Base.objects import Legend, Axis, Plot, Layer, Line
+from Sloppy.Base.objects import Legend, Axis, Plot, Layer, Line, TextLabel
 from Sloppy.Base.error import NoData
 from Sloppy.Base import pdict
 from Sloppy.Base.dataio import ExporterRegistry, read_table_from_stream
@@ -43,12 +43,12 @@ from Numeric import *
 
 
 DEFAULT_FF = "SIF"
-FILEFORMAT = "0.4"
+FILEFORMAT = "0.4.3"
 
 """
 File format history:
-  - 0.3 -> 0.4: Table.cols -> Table.ncols
-  -
+  - 0.3 -> 0.4: Table.cols -> Table.ncols  (transformation implemented)
+  - 0.4 -> 0.4.3: added layer.labels (no conversion required)
 """
 
 class ParseError(Exception):
@@ -110,7 +110,8 @@ def new_dataset(spj, element):
 def new_label(spj, element):
     text = element.text
     element.attrib['text'] = text
-    label = Label(**element.attrib)
+    label = TextLabel(**element.attrib)
+    print "Added new label ", label
     return label
 
 def new_line(spj, element):
@@ -161,10 +162,11 @@ def new_plot(spj, element):
     plot = Plot(**element.attrib)
 
     for eLayer in element.findall('Layers/Layer'):
-        plot.layers.append(new_layer(spj, eLayer))
+        layer = new_layer(spj, eLayer)
+        plot.layers.append(layer)
 
-    for eLabel in element.findall('Labels/Label'):
-        plot.labels.append(new_label(spj, eLabel))
+        for eLabel in eLayer.findall('Labels/Label'):
+            layer.labels.append(new_label(spj, eLabel))
         
     eComment = element.find('comment')
     if eComment is not None:
@@ -195,6 +197,11 @@ def fromTree(tree):
 
             version = raise_version('0.4')
             continue
+        #
+        elif version=='0.4':
+            version = raise_version('0.4.3')
+            continue
+        #
         else:
             raise IOError("Invalid Sloppy File Format Version %s. Aborting Import." % version)        
 
@@ -335,15 +342,17 @@ def toElement(project):
                 safe_set(eLine, 'cxerr', line.cxerr)                
                 safe_set(eLine, 'cyerr', line.cyerr)
 
-        eLabels = SubElement(ePlot, "Labels")
-        for label in plot.labels:
-            eLabel = SubElement(eLabel, "Label")
-            safe_set(eLabel, 'x', label.x)
-            safe_set(eLabel, 'y', label.y)
-            safe_set(eLabel, 'system', label.system)
-            safe_set(eLabel, 'valign', label.valign)
-            safe_set(eLabel, 'halign', label.halign)
-            eLabel.text = text                              
+            # layer.labels
+            if len(layer.labels) > 0:
+                eLabels = SubElement(eLayer, "Labels")
+                for label in layer.labels:
+                    eLabel = SubElement(eLabels, "Label")
+                    safe_set(eLabel, 'x', label.x)
+                    safe_set(eLabel, 'y', label.y)
+                    safe_set(eLabel, 'system', label.system)
+                    safe_set(eLabel, 'valign', label.valign)
+                    safe_set(eLabel, 'halign', label.halign)
+                    eLabel.text = label.text                              
 
     # beautify the XML output by inserting some newlines
     def insert_newlines(element):

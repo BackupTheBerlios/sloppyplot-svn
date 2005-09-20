@@ -637,7 +637,6 @@ class AppWindow( gtk.Window ):
         </menu>
         <menu action='ViewMenu'>
           <menuitem action='ToggleToolWindow'/>
-          <separator/>
           <menuitem action='ToggleLogwindow'/>          
           <separator/>
         </menu>        

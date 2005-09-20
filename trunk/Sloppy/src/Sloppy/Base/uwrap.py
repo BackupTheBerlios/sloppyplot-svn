@@ -35,7 +35,7 @@ from Sloppy.Base.const import default_params
 def set(container, *args, **kwargs):
     undolist = kwargs.pop('undolist', UndoList())
     olditems = dict()
-    changed_props = []
+    changeset = []
 
     arglist = list(args)
     while len(arglist) > 1:
@@ -43,17 +43,20 @@ def set(container, *args, **kwargs):
         value = arglist.pop(0)
         olditems[key] = container.get_value(key, None)
         setattr(container, key, value)
-        changed_props.append(key)
+        changeset.append(key)
 
     for (key, value) in kwargs.iteritems():
         olditems[key] = container.get_value(key, None)            
         setattr(container, key, value)
-        changed_props.append(key)
+        changeset.append(key)
 
     undolist.append( UndoInfo(set, container, **olditems) )      
 
-    if len(changed_props) > 0:
-        Signals.emit(container, "prop-changed", changed_props)
+    if len(changeset) > 0:
+        Signals.emit(container, "notify", changeset)
+
+        # TODO: remove, it's deprecated
+        Signals.emit(container, "prop-changed", changeset) 
 
 
 def smart_set(container, *args, **kwargs):

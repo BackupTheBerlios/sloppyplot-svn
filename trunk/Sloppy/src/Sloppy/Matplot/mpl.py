@@ -23,13 +23,20 @@
 An implementation of the Backend object using matplotlib.
 """
 
-import pygtk  # TBR
-pygtk.require('2.0') # TBR
+try:
+    import pygtk
+    pygtk.require('2.0')
+except ImportError:
+    pass
 
 import gtk
 
+
 import logging
 logger = logging.getLogger('Backends.mpl')
+
+import inspect
+
 
 import matplotlib
 from matplotlib import *
@@ -83,6 +90,14 @@ linemarker_mappings = \
  }
 
 
+#
+# Note about updateinfo:
+#
+# {'add': x, 'remove': y, 'edit': z}
+#
+# where  x,y,z are either single objects or a list of objects.
+#
+
 
 class Backend( backend.Backend ):
 
@@ -91,7 +106,8 @@ class Backend( backend.Backend ):
         self.layer_to_axes = {}
         self.axes_to_layer = {}
         self.layers_cache = [] # copy of self.plot.layers
-
+        self.layer_signals = {}
+        
         self.line_caches = {}
         self.omaps = {}
         
@@ -114,9 +130,8 @@ class Backend( backend.Backend ):
     def set(self, project,plot):
         backend.Backend.set(self, project, plot)
         if self.project is not None:
-            self.Signals['update-sobject'] = Signals.connect(
-                self.project, 'update-sobject', self.on_update_sobject)
-
+            # TODO: connect to notify::layers of Plot
+            pass
 
     def disconnect(self):
         logger.debug("Closing matplotlib session.")
@@ -149,7 +164,13 @@ class Backend( backend.Backend ):
         
         self.layer_to_axes.clear()
         self.axes_to_layer.clear()
-        self.layers_cache = list()
+        self.layers_cache = []
+
+        for signal_list in self.layer_signals.itervalues():
+            for signal in signal_list:
+                Signals.disconnect(signal)
+        self.layer_signals = {}
+        
         j = 1
         for layer in layers:
             print "Setting up layer", layer
@@ -157,14 +178,19 @@ class Backend( backend.Backend ):
             self.layer_to_axes[layer] = axes
             self.axes_to_layer[axes] = layer
             self.layers_cache.append(layer)
+
+            print "Connecting to notify of ", layer
+            self.layer_signals[layer] = \
+              [Signals.connect(layer, 'notify', self.on_update_sobject),
+               Signals.connect(layer, 'notify::labels', self.on_update_labels)]
+
             j += 1
-        
 
         
     def draw_layer(self, layer, group_info):
 
         ax = self.layer_to_axes[layer]
-        logging.info ("drawing layer %s (axes %s)" % (layer, ax))
+        logger.info ("drawing layer %s (axes %s)" % (layer, ax))
 
         omap = self.omaps[layer]
         
@@ -226,9 +252,6 @@ class Backend( backend.Backend ):
         grid = uwrap.get(layer, 'grid')        
         ax.grid(grid)                         
 
-
-
-
         #:layer.lines:OK
         for line in layer.lines:
             self.update_line(line, layer, axes=ax)
@@ -261,20 +284,45 @@ class Backend( backend.Backend ):
 
     #----------------------------------------------------------------------
         
-    def on_update_sobject(self, sender, sobject, *args):
-        logger.debug("Updating %s" % sobject)
-
-        if isinstance(sobject, objects.TextLabel):
-            self.update_textlabel(sobject, *args[:1])
-        elif isinstance(sobject, objects.Legend):
-            self.update_legend(sobject, *args[:1])
-        elif isinstance(sobject, objects.Line):
-            self.update_line(sobject, *args[:1])
-            self.update_legend(sobject, *args[:1])
-
-        self.canvas.draw()
+    def on_update_sobject(self, sender, sobject, **kwargs):
+        logger.debug("Updating %s with args %s" % (sobject,str(kwargs)))
+        return
+    
+        try:
+            if isinstance(sobject, objects.TextLabel):
+                self.update_textlabel(sobject, sender, **kwargs)
+            elif isinstance(sobject, objects.Legend):
+                self.update_legend(sobject, **kwargs)
+            elif isinstance(sobject, objects.Line):
+                self.update_line(sobject, **kwargs)
+                self.update_legend(sobject, **kwargs)
+        except Exception, msg:
+            logger.info("Exception raised during sobject update.")
+            logger.info(str(inspect.trace()))
+        else:
+            self.canvas.draw()
         
-       
+
+    def on_update_labels(self, layer, updateinfo={}):
+        # currently, updateinfo is ignored and all labels
+        # are rebuilt.
+
+        # clear existing labels and their corresponding mappings
+        axes = self.layer_to_axes[layer]        
+        axes.texts = []
+        for label in layer.labels:
+            try:
+                self.omaps[layer].pop(label)
+            except KeyError:
+                pass
+            
+        # create new labels
+        for label in layer.labels:            
+            self.update_textlabel(label, layer)
+
+        self.canvas.draw()        
+
+        
     #----------------------------------------------------------------------
     # Line
     #
@@ -349,8 +397,10 @@ class Backend( backend.Backend ):
     #
     
     def update_textlabel(self, label, layer, axes=None):
-        axes = axes or self.layer_to_axes[layer]        
+        axes = axes or self.layer_to_axes[layer]
         kwargs = self.label_kwargs(axes, label)
+        if kwargs is None:
+            return
         transform = kwargs.pop('transform')
 
         try:
@@ -363,10 +413,9 @@ class Backend( backend.Backend ):
             mpl_label.update(kwargs)
 
         mpl_label.set_transform(transform)
-        print "Updated textlabel"
 
         
-    def label_kwargs(self, axes, label):            
+    def label_kwargs(self, axes, label):
         if label.x is None or label.y is None:
             logger.info("Label coordinates contains empty value. Skipped.")
             return None

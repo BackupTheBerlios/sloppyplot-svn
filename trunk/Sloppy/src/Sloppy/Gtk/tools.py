@@ -29,9 +29,23 @@ import gtk
 
 
 import uihelper
-from Sloppy.Lib import Signals
 from dock import *
 
+from Sloppy.Lib import Signals
+from Sloppy.Lib.Undo import ulist
+from Sloppy.Base import uwrap, error
+
+
+
+
+def create_changeset(container, working_copy):
+    # find differences to old Container
+    changeset = {}
+    for key, value in working_copy.get_values().iteritems():
+        old_value = container.get_value(key)
+        if value != old_value:
+            changeset[key] = value
+    return changeset       
 
 
 #------------------------------------------------------------------------------
@@ -87,10 +101,18 @@ class ToolWindow(gtk.Window):
         vbox.show()
         self.add(vbox)
 
-        lt = LabelsTool(project)
+        lt = LabelsTool()
         lt.show()
 
         dock.add(lt)
+
+        # We add a handler to skip delete-events, i.e. if the
+        # user clicks on the close button of his window, the window
+        # will only be hidden.        
+        def _cb_delete_event(widget, *args):
+            self.hide()
+            return True # don't continue deletion
+        self.connect('delete_event', _cb_delete_event)
 
         self.set_project(project)
 
@@ -108,6 +130,8 @@ class ToolWindow(gtk.Window):
             Signals.connect(project.app, 'notify::current_plot',
                             (lambda sender, plot: self.set_plot(plot)))
 
+        self.dock.foreach((lambda tool: tool.set_data('project', project)))
+        
         self.project = project
         self.update_combobox()
         self.update_plot()
@@ -172,13 +196,16 @@ class Tool(Dockable):
 
     """
     Dockable base class for any tool that edits part of a Plot.
+
+    The project should be set by the top window using
+
+        >>> tool.set_data('project', project)        
     """
     
     
-    def __init__(self, project, label, stock_id):
+    def __init__(self, label, stock_id):
         Dockable.__init__(self, label, stock_id)
 
-        self.project = project
         self.layer = -1
         self.plot = -1
 
@@ -210,8 +237,8 @@ class Tool(Dockable):
 
 class LayerTool(Tool):
 
-    def __init__(self, project):
-        Tool.__init__(self, project, "Layers", gtk.STOCK_EDIT)
+    def __init__(self):
+        Tool.__init__(self, "Layers", gtk.STOCK_EDIT)
        
         # model: (object) = (layer object)
         model = gtk.ListStore(object)        
@@ -258,8 +285,8 @@ class LayerTool(Tool):
         
 class LabelsTool(Tool):
 
-    def __init__(self, project):
-        Tool.__init__(self, project, "Labels", gtk.STOCK_EDIT)
+    def __init__(self):
+        Tool.__init__(self,"Labels", gtk.STOCK_EDIT)
         self.set_size_request(-1,200)
        
         #
@@ -287,7 +314,7 @@ class LabelsTool(Tool):
         #
 
         buttons = [(None, gtk.STOCK_EDIT, self.on_edit),
-                   (None, gtk.STOCK_REMOVE, (lambda sender: self.on_remove())),
+                   (None, gtk.STOCK_REMOVE, self.on_remove),
                    (None, gtk.STOCK_NEW, self.on_new)]
 
         btnbox = uihelper.construct_buttonbox(buttons, show_stock_labels=False)
@@ -299,9 +326,15 @@ class LabelsTool(Tool):
 
         # save variables for reference and update view
         self.treeview = treeview        
-        #self.update_plot()
         
 
+    def set_plot(self, plot):
+        if plot is not None:
+            self.layer = plot.current_layer
+            Signals.connect(self.layer, "notify::labels", self.on_notify_labels)
+        Tool.set_plot(self, plot)
+
+        
     #------------------------------------------------------------------------------
         
     def update_layer(self):
@@ -320,19 +353,16 @@ class LabelsTool(Tool):
 
     def edit(self, label):
         dialog = ModifyHasPropsDialog(label)
-        try:
+        try:           
             response = dialog.run()
-            if response == gtk.RESPONSE_ACCEPT:                
-                dialog.check_out()
+            if response == gtk.RESPONSE_ACCEPT:
+                return dialog.check_out()
+            else:
+                raise error.UserCancel
 
-            Signals.emit(self.project, 'update-sobject', label, self.layer) # add changeset
-
-            def assign_changes(treeview, owner, changeset):
-                pass
-            
         finally:
             dialog.destroy()
-            
+        
     #----------------------------------------------------------------------
     # Callbacks
     #
@@ -341,19 +371,49 @@ class LabelsTool(Tool):
         (model, pathlist) = self.treeview.get_selection().get_selected_rows()
         if model is None:
             return
+        project = self.get_data('project')
+            
         label = model.get_value( model.get_iter(pathlist[0]), 0)
-        self.edit(label)
-        self.treeview.grab_focus()
+        new_label = self.edit(label.copy())
+        changeset = create_changeset(label, new_label)
+        
+        ul = UndoList().describe("Update label.")
+        changeset['undolist'] = ul
+        uwrap.set(label, **changeset)
+        uwrap.emit_last(self.layer, 'notify::labels',
+                        updateinfo={'edit' : label},
+                        undolist=ul)
+        project.journal.append(ul)    
                 
 
-    def on_new(self, sender):        
+    def on_new(self, sender):
         label = objects.TextLabel(text='newlabel')
-        self.layer.labels.append(label)
-        self.treeview.get_model().append((label,))
         self.edit(label)
-        self.treeview.grab_focus()
+        project = self.get_data('project')
+            
+        ul = UndoList().describe("New label.")
+        ulist.append(self.layer.labels, label, undolist=ul)
+        uwrap.emit_last(self.layer, "notify::labels",
+                        updateinfo={'add' : label},
+                        undolist=ul)
+        project.journal.append(ul)
 
 
+    def on_remove(self, sender):
+        (model, pathlist) = self.treeview.get_selection().get_selected_rows()
+        if model is None:
+            return
+        project = self.get_data('project')
+        label = model.get_value( model.get_iter(pathlist[0]), 0)
+
+        ul = UndoList().describe("Remove label.")
+        ulist.remove(self.layer.labels, label, undolist=ul)
+        uwrap.emit_last(self.layer, "notify::labels",
+                        updateinfo={'remove' : label},
+                        undolist=ul)
+        project.journal.append(ul)
+        
+        
     def on_notify_layer(self, sender, layer):
         # no change ?        
         if layer == self.layer:
@@ -361,6 +421,9 @@ class LabelsTool(Tool):
         self.layer = layer
         self.update_layer()
 
+
+    def on_notify_labels(self, layer, updateinfo=None):
+        self.update_layer()
         
 
 
@@ -406,7 +469,8 @@ class ModifyHasPropsDialog(gtk.Dialog):
         for pw in self.pwdict.itervalues():
             pw.check_out(undolist=ul)
         undolist.append(ul)            
-
+        return self.owner
+           
     def run(self):
         self.check_in()
         return gtk.Dialog.run(self)
