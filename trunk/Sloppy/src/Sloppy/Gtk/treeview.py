@@ -164,8 +164,8 @@ class ProjectTreeView( gtk.TreeView ):
 
         # TODO: remove old signals
         if self.project is not None:
-            Signals.connect(self.project.datasets, "notify", self.populate_treeview)
-            Signals.connect(self.project.plots, "notify", self.populate_treeview)
+            Signals.connect(self.project, "notify::datasets", self.populate_treeview)
+            Signals.connect(self.project, "notify::plots", self.populate_treeview)
             
         
     project = property(get_project,set_project)

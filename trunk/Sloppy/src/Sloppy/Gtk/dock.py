@@ -42,6 +42,9 @@ import gtk
 import gobject
 
 
+from Sloppy.Base import config
+
+
 
 DockRegistry = []
 
@@ -429,8 +432,7 @@ class Dock( gtk.VBox ):
                     pass
             return rv
 
-        return do_loop(self)
-                    
+        return do_loop(self)    
 
 gobject.type_register(Dock)
 
@@ -438,9 +440,8 @@ gobject.type_register(Dock)
        
 
 #==============================================================================
-
-
-
+    
+#==============================================================================
 
 def test():
     win = gtk.Window()
@@ -497,28 +498,18 @@ def test():
             print "  -", grandchild
         child.foreach( print_grandchild )
 
-    def size_test(sender, win):
-        #dock.foreach( print_child )
-        print win.get_size_request()
-        print win.get_gravity()
-        print win.get_position()
-        print win.get_size()
-        print dock.get_positions()
-        
-    def resize_test(sender, book):
-        a = sender.get_allocation()
-        a.height += 10
-        sender.size_allocate(a)
-
-        #sender.set_requisition(a)
-        #sender.set_default_size(a.width, a.height)
-        
-    b1.connect("clicked", size_test, win)
-    b2.connect("clicked", resize_test, dockbook)
-
     win.connect("destroy", gtk.main_quit)
     win.set_size_request(240,-1)
     win.set_default_size(300,500)
+
+    # pseudo app
+    class A:
+        toolwindow = dock
+    class B:
+        window = A()
+        
+    config.build_all(B())
+    
     gtk.main()
 
 

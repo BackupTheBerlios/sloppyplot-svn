@@ -476,6 +476,33 @@ class ModifyHasPropsDialog(gtk.Dialog):
         return gtk.Dialog.run(self)
 
     
+#------------------------------------------------------------------------------
+
+def build_toolwindow_element(app):
+    toolwindow = app.window.toolwindow
+    dock = toolwindow.dock
+    
+    eToolWindow = config.Element("ToolWindow")
+    # TODO: position
+    
+    # get information about dockables/dockbooks
+    eDock = config.SubElement(eToolWindow, "Dock")
+    width, height = dock.size_request()
+    eDock.attrib['width'] = str(width)
+    eDock.attrib['height'] = str(height)
+
+    for dockbook in dock.dockbooks:
+        eDockbook = config.SubElement(eDock, "Dockbook")        
+        for dockable in dockbook.get_children():
+            eDockable = config.SubElement(eDockbook, "Dockable")
+            width, height = dockable.size_request()            
+            eDockable.attrib['width'] = str(width)
+            eDockable.attrib['height'] = str(height)
+            eDockable.text = dockable.__class__.__name__
+            
+    return eToolWindow
+
+config.ConfigBuilder['ToolWindow'] = build_toolwindow_element
 
 #------------------------------------------------------------------------------
 import Sloppy

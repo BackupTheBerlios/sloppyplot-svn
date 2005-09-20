@@ -40,11 +40,13 @@ from Sloppy.Base.table import Table
 from Sloppy.Base.dataio import ImporterRegistry, ExporterRegistry, importer_from_filename
 from Sloppy.Base import uwrap, const, utils
 from Sloppy.Base.dataio import ImporterRegistry, ExporterRegistry, importer_from_filename, Importer, ImportError
+from Sloppy.Base import config
 
 from Sloppy import Plugins
 from Sloppy.Base.plugin import PluginRegistry
 
 
+        
 class Application(object):
 
     def __init__(self, project=None):
@@ -52,7 +54,7 @@ class Application(object):
 
         self.plugins = dict()
         self.recent_files = list()
-
+        
         # make sure config path exists and then open config file
         if os.path.exists(const.PATH_CONFIG) is False:
             try:
@@ -82,6 +84,8 @@ class Application(object):
     def quit(self):
         self.set_project(None, confirm=True)
         self.write_configuration_file(self.config_parser, const.CONFIG_FILE)
+        # TESTING
+        config.build_all(self)
         
         
     #----------------------------------------------------------------------
@@ -234,7 +238,7 @@ class Application(object):
         filename = os.path.expanduser(filename)
         fd = open(filename, 'w+')
         scp.write(fd)
-        fd.close()
+        fd.close()                
 
 
     #----------------------------------------------------------------------
@@ -333,3 +337,20 @@ def test_application():
 
     return app
 
+
+
+#------------------------------------------------------------------------------
+
+def build_recent_files_element(app):
+    ruf = app.recent_files
+
+    if len(ruf) > 0:
+        eRecentFiles = config.Element("RecentFiles")
+        for file in ruf:
+            eFile = config.SubElement(eRecentFiles, "File")
+            eFile.text = unicode(file)
+        return eRecentFiles
+    else:
+        return None
+
+config.ConfigBuilder['RecentFiles'] = build_recent_files_element

@@ -69,7 +69,7 @@ class AppWindow( gtk.Window ):
 
         self.uimanager = self._construct_uimanager()
         self._construct_logwindow()
-        self._construct_toolwindow()
+        self.toolwindow = self._construct_toolwindow()
 
         # and build ui
         self.uimanager.add_ui_from_string(self.ui_string)
