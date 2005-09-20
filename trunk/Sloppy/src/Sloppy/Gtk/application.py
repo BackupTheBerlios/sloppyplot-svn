@@ -856,19 +856,21 @@ class GtkApplication(Application):
         pj = self._check_project()
 
         objects = self.window.treeview.get_selected_objects()
-
-        response = gtkutils.dialog_confirm_list(\
-            title = "Remove Objects ?",
-            msg =
-            """
-            Do you really wish to remove
-            the following objects ?
-            """,
-            objects = objects)
-
-        if response == gtk.RESPONSE_OK:
-            print "OBJECTS", objects
-            pj.remove_objects(objects)
+        pj.remove_objects(objects)
+        
+        # I removed this confirmation dialog again,
+        # since the user can easily undo the operation.
+        # So why bother ask?
+        #response = gtkutils.dialog_confirm_list(\
+        #    title = "Remove Objects ?",
+        #    msg =
+        #    """
+        #    Do you really wish to remove
+        #    the following objects ?
+        #    """,
+        #    objects = objects)
+        #if response == gtk.RESPONSE_OK:
+        #    pj.remove_objects(objects)
 
 
     def _cb_experimental_plot(self, action):        
