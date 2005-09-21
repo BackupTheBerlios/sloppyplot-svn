@@ -87,7 +87,7 @@ class Legend(HasProps):
     label = pUnicode(doc='Legend Label')
     visible = pBoolean()
     border = pBoolean()
-    position = pString(value_list=PV['legend.position'])
+    position = Prop(CheckValid(PV['legend.position']))
     x = pFloat(CheckBounds(min=0.0, max=1.0))
     y = pFloat(CheckBounds(min=0.0, max=1.0))
 

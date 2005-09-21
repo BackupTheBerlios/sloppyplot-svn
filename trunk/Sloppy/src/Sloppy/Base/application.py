@@ -51,10 +51,12 @@ class Application(object):
     def __init__(self, project=None):
 	" 'project' may be a Project object or a filename. "
 
+        self.config = config.read_configfile(self, const.CONFIG_FILE+".xml")
+        
         self.plugins = dict()
-        self.recent_files = list()
 
-        config.read_configfile(self, const.CONFIG_FILE+".xml")
+        self.recent_files = list()
+        config.ConfigReader['RecentFiles'](self, self.config)
         
         # init() is a good place for initialization of derived class
         self.init()

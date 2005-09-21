@@ -93,12 +93,16 @@ def read_configfile(app, filename=const.CONFIG_FILE):
 
     try:
         try:
-            parse_all(app, parse(fd).getroot())
+            eRoot = parse(fd).getroot()
+            #parse_all(app, eRoot)
+            return eRoot
         except:
             raise
             print "Parse Error"
     finally:
         fd.close()
+
+    
 
 
 def write_configfile(app, filename=const.CONFIG_FILE):
