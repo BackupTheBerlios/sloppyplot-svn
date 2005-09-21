@@ -1,46 +1,31 @@
-Most important points are:
 
-- provide new ASCII import using regular expressions
+for 0.4.4:
 
-- try to (once again) replace the default file format to this ASCII
-format.  It might fail (i.e. it might be too slow), but I have to try,
-because it would mean that I would be able to drop two more
-dependencies (netCDF and pycdf), resulting in only pygtk,numeric and
-matplotlib (and matplotlib requires numeric anyway).
+clean up:
 
+- replace mpl.update_sobject with a better implementation.
 
+- restore size of tool window
 
+- don't update tools window if it is hidden, i.e. disconnect signals!
 
+- disconnect signals if layer changes.
 
+- allow to open tool window from mpl window and make the corresponding
+plot the active plot in the tool window.
 
-###############################################################################
+new features:
 
-Plan for 0.5:
+- add Mapping to pwconnect, so that we can use the mapping for TextLabel
 
-- Rewrite ASCII import, so that
+   0 : axes
+   1 : system
+   2 : ?
 
-  -  The custom ascii import might be a regular expression.  This is
-     probably slower but might also be a lot more flexible.
-
-  - respect commentary sign (#) in ASCII import
-
-  - Importer.ASCII.designations from list => string  
-
-
-- Add ASCII import wizard:
-
-   Number of header lines (combo, blue)
-   Column names from line (combo, red)
-
-   Column label lines from (combo from, combo to), green
-   Save header lines from (combo from, combo to), --
- 
-   checkbox 'Define header variables'
-   ...
 
 
 ###############################################################################
-# EVERYTHING BELOW THIS POINT IS JUST A COLLECTION OF IDEAS
+#EVERYTHING BELOW THIS POINT IS JUST A COLLECTION OF IDEAS
 
 #----------------------------------------------------------------------
 
@@ -313,3 +298,33 @@ examples for format
             #else:
             #    ymin = lasty+alphay*(ymin-lasty)
             #    ymax = lasty+alphay*(ymax-lasty)
+
+
+#------------------------------------------------------------------------------
+
+            # x/y are absolute coordinates
+            # we need to be able to work with
+            #  - data coordinates
+            #  - relative graph positions (0-1)
+            #  - absolute screen positions (like it is right now)
+
+            def screen_from_data(ax, xdata, ydata):
+                return ax.transData.xy_tup((xdata,ydata))
+
+            def data_from_screen(ax, x, y):
+                return ax.transData.inverse_xy_tup((x,y))
+
+            def graph_from_screen(ax, x, y):
+                l,b,w,h = ax.bbox.get_bounds()
+
+                if x < l or x > (l+w):  x = None
+                else: x = (x-l)/w
+
+                if y < b or y > (b+h): y = None
+                else: y = (y-b)/h
+
+                return x,y
+
+            def screen_from_graph(ax, x, y):
+                l,b,w,h = ax.bbox.get_bounds()
+                return l+w*x, b+h*y

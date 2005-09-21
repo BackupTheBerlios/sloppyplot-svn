@@ -40,6 +40,9 @@ from Sloppy.Base.backend import BackendRegistry
 from Sloppy.Gtk.mpl_window import MatplotlibWidget
 from Sloppy.Lib import Signals
 
+from Sloppy.Lib.ElementTree.ElementTree import Element, SubElement
+
+
 import logging
 logger = logging.getLogger('Gtk.appwindow')
 
@@ -57,10 +60,20 @@ class AppWindow( gtk.Window ):
         self._windowlist_merge_id = None
         self._recentfiles_merge_id = None
 
+        Signals.connect(self.app, "write-config", self.write_appwindow_config)
+
+        # restore position
+        self.set_gravity(gtk.gdk.GRAVITY_NORTH_WEST)        
+        eWindow = app.eConfig.find('AppWindow')
+        if eWindow is not None:
+            x = int(eWindow.attrib['x'])
+            y = int(eWindow.attrib['y'])
+            self.move(x, y)
+        else:
+            self.move(0,0)
+
 #        self.set_size_request(640,480)
-        
-        self.set_gravity(gtk.gdk.GRAVITY_NORTH_WEST)
-        self.move(0,0)
+
         icon = self.render_icon('sloppy-Plot', gtk.ICON_SIZE_BUTTON)
         self.set_icon(icon)
 
@@ -172,7 +185,7 @@ class AppWindow( gtk.Window ):
 
     def _construct_toolwindow(self):
 
-        window = tools.ToolWindow(None)
+        window = tools.ToolWindow(self.app, None)
         window.set_transient_for(self)
         window.set_destroy_with_parent(True)
         window.hide()
@@ -525,6 +538,19 @@ class AppWindow( gtk.Window ):
 
         dialog.run()
         dialog.destroy()
+
+    # for config file
+    def write_appwindow_config(self, app):
+        eAppWindow = app.eConfig.find('AppWindow')
+        if eAppWindow is None:
+            eAppWindow = SubElement(app.eConfig, "AppWindow")
+        else:
+            eAppWindow.clear()
+            
+        x, y = self.get_position()
+        eAppWindow.attrib['x'] = str(x)
+        eAppWindow.attrib['y'] = str(y)
+
         
     #----------------------------------------------------------------------
 

@@ -33,6 +33,8 @@ from dock import *
 
 from Sloppy.Lib import Signals
 from Sloppy.Lib.Undo import ulist
+from Sloppy.Lib.ElementTree.ElementTree import Element, SubElement
+
 from Sloppy.Base import uwrap, error
 
 
@@ -63,11 +65,13 @@ class ToolWindow(gtk.Window):
     @ivar plot: currently active plot as displayed in the ToolWindow combo.
     """
 
-    def __init__(self, project):
+    def __init__(self, app, project=None):
         gtk.Window.__init__(self)
-       
+
+        self.app = app
         self.plot = None
-        self.project = -1 
+
+        self.project = project or -1
 
         #
         # create gui
@@ -116,7 +120,23 @@ class ToolWindow(gtk.Window):
 
         self.set_project(project)
 
+        # for config file
+        Signals.connect(self.app, "write-config", self.write_toolwindow_config)
 
+        # read position
+        eWindow = app.eConfig.find('ToolWindow')
+        if eWindow is not None:
+            x = int(eWindow.attrib['x'])
+            y = int(eWindow.attrib['y'])
+            self.move(x, y)
+            width = int(eWindow.attrib['width'])
+            height = int(eWindow.attrib['height'])
+            #self.set_size_request(width, height)
+        else:
+            self.move(0,0)
+            #self.set_size_request(width, height)
+        
+        
                       
 
     def set_project(self, project):
@@ -184,6 +204,33 @@ class ToolWindow(gtk.Window):
             self.combobox.set_sensitive(False)
 
             
+    def write_toolwindow_config(self, app):
+        eToolWindow = app.eConfig.find("ToolWindow")
+        if eToolWindow is None:
+            eToolWindow = SubElement(app.eConfig, "ToolWindow")
+        else:
+            eToolWindow.clear()
+
+        # TODO: position
+        eToolWindow.attrib['visible'] = str(self.get_property('visible'))
+        x, y = self.get_position()            
+        eToolWindow.attrib['x'] = str(x)
+        eToolWindow.attrib['y'] = str(y)
+        width, height = self.size_request()        
+        eToolWindow.attrib['width'] = str(width)
+        eToolWindow.attrib['height'] = str(height)
+
+        # get information about dockables/dockbooks
+        eDock = config.SubElement(eToolWindow, "Dock")
+        for dockbook in self.dock.dockbooks:
+            eDockbook = config.SubElement(eDock, "Dockbook")        
+            for dockable in dockbook.get_children():
+                eDockable = config.SubElement(eDockbook, "Dockable")
+                width, height = dockable.size_request()            
+                eDockable.attrib['width'] = str(width)
+                eDockable.attrib['height'] = str(height)
+                eDockable.text = dockable.__class__.__name__
+
 
 
         
@@ -476,37 +523,6 @@ class ModifyHasPropsDialog(gtk.Dialog):
 
     
 #------------------------------------------------------------------------------
-def build_toolwindow_config(app):
-    if not hasattr(app, 'window') or not hasattr(app.window, 'toolwindow'):
-        return
-    toolwindow = app.window.toolwindow
-    dock = toolwindow.dock
-
-    eToolWindow = config.Element("ToolWindow")        
-    # TODO: position
-    eToolWindow.attrib['visible'] = str(toolwindow.get_property('visible'))
-
-    # get information about dockables/dockbooks
-    eDock = config.SubElement(eToolWindow, "Dock")
-    width, height = dock.size_request()
-    # TODO: position
-    eDock.attrib['width'] = str(width)
-    eDock.attrib['height'] = str(height)
-
-    for dockbook in dock.dockbooks:
-        eDockbook = config.SubElement(eDock, "Dockbook")        
-        for dockable in dockbook.get_children():
-            eDockable = config.SubElement(eDockbook, "Dockable")
-            width, height = dockable.size_request()            
-            eDockable.attrib['width'] = str(width)
-            eDockable.attrib['height'] = str(height)
-            eDockable.text = dockable.__class__.__name__
-
-    return eToolWindow
-
-config.ConfigWriter['ToolWindow'] = build_toolwindow_config
-
-#------------------------------------------------------------------------------
 
 import Sloppy
 from Sloppy.Base import const, objects
@@ -519,7 +535,7 @@ def test2():
     app = application.GtkApplication(filename)
     plot = app.project.get_plot(0)
 
-    win = ToolWindow(app.project)
+    win = ToolWindow(app, app.project)
     win.connect("destroy", gtk.main_quit)
 
     win.show()

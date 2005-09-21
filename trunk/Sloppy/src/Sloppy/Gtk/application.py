@@ -46,7 +46,7 @@ from layerwin import LayerWindow
 
 import Sloppy
 from Sloppy.Base.application import Application
-from Sloppy.Base import const, utils, error
+from Sloppy.Base import const, utils, error, config
 from Sloppy.Base.objects import Plot, Axis, Line, Layer, new_lineplot2d
 from Sloppy.Base.dataset import Dataset
 from Sloppy.Base.project import Project
@@ -930,7 +930,6 @@ class GtkApplication(Application):
                                    message_format=unicode(msg))
         dialog.run()
         dialog.destroy()
-
 
 
 

@@ -29,6 +29,7 @@ import os
 
 from Sloppy.Lib.Undo import *
 from Sloppy.Lib import Signals
+from Sloppy.Lib.ElementTree.ElementTree import Element, SubElement
 
 from Sloppy.Base.objects import Plot, Axis, Line, Layer, new_lineplot2d
 from Sloppy.Base.dataset import Dataset
@@ -51,13 +52,16 @@ class Application(object):
     def __init__(self, project=None):
 	" 'project' may be a Project object or a filename. "
 
-        self.config = config.read_configfile(self, const.CONFIG_FILE+".xml")
+        
+        self.eConfig = config.read_configfile(self, const.CONFIG_FILE+".xml")
+        Signals.connect(self, "write-config",
+                        (lambda sender: self.write_recentfiles()))
         
         self.plugins = dict()
 
         self.recent_files = list()
-        config.ConfigReader['RecentFiles'](self, self.config)
-        
+        self.read_recentfiles()
+
         # init() is a good place for initialization of derived class
         self.init()
         
@@ -76,7 +80,10 @@ class Application(object):
 
     def quit(self):
         self.set_project(None, confirm=True)
-        config.write_configfile(self, const.CONFIG_FILE+".xml")
+
+        # TODO: maybe emit the signal here?
+        Signals.emit(self, "write-config")
+        config.write_configfile(self.eConfig, const.CONFIG_FILE+".xml")
         
         
     #----------------------------------------------------------------------
@@ -185,6 +192,27 @@ class Application(object):
     def clear_recent_files(self):
         self.recent_files = list()
         Signals.emit(self, 'update-recent-files')
+
+    def read_recentfiles(self):
+        ruf = []
+        for eFile in self.eConfig.findall('RecentFiles/File'):
+            ruf.append( eFile.text )
+        self.recent_files = ruf
+
+    def write_recentfiles(self):    
+        if len(self.recent_files) == 0:
+            return
+
+        eRecentFiles = self.eConfig.find("RecentFiles")
+        if eRecentFiles is None:
+            eRecentFiles = SubElement(self.eConfig, "RecentFiles")
+        else:
+            eRecentFiles.clear()
+        
+        for file in self.recent_files:
+            eFile = SubElement(eRecentFiles, "File")
+            eFile.text = unicode(file)
+
             
     #----------------------------------------------------------------------
     # Simple user I/O
@@ -242,28 +270,6 @@ class Application(object):
             undolist.append(ul)
         else:
             undolist.append(NullUndo())    
-
-#------------------------------------------------------------------------------
-def build_recentfiles_config(app):    
-    if len(app.recent_files) > 0:
-        eRecentFiles = config.Element("RecentFiles")
-        for file in app.recent_files:
-            eFile = config.SubElement(eRecentFiles, "File")
-            eFile.text = unicode(file)
-        return eRecentFiles
-    else:
-        return None
-
-config.ConfigWriter['RecentFiles'] = build_recentfiles_config
-
-def parse_recentfiles_config(app, element):
-    ruf = []
-    for eFile in element.findall('RecentFiles/File'):
-        ruf.append( eFile.text )
-    app.recent_files = ruf
-    print "Setting ruf to ", ruf
-
-config.ConfigReader['RecentFiles'] = parse_recentfiles_config
 
 #------------------------------------------------------------------------------
 

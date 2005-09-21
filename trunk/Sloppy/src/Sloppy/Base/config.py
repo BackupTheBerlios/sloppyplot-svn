@@ -36,40 +36,6 @@ logger = logging.getLogger('Base.config')
 
 CONFIG_FILE_VERSION = "0.4.3"
 
-ConfigWriter = {}
-ConfigReader = {}
-
-
-def build_all(app):
-    eConfig = Element("Config")
-    eConfig.attrib['version'] = CONFIG_FILE_VERSION
-    
-    for builder in ConfigWriter.itervalues():
-        print "Building ", builder
-        element = builder(app)
-        if element is not None:
-            eConfig.append(element)
-
-    # beautify the XML output by inserting some newlines
-    def insert_newlines(element):
-        element.tail = '\n'
-        if element.text is None:
-            element.text = "\n"
-        for sub_element in element.getchildren():
-            insert_newlines(sub_element)
-    insert_newlines(eConfig)
-
-    # for debugging
-    ElementTree(eConfig).write(sys.stdout, encoding="utf-8")
-    
-    return eConfig
-
-
-def parse_all(app, eConfig):
-    # TODO: check version
-    for reader in ConfigReader.itervalues():
-        reader(app, eConfig)
-
 
 def check_path():
     """ Make sure path to config file exists. """
@@ -87,6 +53,8 @@ def read_configfile(app, filename=const.CONFIG_FILE):
     filename = os.path.expanduser(filename)
     if os.path.isfile(filename) is not True:
         logger.info("No configuration file '%s' found." % filename)
+        # create root element
+        return Element("Config")
     else:
         logger.info("Reading configuration file '%s'." % filename)
         fd = open(filename, 'r')
@@ -105,19 +73,23 @@ def read_configfile(app, filename=const.CONFIG_FILE):
     
 
 
-def write_configfile(app, filename=const.CONFIG_FILE):
+def write_configfile(eConfig, filename=const.CONFIG_FILE):
     check_path()
 
     filename = os.path.expanduser(filename)
     fd = open(filename, 'w')
 
+    # beautify the XML output by inserting some newlines
+    def insert_newlines(element):
+        element.tail = '\n'
+        if element.text is None:
+            element.text = "\n"
+        for sub_element in element.getchildren():
+            insert_newlines(sub_element)
+    insert_newlines(eConfig)
+    
     try:
-        try:
-            eConfig = build_all(app)
-            ElementTree(eConfig).write(fd, encoding="utf-8")
-        except:
-            raise
-            print "Parse Error"
+        ElementTree(eConfig).write(fd, encoding="utf-8")
     finally:
         fd.close()
     
