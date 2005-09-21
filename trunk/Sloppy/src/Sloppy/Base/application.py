@@ -25,7 +25,6 @@ logger = logging.getLogger('application')
 cli_logger = logging.getLogger('cli')
 cli_logger.setLevel(logging.info)
 
-from ConfigParser import SafeConfigParser, NoOptionError
 import os
 
 from Sloppy.Lib.Undo import *
@@ -54,16 +53,8 @@ class Application(object):
 
         self.plugins = dict()
         self.recent_files = list()
-        
-        # make sure config path exists and then open config file
-        if os.path.exists(const.PATH_CONFIG) is False:
-            try:
-                os.mkdir(const.PATH_CONFIG)
-            except IOError, msg:
-                logging.error("Big Fat Warning: Could not create config path! Configuration will not be saved! Please check permissions for creating '%s'. (%s)" % (PATH_CONFIG, msg))
-        
-        self.config_parser = self.read_configuration_file(const.CONFIG_FILE)
 
+        config.read_configfile(self, const.CONFIG_FILE+".xml")
         
         # init() is a good place for initialization of derived class
         self.init()
@@ -83,9 +74,7 @@ class Application(object):
 
     def quit(self):
         self.set_project(None, confirm=True)
-        self.write_configuration_file(self.config_parser, const.CONFIG_FILE)
-        # TESTING
-        config.build_all(self)
+        config.write_configfile(self, const.CONFIG_FILE+".xml")
         
         
     #----------------------------------------------------------------------
@@ -186,60 +175,7 @@ class Application(object):
             return self.plugins[key]
         except KeyError:
             raise RuntimeError("Requested plugin '%s' is not available." % key)
-
-    #----------------------------------------------------------------------
-    # CONFIGURATION FILE
-
-
-    def read_configuration_file(self, filename):
-        # read file
-        scp = SafeConfigParser()
-
-        filename = os.path.expanduser(filename)
-        if os.path.isfile(filename) is not True:
-            logger.info("No configuration file '%s' found." % filename)
-        else:
-            logger.info("Reading configuration file '%s'." % filename)
-            scp.read([filename])  # os.path.expanduser('~/.myapp.cfg'
-
-        # read list of recently used files
-        if scp.has_section('RecentFiles'):
-            ruf = list()
-            for n in range(9):
-                try:
-                    filename = scp.get('RecentFiles', 'file%d' % n)
-                    if filename is not None:
-                        ruf.append(filename)
-                except NoOptionError:
-                    pass
-
-            print "RUF"
-            print ruf
-
-            self.recent_files = ruf
-
-        return scp
-
-
-    def write_configuration_file(self, scp, filename):
-        logger.info("Writing configuration file '%s'." % filename)
-
-        # create list of recently used files
-        ruf = self.recent_files
-
-        n = 1
-        scp.remove_section('RecentFiles')
-        scp.add_section('RecentFiles')
-        for file in ruf:
-            scp.set('RecentFiles', 'file%d' % n, file)
-            n += 1
-
-        # write file
-        filename = os.path.expanduser(filename)
-        fd = open(filename, 'w+')
-        scp.write(fd)
-        fd.close()                
-
+        
 
     #----------------------------------------------------------------------
     # MISC
@@ -306,6 +242,29 @@ class Application(object):
             undolist.append(NullUndo())    
 
 #------------------------------------------------------------------------------
+def build_recentfiles_config(app):    
+    if len(app.recent_files) > 0:
+        eRecentFiles = config.Element("RecentFiles")
+        for file in app.recent_files:
+            eFile = config.SubElement(eRecentFiles, "File")
+            eFile.text = unicode(file)
+        return eRecentFiles
+    else:
+        return None
+
+config.ConfigWriter['RecentFiles'] = build_recentfiles_config
+
+def parse_recentfiles_config(app, element):
+    ruf = []
+    for eFile in element.findall('RecentFiles/File'):
+        ruf.append( eFile.text )
+    app.recent_files = ruf
+    print "Setting ruf to ", ruf
+
+config.ConfigReader['RecentFiles'] = parse_recentfiles_config
+
+#------------------------------------------------------------------------------
+
 
 import Numeric
 
@@ -338,19 +297,3 @@ def test_application():
     return app
 
 
-
-#------------------------------------------------------------------------------
-
-def build_recent_files_element(app):
-    ruf = app.recent_files
-
-    if len(ruf) > 0:
-        eRecentFiles = config.Element("RecentFiles")
-        for file in ruf:
-            eFile = config.SubElement(eRecentFiles, "File")
-            eFile.text = unicode(file)
-        return eRecentFiles
-    else:
-        return None
-
-config.ConfigBuilder['RecentFiles'] = build_recent_files_element

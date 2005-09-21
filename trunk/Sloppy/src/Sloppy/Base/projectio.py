@@ -178,7 +178,6 @@ def new_plot(spj, element):
 
 def fromTree(tree):
     eProject = tree.getroot()
-
                     
     spj = Project()
 

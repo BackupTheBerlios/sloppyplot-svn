@@ -186,7 +186,6 @@ class ToolWindow(gtk.Window):
             
 
 
-
         
 #------------------------------------------------------------------------------
 # Tool and derived classes
@@ -477,17 +476,20 @@ class ModifyHasPropsDialog(gtk.Dialog):
 
     
 #------------------------------------------------------------------------------
-
-def build_toolwindow_element(app):
+def build_toolwindow_config(app):
+    if not hasattr(app, 'window') or not hasattr(app.window, 'toolwindow'):
+        return
     toolwindow = app.window.toolwindow
     dock = toolwindow.dock
-    
-    eToolWindow = config.Element("ToolWindow")
+
+    eToolWindow = config.Element("ToolWindow")        
     # TODO: position
-    
+    eToolWindow.attrib['visible'] = str(toolwindow.get_property('visible'))
+
     # get information about dockables/dockbooks
     eDock = config.SubElement(eToolWindow, "Dock")
     width, height = dock.size_request()
+    # TODO: position
     eDock.attrib['width'] = str(width)
     eDock.attrib['height'] = str(height)
 
@@ -499,12 +501,13 @@ def build_toolwindow_element(app):
             eDockable.attrib['width'] = str(width)
             eDockable.attrib['height'] = str(height)
             eDockable.text = dockable.__class__.__name__
-            
+
     return eToolWindow
 
-config.ConfigBuilder['ToolWindow'] = build_toolwindow_element
+config.ConfigWriter['ToolWindow'] = build_toolwindow_config
 
 #------------------------------------------------------------------------------
+
 import Sloppy
 from Sloppy.Base import const, objects
 import application

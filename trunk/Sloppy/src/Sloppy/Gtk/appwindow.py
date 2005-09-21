@@ -32,7 +32,7 @@ import gtkutils
 
 import Sloppy
 
-from Sloppy.Base import const, utils, error, version
+from Sloppy.Base import const, utils, error, version, config
 from Sloppy.Base.objects import Plot
 from Sloppy.Base.dataset import Dataset
 from Sloppy.Base.backend import BackendRegistry
