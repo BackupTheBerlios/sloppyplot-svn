@@ -53,7 +53,7 @@ class Application(object):
 	" 'project' may be a Project object or a filename. "
 
         
-        self.eConfig = config.read_configfile(self, const.CONFIG_FILE+".xml")
+        self.eConfig = config.read_configfile(self, const.CONFIG_FILE)
         Signals.connect(self, "write-config",
                         (lambda sender: self.write_recentfiles()))
         
@@ -81,9 +81,9 @@ class Application(object):
     def quit(self):
         self.set_project(None, confirm=True)
 
-        # TODO: maybe emit the signal here?
+	# inform all other objects to update the config file elements
         Signals.emit(self, "write-config")
-        config.write_configfile(self.eConfig, const.CONFIG_FILE+".xml")
+        config.write_configfile(self.eConfig, const.CONFIG_FILE)
         
         
     #----------------------------------------------------------------------

@@ -54,7 +54,7 @@ if os.environ.has_key('XDG_CONFIG_HOME'):
 else:
     PATH_CONFIG = os.path.expanduser('~/.config/SloppyPlot')
 
-CONFIG_FILE = os.path.join(PATH_CONFIG, 'sloppyrc')
+CONFIG_FILE = os.path.join(PATH_CONFIG, 'config.xml')
 
 
 # TODO: how to represent absolut dirs?
