@@ -1,3 +1,7 @@
+for 0.4.3:
+
+- add labels to Gnuplot!
+
 
 for 0.4.4:
 
@@ -21,6 +25,7 @@ new features:
    0 : axes
    1 : system
    2 : ?
+
 
 
 
