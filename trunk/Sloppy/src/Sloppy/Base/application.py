@@ -40,7 +40,7 @@ from Sloppy.Base.table import Table
 from Sloppy.Base.dataio import ImporterRegistry, ExporterRegistry, importer_from_filename
 from Sloppy.Base import uwrap, const, utils
 from Sloppy.Base.dataio import ImporterRegistry, ExporterRegistry, importer_from_filename, Importer, ImportError
-from Sloppy.Base import config
+from Sloppy.Base import config, error
 
 from Sloppy import Plugins
 from Sloppy.Base.plugin import PluginRegistry

@@ -207,6 +207,10 @@ class Backend( backend.Backend ):
 
    # def update_layer(self, layer):
 
+        #:layer.lines:OK
+        for line in layer.lines:
+            self.update_line(line, layer, axes=ax)
+
         #:layer.axes
         for (key, axis) in layer.axes.iteritems():
             #:axis.label
@@ -233,7 +237,8 @@ class Backend( backend.Backend ):
 
             if label is not None: set_label(label)
             if scale is not None: set_scale(scale)
-            if start is not None: set_start(start)
+            if start is not None:
+                set_start(start)
             if end is not None: set_end(end)
 
             
@@ -251,10 +256,6 @@ class Backend( backend.Backend ):
         #:layer.grid
         grid = uwrap.get(layer, 'grid')        
         ax.grid(grid)                         
-
-        #:layer.lines:OK
-        for line in layer.lines:
-            self.update_line(line, layer, axes=ax)
                     
         #:layer.legend:OK
         self.update_legend(layer.legend, layer)
