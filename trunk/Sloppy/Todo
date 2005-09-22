@@ -1,19 +1,16 @@
-for 0.4.3:
+- renamed update_sobject with update_layer.  This is more consistent!
 
-- add labels to Gnuplot!
+- disconnect signals if project/plot/layer changes.
+
 
 
 for 0.4.4:
 
 clean up:
 
-- replace mpl.update_sobject with a better implementation.
-
 - restore size of tool window
 
 - don't update tools window if it is hidden, i.e. disconnect signals!
-
-- disconnect signals if layer changes.
 
 - allow to open tool window from mpl window and make the corresponding
 plot the active plot in the tool window.
@@ -27,6 +24,7 @@ new features:
    2 : ?
 
 
+- add labels to Gnuplot!
 
 
 ###############################################################################

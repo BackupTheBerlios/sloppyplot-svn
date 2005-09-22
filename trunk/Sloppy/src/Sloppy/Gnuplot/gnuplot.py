@@ -456,7 +456,7 @@ class Backend(backend.Backend):
         ##    self.arrange()
 
         # TODO: build layers_cache
-        for
+        #for
 
         self.omaps = {}
         for layer in self.plot.layers:
