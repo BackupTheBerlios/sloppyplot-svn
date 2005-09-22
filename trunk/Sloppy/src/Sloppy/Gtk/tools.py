@@ -70,8 +70,8 @@ class ToolWindow(gtk.Window):
 
         self.app = app
         self.plot = None
-
         self.project = project or -1
+        self.project_signals = []
 
         #
         # create gui
@@ -143,12 +143,15 @@ class ToolWindow(gtk.Window):
         if project == self.project:
             return
 
+        Signals.disconnect_list(self.project_signals)            
         if project is not None:
             # update combobox again if plots change
-            Signals.connect(project.plots, 'notify',
-                            (lambda sender: self.update_combobox()))
-            Signals.connect(project.app, 'notify::current_plot',
-                            (lambda sender, plot: self.set_plot(plot)))
+            self.project_signals.extend(
+                [Signals.connect(project.plots, 'notify',
+                                 (lambda sender: self.update_combobox())),
+                 Signals.connect(project.app, 'notify::current_plot',
+                                 (lambda sender, plot: self.set_plot(plot)))
+                 ])
 
         self.dock.foreach((lambda tool: tool.set_data('project', project)))
         
@@ -254,22 +257,25 @@ class Tool(Dockable):
 
         self.layer = -1
         self.plot = -1
+        self.plot_signals = []
 
 
     def set_plot(self, plot):
         if plot == self.plot:
             return        
-        self.plot = plot
 
+        Signals.disconnect_list(self.plot_signals)
         if plot is not None:
             self.layer = plot.current_layer
-            Signals.connect(plot, "notify::current_layer", self.on_notify_layer)
+            self.plot_signals.append(
+                Signals.connect(plot, "notify::current_layer", self.on_notify_layer)
+                )
         else:
             self.layer = None
 
         self.set_sensitive(plot is not None)
 
-        # TODO: connect properly on change of plot
+        self.plot = plot        
         self.update_plot()
        
 
@@ -283,6 +289,8 @@ class Tool(Dockable):
 
 class LayerTool(Tool):
 
+    """ NOT FINISHED. """
+    
     def __init__(self):
         Tool.__init__(self, "Layers", gtk.STOCK_EDIT)
        

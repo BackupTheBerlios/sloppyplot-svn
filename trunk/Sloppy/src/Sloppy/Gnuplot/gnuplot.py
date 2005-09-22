@@ -57,6 +57,15 @@ class Backend(backend.Backend):
         # key: ds, value = (filename, change_counter_on_last_save)
         self.exports = {}
 
+        # X-perimental
+        self.layer_to_axes = {}
+        self.axes_to_layer = {}
+        self.layers_cache = [] # copy of self.plot.layers
+        self.layer_signals = {}
+        
+        self.line_caches = {}
+        self.omaps = {}
+
     
     def connect(self):
         logger.debug( "Opening new gnuplot session." )
@@ -434,6 +443,32 @@ class Backend(backend.Backend):
         
     draw = redraw        
         
+
+
+    def update_layer(self, layer):
+        pass
+    
+    def Xdraw(self):
+        self.check_connection()
+        logger.debug("Gnuplot.draw")                
+             
+        ##if self.plot.layers != self.layers_cache:
+        ##    self.arrange()
+
+        # TODO: build layers_cache
+        for
+
+        self.omaps = {}
+        for layer in self.plot.layers:
+            self.omaps[layer] = {}
+            self.line_caches[layer] = {}
+            self.update_layer(layer)
+
+        self.draw_canvas()
+
+    def draw_canvas(self):
+        self("replot")
+
 
 
 # ======================================================================

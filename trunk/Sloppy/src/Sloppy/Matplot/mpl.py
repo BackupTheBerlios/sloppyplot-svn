@@ -144,7 +144,6 @@ class Backend( backend.Backend ):
         
         backend.Backend.disconnect(self)
 
-
         
 
     #----------------------------------------------------------------------
@@ -181,89 +180,10 @@ class Backend( backend.Backend ):
 
             print "Connecting to notify of ", layer
             self.layer_signals[layer] = \
-              [Signals.connect(layer, 'notify', self.on_update_sobject),
+              [Signals.connect(layer, 'notify', self.on_update_layer),
                Signals.connect(layer, 'notify::labels', self.on_update_labels)]
 
             j += 1
-
-        
-    def draw_layer(self, layer, group_info):
-
-        ax = self.layer_to_axes[layer]
-        logger.info ("drawing layer %s (axes %s)" % (layer, ax))
-
-        omap = self.omaps[layer]
-        
-        ax.lines = []
-
-        line_cache = self.line_caches[layer] = []
-        last_cx = -1
-
-        # Default values come in two flavors:
-        # group-wise and single default values        
-        group_styles = uwrap.get(layer, 'group_styles')
-        group_markers = uwrap.get(layer, 'group_markers')        
-
-
-   # def update_layer(self, layer):
-
-        #:layer.lines:OK
-        for line in layer.lines:
-            self.update_line(line, layer, axes=ax)
-
-        #:layer.axes
-        for (key, axis) in layer.axes.iteritems():
-            #:axis.label
-            #:axis.scale
-            #:axis.start
-            #:axis.end
-            label = uwrap.get(axis, 'label')            
-            scale = uwrap.get(axis, 'scale')
-            start = uwrap.get(axis, 'start')
-            end = uwrap.get(axis, 'end')
-            print "START = %s, END = %s" % (str(start), str(end))
-            if key == 'x':
-                set_label = ax.set_xlabel
-                set_scale = ax.set_xscale
-                set_start = (lambda l: ax.set_xlim(xmin=l))
-                set_end = (lambda l: ax.set_xlim(xmax=l))
-            elif key == 'y':
-                set_label = ax.set_ylabel
-                set_scale = ax.set_yscale
-                set_start = (lambda l: ax.set_ylim(ymin=l))
-                set_end = (lambda l: ax.set_ylim(ymax=l))
-            else:
-                raise RuntimeError("Invalid axis key '%s'" % key)
-
-            if label is not None: set_label(label)
-            if scale is not None: set_scale(scale)
-            if start is not None:
-                set_start(start)
-            if end is not None: set_end(end)
-
-            
-        #:layer.visible
-        if uwrap.get(layer, 'visible') is False:
-            return
-
-        # TODO
-        #:layer.title
-        title = uwrap.get(layer, 'title', None)
-        if title is not None:
-            ax.set_title(title)        
-
-        # TODO
-        #:layer.grid
-        grid = uwrap.get(layer, 'grid')        
-        ax.grid(grid)                         
-                    
-        #:layer.legend:OK
-        self.update_legend(layer.legend, layer)
-
-        #:layer.labels:OK
-        ax.texts = []
-        for label in layer.labels:
-            self.update_textlabel(label, layer)
 
 
     def draw(self):
@@ -277,33 +197,89 @@ class Backend( backend.Backend ):
         for layer in self.plot.layers:
             self.omaps[layer] = {}
             self.line_caches[layer] = {}
-            group_info = {}
-            self.draw_layer(layer, group_info)
-        self.canvas.draw()
-
+            self.update_layer(layer)
+        self.draw_canvas()
+        
+    def draw_canvas(self):
+        self.canvas.draw()        
 
 
     #----------------------------------------------------------------------
-        
-    def on_update_sobject(self, sender, sobject, **kwargs):
-        logger.debug("Updating %s with args %s" % (sobject,str(kwargs)))
-        return
+    # Layer
+    #
     
-        try:
-            if isinstance(sobject, objects.TextLabel):
-                self.update_textlabel(sobject, sender, **kwargs)
-            elif isinstance(sobject, objects.Legend):
-                self.update_legend(sobject, **kwargs)
-            elif isinstance(sobject, objects.Line):
-                self.update_line(sobject, **kwargs)
-                self.update_legend(sobject, **kwargs)
-        except Exception, msg:
-            logger.info("Exception raised during sobject update.")
-            logger.info(str(inspect.trace()))
-        else:
-            self.canvas.draw()
-        
+    def on_update_layer(self, sender, updateinfo={}):
+        # updateinfo is ignored
+        self.update_layer(sender)
+        self.canvas.draw()
+    
+    def update_layer(self, layer):
 
+        axes = self.layer_to_axes[layer]        
+        axes.lines = []
+        line_cache = self.line_caches[layer] = []        
+
+        #:layer.lines:OK
+        for line in layer.lines:
+            self.update_line(line, layer, axes=axes)
+
+        #:layer.axes
+        for (key, axis) in layer.axes.iteritems():
+            #:axis.label
+            #:axis.scale
+            #:axis.start
+            #:axis.end
+            label = uwrap.get(axis, 'label')            
+            scale = uwrap.get(axis, 'scale')
+            start = uwrap.get(axis, 'start')
+            end = uwrap.get(axis, 'end')
+            print "START = %s, END = %s" % (str(start), str(end))
+            if key == 'x':
+                set_label = axes.set_xlabel
+                set_scale = axes.set_xscale
+                set_start = (lambda l: axes.set_xlim(xmin=l))
+                set_end = (lambda l: axes.set_xlim(xmax=l))
+            elif key == 'y':
+                set_label = axes.set_ylabel
+                set_scale = axes.set_yscale
+                set_start = (lambda l: axes.set_ylim(ymin=l))
+                set_end = (lambda l: axes.set_ylim(ymax=l))
+            else:
+                raise RuntimeError("Invalid axis key '%s'" % key)
+
+            if label is not None: set_label(label)
+            if scale is not None: set_scale(scale)
+            if start is not None: set_start(start)
+            if end is not None: set_end(end)
+
+            
+        #:layer.visible
+        if uwrap.get(layer, 'visible') is False:
+            return
+
+        # TODO
+        #:layer.title
+        title = uwrap.get(layer, 'title', None)
+        if title is not None:
+            axes.set_title(title)
+
+        #:layer.grid
+        grid = uwrap.get(layer, 'grid', None)        
+        axes.grid(grid)
+                    
+        #:layer.legend:OK
+        self.update_legend(layer.legend, layer)
+
+        #:layer.labels:OK
+        axes.texts = []
+        for label in layer.labels:
+            self.update_textlabel(label, layer)
+
+
+    #----------------------------------------------------------------------                
+    # Labels
+    #
+    
     def on_update_labels(self, layer, updateinfo={}):
         # currently, updateinfo is ignored and all labels
         # are rebuilt.
@@ -513,6 +489,3 @@ class BackendWithWindow(Backend):
 #------------------------------------------------------------------------------
 backend.BackendRegistry.register('matplotlib', Backend)
 backend.BackendRegistry.register('matplotlib/w', Backend)
-
-
-            

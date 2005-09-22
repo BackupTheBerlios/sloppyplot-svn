@@ -23,7 +23,7 @@
 Collection of all basic data objects used for SloppyPlot.
 """
  
-from Sloppy.Base.const import PV
+from Sloppy.Base.const import PV, DP
 from Sloppy.Base.dataset import Dataset
 from Sloppy.Base import const
 
@@ -96,8 +96,8 @@ class Layer(HasProps):
     type = pString(CheckValid(PV['layer.type']))
     title = pUnicode(blurb="Title")
     lines = pList(CheckType(Line), blurb="Lines")
-    grid = pBoolean(blurb="Grid", doc="Display a grid")
-    visible = pBoolean(blurb="Visible")
+    grid = pBoolean(blurb="Grid", doc="Display a grid", default=DP['layer.grid'])
+    visible = pBoolean(blurb="Visible", default=DP['layer.visible'])
     legend = Prop(CheckType(Legend), reset=(lambda: Legend()))
 
     x = pFloat(CheckBounds(min=0.0, max=1.0))

@@ -147,6 +147,8 @@ default_params = {
     'dataset.label'  : None
     }
 
+DP = default_params # shortcut
+
 
 def replace_default_parameters():
     """    
