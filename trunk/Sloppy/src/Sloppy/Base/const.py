@@ -72,11 +72,11 @@ DEFAULT_BACKEND = 'matplotlib'
 
 PV = {
 #    'PointType': ['circle','square'],
-    'legend.position': ['best', 'center', 'lower left', 'center right', 'upper left',
+    'legend.position': [None, 'best', 'center', 'lower left', 'center right', 'upper left',
                         'center left', 'upper right', 'lower right',
                         'upper center', 'lower center',
                         'outside', 'at position'],
-    'axis.scale': ['linear','log'],
+    'axis.scale': [None, 'linear','log'],
     'axis.key': ['x','y','z'],
     'line.style' : [None,"None","solid","dashed","dash-dot","dotted","steps"],
     'line.marker' : [None,"None","points","pixels","circle symbols",

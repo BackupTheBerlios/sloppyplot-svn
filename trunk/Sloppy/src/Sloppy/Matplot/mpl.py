@@ -352,8 +352,9 @@ class Backend( backend.Backend ):
         #:line.width:OK
 
         #:line.color
+        N = len(layer.group_colors)
         index = layer.lines.index(line)
-        color = uwrap.get(line, 'color', layer.group_colors[index])
+        color = uwrap.get(line, 'color', layer.group_colors[index%N])
 
 
         #--- PLOT LINE ---
