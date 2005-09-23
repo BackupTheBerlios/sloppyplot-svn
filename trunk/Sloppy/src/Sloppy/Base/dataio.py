@@ -24,7 +24,6 @@ logging.basicConfig()
 
 import os.path
 
-from Sloppy.Base import klassregistry
 from Sloppy.Base.table import table_to_array, array_to_table, Table
 from Sloppy.Lib.Props import *
 
@@ -140,24 +139,24 @@ class Exporter(HasProps):
         
 
 #------------------------------------------------------------------------------
-ImporterRegistry = klassregistry.Registry("Importer")
-ExporterRegistry = klassregistry.Registry("Exporter")
+ImporterRegistry = {}
+ExporterRegistry = {}
 
 
 #------------------------------------------------------------------------------
 # convenience methods
 
 def read_table_from_file(filename, importer_key='ASCII', **kwargs):
-    importer = ImporterRegistry.new_instance(importer_key, **kwargs)
+    importer = ImporterRegistry[importer_key](**kwargs)
     return importer.read_table_from_file(filename)
 
 def read_table_from_stream(fd, importer_key='ASCII', **kwargs):
-    importer = ImporterRegistry.new_instance(importer_key, **kwargs)
+    importer = ImporterRegistry[importer_key](**kwargs)
     return importer.read_table_from_stream(fd)
     
 
 def read_array_from_file(filename, importer_key='ASCII', **kwargs):
-    importer = ImporterRegistry.new_instance(importer_key, **kwargs)
+    importer = ImporterRegistry[importer_key](**kwargs)
     return importer.read_array_from_file(filename)
 
 def importer_from_filename(filename):
@@ -167,8 +166,7 @@ def importer_from_filename(filename):
     else: return matches
 
     matches = []
-    for key, classwrapper in ImporterRegistry.iteritems():
-        importer = classwrapper.klass
+    for key, importer in ImporterRegistry.iteritems():
         if ext in importer.extensions:
             matches.append(key)
 

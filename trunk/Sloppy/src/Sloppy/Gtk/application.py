@@ -566,10 +566,10 @@ class GtkApplication(Application):
         #
         # construct backend for output
         #
-        backend = BackendRegistry.new_instance(
-            'gnuplot', project=project, plot=plot,
-            filename=filename,
-            terminal=terminal)
+        backend = BackendRegistry['gnuplot'](project=project,
+                                             plot=plot,
+                                             filename=filename,
+                                             terminal=terminal)
         try:
             backend.draw()
         finally:
@@ -607,14 +607,13 @@ class GtkApplication(Application):
         filter_keys[blurb_all_files] = 'auto' # default if nothing else specified
         
         # create file filters
-        for (key, val) in ImporterRegistry.iteritems():            
-            klass = val.klass
-            extensions = ';'.join(map(lambda ext: '*.'+ext, klass.extensions))
-            blurb = "%s (%s)" % (klass.blurb, extensions)
+        for (key, importer) in ImporterRegistry.iteritems():
+            extensions = ';'.join(map(lambda ext: '*.'+ext, importer.extensions))
+            blurb = "%s (%s)" % (importer.blurb, extensions)
 
             filter = gtk.FileFilter()
             filter.set_name(blurb)
-            for ext in klass.extensions:
+            for ext in importer.extensions:
                 filter.add_pattern("*."+ext.lower())
                 filter.add_pattern("*."+ext.upper())
             chooser.add_filter(filter)
@@ -637,8 +636,8 @@ class GtkApplication(Application):
         model = gtk.ListStore(str, str)
         # add 'Same as Filter' as first choice, then add all importers
         model.append( (None, "Auto") )
-        for key, val in ImporterRegistry.iteritems():
-            model.append( (key, val.klass.blurb) )
+        for key, importer in ImporterRegistry.iteritems():
+            model.append( (key, importer.blurb) )
 
         combobox = gtk.ComboBox(model)
         cell = gtk.CellRendererText()
@@ -695,7 +694,7 @@ class GtkApplication(Application):
             pbar.show()
             
             # request import options
-            importer = ImporterRegistry.new_instance(importer_key)
+            importer = ImporterRegistry[importer_key]()
 
             try:
                 dialog = OptionsDialog(importer, self.window)
@@ -773,64 +772,6 @@ class GtkApplication(Application):
             chooser.destroy()
 
 
-
-    ### TODO: rewrite this!
-    def _cb_export_dataset(self, widget):           
-        """
-        Export the selected Dataset to a file.
-        Currently, only the csv format is supported.
-        TODO: Support for arbitrary export filters.
-
-        @attention: This needs to be written from scratch!
-        """
-        pj = self._check_project()
-        objects = self.window.treeview.get_selected_objects()
-        if len(objects) == 0:
-            return
-        object = objects[0]
-
-        if not isinstance(object,Dataset):
-            return
-
-        # allow user to choose a filename
-        chooser = gtk.FileChooserDialog(
-            title="Export Dataset %s" % object.get_option('label'),
-            action=gtk.FILE_CHOOSER_ACTION_SAVE,
-            buttons=(gtk.STOCK_CANCEL,
-                     gtk.RESPONSE_CANCEL,
-                     gtk.STOCK_SAVE,
-                     gtk.RESPONSE_OK))
-        chooser.set_default_response(gtk.RESPONSE_OK)
-        chooser.set_current_folder(const.internal_path(const.PATH_EXAMPLE))
-        chooser.set_select_multiple(False)
-
-        filter = gtk.FileFilter()
-        filter.set_name("All files")
-        filter.add_pattern("*")
-        chooser.add_filter(filter)
-
-        filter = gtk.FileFilter()
-        filter.set_name("Data Files")
-        filter.add_pattern("*.dat")
-        chooser.add_filter(filter)
-        chooser.set_filter(filter) # default filter
-
-        shortcut_folder = const.internal_path(const.PATH_EXAMPLE)
-        if os.path.exists(shortcut_folder):
-            chooser.add_shortcut_folder(shortcut_folder)
-
-        response = chooser.run()
-        if response == gtk.RESPONSE_OK:
-            filename = chooser.get_filename()
-        else:
-            filename = None
-        chooser.destroy()
-
-        # export file, using the filter 'f'
-        filename = os.path.abspath(filename)
-        logger.debug("Exporting file %s as csv..." % filename )
-        f = FilterRegistry.new_instance('comma separated values')
-        f.export_to_file(filename, object)
 
 
     def _cb_new_dataset(self,widget):

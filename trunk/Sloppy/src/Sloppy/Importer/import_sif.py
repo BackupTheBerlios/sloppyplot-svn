@@ -85,6 +85,7 @@ class Importer(dataio.Importer):
         return self.table
 
 #------------------------------------------------------------------------------
-dataio.ImporterRegistry.register("SIF", Importer)
+dataio.ImporterRegistry["SIF"] = Importer
+
         
 

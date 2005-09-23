@@ -195,8 +195,6 @@ class Backend( backend.Backend ):
 
         self.omaps = {}
         for layer in self.plot.layers:
-            self.omaps[layer] = {}
-            self.line_caches[layer] = {}
             self.update_layer(layer)
         self.draw_canvas()
         
@@ -213,15 +211,15 @@ class Backend( backend.Backend ):
         self.update_layer(sender)
         self.canvas.draw()
     
-    def update_layer(self, layer):
+    def update_layer(self, layer, updateinfo={}):
+        # updateinfo is ignored
+
+        self.omaps[layer] = {}
+        self.line_caches[layer] = {}
 
         axes = self.layer_to_axes[layer]        
         axes.lines = []
         line_cache = self.line_caches[layer] = []        
-
-        #:layer.lines:OK
-        for line in layer.lines:
-            self.update_line(line, layer, axes=axes)
 
         #:layer.axes
         for (key, axis) in layer.axes.iteritems():
@@ -252,6 +250,9 @@ class Backend( backend.Backend ):
             if start is not None: set_start(start)
             if end is not None: set_end(end)
 
+        #:layer.lines:OK
+        for line in layer.lines:
+            self.update_line(line, layer, axes=axes)
             
         #:layer.visible
         if uwrap.get(layer, 'visible') is False:
@@ -274,30 +275,6 @@ class Backend( backend.Backend ):
         axes.texts = []
         for label in layer.labels:
             self.update_textlabel(label, layer)
-
-
-    #----------------------------------------------------------------------                
-    # Labels
-    #
-    
-    def on_update_labels(self, layer, updateinfo={}):
-        # currently, updateinfo is ignored and all labels
-        # are rebuilt.
-
-        # clear existing labels and their corresponding mappings
-        axes = self.layer_to_axes[layer]        
-        axes.texts = []
-        for label in layer.labels:
-            try:
-                self.omaps[layer].pop(label)
-            except KeyError:
-                pass
-            
-        # create new labels
-        for label in layer.labels:            
-            self.update_textlabel(label, layer)
-
-        self.canvas.draw()        
 
         
     #----------------------------------------------------------------------
@@ -373,8 +350,26 @@ class Backend( backend.Backend ):
     #----------------------------------------------------------------------
     # TextLabel
     #
+
+    def on_update_labels(self, layer, updateinfo={}):
+        # updateinfo is ignored
+
+        # clear existing labels and their corresponding mappings
+        axes = self.layer_to_axes[layer]        
+        axes.texts = []
+        for label in layer.labels:
+            try:
+                self.omaps[layer].pop(label)
+            except KeyError:
+                pass
+            
+        # create new labels
+        for label in layer.labels:            
+            self.update_textlabel(label, layer)
+
+        self.canvas.draw()        
     
-    def update_textlabel(self, label, layer, axes=None):
+    def update_textlabel(self, label, layer, axes=None):        
         axes = axes or self.layer_to_axes[layer]
         kwargs = self.label_kwargs(axes, label)
         if kwargs is None:
@@ -488,5 +483,6 @@ class BackendWithWindow(Backend):
         
 
 #------------------------------------------------------------------------------
-backend.BackendRegistry.register('matplotlib', Backend)
-backend.BackendRegistry.register('matplotlib/w', Backend)
+backend.BackendRegistry['matplotlib'] = Backend
+backend.BackendRegistry['matplotlib/w'] = BackendWithWindow
+

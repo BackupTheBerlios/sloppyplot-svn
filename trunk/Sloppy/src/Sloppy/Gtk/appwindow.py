@@ -582,7 +582,6 @@ class AppWindow( gtk.Window ):
         ('DatasetMenu', None, 'Dataset'),
         ('DatasetToPlot', None, 'Create Plot from Dataset', None, 'Create a new Plot object from the current Dataset', '_cb_create_plot_from_datasets'),
         ('DatasetAddToPlot', None, 'Add Datasets to Plot', None, 'Add Datasets to Plot', '_cb_add_datasets_to_plot'),
-        ('DatasetExport', None, '_Export', '<control>E', 'Export the currently selected dataset to a file.', '_cb_export_dataset'),
         ('DatasetImport', None, 'Import Dataset', '<control>I', 'Import a dataset', '_cb_import_dataset'),
         ('NewDataset', gtk.STOCK_ADD, 'New Dataset', None, 'Create a new dataset', '_cb_new_dataset'),
         ('ExperimentalPlot', None, 'Experimental Plotting', None, None, '_cb_experimental_plot'),

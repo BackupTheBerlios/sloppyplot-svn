@@ -58,10 +58,12 @@ class Importer(dataio.Importer):
                    'delimiter' : None,
                    'custom_delimiter' : ',\s*'}
                            
-        importer = dataio.ImporterRegistry.new_instance('ASCII', **options)
+        importer = dataio.ImporterRegistry['ASCII'](**options)
         return importer.read_table_from_stream(fd)
 
 #------------------------------------------------------------------------------
-dataio.ImporterRegistry.register('PFC', Importer)
+dataio.ImporterRegistry['PFC'] = Importer
+
+
 
 

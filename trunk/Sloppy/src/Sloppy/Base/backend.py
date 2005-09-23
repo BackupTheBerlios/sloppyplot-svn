@@ -28,7 +28,7 @@ import logging, os
 
 from Sloppy.Lib import Signals
 
-from Sloppy.Base import uwrap, klassregistry
+from Sloppy.Base import uwrap
 from Sloppy.Base.table import Table
 
 
@@ -247,4 +247,4 @@ class Backend(object):
 # BackendRegistry
 #
 
-BackendRegistry = klassregistry.Registry("Backends")
+BackendRegistry = {}

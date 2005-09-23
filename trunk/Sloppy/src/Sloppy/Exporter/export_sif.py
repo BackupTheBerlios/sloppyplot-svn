@@ -82,4 +82,4 @@ class Exporter(dataio.Exporter):
             j += 1        
 
 #------------------------------------------------------------------------------
-dataio.ExporterRegistry.register("SIF", Exporter)
+dataio.ExporterRegistry["SIF"] = Exporter

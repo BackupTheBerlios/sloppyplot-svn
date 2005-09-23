@@ -45,9 +45,13 @@ _all__ = ["PWContainer", "PWTableBox",
 def collect_values(prop):
     """ Collect all values of the prop specified by CheckValid. """
     value_list = []
-    for item in prop.check.items:
-        if isinstance(item, CheckValid):
-            value_list.extend(item.values)
+    print "Checking prop ", prop
+    try:
+        for item in prop.check.items:
+            if isinstance(item, CheckValid):
+                value_list.extend(item.values)
+    except AttributeError:
+        pass
     return value_list
         
     
@@ -253,6 +257,7 @@ class PWComboBox(PW):
 
     def check_in(self):
         try:
+            print "Checking in from ", self.container
             value_list = collect_values(self.prop)
             index = value_list.index(self.get_value())
             self.widget.set_active(index)

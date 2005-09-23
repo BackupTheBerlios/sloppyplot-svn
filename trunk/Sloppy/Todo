@@ -1,5 +1,4 @@
 - renamed update_sobject with update_layer.  This is more consistent!
-
 - disconnect signals if project/plot/layer changes.
 
 
@@ -8,7 +7,9 @@ for 0.4.4:
 
 clean up:
 
-- restore size of tool window
+- fix log problem with matplotlib
+
+- add pwconnect to SVN
 
 - don't update tools window if it is hidden, i.e. disconnect signals!
 
@@ -24,7 +25,9 @@ new features:
    2 : ?
 
 
-- add labels to Gnuplot!
+- add labels to Gnuplot! => works, but we need to include the
+'auto-update' functionality, then it is complete.
+
 
 
 ###############################################################################

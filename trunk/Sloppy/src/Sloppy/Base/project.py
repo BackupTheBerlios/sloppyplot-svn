@@ -442,9 +442,6 @@ class Project(HasProps):
         return None
 
 
-
-
-
     #----------------------------------------------------------------------
     def plot(self, plot=0, key=const.DEFAULT_BACKEND):
         plot = self.get_plot(plot)
@@ -455,7 +452,7 @@ class Project(HasProps):
     def find_backends(self, key=None, plot=None):
         matches = self.backends
         if key is not None:
-            klass = BackendRegistry.get_class(key)            
+            klass = BackendRegistry[key]
             matches = [item for item in matches if isinstance(item, klass)]
         if plot is not None:
             matches = [item for item in matches if repr(item.plot) == repr(plot)]
@@ -469,7 +466,7 @@ class Project(HasProps):
         if len(matches) > 0:
             return matches[0]
         else:
-            backend = BackendRegistry.new_instance(key, project=self, plot=plot)            
+            backend = BackendRegistry[key](project=self, plot=plot)            
             self.backends.append(backend)
             return backend
         

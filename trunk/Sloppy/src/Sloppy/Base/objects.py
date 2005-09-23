@@ -48,7 +48,7 @@ class TextLabel(HasProps):
     text = pUnicode()
     x = pFloat()
     y = pFloat()
-    system = pInteger(MapValue(map_system), default=0)    
+    system = pInteger(MapValue(map_system), default=0)
     valign = pInteger(MapValue(map_valign), default=0)
     halign = pInteger(MapValue(map_halign), default=0)
     

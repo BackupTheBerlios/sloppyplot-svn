@@ -233,5 +233,5 @@ class Importer(dataio.Importer):
 
 
 #------------------------------------------------------------------------------
-dataio.ImporterRegistry.register("ASCII", Importer)
+dataio.ImporterRegistry['ASCII'] = Importer
 

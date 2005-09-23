@@ -104,11 +104,12 @@ class Importer(import_ascii.Importer):
             #
             pass
 
-            importer = dataio.ImporterRegistry.new_instance('ASCII', **options)
+            importer = dataio.ImporterRegistry['ASCII'](**options)
             return importer.read_table_from_stream(fd)
 
 
 
 
 #------------------------------------------------------------------------------
-dataio.ImporterRegistry.register('XPS', Importer)
+dataio.ImporterRegistry['XPS'] = Importer
+

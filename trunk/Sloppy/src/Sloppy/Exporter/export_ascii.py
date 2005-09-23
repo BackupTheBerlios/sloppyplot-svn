@@ -50,4 +50,4 @@ class Exporter(dataio.Exporter):
 
 
 #------------------------------------------------------------------------------
-dataio.ExporterRegistry.register("ASCII", Exporter)
+dataio.ExporterRegistry["ASCII"] = Exporter
