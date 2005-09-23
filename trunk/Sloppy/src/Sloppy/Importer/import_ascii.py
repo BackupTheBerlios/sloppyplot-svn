@@ -22,7 +22,7 @@
 import logging
 logger = logging.getLogger('Importer.import_ascii')
 
-import csv
+import re
 
 from Sloppy.Base.dataset import *
 from Sloppy.Base import dataio
