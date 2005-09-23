@@ -63,16 +63,18 @@ class AppWindow( gtk.Window ):
         Signals.connect(self.app, "write-config", self.write_appwindow_config)
 
         # restore position
-        self.set_gravity(gtk.gdk.GRAVITY_NORTH_WEST)        
+        self.set_gravity(gtk.gdk.GRAVITY_NORTH_WEST)
+        self.move(0,0)        
+
+        # TODO: read config data
         eWindow = app.eConfig.find('AppWindow')
         if eWindow is not None:
-            x = int(eWindow.attrib['x'])
-            y = int(eWindow.attrib['y'])
-            self.move(x, y)
-        else:
-            self.move(0,0)
-
-#        self.set_size_request(640,480)
+            try:
+                x = int(eWindow.attrib['width'])
+                y = int(eWindow.attrib['height'])
+                self.set_size_request(width, height)
+            except KeyError:
+                pass
 
         icon = self.render_icon('sloppy-Plot', gtk.ICON_SIZE_BUTTON)
         self.set_icon(icon)
@@ -546,10 +548,14 @@ class AppWindow( gtk.Window ):
             eAppWindow = SubElement(app.eConfig, "AppWindow")
         else:
             eAppWindow.clear()
-            
-        x, y = self.get_position()
-        eAppWindow.attrib['x'] = str(x)
-        eAppWindow.attrib['y'] = str(y)
+
+        # according to the pygtk documentation, we should never
+        # use self.get_size(), though I don't see any other way
+        # to obtain the window size.  I guess I need to ask about this.
+        
+        #width, height = self.get_position()
+        #eAppWindow.attrib['width'] = str(width)
+        #eAppWindow.attrib['height'] = str(height)
 
         
     #----------------------------------------------------------------------

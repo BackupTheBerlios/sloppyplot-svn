@@ -123,20 +123,15 @@ class ToolWindow(gtk.Window):
         # for config file
         Signals.connect(self.app, "write-config", self.write_toolwindow_config)
 
-        # read position
+        # TODO: read config data
         eWindow = app.eConfig.find('ToolWindow')
         if eWindow is not None:
-            x = int(eWindow.attrib['x'])
-            y = int(eWindow.attrib['y'])
-            self.move(x, y)
-            width = int(eWindow.attrib['width'])
-            height = int(eWindow.attrib['height'])
-            #self.set_size_request(width, height)
-        else:
-            self.move(0,0)
-            #self.set_size_request(width, height)
-        
-        
+            pass
+
+        # move window to top right
+        self.set_gravity(gtk.gdk.GRAVITY_NORTH_EAST)
+        self.move(gtk.gdk.screen_width(), 0)
+
                       
 
     def set_project(self, project):
@@ -213,15 +208,6 @@ class ToolWindow(gtk.Window):
             eToolWindow = SubElement(app.eConfig, "ToolWindow")
         else:
             eToolWindow.clear()
-
-        # TODO: position
-        eToolWindow.attrib['visible'] = str(self.get_property('visible'))
-        x, y = self.get_position()            
-        eToolWindow.attrib['x'] = str(x)
-        eToolWindow.attrib['y'] = str(y)
-        width, height = self.size_request()        
-        eToolWindow.attrib['width'] = str(width)
-        eToolWindow.attrib['height'] = str(height)
 
         # get information about dockables/dockbooks
         eDock = config.SubElement(eToolWindow, "Dock")
