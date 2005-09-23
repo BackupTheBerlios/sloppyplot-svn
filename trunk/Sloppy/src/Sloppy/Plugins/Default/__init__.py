@@ -114,17 +114,17 @@ class Plugin:
         plot = Plot()
         plot.key = pdict.unique_key(project.plots, "exp_plot")
         layer1 = Layer(type="line2d",
-                       lines=[Line(source=ds,cx=0,cy=1), Line(source=ds2)],
+                       lines=[Line(source=ds,cx=0,cy=1),
+                              Line(source=ds2,cx=0,cy=1)],
                        x=0.0, y=0.0, width=1.0, height=0.5)
         layer2 = Layer(type="line2d",
                        lines=[Line(source=ds2,cx=0,cy=1)],
                        x=0.0, y=0.5, width=1.0, height=0.5)
         plot.layers = [layer1, layer2]
 #        plot.layers.arrange(nrows=1, ncols=2)
-        
-        ulist.append( project.plots, plot, undolist=ul )
 
-        uwrap.emit_last(project.datasets, "changed")
+        project.add_plot(plot, undolist=ul)
+
         undolist.append(ul)
         
         
