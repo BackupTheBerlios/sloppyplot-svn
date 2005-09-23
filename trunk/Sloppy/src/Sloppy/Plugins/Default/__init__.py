@@ -108,9 +108,6 @@ class Plugin:
         ds2.data[0] = [10,17,3,8]
         ds2.data[1] = [1,89,48,1]
 
-        ulist.append( project.datasets, ds, undolist=ul )
-        ulist.append( project.datasets, ds2, undolist=ul )                
-
         plot = Plot()
         plot.key = pdict.unique_key(project.plots, "exp_plot")
         layer1 = Layer(type="line2d",
@@ -121,10 +118,9 @@ class Plugin:
                        lines=[Line(source=ds2,cx=0,cy=1)],
                        x=0.0, y=0.5, width=1.0, height=0.5)
         plot.layers = [layer1, layer2]
-#        plot.layers.arrange(nrows=1, ncols=2)
 
+        project.add_datasets([ds,ds2], undolist=ul)
         project.add_plot(plot, undolist=ul)
-
         undolist.append(ul)
         
         

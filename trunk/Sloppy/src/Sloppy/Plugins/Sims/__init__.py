@@ -92,7 +92,10 @@ class Plugin:
         if undolist is None:
             undolist = project.journal
 
-        table = dataset.data   # TODO: check for Table
+        table = dataset.get_data()   # TODO: check for Table
+        if table is None:
+            logger.info("No dataset selected.")
+            return
         
         if table.ncols % 2 == 1:
             logger.error("action_plot_profile_plot: Dataset '%s' has wrong shape." % dataset.key)
@@ -106,12 +109,12 @@ class Plugin:
         p = Plot( key = pdict.unique_key(project.plots, "profile_%s" % dataset.key),
                   layers = [Layer(type='line2d',
                                   lines=lines,
-                                  axes={'y' : Axis(scale="log",
-                                                   label='log SIMS intensity (cts/sec)',
-                                                   start=10,
-                                                   format='%L'),
-                                        'x' : Axis(scale="linear",
-                                                   label='time (sec)')},                                  
+                                  yaxis = Axis(scale="log",
+                                               label='log SIMS intensity (cts/sec)',
+                                               start=10,
+                                               format='%L'),
+                                  xaxis = Axis(scale="linear",
+                                               label='time (sec)'), 
                                   title=u"SIMS depth profile of %s" % dataset.key,
                                   legend = Legend(border=True,
                                                   position='outside')                                  
@@ -133,7 +136,7 @@ class Plugin:
         if undolist is None:
             undolist = project.journal
             
-        table = dataset.data   # TODO: check for Table
+        table = dataset.get_data()   # TODO: check for Table (get_table?)
             
         p = Plot( key = pdict.unique_key(project.plots, "spectrum_%s" % dataset.key),
                   layers = [Layer(type='line2d',
@@ -142,12 +145,12 @@ class Plugin:
                                                cx=1,
                                                cy=2 )
                                          ],
-                                  axes={'y' : Axis(scale="log",
-                                                   label='SIMS intensity (cts/sec)',
-                                                   start=10,
-                                                   format='%2.1e'),
-                                        'x' : Axis(scale="linear",
-                                                   label='mass (amu)')},                                  
+                                  yaxis = Axis(scale="log",
+                                               label='SIMS intensity (cts/sec)',
+                                               start=10,
+                                               format='%2.1e'),
+                                  xaxis = Axis(scale="linear",
+                                               label='mass (amu)'),
                                   title=u"SIMS mass spectrum of %s" % dataset.key,
                                   )
                             ]
