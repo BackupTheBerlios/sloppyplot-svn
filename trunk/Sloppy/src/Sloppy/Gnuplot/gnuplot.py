@@ -66,6 +66,10 @@ class Backend(backend.Backend):
         self.line_caches = {}
         self.omaps = {}
 
+        # we keep an instance var 'cmd_list' which contains all commands
+        # in the order that they should be executed
+        self.cmd_list = []
+
     
     def connect(self):
         logger.debug( "Opening new gnuplot session." )
@@ -209,7 +213,30 @@ class Backend(backend.Backend):
             return new_export[0]
         else:
             return self.exports[source][0]
-            
+
+
+    def export_datasets(self):
+        # Export Datasets to temporary directory, so that
+        # gnuplot can access them.
+        exporter = ExporterRegistry.new_instance('ASCII')
+        
+        destdir = self.tmpdir
+        for (source, value) in self.exports.iteritems():
+            (filename, change_counter, ds) = value
+            if ds is None:
+                logger.warn("One of the Datasets to export is None.")
+                continue
+            if ds.is_empty():
+                logger.warn("One of the Datasets to export is empty")
+                continue
+            logging.debug("Change counter %d, old %d" % (ds.change_counter, change_counter))
+            if ds.has_changes(change_counter):                              
+                filename = os.path.join(destdir, filename)
+                logger.debug('exporting "%s" to dir "%s"' % (ds, destdir))            
+                exporter.write_to_file(filename, ds.data)
+                self.exports[source][1] = ds.change_counter
+            else:
+                logger.info("Dataset has not changed and is not exported!")                           
         
     #----------------------------------------------------------------------
     def clear(self):
@@ -404,29 +431,7 @@ class Backend(backend.Backend):
             group_info = {}
             cmd_list += self.build_layer(self.plot.layers[0], group_info)
 
-
-        # Export Datasets to temporary directory, so that
-        # gnuplot can access them.
-        exporter = ExporterRegistry['ASCII']()
-        
-        destdir = self.tmpdir
-        for (source, value) in self.exports.iteritems():
-            (filename, change_counter, ds) = value
-            if ds is None:
-                logger.warn("One of the Datasets to export is None.")
-                continue
-            if ds.is_empty():
-                logger.warn("One of the Datasets to export is empty")
-                continue
-            logging.debug("Change counter %d, old %d" % (ds.change_counter, change_counter))
-            if ds.has_changes(change_counter):                              
-                filename = os.path.join(destdir, filename)
-                logger.debug('exporting "%s" to dir "%s"' % (ds, destdir))            
-                exporter.write_to_file(filename, ds.data)
-                self.exports[source][1] = ds.change_counter
-            else:
-                logger.info("Dataset has not changed and is not exported!")
-                
+        self.export_datasets()
        
         # Now execute all collected commands.
         print "cmd list is: "
@@ -444,8 +449,27 @@ class Backend(backend.Backend):
     draw = redraw        
         
 
+    #######################################################################
+    # reimplementation
 
+    """
+    One idea:
+
+    When you call an update function, then the cmd_list is regenerated.
+
+    If you want to replot everything, then you can just execute all
+    commands in the order of cmd_list.
+
+    Alternatively, if update_layer gets an updateinfo and updates only
+    parts, then it will move the commands needed to update these few
+    things into a cmd_queue, which then must be executed by the calling
+    function!
+    
+    """
+
+    
     def update_layer(self, layer):
+        
         pass
     
     def Xdraw(self):
@@ -458,16 +482,29 @@ class Backend(backend.Backend):
         # TODO: build layers_cache
         #for
 
-        self.omaps = {}
+        # clear command list
+        cl = self.cmd_list = []
+
+        # TEMPDIR
+        cl.append("#:TEMPDIR")
+        cl.append('cd "%s"' % self.tmpdir)
+        
+        # ENCODING
+        cl.append("#:ENCODING")
+	cl.append( "set encoding %s" % self.encoding )
+
+        # TERMINAL
+        cl.append("#:TERMINAL")
+        cl += self.terminal.build(self)
+        
         for layer in self.plot.layers:
-            self.omaps[layer] = {}
-            self.line_caches[layer] = {}
             self.update_layer(layer)
 
-        self.draw_canvas()
+        self.execute_queue()
 
-    def draw_canvas(self):
-        self("replot")
+
+    def execute_queue(self):
+        pass
 
 
 
