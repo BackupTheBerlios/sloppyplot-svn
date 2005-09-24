@@ -218,7 +218,7 @@ class Backend(backend.Backend):
     def export_datasets(self):
         # Export Datasets to temporary directory, so that
         # gnuplot can access them.
-        exporter = ExporterRegistry.new_instance('ASCII')
+        exporter = ExporterRegistry['ASCII']()
         
         destdir = self.tmpdir
         for (source, value) in self.exports.iteritems():
@@ -264,54 +264,10 @@ class Backend(backend.Backend):
         grid = uwrap.get(layer, 'grid')
         if grid is True: rv.append('set grid')
         else: rv.append('unset grid')
+        
+        rv.extend(self.update_legend(self, layer.legend, layer))
 
-        #:legend
-        # (aka key in gnuplot)
-        legend = uwrap.get(layer, 'legend')
-        if legend is not None:
-            #:legend.visible
-            visible = uwrap.get(legend, 'visible')
-            if visible is True:
-                #:legend.label
-                label = uwrap.get(legend, 'label')                
-                if label is not None: key_title = 'title "%s"' % label
-                else: key_title = ""
-
-                #:legend.border:OK
-                border = uwrap.get(legend, 'border')
-                if border is True: key_border = "box"
-                else: key_border = "nobox"
-
-                # legend positioning
-                position_mapping = {
-                    'center' : 'graph 0.5, graph 0.5',
-                    'lower left' : 'graph 0.0, graph 0.0',
-                    'center right' : 'graph 1.0, graph 0.5',
-                    'upper left' : 'graph 0.0, graph 1.0',
-                    'center left' : 'graph 0.0, graph 0.5',
-                    'upper right' : 'graph 1.0, graph 1.0',
-                    'lower right' : 'graph 1.0, graph 0.0',
-                    'upper center' : 'graph 0.5, graph 1.0',
-                    'lower center' : 'graph 0.5, graph 0.0',
-                    'outside' : 'outside'
-                    }
-                pos = uwrap.get(legend, 'position')
-                if pos == 'best':
-                    key_pos = ''
-                elif pos == 'at position':
-                    if legend.x is None and legend.y is None:
-                        key_pos = ''
-                    else:
-                        x = uwrap.get(legend, 'x')
-                        y = uwrap.get(legend, 'y')
-                        key_pos = 'graph %.2f, graph %.2f' % (x, y)
-                else:
-                    key_pos = position_mapping[pos]
-
-                rv.append("set key %(key_pos)s %(key_title)s %(key_border)s" % locals())
-            else:
-                rv.append("unset key")                
-
+        
         # axes
         for key, axis in layer.axes.iteritems():            
             # axis format
@@ -336,17 +292,7 @@ class Backend(backend.Backend):
             else:
                 logger.error("Axis scale '%s' not supported by this backend." % scale)
 
-        #:layer.labels
-        for label in layer.labels:                                    
-            if label.system == 0: # 0: data
-                coords = "at first %.2f, first %.2f" % (label.x, label.y)
-            elif label.system == 1: # 1: graph
-                coords = "at graph %.2f, graph %.2f" % (label.x, label.y)
-
-            map_align = {0:'center', 1:'left', 2:'right'}
-            align = map_align[label.halign]
-            rv.append('set label "%s" %s %s' % (label.text, coords, align) )
-
+        rv.extend(self.update_labels(layer))
 
         # lines
         line_cache = []
@@ -467,9 +413,84 @@ class Backend(backend.Backend):
     
     """
 
-    
-    def update_layer(self, layer):
+
+    def update_legend(self, legend, layer, updateinfo={}):
+        # updateinfo is ignored
+
+        cl = []
+        #:legend
+        # (aka key in gnuplot)
+        legend = uwrap.get(layer, 'legend')
+        if legend is not None:
+            #:legend.visible
+            visible = uwrap.get(legend, 'visible')
+            if visible is True:
+                #:legend.label
+                label = uwrap.get(legend, 'label')                
+                if label is not None: key_title = 'title "%s"' % label
+                else: key_title = ""
+
+                #:legend.border:OK
+                border = uwrap.get(legend, 'border')
+                if border is True: key_border = "box"
+                else: key_border = "nobox"
+
+                # legend positioning
+                position_mapping = {
+                    'center' : 'graph 0.5, graph 0.5',
+                    'lower left' : 'graph 0.0, graph 0.0',
+                    'center right' : 'graph 1.0, graph 0.5',
+                    'upper left' : 'graph 0.0, graph 1.0',
+                    'center left' : 'graph 0.0, graph 0.5',
+                    'upper right' : 'graph 1.0, graph 1.0',
+                    'lower right' : 'graph 1.0, graph 0.0',
+                    'upper center' : 'graph 0.5, graph 1.0',
+                    'lower center' : 'graph 0.5, graph 0.0',
+                    'outside' : 'outside'
+                    }
+                pos = uwrap.get(legend, 'position')
+                if pos == 'best':
+                    key_pos = ''
+                elif pos == 'at position':
+                    if legend.x is None and legend.y is None:
+                        key_pos = ''
+                    else:
+                        x = uwrap.get(legend, 'x')
+                        y = uwrap.get(legend, 'y')
+                        key_pos = 'graph %.2f, graph %.2f' % (x, y)
+                else:
+                    key_pos = position_mapping[pos]
+
+                cl.append("set key %(key_pos)s %(key_title)s %(key_border)s" % locals())
+            else:
+                cl.append("unset key")                
+
+        # TODO: we should add this to a queue and/or to the command list
+        # self.cmd_dict.update('legend', cl)
+        # self.cmd_queue.append(cl)
+        return cl
+
+    # This is inconsequent: then update_legend shouldn't need to have the legend passed on
+    def update_labels(self, layer, updateinfo={}):
+
+        cl = []
+        #:layer.labels
+        for label in layer.labels:                                    
+            if label.system == 0: # 0: data
+                coords = "at first %.2f, first %.2f" % (label.x, label.y)
+            elif label.system == 1: # 1: graph
+                coords = "at graph %.2f, graph %.2f" % (label.x, label.y)
+
+            map_align = {0:'center', 1:'left', 2:'right'}
+            align = map_align[label.halign]
+            cl.append('set label "%s" %s %s' % (label.text, coords, align) )
+
+        # self.cmd_dict.update('legend', cl)
+        # self.cmd_queue.append(cl)
+        return cl
+
         
+    def update_layer(self, layer):        
         pass
     
     def Xdraw(self):

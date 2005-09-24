@@ -281,8 +281,9 @@ class Backend( backend.Backend ):
     # Line
     #
     
-    def update_line(self, line, layer, axes=None):
-
+    def update_line(self, line, layer, axes=None, updateinfo={}):
+        # updateinfo is ignored
+        
         axes = axes or self.layer_to_axes[layer]
         omap = self.omaps[layer]
         line_cache = self.line_caches[layer]
@@ -369,7 +370,9 @@ class Backend( backend.Backend ):
 
         self.canvas.draw()        
     
-    def update_textlabel(self, label, layer, axes=None):        
+    def update_textlabel(self, label, layer, axes=None, updateinfo={}):
+        # updateinfo is ignored
+        
         axes = axes or self.layer_to_axes[layer]
         kwargs = self.label_kwargs(axes, label)
         if kwargs is None:
@@ -412,13 +415,14 @@ class Backend( backend.Backend ):
     # Legend
     #
     
-    def update_legend(self, legend, layer, axes=None):
+    def update_legend(self, legend, layer, axes=None, updateinfo={}):
+        # updateinfo is ignored
         axes = axes or self.layer_to_axes[layer]
         if legend is None:
             if axes.legend_ is not None:
                 axes.legend_ = None
             self.omaps[layer][legend] = None
-        else:                         
+        else:
             kw = self.legend_kwargs(legend, layer)
             border = kw.pop('border')
             visible = kw.pop('visible')
