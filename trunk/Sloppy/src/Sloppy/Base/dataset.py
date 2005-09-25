@@ -91,12 +91,12 @@ class Dataset(HasProps):
     #----------------------------------------------------------------------
     def revert_change(self, undolist=[]):
         self.change_counter -= 1
-        Signals.emit(self, 'changed')
+        Signals.emit(self, 'notify')
         undolist.append( UndoInfo(self.notify_change).describe("Notify") )
         
     def notify_change(self, undolist=[]):
         self.change_counter += 1        
-        Signals.emit(self, 'changed')
+        Signals.emit(self, 'notify')
         undolist.append( UndoInfo(self.revert_change).describe("Notify") )
 
     def has_changes(self, counter):

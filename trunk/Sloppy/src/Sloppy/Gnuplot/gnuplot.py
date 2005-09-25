@@ -69,6 +69,7 @@ class Backend(backend.Backend):
         # we keep an instance var 'cmd_list' which contains all commands
         # in the order that they should be executed
         self.cmd_list = []
+        self.cmd_dict = {}
 
     
     def connect(self):
@@ -265,88 +266,12 @@ class Backend(backend.Backend):
         if grid is True: rv.append('set grid')
         else: rv.append('unset grid')
         
-        rv.extend(self.update_legend(self, layer.legend, layer))
-
-        
-        # axes
-        for key, axis in layer.axes.iteritems():            
-            # axis format
-            format = uwrap.get(axis, 'format')
-            if format is not None: rv.append('set format %s "%s"' % (key, format))
-            else: rv.append('set format %s' % key)
-
-            # axis label
-            label = uwrap.get(axis, 'label')
-            if label is not None: rv.append('set %slabel "%s"' % (key, label))
-            else: rv.append('unset %slabel' % key)
-
-            # axis range
-            start = uwrap.get(axis, 'start','*')
-            end = uwrap.get(axis, 'end','*')
-            rv.append('set %srange [%s:%s]' % (key,start,end))
-
-            # axis scale
-            scale = uwrap.get(axis, 'scale')
-            if scale == 'linear': rv.append('unset log %s' % key)
-            elif scale == 'log': rv.append('set log %s' % key)
-            else:
-                logger.error("Axis scale '%s' not supported by this backend." % scale)
-
+        rv.extend(self.update_legend(layer))
+        rv.extend(self.update_axes(layer))
         rv.extend(self.update_labels(layer))
+        rv.extend(self.update_lines(layer))
 
-        # lines
-        line_cache = []
-        for line in layer.lines:
-            try:
-                if uwrap.get(line, 'visible') is False: continue
-
-                ds = self.get_line_source(line)
-                table = self.get_table(ds)
-                cx, cy = self.get_column_indices(line)
-                
-                # mark source for export            
-                filename = self.mark_for_export(ds)
-                if filename is None:
-                    continue
-                source = '"%s"' % filename
-
-                label = self.get_line_label(line, table=table, cy=cy)
-                if label is not None: title = 'title "%s"' % label
-                else: title = 'notitle'
-
-                using = 'using %s:%s' % (cx+1,cy+1)
-
-                # TODO: support 'style' and 'marker'
-                # with-clause
-                type = uwrap.get(line, 'style')
-                type_mappings = {'solid': 'w l'}
-                try:
-                    with = type_mappings[type]
-                except KeyError:
-                    with = ''
-                    logger.error('line type "%s" not supported by this backend.' % type )
-
-                # line width
-                width = uwrap.get(line, 'width')
-                width = 'lw %s' % str(width)
-            except backend.BackendError, msg:
-                logger.error("Error while processing line: %s" % msg)
-                continue
-            else:
-                # merge all of the above into a nice gnuplot command
-                line_cache.append( " ".join([source,using,with,width,title]) )
-
-
-
-        # construct plot command from line_cache
-        if len(line_cache) > 0:
-            rv.append("plot " + ",\\\n".join(line_cache))
-            #rv = "\n".join(rv)
-            return rv
-        else:            
-            logger.warn("Emtpy layer!")
-            return []
-
+        return rv
 
 
             
@@ -413,8 +338,96 @@ class Backend(backend.Backend):
     
     """
 
+    def update_axes(self, layer, updateinfo={}):
+        # updateinfo is ignored
+        cl = []
+        # axes
+        for key, axis in layer.axes.iteritems():            
+            # axis format
+            format = uwrap.get(axis, 'format')
+            if format is not None: cl.append('set format %s "%s"' % (key, format))
+            else: cl.append('set format %s' % key)
 
-    def update_legend(self, legend, layer, updateinfo={}):
+            # axis label
+            label = uwrap.get(axis, 'label')
+            if label is not None: cl.append('set %slabel "%s"' % (key, label))
+            else: cl.append('unset %slabel' % key)
+
+            # axis range
+            start = uwrap.get(axis, 'start','*')
+            end = uwrap.get(axis, 'end','*')
+            cl.append('set %srange [%s:%s]' % (key,start,end))
+
+            # axis scale
+            scale = uwrap.get(axis, 'scale')
+            if scale == 'linear': cl.append('unset log %s' % key)
+            elif scale == 'log': cl.append('set log %s' % key)
+            else:
+                logger.error("Axis scale '%s' not supported by this backend." % scale)
+
+        self.cmd_dict['axes'] = cl                
+        return cl
+
+    
+    def update_lines(self, layer, updateinfo={}):
+        # updateinfo is ignored
+
+        cl = []
+        # lines
+        line_cache = []
+        for line in layer.lines:
+            try:
+                if uwrap.get(line, 'visible') is False: continue
+
+                ds = self.get_line_source(line)
+                table = self.get_table(ds)
+                cx, cy = self.get_column_indices(line)
+                
+                # mark source for export            
+                filename = self.mark_for_export(ds)
+                if filename is None:
+                    continue
+                source = '"%s"' % filename
+
+                label = self.get_line_label(line, table=table, cy=cy)
+                if label is not None: title = 'title "%s"' % label
+                else: title = 'notitle'
+
+                using = 'using %s:%s' % (cx+1,cy+1)
+
+                # TODO: support 'style' and 'marker'
+                # with-clause
+                type = uwrap.get(line, 'style')
+                type_mappings = {'solid': 'w l'}
+                try:
+                    with = type_mappings[type]
+                except KeyError:
+                    with = ''
+                    logger.error('line type "%s" not supported by this backend.' % type )
+
+                # line width
+                width = uwrap.get(line, 'width')
+                width = 'lw %s' % str(width)
+            except backend.BackendError, msg:
+                logger.error("Error while processing line: %s" % msg)
+                continue
+            else:
+                # merge all of the above into a nice gnuplot command
+                line_cache.append( " ".join([source,using,with,width,title]) )
+
+        # construct plot command from line_cache
+        if len(line_cache) > 0:
+            cl.append("plot " + ",\\\n".join(line_cache))
+            #rv = "\n".join(rv)
+            self.cmd_dict['lines'] = cl
+            return cl
+        else:            
+            logger.warn("Emtpy layer!")
+            self.cmd_dict['lines'] = []            
+            return []
+
+
+    def update_legend(self, layer, updateinfo={}):
         # updateinfo is ignored
 
         cl = []
@@ -465,12 +478,10 @@ class Backend(backend.Backend):
             else:
                 cl.append("unset key")                
 
-        # TODO: we should add this to a queue and/or to the command list
-        # self.cmd_dict.update('legend', cl)
-        # self.cmd_queue.append(cl)
+        self.cmd_dict.update('legend', cl)
         return cl
 
-    # This is inconsequent: then update_legend shouldn't need to have the legend passed on
+
     def update_labels(self, layer, updateinfo={}):
 
         cl = []
@@ -485,8 +496,7 @@ class Backend(backend.Backend):
             align = map_align[label.halign]
             cl.append('set label "%s" %s %s' % (label.text, coords, align) )
 
-        # self.cmd_dict.update('legend', cl)
-        # self.cmd_queue.append(cl)
+        self.cmd_dict.update('labels', cl)    
         return cl
 
         
@@ -504,25 +514,33 @@ class Backend(backend.Backend):
         #for
 
         # clear command list
-        cl = self.cmd_list = []
+        cd = self.cmd_dict = []
 
-        # TEMPDIR
-        cl.append("#:TEMPDIR")
-        cl.append('cd "%s"' % self.tmpdir)
-        
-        # ENCODING
-        cl.append("#:ENCODING")
-	cl.append( "set encoding %s" % self.encoding )
-
-        # TERMINAL
-        cl.append("#:TERMINAL")
-        cl += self.terminal.build(self)
+        cd['tempdir'] = ['cd "%s"' % self.tmpdir]
+        cd['encoding'] = ['set encoding %s' % self.encoding]
+        cd['terminal'] = [self.terminal.build(self)]
         
         for layer in self.plot.layers:
             self.update_layer(layer)
 
         self.execute_queue()
 
+
+    def build_queue(self):
+        # right now we will build the complete cmd_dict in a certain
+        # order.  The long term goal should be, that the update functions
+        # not only update the appropriate section in the cmd_dict, but
+        # also provide some simple commands to replace the data, e.g.
+        # if a label is removed, then the appropriate label line would
+        # be removed from cmd_dict['labels'].  At the same time, the
+        # cmd_queue should contain something like 'unset label xxx'.
+        # Of course this requires a lot more work, so this is nothing
+        # for now.
+        #
+        
+        # 'lines' is last and contains the plot commands
+        order = ['tempdir', 'encoding', 'terminal', 'axes', 'labels', 'layer',
+                 'lines']
 
     def execute_queue(self):
         pass

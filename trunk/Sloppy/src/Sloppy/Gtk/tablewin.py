@@ -352,7 +352,7 @@ class DatasetWindow( gtk.Window ):
         rownr, colnr, column_object = self.popup_info        
         table = self.dataset.get_data()
 
-        cc = ColumnCalculator(self.app, self.dataset, colnr)        
+        cc = ColumnCalculator(self.project, self.dataset, colnr)        
         cc.show()
 
     def cb_column_insert(self, action):
@@ -472,12 +472,11 @@ class DatasetWindow( gtk.Window ):
 
 class ColumnCalculator(gtk.Window):
 
-    """
-    An experimental tool window to calculate columns according to some expression.
-    """
+    """ An experimental tool window to calculate columns according to
+    some expression.  """
 
-    def __init__(self, app, dataset, colnr):
-        self.app = app
+    def __init__(self, project, dataset, colnr):
+        self.project = project
         self.dataset = dataset
         self.colnr = colnr
         
@@ -556,7 +555,7 @@ class ColumnCalculator(gtk.Window):
             print "-- incompatible result --", result
             return
         self.dataset.notify_change(undolist=ul)
-        self.app.project.journal.add_undo(ul)
+        self.project.journal.append(ul)
 
      
 
