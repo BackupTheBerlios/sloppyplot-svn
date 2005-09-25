@@ -73,7 +73,7 @@ class UndoInfo:
         object with the given arguments and keyword arguments.
 
         The undolist returned by the called method is stored in this
-        method's argument `undoinfo`.
+        method's argument `undolist`.
         
         Returns the called method's return value.
         
@@ -86,6 +86,7 @@ class UndoInfo:
             old_len = len(undolist)
             self.kwargs.update( {'undolist' : undolist} )
             return_value = self.func(*self.args, **self.kwargs)
+            undolist.describe(self.doc)
             if len(undolist) == old_len:
                 raise UndoError("Undo list unchanged: No redo information returned by function %s" % str(self.func))                            
             return return_value
@@ -160,6 +161,7 @@ class UndoList( UserList.UserList, UndoInfo ):
                 info.execute(undolist=new_list)
         logger.debug("EOL")
         undolist.append(new_list.simplify())
+        undolist.describe(self.doc)
 
     def simplify(self, preserve_list=False):
         """
@@ -170,7 +172,11 @@ class UndoList( UserList.UserList, UndoInfo ):
 
         If the UndoList can be reduced to a NullUndo and if
         preserve_list is 'false' (default), then NullUndo is returned.
+
+        If the UndoList contained documentation, then this
+        documentation is used for the returned object.        
         """
+        
         infos = list()
         for info in self.data:
             info = info.simplify()
@@ -181,8 +187,11 @@ class UndoList( UserList.UserList, UndoInfo ):
             if len(infos) == 0:
                 return NullUndo()
             elif len(infos) == 1:
+                if self.doc is not None:
+                    infos[0].doc = self.doc
                 return infos[0]
 
+        ul = UndoList(infos).describe(self.doc)
         return UndoList(infos)
         
 
@@ -212,7 +221,6 @@ class UndoRedo:
             info = self.__undolist.pop()
             redolist = UndoList()
             return_value = info.execute(redolist)
-            redolist.describe(info.doc)
             self.__redolist.append(redolist.simplify())
             self.has_changed()
             return return_value
@@ -222,7 +230,6 @@ class UndoRedo:
             info = self.__redolist.pop()
             undolist = UndoList()
             return_value = info.execute(undolist)
-            undolist.describe(info.doc)
             self.__undolist.append(undolist.simplify())
             self.has_changed()
             return return_value

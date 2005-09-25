@@ -269,7 +269,7 @@ class Backend( backend.Backend ):
         axes.grid(grid)
                     
         #:layer.legend:OK
-        self.update_legend(layer.legend, layer)
+        self.update_legend(layer)
 
         #:layer.labels:OK
         axes.texts = []
@@ -415,9 +415,10 @@ class Backend( backend.Backend ):
     # Legend
     #
     
-    def update_legend(self, legend, layer, axes=None, updateinfo={}):
+    def update_legend(self, layer, axes=None, updateinfo={}):
         # updateinfo is ignored
         axes = axes or self.layer_to_axes[layer]
+        legend = layer.legend
         if legend is None:
             if axes.legend_ is not None:
                 axes.legend_ = None
