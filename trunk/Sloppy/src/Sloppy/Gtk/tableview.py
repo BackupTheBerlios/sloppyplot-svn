@@ -20,9 +20,6 @@
 # $Id$
 
 
-import logging
-logging.basicConfig()
-
 import pygtk # TBR
 pygtk.require('2.0') # TBR
 

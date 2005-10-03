@@ -25,7 +25,7 @@ Constant declarations.
 
 
 import logging
-logging.basicConfig()
+logger = logging.getLogger('Base.const')
 
 import os
 
@@ -39,7 +39,7 @@ def set_path(path):
 def internal_path(*path):
     global the_path
     if len(the_path) == 0:
-	logging.error("Fatal Error: internal path not set up properly!")
+	logger.error("Fatal Error: internal path not set up properly!")
 	raise SystemExit
     return os.path.join( the_path[-1], *path )
 

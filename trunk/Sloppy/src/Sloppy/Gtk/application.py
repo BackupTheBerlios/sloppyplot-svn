@@ -59,7 +59,7 @@ from Sloppy.Base.plugin import PluginRegistry
 from Sloppy.Base.dataio import ImporterRegistry, ExporterRegistry, importer_from_filename, Importer, ImportError
 
 from Sloppy.Gnuplot.terminal import PostscriptTerminal
-from options_dialog import OptionsDialog, NoOptionsError
+from options_dialog import OptionsDialog2, NoOptionsError
 
 from Sloppy.Lib.Undo import *
 from Sloppy.Lib import Signals
@@ -440,7 +440,8 @@ class GtkApplication(Application):
                  and win.get_plot() == plot) )
 
             if window is None:
-                window = MatplotlibWindow(self, project=self.project, plot=plot)                   
+                window = MatplotlibWindow(self, project=self.project, plot=plot)
+                ##window.set_transient_for(self.window)
                 self.window.subwindow_add(window)
 
             window.show()
@@ -509,19 +510,23 @@ class GtkApplication(Application):
         ##         'dashlength', 'linewidth', 'duplexing', 'rounded', 'fontname',
         ##         'fontsize', 'timestamp']          
         
-        dialog = OptionsDialog(PostscriptTerminal(), app.window)
+        dialog = OptionsDialog2(PostscriptTerminal(), parent=app.window)
         dialog.set_size_request(320,520)
 
         # determine requested postscript mode (ps or eps) from extension
         path, ext = os.path.splitext(filename)
         ext = ext.lower()
         if ext == '.eps':
-            dialog.container.mode = 'eps'
+            dialog.owner.mode = 'eps'
         elif ext == '.ps':
-            dialog.container.mode = 'landscape'
+            dialog.owner.mode = 'landscape'
             
         try:
             result = dialog.run()
+            if response == gtk.RESPONSE_ACCEPT:            
+                dialog.check_out()
+            else:
+                return
             terminal = dialog.container
         finally:
             dialog.destroy()
@@ -697,7 +702,7 @@ class GtkApplication(Application):
             importer = ImporterRegistry[importer_key]()
 
             try:
-                dialog = OptionsDialog(importer, self.window)
+                dialog = OptionsDialog2(importer, parent=self.window)
             except NoOptionsError:
                 pass
             else:
@@ -740,11 +745,13 @@ class GtkApplication(Application):
 
                 try:
                     result = dialog.run()
+                    if result == gtk.RESPONSE_ACCEPT:
+                        dialog.check_out
+                    else:
+                        return
                 finally:
                     dialog.destroy()
 
-                if result != gtk.RESPONSE_ACCEPT:
-                    return
 
             def set_text(queue):
                 while True:
@@ -770,7 +777,6 @@ class GtkApplication(Application):
 
         finally:
             chooser.destroy()
-
 
 
 

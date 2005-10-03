@@ -30,7 +30,8 @@ Credits go to Gustavo Carneiro.
 """
 
 import logging
-logging.basicConfig()
+logger = logging.getLogger('Gtk.gtkexcepthook')
+
 
 import gtk, pango
 
@@ -72,7 +73,7 @@ def _info(type, value, tb):
     textbuffer = textview.get_buffer()
     trace = StringIO()
     traceback.print_exception(type, value, tb, None, trace)
-    logging.critical("%s" % trace.getvalue())
+    logger.critical("%s" % trace.getvalue())
     textbuffer.set_text(trace.getvalue())
     textview.set_size_request(gtk.gdk.screen_width()/2, gtk.gdk.screen_height()/3)
 

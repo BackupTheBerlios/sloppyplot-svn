@@ -93,7 +93,7 @@ class MatplotlibWindow( gtk.Window ):
 
         gtk.Window.__init__(self)
         self.set_default_size(640,480)
-        #self.set_transient_for(app.window)
+
         self.is_fullscreen = False
         self.app = app
         self.disabled_groups = list()

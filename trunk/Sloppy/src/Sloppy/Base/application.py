@@ -19,11 +19,8 @@
 # $Id$
 
 import logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('application')
 
-cli_logger = logging.getLogger('cli')
-cli_logger.setLevel(logging.info)
 
 import os
 

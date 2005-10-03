@@ -29,6 +29,7 @@ import logging
 logger = logging.getLogger('gtk.uihelper')
 
 
+
 def add_actions(uimanager, key, actions, map=None):
     if map is not None:
         actions = map_actions(actions, map)
@@ -141,6 +142,8 @@ def construct_buttonbox(buttons,
         btnbox.pack_end(button,False,False)
 
     return btnbox
+
+
 
         
 # DEPRECATED?

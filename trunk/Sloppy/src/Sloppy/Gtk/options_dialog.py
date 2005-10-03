@@ -27,48 +27,130 @@ pygtk.require('2.0') # TBR
 
 import gtk, gobject
 
-from propwidgets import *
+
+from Sloppy.Lib.Props.Gtk import pwconnect
+from Sloppy.Lib.Props import pBoolean
+
 
 
 class NoOptionsError(Exception):
     pass
 
-class OptionsDialog(gtk.Dialog):
 
-    def __init__(self, container, parent=None):
-            
-        gtk.Dialog.__init__(self, "Options", parent,
-                            gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
+class OptionsDialog2(gtk.Dialog):
+
+    """
+    Note: run() does not check out the values, you have to do that yourself.
+    """
+
+    def __init__(self, owner, parent=None):
+        """
+        owner: instance of HasProps that owns the properties
+        parent: parent window
+        """
+        gtk.Dialog.__init__(self, "Edit Properties", parent,
+                            gtk.DIALOG_MODAL|gtk.DIALOG_DESTROY_WITH_PARENT,
                             (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
                              gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
 
-        self.container = container
 
-        if hasattr(container, 'public_props'):
-            props = container.public_props
-        else:
-            props = self.container.get_props().keys()
-
-        if len(props) == 0:
+        self.owner = owner
+        self.connectors = construct_connectors(owner)
+        if len(self.connectors) == 0:
             raise NoOptionsError
-
-        self.pwbox = PWTableBox(self.container, props)
-        self.pwbox.show()
         
-        frame = gtk.Frame("Options")
-        frame.add(self.pwbox)
+        self.tablewidget = construct_table(self.connectors)
+
+        frame = gtk.Frame('Edit')
+        frame.add(self.tablewidget)
         frame.show()
 
-        self.vbox.add(frame)
-        self.vbox.show()
+        self.vbox.pack_start(frame, False, True)
+        self.tablewidget.show()
 
+        
+    def check_in(self):
+        for c in self.connectors:
+            c.check_in()
 
+    def check_out(self):
+        for c in self.connectors:
+            c.check_out()
+        return self.owner
+           
     def run(self):
-        self.pwbox.check_in()
-        response = gtk.Dialog.run(self)
-        if response == gtk.RESPONSE_ACCEPT:
-            self.pwbox.check_out()
-        return response    
+        self.check_in()
+        return gtk.Dialog.run(self)
+
+
+
+#------------------------------------------------------------------------------
+# Convenience Methods To Construct Connectors And Container Widgets For Them.
+#
+       
+def construct_table(clist):
+    tw = gtk.Table(rows=len(clist), columns=2)
+    tooltips = gtk.Tooltips()
+
+    n = 0
+    for c in clist:                
+        # widget
+        tw.attach(c.widget, 1,2,n,n+1,
+                  xoptions=gtk.EXPAND|gtk.FILL,
+                  yoptions=0, xpadding=5, ypadding=1)
+
+        # label (put into an event box to display the tooltip)
+        label = gtk.Label(c.prop.blurb or c.key)
+        label.show()
+
+        ebox = gtk.EventBox()
+        ebox.add(label)
+        ebox.show()
+        if c.prop.doc is not None:
+            tooltips.set_tip(ebox, c.prop.doc)
+
+        tw.attach(ebox, 0,1,n,n+1,
+                  xoptions=gtk.EXPAND|gtk.FILL,
+                  yoptions=0, xpadding=5, ypadding=1)
+
+        n += 1
+    return tw
+
+
+def construct_connectors(owner):
+    """    
+    If owner.public_props is set, then the creation of connectors is limited
+    to items of this list.
+    """
+    if hasattr(owner, 'public_props'):
+        proplist = []
+        for key in owner.public_props:
+            proplist.append(owner.get_prop(key))
+    else:
+        proplist = owner.get_props().itervalues()
+    
+    clist = []
+    for prop in proplist:
+        
+        #
+        # Determine type of connector from widget type
+        # and construct it.
+        #
+        if prop.get_value_dict() is not None:
+            ctype = "ComboBox"
+        elif prop.get_value_list() is not None:
+            ctype = "ComboBox"
+        elif isinstance(prop, pBoolean):
+            ctype = "CheckButton"
+        else:
+            ctype = "Entry"
+
+        connector = pwconnect.connectors[ctype](owner, prop.name)
+        connector.create_widget()
+        connector.widget.show()        
+        clist.append(connector)
+
+    return clist
 
 
 

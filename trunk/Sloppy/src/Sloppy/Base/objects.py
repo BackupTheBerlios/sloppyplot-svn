@@ -43,14 +43,21 @@ map_halign = {'center':0, 'left':1, 'right': 2}
 # BASE OBJECTS
 #
 
+TEXTLABEL_TEXT = "Text to display"
+TEXTLABEL_X = "X-Position"
+TEXTLABEL_Y = "Y-Position"
+TEXTLABEL_SYSTEM = "Coordinate System"
+TEXTLABEL_VALIGN = "Vertical Alignment"
+TEXTLABEL_HALIGN = "Horizontal Alignment"
+
 class TextLabel(HasProps):
     " Single text label. "
-    text = pUnicode()
-    x = pFloat()
-    y = pFloat()
-    system = pInteger(MapValue(map_system), default=0)
-    valign = pInteger(MapValue(map_valign), default=0)
-    halign = pInteger(MapValue(map_halign), default=0)
+    text = pUnicode(doc=TEXTLABEL_TEXT)
+    x = pFloat(doc=TEXTLABEL_X)
+    y = pFloat(doc=TEXTLABEL_Y)
+    system = pInteger(ValueDict(map_system), default=0, doc=TEXTLABEL_SYSTEM)
+    valign = pInteger(ValueDict(map_valign), default=0, doc=TEXTLABEL_VALIGN)
+    halign = pInteger(ValueDict(map_halign), default=0, doc=TEXTLABEL_HALIGN)
     
 
 

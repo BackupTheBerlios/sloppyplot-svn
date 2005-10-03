@@ -20,7 +20,7 @@
 
 
 import logging
-logging.basicConfig()
+logger = logging.getLogger('Gtk.treeview')
 
 import pygtk # TBR
 pygtk.require('2.0') # TBR
@@ -129,7 +129,7 @@ class ProjectTreeView( gtk.TreeView ):
         if not self._project:
             return
 
-	logging.debug("self._project: %s" % self._project)
+	logger.debug("self._project: %s" % self._project)
 	
         # add Plots
         def add_plot_object(plots, model, parent=None):            
@@ -227,7 +227,7 @@ class ProjectTreeView( gtk.TreeView ):
         " Returns 2-tuple ([plots], [datasets]). "
         (model, pathlist) = self.get_selection().get_selected_rows()
         objects = [self.get_object_by_path(path) for path in pathlist]
-        logging.debug("object[0] = %s" % objects[0])
+        logger.debug("object[0] = %s" % objects[0])
         plots = [obj for obj in objects if isinstance(obj,Plot)]
         datasets = [obj for obj in objects if isinstance(obj,Dataset)]
         return (plots, datasets)

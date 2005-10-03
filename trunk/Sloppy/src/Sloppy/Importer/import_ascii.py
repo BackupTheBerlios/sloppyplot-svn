@@ -19,9 +19,6 @@
 # $Id$
 
 
-import logging
-logger = logging.getLogger('Importer.import_ascii')
-
 import re
 
 from Sloppy.Base.dataset import *
@@ -32,13 +29,18 @@ from Sloppy.Lib.Props import *
 from Sloppy.Lib.Signals import *
 
 
+# This must be at the end, because otherwise we might import the
+# logger object in the import statements above!
+import logging
+logger = logging.getLogger('import.ascii')
+
+
             
 class Importer(dataio.Importer):
 
     extensions = ['dat', 'txt']
     author = "Niklas Volbers"
     blurb = "ASCII"
-
 
     #----------------------------------------------------------------------
     # Properties
@@ -78,7 +80,7 @@ class Importer(dataio.Importer):
     #
     
     def read_table_from_stream(self, fd):
-
+       
         # determine optional arguments
         typecodes = self.typecodes
         ncols = self.ncols
@@ -109,8 +111,8 @@ class Importer(dataio.Importer):
             else:
                 delimiter = '[\s\t]*'
             fd.seek(rewind)
-                
-        logging.debug("determined delimiter: %s" % delimiter)
+
+        logger.debug("determined delimiter: %s" % delimiter)
         
         # If a table or a list of designations is given, then we will
         # skip the column count determination and the creation of a
@@ -121,16 +123,22 @@ class Importer(dataio.Importer):
             if ncols is None:
                 rewind = fd.tell()
                 line = fd.readline()
-                ncols = len(line.split(delimiter))
-                fd.seek(rewind)
-                logger.debug("# of columns to be expected: %d" % ncols)
 
+                cregexp = re.compile(delimiter)
+                matches = [match for match in cregexp.split(line) if len(match) > 0]
+                logger.debug("MATCHES = %s" % str(matches))
+                ncols = len(matches)
+               
+                fd.seek(rewind)
 
             # create new Table
             tbl = Table(nrows=self.growth_offset, ncols=ncols, typecodes=typecodes)
         else:
             tbl = self.table
-            
+
+        logger.debug("# of columns to be expected: %d" % ncols)
+
+        
         # make sure existing Table has at least one entry.
         if tbl.nrows == 0:
             tbl.resize(1)
@@ -162,43 +170,29 @@ class Importer(dataio.Importer):
         for column in tbl.get_columns():
             column.designation = designations[n]
             n += 1
-
-        #
+        
         # Create regular expression used to match the lines.
-        #
-        expmap = {'number' : '([-+]?[\d.]+)',
-                  'string' : '(\".*?\")',
-                  'eol' :'\s*(?:\#+.*)?$',
-                  'bol' : '\s*',
-                  'delimiter' : delimiter}
-    
-        tcmap = {'d' : expmap['number'],
-                 'f' : expmap['number']}
+        cregexp = re.compile(delimiter)
 
-        if len(typecodes) > 1:
-            regexp = [tcmap[tc] for tc in typecodes]
-        else:
-            regexp = [tcmap[typecodes] for n in range(ncols)]
-
-        regexp = expmap['bol'] + expmap['delimiter'].join(regexp) + expmap['eol']
-        cregexp = re.compile(regexp)
-        logger.info("Regular Expression is: %s" % regexp)
 
         #
         # read in file line by line
         #
+        logger.debug("Start reading ASCII file.")
         skipcount = 0
         row = fd.readline()        
         while len(row) > 0:
-            matches = cregexp.match(row)
-            if matches is None:
+
+            matches = [match for match in cregexp.split(row) if len(match) > 0]
+            logger.debug("MATCHES = %s" % str(matches))
+            if len(matches) == 0:
                 skipcount += 1
                 if skipcount > 100:
                     Signals.emit("ask-for-confirmation", "Warning: More than 100 lines skipped recently. Should we continue with this file?")
                     skipcount = 0
             else:
                 try:
-                    values = map(lambda x, c: c(x), matches.groups(), converters)
+                    values = map(lambda x, c: c(x), matches, converters)
                 except ValueError, msg:
                     #logger.warn("Skipped: %s (%s)" % (row,msg))
                     row = fd.readline()
@@ -223,6 +217,8 @@ class Importer(dataio.Importer):
                     iter = iter.next()
 
             row = fd.readline()
+
+        logger.info("Finished reading ASCII file.")
         
         # Resize dataset to real size, i.e. the number
         # of rows that have actually been read.

@@ -36,7 +36,7 @@ import gtk
 
 __all__ = ['Connector', 'connectors',
            #
-           'Entry', 'ComboBox', 'CheckButton'
+           'Entry', 'ComboBox', 'CheckButton',
            ]
 
 
@@ -148,6 +148,10 @@ class ComboBox(Connector):
     
     widget_type = gtk.ComboBox
 
+    def init(self):
+        self.value_dict = {}
+        self.value_list = []
+        
     def use_widget(self, widget):
         Connector.use_widget(self, widget)
 
@@ -160,9 +164,19 @@ class ComboBox(Connector):
 
         # fill combo
         model.clear()
-        value_list = self.prop.valid_values()
-        for value in value_list:
-            model.append((value or "<None>", value) )
+        value_dict = self.prop.get_value_dict()
+        if value_dict is not None:
+            for key, value in value_dict.dict.iteritems():
+                model.append((key or "<None>", value))
+                self.value_dict[value] = value
+                self.value_list.append(value)
+        else:
+            # if no ValueDict was found, try ValueList
+            value_list = self.prop.get_value_list()
+            for value in value_list.values:
+                model.append((value or "<None>", value))
+                self.value_dict[value] = value
+                self.value_list.append(value)                
 
             
     #----------------------------------------------------------------------
@@ -170,10 +184,8 @@ class ComboBox(Connector):
     
     def check_in(self):
         try:
-            print self.prop.description(), self.prop.name
             value = self.get_value()
-            value_list = self.prop.valid_values()
-            index = value_list.index(self.get_value())
+            index = self.value_list.index(value)
         except:
             raise ValueError("Failed to retrieve prop value '%s' in list of available values '%s'" % (self.get_value(), value_list))
 
@@ -229,6 +241,3 @@ class CheckButton(Connector):
         self.set_value(value)
 
 connectors['CheckButton'] = CheckButton
-
-
-

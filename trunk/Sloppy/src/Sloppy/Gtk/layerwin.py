@@ -19,11 +19,7 @@
 # $Id$
 
 
-import logging
-logging.basicConfig()
-
 import gtk
-
 
 from Sloppy.Lib.Undo import UndoList, UndoInfo, FakeUndoInfo, NullUndo, ulist
 from Sloppy.Lib import Signals

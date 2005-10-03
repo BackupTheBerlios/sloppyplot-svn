@@ -33,9 +33,6 @@
 # - possible
 
 
-import logging
-logging.basicConfig()
-
 import re
 
 from Sloppy.Base import dataio

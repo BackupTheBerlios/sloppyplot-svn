@@ -17,7 +17,7 @@ class Recipe(HasProps):
     rating = Prop(CheckValid(['gross', 'yummy', 'soso']))
     how_often_cooked = Prop(Coerce(int), CheckBounds(min=0))
     weak_reference = pWeakref(CheckType(DummyClass))
-    units = Prop(MapValue({'g':'gramm', 'l':'litre'}))
+    units = Prop(ValueDict({'g':'gramm', 'l':'litre'}))
 
 class SimpleTestCase(unittest.TestCase):  
 

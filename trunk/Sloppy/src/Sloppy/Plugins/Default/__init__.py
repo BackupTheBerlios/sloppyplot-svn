@@ -59,14 +59,17 @@ class Plugin:
         axis = layer.yaxis
         if axis.scale != 'log':
             uwrap.set(axis, scale='log', undolist=ul)
+            updateinfo.update['scale'] = 'log'
+            
             start = uwrap.get(axis, 'start')
             if start is not None and start < 0:
                 uwrap.set(axis, start=None, undolist=ul)
+                updateinfo.update['start'] = None
         else:
             uwrap.set(axis, scale='linear', undolist=ul)
 
         # TODO: replace by something like
-        # Signals.emit(layer, "notify", updateinfo={'yaxis': {scale='linear'}})
+        #uwrap.emit_last(layer, "notify::axes", updateinfo=updateinfo, undolist=ul)
         uwrap.emit_last( plot, "plot-changed", undolist=ul )
         undolist.append(ul)
 

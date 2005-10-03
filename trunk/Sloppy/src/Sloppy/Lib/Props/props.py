@@ -23,7 +23,7 @@
 pUnicode, pInteger, pFloat, pWeakref, pDict
 
 @group checks: Coerce, CheckRegexp, CheckType, CheckTuple, CheckAll,
-CheckBounds, CheckValid, CheckInvalid, MapValue
+CheckBounds, CheckValid, CheckInvalid, ValueDict
 """
 
 import weakref
@@ -40,7 +40,7 @@ __all__ = ["HasProps",
            "Prop", "pInteger", "pFloat", "pWeakref", "pKeyword", "pString",
            "pBoolean", "pList", "pDictionary", "pDict", "pUnicode",
            #
-           "MapValue", # experimental
+           "ValueDict", # experimental
            #
            "Check", "Transformation", "Coerce", "CheckRegexp", "CheckType",
            "CheckTuple", "CheckAll", "CheckBounds", "CheckValid", "CheckInvalid"
@@ -307,24 +307,24 @@ class CheckBounds(Check):
 # TESTING AREA
 #
 
-class MapValue(Transformation):
+class ValueDict(Transformation):
 
     """ Map the given value according to the dict.
 
     @todo: Not yet finished.
     """
     
-    def __init__(self, mapping):
-        self.mapping = mapping
-        self.values = mapping.values()
+    def __init__(self, adict):
+        self.dict = adict
+        self.values = adict.values()
 
     def __call__(self, value):
         if value in self.values:
             return value
         try:
-            return self.mapping[value]
+            return self.dict[value]
         except KeyError:
-            raise ValueError("Could not find value '%s' in the list of mappings '%s'" % (value, self.mapping))
+            raise ValueError("Could not find value '%s' in the list of mappings '%s'" % (value, self.dict))
 
 
 
@@ -385,6 +385,22 @@ class Prop:
     # Helper methods for introspection
     #
 
+    def get_value_dict(self):
+        """ Return first instance of ValueDict or None. """
+        for item in self.check.items:
+            if isinstance(item, ValueDict):
+                return item
+        else:
+            return None
+
+    def get_value_list(self):
+        """ Return first instance of CheckValid or None. """
+        for item in self.check.items:
+            if isinstance(item, CheckValid):
+                return item
+        else:
+            return None
+        
     def valid_values(self):
         """ Collect all values of the prop specified by CheckValid. """
         values = []
@@ -430,6 +446,7 @@ class pList(Prop):
 
         def __init__(self, check):
             self.check = check
+            self.items = [] # needed because Prop.check requires such an item!
 
         def __call__(self, value):
             if isinstance(value, TypedList):
@@ -456,6 +473,7 @@ class pDictionary(Prop):
 
         def __init__(self, check):
             self.check = check
+            self.items = [] # needed because Prop.check requires such an item!            
 
         def __call__(self, value):
             if isinstance(value, TypedDict):

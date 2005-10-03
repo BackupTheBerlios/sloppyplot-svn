@@ -1,7 +1,7 @@
 
 
 import logging
-logging.basicConfig()
+logger = logging.getLogger('Cli.main')
 
 from Sloppy.Base.project import *
 from Sloppy.Base import const
@@ -15,10 +15,10 @@ from optparse import OptionParser
 
 def load_file(filename):
     try:
-        logging.info("Loading %s" % filename)
+        logger.info("Loading %s" % filename)
         return create_project_from_file(filename)
     except IOError:
-        logging.error("File not found error.")
+        logger.error("File not found error.")
         raise SystemExit
 
 
@@ -39,19 +39,19 @@ args = ["-f", os.path.join(const.internal_path(const.PATH_EXAMPLE),"zno.spj"), "
 
 #------------------------------------------------------------------------------
 # process options
-logging.debug("Supplied options: %s" % options)
+logger.debug("Supplied options: %s" % options)
 
-logger = logging.getLogger('')
+logger = logger.getLogger('')
 if options.debug is True:
     print "(debug mode)"
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logger.DEBUG)
 else:
     if options.verbose is False:
         print "(quiet mode)"
-        logger.setLevel(logging.WARNING)
+        logger.setLevel(logger.WARNING)
     else:
         print "(normal mode)"
-        logger.setLevel(logging.INFO)
+        logger.setLevel(logger.INFO)
 
 
     
@@ -62,12 +62,12 @@ while len(args) > 0:
     arg = args.pop()
 
     if arg == "dump":
-        logging.info("Dump !")
+        logger.info("Dump !")
         if not options.filename:
             raise MissingArgument
         print load_file(options.filename)
     elif arg == "plot":
-        logging.info("Plot !")
+        logger.info("Plot !")
         if not options.filename:
             raise MissingArgument
         project = load_file(options.filename)

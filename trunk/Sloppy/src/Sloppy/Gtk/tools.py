@@ -31,13 +31,16 @@ import gtk
 import uihelper
 from dock import *
 
+from options_dialog import OptionsDialog2
+
+
 from Sloppy.Lib import Signals
-from Sloppy.Lib.Undo import ulist
+from Sloppy.Lib.Undo import ulist, UndoList
 from Sloppy.Lib.ElementTree.ElementTree import Element, SubElement
 
 from Sloppy.Base import uwrap, error
-
-
+from Sloppy.Lib.Props.Gtk import pwconnect
+from Sloppy.Lib.Props import pBoolean
 
 
 def create_changeset(container, working_copy):
@@ -392,7 +395,7 @@ class LabelsTool(Tool):
 
 
     def edit(self, label):
-        dialog = ModifyHasPropsDialog(label)
+        dialog = OptionsDialog2(label)
         try:           
             response = dialog.run()
             if response == gtk.RESPONSE_ACCEPT:
@@ -423,6 +426,8 @@ class LabelsTool(Tool):
         uwrap.emit_last(self.layer, 'notify::labels',
                         updateinfo={'edit' : label},
                         undolist=ul)
+        
+        
         project.journal.append(ul)    
                 
 
@@ -468,52 +473,6 @@ class LabelsTool(Tool):
 
 
 
-import propwidgets
-from Sloppy.Lib.Undo import UndoList
-class ModifyHasPropsDialog(gtk.Dialog):
-
-    def __init__(self, owner):
-
-        gtk.Dialog.__init__(self, "Edit Properties", None,
-                            gtk.DIALOG_MODAL|gtk.DIALOG_DESTROY_WITH_PARENT,
-                            (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
-                             gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
-
-        self.owner = owner
-        
-        self.pwdict = dict()
-        
-        pwlist = list()
-        keys = owner.get_props().keys()
-        for key in keys:
-            pw = propwidgets.construct_pw(owner, key)
-            self.pwdict[key] = pw
-            pwlist.append(pw)
-
-        self.tablewidget = propwidgets.construct_pw_table(pwlist)
-
-        frame = gtk.Frame('Edit')
-        frame.add(self.tablewidget)
-        frame.show()
-
-        self.vbox.pack_start(frame, False, True)
-        self.tablewidget.show()
-                    
-        
-    def check_in(self):
-        for pw in self.pwdict.itervalues():
-            pw.check_in()
-
-    def check_out(self, undolist=[]):
-        ul = UndoList().describe("Set Properties")
-        for pw in self.pwdict.itervalues():
-            pw.check_out(undolist=ul)
-        undolist.append(ul)            
-        return self.owner
-           
-    def run(self):
-        self.check_in()
-        return gtk.Dialog.run(self)
 
     
 #------------------------------------------------------------------------------

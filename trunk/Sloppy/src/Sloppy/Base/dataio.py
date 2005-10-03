@@ -19,9 +19,6 @@
 # $Id$
 
 
-import logging
-logging.basicConfig()
-
 import os.path
 
 from Sloppy.Base.table import table_to_array, array_to_table, Table

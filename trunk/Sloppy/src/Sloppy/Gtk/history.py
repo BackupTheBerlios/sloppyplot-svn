@@ -20,7 +20,7 @@
 
 
 import logging
-logging.basicConfig()
+logger = logging.getLogger('Gtk.history')
 
 import gtk
 
@@ -199,11 +199,11 @@ class GnuplotHistory( gtk.Alignment):
 
 
     def cb_previous(self, widget):
-        logging.debug("Going to previous message.")
+        logger.debug("Going to previous message.")
     def cb_next(self, widget):
-        logging.debug("Going to next message.")
+        logger.debug("Going to next message.")
     def cb_clear(self, widget):
-        logging.debug("Clearing message.")
+        logger.debug("Clearing message.")
         self.backend.history = []
         self.model.clear()
     def cb_hide(self, widget):
