@@ -1,32 +1,57 @@
 - renamed update_sobject with update_layer.  This is more consistent!
-- disconnect signals if project/plot/layer changes.
+
+- disconnect signals if project/plot/layer changes.  fixed log problem
+
+- with matplotlib.  This was actually a matplotlib problem which
+  occured when legend placement was 'best'.
+
+- Undo/Redo text is now properly displayed in the menu.
+
+- Added support for ValueDict in pwconnect.ComboBox
+
+- Replaced OptionsDialog by a far better one, which also provides tooltips
+  for the items.
 
 
 
-for 0.4.4:
+TODO for 0.4.4:
 
-clean up:
+- remove print statements and completely replace them by logging
+calls.
 
-- fix log problem with matplotlib
+- logging modes:
+  - debug = show debug messages in both console and file handler
+  - normal = show info messages 
+  - quiet = only show error messages
 
-- add pwconnect to SVN
-
-- don't update tools window if it is hidden, i.e. disconnect signals!
+- consistency: ValueDict and ValueList (i.e. remove CheckValue)
 
 - allow to open tool window from mpl window and make the corresponding
 plot the active plot in the tool window.
 
-new features:
+- use OptionsDialog2
 
-- add Mapping to pwconnect, so that we can use the mapping for TextLabel
+- add documentation for import options!
 
-   0 : axes
-   1 : system
-   2 : ?
 
+for 0.4.5:
 
 - add labels to Gnuplot! => works, but we need to include the
 'auto-update' functionality, then it is complete.
+
+- toggle_logscale_y : notify correctly (notify::axes ?)
+
+- let layerwindow use pwconnect (or whatever it is called) and
+deprecate propwidgets.
+
+- add documentation for objects.
+
+- don't update tools window if it is hidden, i.e. disconnect signals!
+
+- what about Signals in classes?  HasSignals?
+
+
+
 
 
 
@@ -98,19 +123,6 @@ Importer
 
 Plugins:
 --------
-
-- toggle_logscale_y : we should clarify: It should be sufficient to
-  emit a 'changed' signal on the layer. BTW, I need to rename the 
-  'plot-changed' signals to 'changed'.  maybe 'notify' ???
-
-
-  - Another idea: plot 'changed', but you can look up which part did exactly
-    change.
-    
-    Then we come back to the ::notify problem... 
-    
-    (A) Immediately notify of any change.
-    (B) Collect changes, then notify.
 
 - reverse axes.
 
