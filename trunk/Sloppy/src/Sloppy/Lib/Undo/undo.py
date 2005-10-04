@@ -191,8 +191,7 @@ class UndoList( UserList.UserList, UndoInfo ):
                     infos[0].doc = self.doc
                 return infos[0]
 
-        ul = UndoList(infos).describe(self.doc)
-        return UndoList(infos)
+        return UndoList(infos).describe(self.doc)
         
 
     def dump(self, detailed=False, indent=0):
