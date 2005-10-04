@@ -221,6 +221,10 @@ class Backend( backend.Backend ):
         axes.lines = []
         line_cache = self.line_caches[layer] = []        
 
+        #:layer.lines:OK
+        for line in layer.lines:
+            self.update_line(line, layer, axes=axes)
+
         #:layer.axes
         for (key, axis) in layer.axes.iteritems():
             #:axis.label
@@ -231,7 +235,9 @@ class Backend( backend.Backend ):
             scale = uwrap.get(axis, 'scale')
             start = uwrap.get(axis, 'start')
             end = uwrap.get(axis, 'end')
-            print "START = %s, END = %s" % (str(start), str(end))
+
+            logger.debug("start = %s; end = %s" % (start, end))
+            
             if key == 'x':
                 set_label = axes.set_xlabel
                 set_scale = axes.set_xscale
@@ -249,10 +255,6 @@ class Backend( backend.Backend ):
             if scale is not None: set_scale(scale)
             if start is not None: set_start(start)
             if end is not None: set_end(end)
-
-        #:layer.lines:OK
-        for line in layer.lines:
-            self.update_line(line, layer, axes=axes)
             
         #:layer.visible
         if uwrap.get(layer, 'visible') is False:

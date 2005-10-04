@@ -400,7 +400,7 @@ def save_project(spj, filename=None, path=None):
         #
 
         # add Dataset files to tempdir
-        exporter = ExporterRegistry.new_instance(DEFAULT_FF)
+        exporter = ExporterRegistry[DEFAULT_FF]()
 
         dsdir = os.path.join(tempdir, 'datasets')
         os.mkdir(dsdir)

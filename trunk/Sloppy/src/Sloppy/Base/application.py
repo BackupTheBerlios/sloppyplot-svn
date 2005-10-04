@@ -207,8 +207,9 @@ class Application(object):
             eRecentFiles.clear()
         
         for file in self.recent_files:
-            eFile = SubElement(eRecentFiles, "File")
+            eFile = Element("File")
             eFile.text = unicode(file)
+            eRecentFiles.append(eFile)
 
             
     #----------------------------------------------------------------------

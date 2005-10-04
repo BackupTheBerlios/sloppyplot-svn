@@ -478,7 +478,7 @@ class Backend(backend.Backend):
             else:
                 cl.append("unset key")                
 
-        self.cmd_dict.update('legend', cl)
+        self.cmd_dict['legend'] = cl
         return cl
 
 
@@ -496,7 +496,7 @@ class Backend(backend.Backend):
             align = map_align[label.halign]
             cl.append('set label "%s" %s %s' % (label.text, coords, align) )
 
-        self.cmd_dict.update('labels', cl)    
+        self.cmd_dict['labels'] = cl
         return cl
 
         
