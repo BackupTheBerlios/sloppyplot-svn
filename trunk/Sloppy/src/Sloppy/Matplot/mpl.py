@@ -343,6 +343,7 @@ class Backend( backend.Backend ):
                         linestyle=style,
                         marker=marker,
                         color=color)
+
         line_cache.append(l)
         omap[line] = l        
 

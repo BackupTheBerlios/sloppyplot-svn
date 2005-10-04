@@ -16,6 +16,8 @@
 
 TODO for 0.4.4:
 
+- add the possibility in statusbar to show the column label/key
+
 - remove print statements and completely replace them by logging
 calls.
 
