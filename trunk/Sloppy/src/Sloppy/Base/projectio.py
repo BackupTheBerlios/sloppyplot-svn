@@ -36,10 +36,11 @@ import tempfile
 import os
 import shutil
 
+from Numeric import *
+
+#------------------------------------------------------------------------------
 import logging
 logger = logging.getLogger('Base.projectio')
-
-from Numeric import *
 
 
 DEFAULT_FF = "SIF"
@@ -111,7 +112,6 @@ def new_label(spj, element):
     text = element.text
     element.attrib['text'] = text
     label = TextLabel(**element.attrib)
-    print "Added new label ", label
     return label
 
 def new_line(spj, element):

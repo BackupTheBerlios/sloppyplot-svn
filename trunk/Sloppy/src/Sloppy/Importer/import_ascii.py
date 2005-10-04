@@ -47,9 +47,11 @@ class Importer(dataio.Importer):
     #
     
     delimiter = pString(CheckValid([None,',', '\t',';', '\s*']),
-                        blurb ="Delimiter")
+                        blurb ="Delimiter",
+                        doc="Column delimiter that separates the columns.")
     
-    custom_delimiter = pString(blurb="Custom delimiter used if delimiter is None.")
+    custom_delimiter = pString(blurb="Custom Delimiter",
+                               doc="Custom delimiter used if delimiter is None.")
     
     ncols = pInteger(CheckBounds(min=0), default=None,
                       blurb="Number of columns")

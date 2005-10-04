@@ -68,6 +68,8 @@ class Column(HasProps):
     query = pString()
     label = pUnicode()
     data = pArray(rank=1)
+
+    public_props = ['key', 'label', 'designation']
                                    
     def __str__(self):
         return "%s (%s): %s" % (self.key, self.designation, self.label)

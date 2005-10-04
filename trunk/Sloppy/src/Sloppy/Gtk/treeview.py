@@ -19,9 +19,6 @@
 # $Id$
 
 
-import logging
-logger = logging.getLogger('Gtk.treeview')
-
 import pygtk # TBR
 pygtk.require('2.0') # TBR
 
@@ -35,7 +32,11 @@ from Sloppy.Base import pdict, uwrap
 
 from Sloppy.Lib import Signals
 
-# ----------------------------------------------------------------------
+#------------------------------------------------------------------------------
+import logging
+logger = logging.getLogger('Gtk.treeview')
+
+
 
 class ProjectTreeView( gtk.TreeView ):
 

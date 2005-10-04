@@ -19,9 +19,6 @@
 # $Id$
 
 
-import logging
-logger = logging.getLogger('Gtk.tablewin')
-
 import pygtk # TBR
 pygtk.require('2.0') # TBR
 
@@ -41,6 +38,12 @@ from tableview import TableView
 import uihelper
 import propwidgets
 
+from options_dialog import OptionsDialog
+
+
+#------------------------------------------------------------------------------
+import logging
+logger = logging.getLogger('Gtk.tablewin')
 
 
 class DatasetWindow( gtk.Window ):    
@@ -395,12 +398,16 @@ class DatasetWindow( gtk.Window ):
         rownr, colnr, column_object = self.popup_info
         table = self.dataset.get_data()
 
-        dialog = ColumnPropertiesDialog(table.get_column(colnr))
+        column = table.get_column(colnr)
+        dialog = OptionsDialog(column.copy())
         try:
             response = dialog.run()
             if response == gtk.RESPONSE_ACCEPT:
+                new_column = dialog.check_out()
+                changeset = column.create_changeset(new_column)
+                
                 ul = UndoList().describe("Update Columns")
-                dialog.check_out(undolist=ul)
+                uwrap.set(column, **changeset)
                 uwrap.emit_last(table, 'update-columns', undolist=ul)
                 self.project.journal.append(ul)
         finally:
@@ -558,54 +565,6 @@ class ColumnCalculator(gtk.Window):
         self.project.journal.append(ul)
 
      
-
-
-
-class ColumnPropertiesDialog(gtk.Dialog):
-
-    def __init__(self, column):
-
-        gtk.Dialog.__init__(self, "Column Properties", None,
-                            gtk.DIALOG_MODAL|gtk.DIALOG_DESTROY_WITH_PARENT,
-                            (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
-                             gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
-
-        self.column = column
-        
-        self.pwdict = dict()
-        
-        pwlist = list()
-        keys = ['key', 'designation', 'label']
-        for key in keys:
-            pw = propwidgets.construct_pw(column, key)
-            self.pwdict[key] = pw
-            pwlist.append(pw)
-
-        self.tablewidget = propwidgets.construct_pw_table(pwlist)
-
-        frame = gtk.Frame('Edit Column')
-        frame.add(self.tablewidget)
-        frame.show()
-
-        self.vbox.pack_start(frame, False, True)
-        self.tablewidget.show()
-                    
-        
-    def check_in(self):
-        for pw in self.pwdict.itervalues():
-            pw.check_in()
-
-    def check_out(self, undolist=[]):
-        ul = UndoList().describe("Set Column Properties")
-        for pw in self.pwdict.itervalues():
-            pw.check_out(undolist=ul)
-
-        undolist.append(ul)
-            
-
-    def run(self):
-        self.check_in()
-        return gtk.Dialog.run(self)
 
 
 
@@ -767,11 +726,11 @@ class ModifyTableDialog(gtk.Dialog):
             return
         column = model.get_value( model.get_iter(pathlist[0]), 0)
 
-        dialog = ColumnPropertiesDialog(column)
+        dialog = OptionsDialog(column)
         try:
             response = dialog.run()
             if response == gtk.RESPONSE_ACCEPT:
-                dialog.check_out()
+                dialog.check_out()                
         finally:
             dialog.destroy()
         self.cview.grab_focus()

@@ -31,7 +31,7 @@ import gtk
 import uihelper
 from dock import *
 
-from options_dialog import OptionsDialog2
+from options_dialog import OptionsDialog
 
 
 from Sloppy.Lib import Signals
@@ -42,15 +42,11 @@ from Sloppy.Base import uwrap, error
 from Sloppy.Lib.Props.Gtk import pwconnect
 from Sloppy.Lib.Props import pBoolean
 
+#------------------------------------------------------------------------------
+import logging
+logger = logging.getLogger('Gtk.tools')
 
-def create_changeset(container, working_copy):
-    # find differences to old Container
-    changeset = {}
-    for key, value in working_copy.get_values().iteritems():
-        old_value = container.get_value(key)
-        if value != old_value:
-            changeset[key] = value
-    return changeset       
+
 
 
 #------------------------------------------------------------------------------
@@ -395,7 +391,7 @@ class LabelsTool(Tool):
 
 
     def edit(self, label):
-        dialog = OptionsDialog2(label)
+        dialog = OptionsDialog(label)
         try:           
             response = dialog.run()
             if response == gtk.RESPONSE_ACCEPT:
@@ -418,7 +414,7 @@ class LabelsTool(Tool):
             
         label = model.get_value( model.get_iter(pathlist[0]), 0)
         new_label = self.edit(label.copy())
-        changeset = create_changeset(label, new_label)
+        changeset = label.create_changeset(new_label)
         
         ul = UndoList().describe("Update label.")
         changeset['undolist'] = ul
@@ -427,8 +423,9 @@ class LabelsTool(Tool):
                         updateinfo={'edit' : label},
                         undolist=ul)
         
-        
-        project.journal.append(ul)    
+        logger.info("Updateinfo: documentation = %s" % ul.doc)
+        project.journal.append(ul)
+        logger.info("Journal text: %s" % project.journal.undo_text())
                 
 
     def on_new(self, sender):

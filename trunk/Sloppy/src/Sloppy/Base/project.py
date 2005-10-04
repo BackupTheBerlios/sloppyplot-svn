@@ -42,7 +42,6 @@ from Sloppy.Base import pdict, uwrap, const, utils, error
 
 import logging
 cli_logger = logging.getLogger('cli')
-cli_logger.setLevel(logging.info)  # TODO: This should not be set here
 logger = logging.getLogger('Base.project')
 
 
@@ -140,6 +139,7 @@ class Project(HasProps):
 
         if len(datasets) == 0:
             undolist.append(NullUndo())
+            return
         
         ul = UndoList()
         ul.describe("Append Dataset to Project")
@@ -458,11 +458,8 @@ class Project(HasProps):
             matches = [item for item in matches if repr(item.plot) == repr(plot)]
         return matches
 
-    def request_backend(self, key, plot=None):
-        print "Requesting Backend ", key, "for plot", plot
-        
+    def request_backend(self, key, plot=None):       
         matches = self.find_backends(key=key, plot=plot)
-        print "===> matches = ", matches
         if len(matches) > 0:
             return matches[0]
         else:

@@ -43,6 +43,7 @@ from Sloppy.Lib import Signals
 from Sloppy.Lib.ElementTree.ElementTree import Element, SubElement
 
 
+#------------------------------------------------------------------------------
 import logging
 logger = logging.getLogger('Gtk.appwindow')
 
@@ -199,15 +200,12 @@ class AppWindow( gtk.Window ):
         t.connect("toggled", cb_toggle_window, window)
         uihelper.get_action_group(self.uimanager, 'Application').add_action(t)
 
-        def cb_window_hideshow(window):
-            action = self.uimanager.get_action('/MainMenu/ViewMenu/ToggleToolWindow')
+        def on_window_visibility_toggled(window, action):
             action.set_active(window.get_property('visible'))
-        window.connect('hide', cb_window_hideshow)
-        window.connect('show', cb_window_hideshow)
+        window.connect('hide', on_window_visibility_toggled, t)
+        window.connect('show', on_window_visibility_toggled, t)
 
         def on_notify_project(sender, project, toolwin):
-            print "==> project = ", project
-            print "==> toolwin = ", toolwin
             toolwin.set_project(project)
         Signals.connect(self.app, 'notify::project', on_notify_project, window)
         
@@ -216,8 +214,7 @@ class AppWindow( gtk.Window ):
     
     def _construct_logwindow(self):
 
-        def cb_logwindow_hideshow(window):
-            action = self.uimanager.get_action('/MainMenu/ViewMenu/ToggleLogwindow')
+        def cb_logwindow_hideshow(window, action):
             action.set_active(window.get_property('visible'))
 
         # logwindow is hidden by default. See _construct_uimanager if
@@ -236,8 +233,8 @@ class AppWindow( gtk.Window ):
         t.connect("toggled", cb_toggle_logwindow, logwindow)
         uihelper.get_action_group(self.uimanager, 'Application').add_action(t)
 
-        logwindow.connect('hide', cb_logwindow_hideshow)
-        logwindow.connect('show', cb_logwindow_hideshow)
+        logwindow.connect('hide', cb_logwindow_hideshow, t)
+        logwindow.connect('show', cb_logwindow_hideshow, t)
         
         return logwindow
 

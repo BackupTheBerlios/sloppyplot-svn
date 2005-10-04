@@ -37,18 +37,19 @@ class NoOptionsError(Exception):
     pass
 
 
-class OptionsDialog2(gtk.Dialog):
+class OptionsDialog(gtk.Dialog):
 
     """
     Note: run() does not check out the values, you have to do that yourself.
     """
 
-    def __init__(self, owner, parent=None):
+    def __init__(self, owner, title="Edit Options", parent=None):
         """
         owner: instance of HasProps that owns the properties
         parent: parent window
+        @note: 'parent' is currently ignored, since it produces a silly window placement!
         """
-        gtk.Dialog.__init__(self, "Edit Properties", parent,
+        gtk.Dialog.__init__(self, title, None,
                             gtk.DIALOG_MODAL|gtk.DIALOG_DESTROY_WITH_PARENT,
                             (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
                              gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
@@ -101,6 +102,8 @@ def construct_table(clist):
 
         # label (put into an event box to display the tooltip)
         label = gtk.Label(c.prop.blurb or c.key)
+        label.set_alignment(0,0)
+        #label.set_justify(gtk.JUSTIFY_LEFT)
         label.show()
 
         ebox = gtk.EventBox()
@@ -110,7 +113,6 @@ def construct_table(clist):
             tooltips.set_tip(ebox, c.prop.doc)
 
         tw.attach(ebox, 0,1,n,n+1,
-                  xoptions=gtk.EXPAND|gtk.FILL,
                   yoptions=0, xpadding=5, ypadding=1)
 
         n += 1

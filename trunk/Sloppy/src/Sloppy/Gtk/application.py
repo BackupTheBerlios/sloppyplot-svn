@@ -59,7 +59,7 @@ from Sloppy.Base.plugin import PluginRegistry
 from Sloppy.Base.dataio import ImporterRegistry, ExporterRegistry, importer_from_filename, Importer, ImportError
 
 from Sloppy.Gnuplot.terminal import PostscriptTerminal
-from options_dialog import OptionsDialog2, NoOptionsError
+from options_dialog import OptionsDialog, NoOptionsError
 
 from Sloppy.Lib.Undo import *
 from Sloppy.Lib import Signals
@@ -510,8 +510,10 @@ class GtkApplication(Application):
         ##         'dashlength', 'linewidth', 'duplexing', 'rounded', 'fontname',
         ##         'fontsize', 'timestamp']          
         
-        dialog = OptionsDialog2(PostscriptTerminal(), parent=app.window)
-        dialog.set_size_request(320,520)
+        dialog = OptionsDialog(PostscriptTerminal(),
+                               title="Options Postscript Export",
+                               parent=app.window)
+        #dialog.set_size_request(320,520)
 
         # determine requested postscript mode (ps or eps) from extension
         path, ext = os.path.splitext(filename)
@@ -702,7 +704,7 @@ class GtkApplication(Application):
             importer = ImporterRegistry[importer_key]()
 
             try:
-                dialog = OptionsDialog2(importer, parent=self.window)
+                dialog = OptionsDialog(importer, parent=self.window)
             except NoOptionsError:
                 pass
             else:
@@ -801,23 +803,8 @@ class GtkApplication(Application):
 
     def _cb_delete(self, widget):
         pj = self._check_project()
-
         objects = self.window.treeview.get_selected_objects()
-        pj.remove_objects(objects)
-        
-        # I removed this confirmation dialog again,
-        # since the user can easily undo the operation.
-        # So why bother ask?
-        #response = gtkutils.dialog_confirm_list(\
-        #    title = "Remove Objects ?",
-        #    msg =
-        #    """
-        #    Do you really wish to remove
-        #    the following objects ?
-        #    """,
-        #    objects = objects)
-        #if response == gtk.RESPONSE_OK:
-        #    pj.remove_objects(objects)
+        pj.remove_objects(objects)        
 
 
     def _cb_experimental_plot(self, action):        

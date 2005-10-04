@@ -663,6 +663,15 @@ class HasProps(object):
         kw = self.get_values(include=include,exclude=exclude)                
         return self.__class__(**kw)
 
+    def create_changeset(self, container):
+        changeset = {}
+        for key, value in container.get_values().iteritems():
+            old_value = self.get_value(key)
+            if value != old_value:
+                changeset[key] = value
+        return changeset       
+
+
 
 
 
