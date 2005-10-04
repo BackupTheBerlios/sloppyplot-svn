@@ -5,35 +5,26 @@
 - with matplotlib.  This was actually a matplotlib problem which
   occured when legend placement was 'best'.
 
-- Undo/Redo text is now properly displayed in the menu.
+- Undo/Redo text is now properly displayed in the menu!!!
 
 - Added support for ValueDict in pwconnect.ComboBox
 
 - Replaced OptionsDialog by a far better one, which also provides tooltips
   for the items.
 
+- Found a good place for 'create_changeset' => In HasProps !
+
+- replace ColumnPropertiesDialog with the new OptionsDialog
 
 
 TODO for 0.4.4:
-
-- add the possibility in statusbar to show the column label/key
-
-- remove print statements and completely replace them by logging
-calls.
-
-- logging modes:
-  - debug = show debug messages in both console and file handler
-  - normal = show info messages 
-  - quiet = only show error messages
 
 - consistency: ValueDict and ValueList (i.e. remove CheckValue)
 
 - allow to open tool window from mpl window and make the corresponding
 plot the active plot in the tool window.
 
-- use OptionsDialog2
-
-- add documentation for import options!
+  => add accelerator to 'toggle logwindow'
 
 
 for 0.4.5:
@@ -46,13 +37,15 @@ for 0.4.5:
 - let layerwindow use pwconnect (or whatever it is called) and
 deprecate propwidgets.
 
+- add the possibility in statusbar to show the column label/key
+
 - add documentation for objects.
 
 - don't update tools window if it is hidden, i.e. disconnect signals!
 
 - what about Signals in classes?  HasSignals?
 
-
+- add testsuite for importer
 
 
 
