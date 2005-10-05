@@ -30,7 +30,7 @@ URL="http://sloppyplot.berlios.de"
 
 # Version information. Uncomment second line while developing.
 VERSION="0.4.3"
-VERSION = VERSION+".SVN$Rev: 150$".replace("$Rev: ","").replace("$","")
+VERSION = VERSION+".SVN $Rev$".replace(" $Rev: ","").replace("$","")
 
 DESCRIPTION = "A scientific plotting tool"
 LONG_DESCRIPTION="""\
