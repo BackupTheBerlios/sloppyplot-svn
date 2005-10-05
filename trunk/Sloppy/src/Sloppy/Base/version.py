@@ -21,7 +21,7 @@
 """
 Version, copyright, author, license and other metainformation.
 """
-
+ 
 
 NAME = "sloppyplot"
 COPYRIGHT = "(C)opyright 2004-2005 Niklas Volbers"

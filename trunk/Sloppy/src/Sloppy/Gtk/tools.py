@@ -127,9 +127,15 @@ class ToolWindow(gtk.Window):
         if eWindow is not None:
             pass
 
+        # TODO: From my understanding, the following code should be
+        #  self.set_gravity(gtk.gdk.GRAVITY_NORTH_EAST)
+        #  self.move(gtk.gdk.screen_width(), 0)
+        # However, at least with metacity (gnome) this does not work.
+        
         # move window to top right
+        width, height = self.get_size()
         self.set_gravity(gtk.gdk.GRAVITY_NORTH_EAST)
-        self.move(gtk.gdk.screen_width(), 0)
+        self.move(gtk.gdk.screen_width() - width, 0)
 
                       
 
