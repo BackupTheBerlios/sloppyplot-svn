@@ -69,7 +69,7 @@ class Importer(dataio.Importer):
                         default=None)
 
     typecodes = Prop(CheckType(basestring, list),
-                     default='f')
+                     default='l')
 
     growth_offset = pInteger(CheckBounds(min=10), default=100)
 
@@ -102,7 +102,6 @@ class Importer(dataio.Importer):
         fd.seek(rewind)
 
         # determine delimiter
-        print "<===", self.delimiter, self.header_lines
         delimiter = self.delimiter or self.custom_delimiter
         if delimiter is None:
             # determine from first non-comment line
@@ -184,7 +183,7 @@ class Importer(dataio.Importer):
         skipcount = 0
         row = fd.readline()        
         while len(row) > 0:
-
+            # TODO: split off comments!
             matches = [match for match in cregexp.split(row) if len(match) > 0]
             logger.debug("MATCHES = %s" % str(matches))
             if len(matches) == 0:

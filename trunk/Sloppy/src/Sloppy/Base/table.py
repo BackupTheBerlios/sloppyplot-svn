@@ -39,7 +39,7 @@ class AsArray(Transformation):
     def __call__(self, value):
         # check type
         if isinstance(value, ArrayType):
-            pass
+            pass            
         elif isinstance(value, (tuple,list)):
             value = array(value)
         else:
@@ -121,7 +121,7 @@ class Table(object):
                     if len(typecodes) != ncols:
                         raise ValueError("When specifying the number of columns, you may either specify a single typecode or a list with that many entries.")
                 elif typecodes is None:
-                    tc = 'f'
+                    tc = 'l'
                     typecodes = list()
                     for i in range(ncols):
                         typecodes.append(tc)

@@ -1,25 +1,30 @@
 
-from Sloppy.Base import dataio
-from Sloppy.Base.table import Table
-from Numeric import array
-
 import unittest
 
+from Sloppy.Base.dataio import ImporterRegistry
+from Sloppy.Base.table import Table
 
-tables = [('./ASCII/1.dat', Table([[1,2,3],[2,4,8],[3,9,27],[4,16,64]]))]
 
 
 class TestCase(unittest.TestCase):
 
     def setUp(self):
-        self.filelist = ['./ASCII/1.dat']
+        self.tables = \
+          [('./ASCII/1.dat',
+            ImporterRegistry['ASCII'](),
+            Table([[1,2,3],[2,4,8],[3,9,27],[4,16,64]], typecodes='l')
+            ),
+           ('./ASCII/2.dat',
+            ImporterRegistry['ASCII'](),
+            Table([[1,1,1],[2,2,2],[3,3,3]])
+            )
+           ]
 
     def runTest(self):
-        for filename, result in tables:
-            tbl = dataio.read_table_from_file(filename, 'ASCII')
-            print tbl
-            print result
-            #self.assertEqual(tbl, result)
+        for filename, importer, result in self.tables:
+            tbl = importer.read_table_from_file(filename)
+            self.assert_(tbl.is_equal(result))
+
 
 
 

@@ -1,6 +1,8 @@
-from props import *
-from typed_containers import *
+
 import unittest
+
+from Sloppy.Lib.Props.props import *
+from Sloppy.Lib.Props.typed_containers import *
 
 
 
