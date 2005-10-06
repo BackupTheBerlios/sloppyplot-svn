@@ -1,0 +1,346 @@
+
+- The two zoom buttons don't work.  The reason is simple: The zoom
+functions determine the layer based on the position of the mouse.
+When you click on the toolbar, this will not yield any layer!
+
+ There is a 'current layer' in the plot. Should I really use that? 
+ After all, this is just something needed for editing and nothing
+ that needs to be saved.
+
+ Another possibility would be to put this into the backend! I think
+ this would make a lot more sense.  But then, the layer tool would
+ have a problem... I should sleep about this problem for a while.
+
+ Right now, the layer refers to a Plot object.  Now, if there is no
+ backend opened, then it makes no sense to edit the active layer. After all,
+ the user does not know, what the active layer is. OR?
+ 
+ Then, one might ask, it is ambigiuous, to what backend we are referring.
+ No, it isn't , because matplotlib is the only _interactive_ backend.
+
+ Only drawback: The backend needs to be activated to manipulate the
+ plot. Well, if this is not requested, one might simply use the
+ Edit-Window!
+
+
+
+
+PLANS FOR 0.4.5:
+
+- allow to open tool window from mpl window and make the corresponding
+plot the active plot in the tool window.
+
+  => add accelerator to 'toggle logwindow'
+
+- consistency: ValueDict and ValueList (i.e. remove CheckValue)
+
+- add labels to Gnuplot! => works, but we need to include the
+'auto-update' functionality, then it is complete.
+
+- toggle_logscale_y : notify correctly (notify::axes ?)
+
+- let layerwindow use pwconnect (or whatever it is called) and
+deprecate propwidgets.
+
+- add the possibility in statusbar to show the column label/key
+
+- add documentation for objects.
+
+- don't update tools window if it is hidden, i.e. disconnect signals!
+
+- what about Signals in classes?  HasSignals?
+
+
+
+
+###############################################################################
+#EVERYTHING BELOW THIS POINT IS JUST A COLLECTION OF IDEAS
+
+#----------------------------------------------------------------------
+
+
+
+- Signals.connect_once -> requires an additional flag in the SignalContainer
+
+
+- we might want to change cx, cy to a string of the form
+
+  'column:index'
+
+  where column can either be a column number or a column name, while
+  index is a valid index.  This way, we could specify ranges without
+  requiring yet another property.
+
+
+export
+------
+- ps should have correct orientation
+- aspect ratio of figures should be preserved.
+- gnuplot preview :-) ?
+
+
+View
+----
+
+- A view defines the start/end points
+- Each Plot has a ViewList, with at least one entry, the 'current'
+  view.  There should be a button 'save view as', e.g. 'overview',
+  'region 1'.
+
+  Hmmm.. But a view defines the start/end point for several axes...
+
+
+
+#----------------------------------------------------------------------
+   
+#         Set the foreground color.  fg can be a matlab format string, a
+#         html hex color string, an rgb unit tuple, or a float between 0
+#         and 1.  In the latter case, grayscale is used.
+
+#         The GraphicsContext converts colors to rgb internally.  If you
+#         know the color is rgb already, you can set isRGB to True to
+#         avoid the performace hit of the conversion
+
+# ----------------------------------------------------------------------
+
+
+Plotting
+--------
+- what about nans/masked arrays? => use numeric
+- add linestyle and markerstyle to gnuplot
+- what about broken axes ?
+
+
+Importer
+--------
+
+- Import XPS spectra as multiple worksheets.
+- what about masked values?
+- Show Import Dialog with progress bar.
+
+
+Plugins:
+--------
+
+- reverse axes.
+
+
+Cool ideas:  
+----------
+
+- the method 'add_plots', 'add_datasets' might mark the datasets as 
+  '_new_'.  If you double click on any such object, this new mark is
+  removed.  The new mark could be a little star or something similar.
+
+- show metadata in Dataset view.
+
+- preview window that tries to construct a preview via
+  'create_plot_from_datasets'
+
+
+Minor fixes
+-----------
+
+- Add README file to project explaining how to extract the datasets.
+
+  This is an important step to saving arbitrary data.
+
+   create temporary directory
+
+   write dataset to temporary directory
+ 
+   obtain filelist from project archive, exclude all datasets and project.xml
+
+   write all files from the filelist to the temporary directory.
+   Because we don't want to do this every time we save, we need to keep
+   track if any of these files have changed.
+
+   tar-zip temporary directory
+
+
+
+------------------------------------------------------------------------------
+
+#==============================================================================
+# Plotting Enhancements
+
+- add line.color and implement it in matplotlib
+
+- try to have Gnuplot and Matplotlib do the same thing...
+  => Feature Matrix ?
+
+
+=> we might want to implement hlines and vlines in the Plot.
+   Then we can combine the methods to select a line with the method
+   to put a line into the plot :-)
+
+   There is a method axvline or something that should do exactly that.
+
+    #--------------------------------------------------
+    # Text Snippet to create horizontal/vertical help lines
+
+    #         self.lx, = ax.plot( (0,0), (0,0), 'k-' )  # the horiz line
+    #         self.ly, = ax.plot( (0,0), (0,0), 'k-' )  # the vert line
+
+    #         # text location in axes coords
+    #         self.txt = ax.text( 0.7, 0.9, '', transform=ax.transAxes)
+
+    #         # update the line positions
+    #         self.lx.set_data( (minx, maxx), (y, y) )
+    #         self.ly.set_data( (x, x), (miny, maxy) )
+
+    #         self.txt.set_text( 'x=%1.2f, y=%1.2f'%(x,y) )
+    #         draw()
+
+
+
+ 
+------------------------------------------------------------------------------
+#==============================================================================
+#  Things to do for a 0.3 release:
+#==============================================================================
+
+- serialize group properties
+
+
+Export:
+
+(1) allow export templates => configuration file?
+
+- allow multi-export, especially also export several files in one
+  postscript file
+
+- allow adding linked data -- display them differently ?
+  be careful though about relative/absolute path names
+
+- Everything is centered around Tables.... why not?
+  Well, but we need to think about what to do once regular arrays are allowed:
+
+  - all backends need to check the data type before using the data
+  - the treeview must display different icons
+  - when editing an array, we can't use the tableview
+
+
+
+- When a project is saved, then naturally all data files, which have not
+  yet been loaded, are first imported, and then exported.... This is 
+a lot of unnecessary work. Why not check for this case and then just copy
+the file from the archive to the directory?
+
+
+Plot Templates.
+
+- try to settle on a graph format so that I can start re-implementing
+  matplotlib output
+
+- WE NEED PROPER CACHING !!!!  (maybe using Builder objects?)
+
+
+###############################################################################
+
+- for each layer type, different data is needed. How do we distinguish those?
+
+#----------------------------------------------------------------------
+
+- lock Sloppy Archive upon access
+
+- if clicking on 'apply' or any other button in the layer window,
+  we need to apply all changes that are not yet active.  Maybe by
+  moving focus to the current button?
+
+
+
+#==============================================================================
+
+FANCY EXTRA STUFF
+
+- # - set key noautotitles   => only labels plots that have an explicit title option
+- allow hiding the row display in tableview
+- allow opening an editor for external data
+- allow 'unit' column, e.g. 'nm' and allow to convert to other units!
+- rewrite DatasetWindow insert/remove methods so that it can be
+  extended to cut/copy/paste operations.
+- export dataset 
+
+- implement nifty keyboard mapping ;-)
+
+If so (recommended):
+
+# create accelgroup, add to window
+ag = gtk.AccelGroup()
+window.add_accel_group(ag)
+menu = gtk.Menu()
+menu.set_accel_group(ag)
+
+menuitem = gtk.MenuItem("boo")
+# set unique path to identify the menuitem
+menuitem.set_accel_path("<SomeName>/SomeName/SomeName/MenuItemName")
+
+menu.append(menuitem)
+
+and at the end of the prog 'gtk.accel_map_save("moo")' and at the
+beginning of the prog (after setting up the menus), call
+'gtk.accel_map_load("moo")', and if the load fails,
+gtk.accel_map_change_entry("<SomeName>/SomeName/SomeName/MenuItemName",
+gtk.gdk.keyval_from_name("S"), gtk.gdk.CONTROL_MASK, True)
+
+
+
+
+examples for format
+
+%3.0em    1e+03
+%2.0f     100.00
+%L        3
+
+
+
+            # from matplotlib zooming algorithm
+            #dx=(lastx-x)/float(a.bbox.width())
+            #dy=(lasty-y)/float(a.bbox.height())
+            #dx,dy=format_deltas(event,dx,dy)
+            #alphax = pow(10.0,dx)
+            #alphay = pow(10.0,dy)#use logscaling, avoid singularities and smother scaling...
+            #lastx, lasty = trans.inverse_xy_tup( (lastx, lasty) )
+            #if a.get_xscale()=='log':
+            #    xmin = lastx*(xmin/lastx)**alphax
+            #    xmax = lastx*(xmax/lastx)**alphax
+            #else:
+            #    xmin = lastx+alphax*(xmin-lastx)
+            #    xmax = lastx+alphax*(xmax-lastx)
+            #if a.get_yscale()=='log':
+            #    ymin = lasty*(ymin/lasty)**alphay
+            #    ymax = lasty*(ymax/lasty)**alphay
+            #else:
+            #    ymin = lasty+alphay*(ymin-lasty)
+            #    ymax = lasty+alphay*(ymax-lasty)
+
+
+#------------------------------------------------------------------------------
+
+            # x/y are absolute coordinates
+            # we need to be able to work with
+            #  - data coordinates
+            #  - relative graph positions (0-1)
+            #  - absolute screen positions (like it is right now)
+
+            def screen_from_data(ax, xdata, ydata):
+                return ax.transData.xy_tup((xdata,ydata))
+
+            def data_from_screen(ax, x, y):
+                return ax.transData.inverse_xy_tup((x,y))
+
+            def graph_from_screen(ax, x, y):
+                l,b,w,h = ax.bbox.get_bounds()
+
+                if x < l or x > (l+w):  x = None
+                else: x = (x-l)/w
+
+                if y < b or y > (b+h): y = None
+                else: y = (y-b)/h
+
+                return x,y
+
+            def screen_from_graph(ax, x, y):
+                l,b,w,h = ax.bbox.get_bounds()
+                return l+w*x, b+h*y
