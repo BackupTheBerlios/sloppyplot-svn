@@ -237,7 +237,7 @@ class MatplotlibWidget(gtk.VBox):
         ('ZoomIn', gtk.STOCK_ZOOM_IN, '_Zoom In', 'plus', 'Zoom', '_cb_zoom_in'),
         ('ZoomOut', gtk.STOCK_ZOOM_OUT, '_Zoom Out', 'minus', 'Zoom', '_cb_zoom_out'),
         ('ZoomFit', gtk.STOCK_ZOOM_FIT, '_Zoom Fit', '0', 'Zoom', '_cb_zoom_fit'),
-        ('ZoomRect', gtk.STOCK_ZOOM_IN, '_Zoom Rectangle', 'r', 'Zoom', '_cb_zoom_rect'),
+        ('ZoomRect', gtk.STOCK_ZOOM_FIT, '_Zoom Rectangle', 'r', 'Zoom', '_cb_zoom_rect'),
         ('ToggleLogScale', None, 'Toggle Logarithmic Scale', 'l', 'Toggle Logscale', '_cb_toggle_logscale'),
         ('MovePlot', None, 'Move Plot', 'm', '', '_cb_move_plot'),
         ('DataCursor', None, 'Data Cursor', 'c', '', '_cb_data_cursor'),
@@ -431,7 +431,7 @@ class MatplotlibWidget(gtk.VBox):
 
     def zoom_to_region(self, layer, region, undolist=[]):
        
-        ul = UndoList()
+        ul = UndoList().describe("Zoom Region")
 
         x0 = min( region[0], region[2] )
         x1 = max( region[0], region[2] )
@@ -629,7 +629,7 @@ class MatplotlibWidget(gtk.VBox):
     def _cb_zoom_axes(self, action):
 
         def finish_moving(sender):
-            ul = UndoList().describe("Zoom")
+            ul = UndoList().describe("Zoom Axes")
             layer = self.backend.axes_to_layer[sender.axes]
             self.zoom_to_region(layer, sender.region, undolist=ul)
             self.project.journal.add_undo(ul)           

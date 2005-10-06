@@ -586,7 +586,7 @@ class AppWindow( gtk.Window ):
 
     actions_appwin = [        
         ('RenameItem', None, 'Rename', 'F2', 'Rename', '_cb_rename_item'),
-        ('About', None, '_About', None, 'About application', '_cb_help_about')
+        ('About', gtk.STOCK_ABOUT, '_About', None, 'About application', '_cb_help_about')
         ]
     
     actions_matplotlib = [
