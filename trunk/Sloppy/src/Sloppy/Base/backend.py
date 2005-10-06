@@ -110,6 +110,8 @@ class Backend(object):
         self.plot = None
         self.Signals = {}
 
+        self._current_layer = None
+        
         self.set(project,plot)
         
 
@@ -241,6 +243,38 @@ class Backend(object):
 
         return xdata, ydata
 
+
+    #----------------------------------------------------------------------
+    # Current Layer
+
+    def get_current_layer(self):
+        """
+        Returns the current layer.
+        Make sure that the current_layer actually exists.
+        If this is not the case, the current_layer attribute is reset.
+        """
+        if self._current_layer is None or self.plot is None:
+            return None
+        if self._current_layer in self.plot.layers:
+            return self._current_layer
+
+        self.set_current_layer(None)
+        return None
+
+    def set_current_layer(self, layer):
+        """
+        Set the current layer.
+        The layer must be either None or a Layer instance that is
+        contained in self.layers.
+        """
+        if layer is None or layer in self.plot.layers:
+            self._current_layer = layer
+            # TODO: only when it changes!
+            Signals.emit(self, "notify::current_layer", layer)
+        else:
+            raise ValueError("Layer %s can't be set as current, because it is not part of the Plot!" % layer)
+
+    current_layer = property(get_current_layer, set_current_layer)            
 
 
 #------------------------------------------------------------------------------

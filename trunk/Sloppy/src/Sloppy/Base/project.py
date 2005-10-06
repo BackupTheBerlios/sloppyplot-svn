@@ -465,11 +465,13 @@ class Project(HasProps):
         else:
             backend = BackendRegistry[key](project=self, plot=plot)            
             self.backends.append(backend)
+            Signals.emit(self, 'notify::backends')
             return backend
         
     def remove_backend(self, backend):
         try:
             self.backends.remove(backend)
+            Signals.emit(self, 'notify::backends')
         except ValueError:
             logger.warn("remove_backend: Could not find Backend %s in Project." % backend)
             
