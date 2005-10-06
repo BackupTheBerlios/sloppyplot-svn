@@ -1,5 +1,24 @@
 
 
+Release Notes for SloppyPlot 0.4.4 (released 2005-10-06)
+========================================================
+
+This release is the fourth one in the 0.4.x series that was supposed
+to focus on code cleanup and api documentation.  Since 0.4.3 was
+terribly unstable and many functions were broken, it is very much
+recommended to upgrade to 0.4.4 which has been tested now for quite a
+while and should work well.  
+
+The toolbox is now fully functional, even though there is currently
+only a labels tool available.  The output works on both backends, even
+though the gnuplot backend is not yet automatically redrawn.
+
+Some dialogs have been rewritten, so that they now show tooltips
+(e.g. the postscript export).
+
+The Undo and Redo text is now properly displayed for most functions.
+
+
 Release Notes for SloppyPlot 0.4.3 (released 2005-09-21)
 ========================================================
 

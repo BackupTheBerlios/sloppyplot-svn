@@ -147,7 +147,7 @@ class ToolWindow(gtk.Window):
         if project is not None:
             # update combobox again if plots change
             self.project_signals.extend(
-                [Signals.connect(project.plots, 'notify',
+                [Signals.connect(project, 'notify::plots',
                                  (lambda sender: self.update_combobox())),
                  Signals.connect(project.app, 'notify::current_plot',
                                  (lambda sender, plot: self.set_plot(plot)))

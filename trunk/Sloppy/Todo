@@ -1,33 +1,14 @@
-- renamed update_sobject with update_layer.  This is more consistent!
-
-- disconnect signals if project/plot/layer changes.  fixed log problem
-
-- with matplotlib.  This was actually a matplotlib problem which
-  occured when legend placement was 'best'.
-
-- Undo/Redo text is now properly displayed in the menu!!!
-
-- Added support for ValueDict in pwconnect.ComboBox
-
-- Replaced OptionsDialog by a far better one, which also provides tooltips
-  for the items.
-
-- Found a good place for 'create_changeset' => In HasProps !
-
-- replace ColumnPropertiesDialog with the new OptionsDialog
 
 
-TODO for 0.4.4:
+PLANS FOR 0.4.5:
 
-- consistency: ValueDict and ValueList (i.e. remove CheckValue)
 
 - allow to open tool window from mpl window and make the corresponding
 plot the active plot in the tool window.
 
   => add accelerator to 'toggle logwindow'
 
-
-for 0.4.5:
+- consistency: ValueDict and ValueList (i.e. remove CheckValue)
 
 - add labels to Gnuplot! => works, but we need to include the
 'auto-update' functionality, then it is complete.

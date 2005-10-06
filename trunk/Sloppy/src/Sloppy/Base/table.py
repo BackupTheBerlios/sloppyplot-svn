@@ -36,7 +36,7 @@ class AsArray(Transformation):
     def __init__(self, _rank):
         self._rank = _rank
 
-    def __call__(self, value, owner=None):
+    def __call__(self, value):
         # check type
         if isinstance(value, ArrayType):
             pass
@@ -70,7 +70,7 @@ class Column(HasProps):
     data = pArray(rank=1)
 
     public_props = ['key', 'label', 'designation']
-                                   
+
     def __str__(self):
         return "%s (%s): %s" % (self.key, self.designation, self.label)
 
@@ -82,10 +82,14 @@ class Column(HasProps):
 
 class Table(object):
 
-    def __init__(self, ncols=0, nrows=0, typecodes=None):
+    def __init__(self, data=None, ncols=0, nrows=0, typecodes=None):
         """
 
-        Allowed syntax for typecodes:
+        You can either pass a tuple/array as 'data' argument and the
+        Table will contain this data.  Any other keyword will simply
+        be ignored!
+
+        OR, you can specify some of the other keywords:
 
         - A single typecode, e.g. 'f', will create a Table with `ncols`
           columns of type 'f'. If `ncols` is unspecified, a Table with
@@ -105,32 +109,37 @@ class Table(object):
         
         self._columns = []
 
-        if ncols > 0:
-            if isinstance(typecodes, basestring) and len(typecodes) > 1:
-                typecodes = list(typecodes)
+        if data is not None:
+            data = AsArray(_rank=2)(data)
+            self._columns = [Column(data=c) for c in data]
+        else:
+            if ncols > 0:
+                if isinstance(typecodes, basestring) and len(typecodes) > 1:
+                    typecodes = list(typecodes)
 
-            if isinstance(typecodes, (list,tuple)):
-                if len(typecodes) != ncols:
-                    raise ValueError("When specifying the number of columns, you may either specify a single typecode or a list with that many entries.")
-            elif typecodes is None:
-                tc = 'f'
-                typecodes = list()
-                for i in range(ncols):
-                    typecodes.append(tc)
-            else:
-                tc = typecodes
-                typecodes = list()
-                for i in range(ncols):
-                    typecodes.append(tc)                    
+                if isinstance(typecodes, (list,tuple)):
+                    if len(typecodes) != ncols:
+                        raise ValueError("When specifying the number of columns, you may either specify a single typecode or a list with that many entries.")
+                elif typecodes is None:
+                    tc = 'f'
+                    typecodes = list()
+                    for i in range(ncols):
+                        typecodes.append(tc)
+                else:
+                    tc = typecodes
+                    typecodes = list()
+                    for i in range(ncols):
+                        typecodes.append(tc)                    
 
-        self._nrows = nrows
+            self._nrows = nrows
 
-        typecodes = typecodes or []
-        for tc in typecodes:
-            self._columns.append( self.new_column(tc) )
+            typecodes = typecodes or []
+            for tc in typecodes:
+                self._columns.append( self.new_column(tc) )
 
         self.update_cols()        
         self.update_rows()
+
 
 
     def __getitem__(self, i):
@@ -177,6 +186,22 @@ class Table(object):
 
     def set_value(self, col, row, value):
         self[col][row] = value
+
+
+    def is_equal(self, other_table):
+        # compare table sizes and typecodes
+        if self.ncols != other_table.ncols:
+            return False
+        if self.typecodes != other_table.typecodes:
+            return False
+
+        # compare column data -- the column keywords are not compared!
+        for i in range(self.ncols):
+            if self[i] != other_table[i]:
+                return False
+
+        return True
+
 
     #--- column operations ------------------------------------------------
     
@@ -522,7 +547,14 @@ def test():
     tbl = array_to_table(a)
     print tbl
     
+
+def test2():
+    tbl = Table([[1,2,3,4],[2,4,9,16]])
+    tbl2 = Table([[1,2,3,4],[2,4,9,15]])
+    print tbl
+    print tbl2
+    print tbl.is_equal(tbl2)
     
 if __name__ == "__main__":
-    test()
+    test2()
     
