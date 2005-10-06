@@ -1,6 +1,4 @@
 
-- split off comment in ASCII import!
-
 PLANS FOR 0.4.5:
 
 - allow to open tool window from mpl window and make the corresponding
@@ -25,8 +23,6 @@ deprecate propwidgets.
 - don't update tools window if it is hidden, i.e. disconnect signals!
 
 - what about Signals in classes?  HasSignals?
-
-- add testsuite for importer
 
 
 

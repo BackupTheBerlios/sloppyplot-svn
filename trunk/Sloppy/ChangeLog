@@ -14,7 +14,8 @@ CHANGELOG
     for the items.
   * Found a good place for 'create_changeset' => In HasProps !
   * replace ColumnPropertiesDialog with the new OptionsDialog
-
+  * Added Testsuites directory with two testsuites.
+	
 
 2005-09-21 SloppyPlot 0.4.3	
 ===========================
