@@ -276,8 +276,7 @@ class MatplotlibWidget(gtk.VBox):
         <placeholder name='MainToolbarEdit'>
         <toolitem action='Edit'/>
         </placeholder>
-        <toolitem action='ZoomIn'/>
-        <toolitem action='ZoomFit'/>
+        <toolitem action='ZoomRect'/>
         <separator/>              
         <toolitem action='Replot'/>
       </toolbar>

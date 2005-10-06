@@ -1,4 +1,13 @@
 
+- The two zoom buttons don't work.  The reason is simple: The zoom
+functions determine the layer based on the position of the mouse.
+When you click on the toolbar, this will not yield any layer!
+ => either have a 'current layer' as in Origin
+ => 
+
+
+- Some of the zoom functions have no undo text
+
 PLANS FOR 0.4.5:
 
 - allow to open tool window from mpl window and make the corresponding
