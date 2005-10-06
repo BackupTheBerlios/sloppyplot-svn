@@ -1,9 +1,7 @@
 
-
 - split off comment in ASCII import!
 
 PLANS FOR 0.4.5:
-
 
 - allow to open tool window from mpl window and make the corresponding
 plot the active plot in the tool window.

@@ -125,6 +125,10 @@ class Importer(dataio.Importer):
                 rewind = fd.tell()
                 line = fd.readline()
 
+                # split off comments
+                # TODO: This will not work for text entries "Example #Test"
+                line = line.split('#')[0]
+
                 cregexp = re.compile(delimiter)
                 matches = [match for match in cregexp.split(line) if len(match) > 0]
                 logger.debug("MATCHES = %s" % str(matches))
@@ -183,7 +187,10 @@ class Importer(dataio.Importer):
         skipcount = 0
         row = fd.readline()        
         while len(row) > 0:
-            # TODO: split off comments!
+            # split off comments
+            # TODO: This will not work for text entries "Example #Test"
+            row = row.split('#')[0]
+            
             matches = [match for match in cregexp.split(row) if len(match) > 0]
             logger.debug("MATCHES = %s" % str(matches))
             if len(matches) == 0:
