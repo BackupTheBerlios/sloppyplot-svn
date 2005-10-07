@@ -337,7 +337,6 @@ class Dock( gtk.VBox ):
             gtk.VBox.add(self, dockbook)
             self.reorder_child(dockbook, index)
 
-
         dockbook.show()
 
         self.emit('book-added', dockbook)

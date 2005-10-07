@@ -112,9 +112,19 @@ class ToolWindow(gtk.Window):
         self.dock = dock = Dock()
         dock.show()
 
+        lt = LayerTool()
+        lt.show()
+        book = Dockbook()
+        book.add(lt)
+        book.show()
+        dock.add(book)
+        
         lt = LabelsTool()
         lt.show()
-        dock.add(lt)
+        book = Dockbook()
+        book.add(lt)
+        book.show()
+        dock.add(book)
 
         # stuff combo and dock together
         vbox = gtk.VBox()
@@ -292,55 +302,90 @@ class Tool(Dockable):
         self.backend_signals = []
         self.layer_signals = []
 
+    def set_backend(self, backend):
+        if backend == self.backend:
+            return
+        
+        Signals.disconnect_list(self.backend_signals)
+        self.backend = backend
+        self.update_backend()
+        
+        if backend is not None:            
+            self.set_layer(backend.layer)
+        else:
+            self.set_layer(None)            
+
+    def update_backend(self):
+        pass
+
+    def set_layer(self, layer):
+        pass
+
+    def update_layer(self):
+        pass
+    
     
 
-# class LayerTool(Tool):
+class LayerTool(Tool):
 
-#     """ NOT FINISHED. """
     
-#     def __init__(self):
-#         Tool.__init__(self, "Layers", gtk.STOCK_EDIT)
-       
-#         # model: (object) = (layer object)
-#         model = gtk.ListStore(object)        
-#         treeview = gtk.TreeView(model)
-#         treeview.set_headers_visible(False)
-
-#         cell = gtk.CellRendererText()
-#         column = gtk.TreeViewColumn('label', cell)
-
-#         def render_label(column, cell, model, iter):
-#             layer = model.get_value(iter, 0)
-#             cell.set_property('text', layer.title)
-#         column.set_cell_data_func(cell, render_label)
+    def __init__(self):
+        Tool.__init__(self, "Layers", gtk.STOCK_EDIT)
         
-#         treeview.append_column(column)
-#         #treeview.connect("row-activated", (lambda a,b,c:self.on_edit(a)))
-#         treeview.show()
-#         self.add(treeview)
+        # model: (object) = (layer object)
+        model = gtk.ListStore(object)        
+        treeview = gtk.TreeView(model)
+        treeview.set_headers_visible(False)
+
+        cell = gtk.CellRendererText()
+        column = gtk.TreeViewColumn('label', cell)
+
+        def render_label(column, cell, model, iter):
+            layer = model.get_value(iter, 0)
+            visible = ('','V')[layer.visible]
+            title = layer.title or "<untitled layer>"
+            index = model.get_path(iter)[0]
+            cell.set_property('text', "[%d - %s]: %s" % (index, visible, title))
+        column.set_cell_data_func(cell, render_label)
         
-#         # remember for further reference
-#         self.treeview = treeview
+        treeview.append_column(column)
+        #treeview.connect("row-activated", (lambda a,b,c:self.on_edit(a)))
+        treeview.show()
+        self.add(treeview)
+        
+        # remember for further reference
+        self.treeview = treeview
 
 
-#     def on_notify_layer(self, sender, layer):
-#         print "Change combo to ..."
-#         # mark active layer
+    def set_layer(self, layer):
+        if layer == self.layer:
+            return
+        
+        Signals.disconnect_list(self.layer_signals)
+        self.layer = layer
+        
+        if layer is not None:
+            # maybe connect to layer properties: is it visible, position, ...
+            pass
+        self.update_layer()
 
         
-#     def update_plot(self):
-#         if self.plot is None:
-#             self.treeview.set_sensitive(False)
-#             return
-#         self.treeview.set_sensitive(True)
-
-#         # check_in
-#         model = self.treeview.get_model()
-#         model.clear()
-#         for layer in self.plot.layers:
-#             model.append((layer,))
-
-#         # mark active layer
+    def update_backend(self):
+        if self.backend is None:
+            self.treeview.set_sensitive(False)
+            return
+        
+        self.treeview.set_sensitive(True)
+        
+        # check_in
+        model = self.treeview.get_model()
+        model.clear()
+        for layer in self.backend.plot.layers:
+             model.append((layer,))
+             
+    def update_layer(self):
+        # mark active layer
+        print "MARKING ACTIVE LAYER"
 
             
         
@@ -389,21 +434,6 @@ class LabelsTool(Tool):
         self.treeview = treeview        
         
 
-    def set_backend(self, backend):
-        if backend == self.backend:
-            return
-        
-        Signals.disconnect_list(self.backend_signals)
-        self.backend = backend
-
-        if backend is not None:            
-            self.set_layer(backend.layer)
-        else:
-            self.set_layer(None)
-            
-        self.set_sensitive(backend is not None)
-
-
     def set_layer(self, layer):
         if layer == self.layer:
             return
@@ -419,18 +449,18 @@ class LabelsTool(Tool):
         
     #------------------------------------------------------------------------------
         
-    def update_layer(self):
+    def update_layer(self):       
         model = self.treeview.get_model()        
         model.clear()
             
-        if self.backend is None or self.backend.layer is None:
+        if self.layer is None:
             self.treeview.set_sensitive(False)
             return
         else:
             self.treeview.set_sensitive(True)            
 
         # check_in
-        for label in self.backend.layer.labels:
+        for label in self.layer.labels:
             model.append((label,))
 
 
