@@ -152,8 +152,7 @@ class MatplotlibWindow( gtk.Window ):
         self.connect("destroy", (lambda sender: self.destroy()))
         Signals.connect(self.mpl_widget, "closed", (lambda sender: self.destroy()))
 
-        # TESTING
-        self.connect("focus-in-event", (lambda a,b: app.set_current_plot(self.mpl_widget.plot)))
+        
 
     def destroy(self):
         self.mpl_widget.set_plot(None)
@@ -186,6 +185,8 @@ class MatplotlibWindow( gtk.Window ):
     def get_plot(self):
         return self.mpl_widget.plot
 
+    def get_backend(self):
+        return self.mpl_widget.backend
 
 
     #----------------------------------------------------------------------

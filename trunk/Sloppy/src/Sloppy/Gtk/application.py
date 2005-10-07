@@ -306,22 +306,6 @@ class GtkApplication(Application):
         except error.UserCancel:
             return
 
-
-    #------------------------------------------------------------------------------
-    # Current plot
-    #
-
-    def set_current_plot(self, plot):
-        print "APP: set_current_plto to ", plot
-        self._current_plot = plot
-        Signals.emit(self, "notify::current_plot", plot)
-
-    def get_current_plot(self):
-        return self._current_plot
-
-    current_plot = property(get_current_plot, set_current_plot)
-
-    
     # ----------------------------------------------------------------------
     # Callbacks
     #
@@ -443,6 +427,11 @@ class GtkApplication(Application):
                 window = MatplotlibWindow(self, project=self.project, plot=plot)
                 ##window.set_transient_for(self.window)
                 self.window.subwindow_add(window)
+                # TESTING
+                # Of course, the toolwindow might decide to not use the backend,
+                # e.g. if there is an 'auto' button and it is not pressed. So I will
+                # need to change that then.
+                window.connect("focus-in-event", (lambda a,b: self.window.toolwindow.set_backend(window.get_backend())))
 
             window.show()
             window.present()

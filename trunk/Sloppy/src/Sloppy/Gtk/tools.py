@@ -55,27 +55,40 @@ logger = logging.getLogger('Gtk.tools')
 
 class ToolWindow(gtk.Window):
 
-    """    
-    A window containing a combo box to indicate and select the active
-    backend, along with a Dock that holds the tools to manipulate the
-    backend'splot or its active layer.
+    """ The ToolWindow holds a dock with a number of Tools.
 
+    Since each Tool refers to a backend and to the backend's active
+    layer, the ToolWindow has the task to set these two values for all
+    of its tools.
+
+    The ToolWindow also provides a combobox, so that the user may switch
+    the active backend.  The active layer of this backend can not be
+    manipulated by the ToolWindow.  However, the ToolWindow catches any
+    change of this active layer and sends it to its tools.
+    
     @ivar project: project.
     @ivar backend: currently active backend as displayed in the ToolWindow combo.
+    @ivar layer: currently active layer.
     """
 
     def __init__(self, app, project=None):
         gtk.Window.__init__(self)
 
         self.app = app
-        self.backend = None
+
         self.project = project or -1
         self.project_signals = []
+        self.backend_signals = []
 
+        self.backend = None
+        self.layer = None
+        
         #
         # create gui
         #
-        model = gtk.ListStore(object, str) # object := Plot, Plot.title
+
+        # create combobox
+        model = gtk.ListStore(object, str) # object := Backend, Plot-Title
         combobox = gtk.ComboBox(model)
         cell = gtk.CellRendererText()
         combobox.pack_start(cell, True)
@@ -95,19 +108,20 @@ class ToolWindow(gtk.Window):
 
         self.combobox = combobox
 
+        # create dock
         self.dock = dock = Dock()
         dock.show()
-        
+
+        lt = LabelsTool()
+        lt.show()
+        dock.add(lt)
+
+        # stuff combo and dock together
         vbox = gtk.VBox()
         vbox.pack_start(combobox,False,True)
         vbox.pack_end(dock,True,True)
         vbox.show()
         self.add(vbox)
-
-        lt = LabelsTool()
-        lt.show()
-
-        dock.add(lt)
 
         # We add a handler to skip delete-events, i.e. if the
         # user clicks on the close button of his window, the window
@@ -127,12 +141,12 @@ class ToolWindow(gtk.Window):
         if eWindow is not None:
             pass
 
+        # move window to top right
+        
         # TODO: From my understanding, the following code should be
         #  self.set_gravity(gtk.gdk.GRAVITY_NORTH_EAST)
         #  self.move(gtk.gdk.screen_width(), 0)
-        # However, at least with metacity (gnome) this does not work.
-        
-        # move window to top right
+        # However, at least with metacity (gnome) this does not work.    
         width, height = self.get_size()
         self.set_gravity(gtk.gdk.GRAVITY_NORTH_EAST)
         self.move(gtk.gdk.screen_width() - width, 0)
@@ -157,37 +171,64 @@ class ToolWindow(gtk.Window):
         
         self.project = project
         self.update_combobox()
-        self.update_backend()
+        
 
 
     def set_backend(self, backend):
+        """ Set the backend to the new value (implies setting a new layer). """
         if self.backend != backend:
-            self.backend = backend
-            self.update_backend()
+            Signals.disconnect_list(self.backend_signals)
 
+            self.backend = backend
+
+            if self.backend is not None:
+                # If no active layer is set, even though there are layers,
+                # then we should set the first layer as being active.
+                if self.backend.layer is None and len(self.backend.plot.layers) > 0:
+                    self.backend.layer = self.backend.plot.layers[0]
+                self.layer = self.backend.layer
+
+                # make sure we keep track of changes to the active layer
+                self.backend_signals.append(
+                    Signals.connect(backend, "notify::layer",
+                                    (lambda sender, layer: self.set_backend(layer)))
+                    )
+            else:
+                self.layer = None
+
+            # propagate the new backend to all tools
+            print "PROPAGATING ", self.backend
+            self.dock.foreach((lambda tool: tool.set_backend(self.backend)))
+            print "DONE"
+            
+            # Adjust the active index of the combobox so that the new
+            # backend is displayed.
             if self.backend is None:
                 index = -1
             else:
                 model = self.combobox.get_model()
                 index = self.project.backends.index(backend)
             self.combobox.set_active(index)
+            
 
-    def update_backend(self):
-        if self.backend is not None and \
-               (self.backend.current_layer is None and len(self.backend.plot.layers) > 0):
-            self.backend.current_layer = self.backend.plot.layers[0]
-        self.dock.foreach((lambda tool: tool.set_backend(self.backend)))
+    def set_layer(self, layer):
+        """ Set the layer to the new value (implies keeping the old backend). """
+        if layer != self.layer:
+            self.layer = layer
 
+            # propagate the new layer to all tools
+            self.dock.foreach(lambda tool: tool.set_layer(layer))
+
+                              
+        
     def update_combobox(self):
+        """
+        Fill the combobox with all available matplotlib backends.
+        This method might change the current backend, e.g. if the former
+        current backend does no longer exist in the list.
+        """
+        
         model = self.combobox.get_model()
-
-        # remember last selected Backend in combobox
-        index = self.combobox.get_active()
-        if index == -1:
-            old_object = None
-        else:
-            iter = model.get_iter((index,))
-            old_object = model.get_value(iter,0)
 
         # fill model with Backend objects and their keys
         model.clear()
@@ -196,10 +237,10 @@ class ToolWindow(gtk.Window):
                 model.append((backend, backend.plot.key))
             self.combobox.set_sensitive(True)
             
-            # reset old Backend object
+            # make current Backend the active one
             try:
-                index = self.project.backends.index(old_object)
-                self.combobox.set_active(index)                
+                index = self.project.backends.index(self.backend)
+                self.combobox.set_active(index)
             except ValueError:
                 self.combobox.set_active(-1)
             
@@ -246,35 +287,10 @@ class Tool(Dockable):
     def __init__(self, label, stock_id):
         Dockable.__init__(self, label, stock_id)
 
-        self.layer = -1
         self.backend = -1
+        self.layer = -1
         self.backend_signals = []
-
-
-    def set_backend(self, backend):
-        if backend == self.backend:
-            return        
-
-        Signals.disconnect_list(self.backend_signals)
-        if backend is not None:
-            self.layer = backend.current_layer
-            self.backend_signals.append(
-                Signals.connect(backend, "notify::current_layer", self.on_notify_layer)
-                )
-        else:
-            self.layer = None
-
-        self.set_sensitive(backend is not None)
-
-        self.backend = backend
-        self.update_backend()
-       
-
-    def update_backend(self):
-        self.update_layer()
-
-    def update_layer(self):
-        pass
+        self.layer_signals = []
 
     
 
@@ -374,25 +390,47 @@ class LabelsTool(Tool):
         
 
     def set_backend(self, backend):
-        if backend is not None:
-            self.layer = backend.current_layer
-            Signals.connect(self.layer, "notify::labels", self.on_notify_labels)
-        Tool.set_backend(self, backend)
+        if backend == self.backend:
+            return
+        
+        Signals.disconnect_list(self.backend_signals)
+        self.backend = backend
 
+        if backend is not None:            
+            self.set_layer(backend.layer)
+        else:
+            self.set_layer(None)
+            
+        self.set_sensitive(backend is not None)
+
+
+    def set_layer(self, layer):
+        if layer == self.layer:
+            return
+        
+        Signals.disconnect_list(self.layer_signals)
+        self.layer = layer
+        
+        if layer is not None:
+            self.layer_signals.append(
+                Signals.connect(self.layer, "notify::labels", self.on_notify_labels)
+                )
+        self.update_layer()
         
     #------------------------------------------------------------------------------
         
     def update_layer(self):
-        if self.layer is None:
+        model = self.treeview.get_model()        
+        model.clear()
+            
+        if self.backend is None or self.backend.layer is None:
             self.treeview.set_sensitive(False)
             return
         else:
             self.treeview.set_sensitive(True)            
 
         # check_in
-        model = self.treeview.get_model()        
-        model.clear()
-        for label in self.layer.labels:
+        for label in self.backend.layer.labels:
             model.append((label,))
 
 
@@ -425,7 +463,7 @@ class LabelsTool(Tool):
         ul = UndoList().describe("Update label.")
         changeset['undolist'] = ul
         uwrap.set(label, **changeset)
-        uwrap.emit_last(self.layer, 'notify::labels',
+        uwrap.emit_last(self.backend.layer, 'notify::labels',
                         updateinfo={'edit' : label},
                         undolist=ul)
         
@@ -462,14 +500,6 @@ class LabelsTool(Tool):
         project.journal.append(ul)
         
         
-    def on_notify_layer(self, sender, layer):
-        # no change ?        
-        if layer == self.layer:
-            return
-        self.layer = layer
-        self.update_layer()
-
-
     def on_notify_labels(self, layer, updateinfo=None):
         self.update_layer()
         
