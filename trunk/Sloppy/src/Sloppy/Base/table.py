@@ -359,7 +359,7 @@ class Table(object):
         self._typecodes = map(lambda x: x.typecode(), self._columns)
 
         # TODO: move to types.h
-        type_map = {'d': float, 'f': float, 'O': str, 'l': long}
+        type_map = {'d': float, 'f': float, 'O': str, 'l': long, 'i': int}
         self._converters = map(lambda tc: type_map[tc], self._typecodes)
 
         Signals.emit(self, 'update-columns') # FIXME
