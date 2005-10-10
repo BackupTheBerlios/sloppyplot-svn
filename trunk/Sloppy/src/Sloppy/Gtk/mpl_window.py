@@ -75,11 +75,14 @@ class MatplotlibWindow( gtk.Window ):
         <menu action='DisplayMenu'/>
         <menu action='AnalysisMenu'/>       
         <menu action='ViewMenu'>
+          <menuitem action='ToggleToolbox'/>
+          <separator/>
           <menuitem action='Fullscreen'/>
         </menu>
       </menubar>
       <toolbar name='MainToolbar'>
         <placeholder name='MainToolbarEdit'/>
+        <toolitem action='ToggleToolbox'/>
         <separator/>
         <toolitem action='Undo'/>
         <toolitem action='Redo'/>
@@ -87,6 +90,7 @@ class MatplotlibWindow( gtk.Window ):
       </toolbar>
     </ui>
     """
+
 
     
     def __init__(self, app, project, plot):
@@ -102,14 +106,29 @@ class MatplotlibWindow( gtk.Window ):
         
         # set up ui manager
         self.uimanager = gtk.UIManager()        
-
+       
         # add undo/redo ui from application window
         ag = uihelper.get_action_group(self.app.window.uimanager, 'UndoRedo')
         self.uimanager.insert_action_group(ag,0)
         
-        # add ui information from window
+        # add action group from window
         for ag in uihelper.construct_actiongroups(self.actions_dict, map=self):
             self.uimanager.insert_action_group(ag,0)
+
+        # add action group for toolbox
+        toolbox = self.app.window.toolbox
+        def on_toggled(action, window):
+            if action.get_active() is True:
+                window.show()
+            else:
+                window.hide()
+        t = gtk.ToggleAction('ToggleToolbox', 'Toolbox', 'ToggleToolbox visibility', gtk.STOCK_PROPERTIES)
+        t.connect("toggled", on_toggled, toolbox)
+        uihelper.get_action_group(self.uimanager, 'ViewMenu').add_action(t)
+
+
+        # ...and now that all action groups are created,
+        # we can create the actual ui for the window 
         self.uimanager.add_ui_from_string(self.uistring)
 
         # add ui information from subwidget
@@ -152,7 +171,7 @@ class MatplotlibWindow( gtk.Window ):
         self.connect("destroy", (lambda sender: self.destroy()))
         Signals.connect(self.mpl_widget, "closed", (lambda sender: self.destroy()))
 
-        
+
 
     def destroy(self):
         self.mpl_widget.set_plot(None)
@@ -225,7 +244,7 @@ class MatplotlibWidget(gtk.VBox):
         [
         ('PlotMenu', None, '_Plot'),
         ('Replot', 'sloppy-replot', '_Replot', '<control>R', 'Replot', '_cb_replot'),
-        ('Edit', gtk.STOCK_PROPERTIES, '_Edit', '<control>E', 'Edit', '_cb_edit'),
+        ('EditLayer', gtk.STOCK_PROPERTIES, '_Edit Layer', '<control>E', 'Edit Layer', 'on_edit_layer'),
         ('ExportViaMPL', gtk.STOCK_SAVE_AS, 'Export via matplotlib...', None, 'Export via Matplotlib', 'on_export_via_matplotlib'),
         ],
         'Analysis':
@@ -253,7 +272,7 @@ class MatplotlibWidget(gtk.VBox):
         <menu action='PlotMenu'>
           <placeholder name='PlotMenuActions'>
             <menuitem action='Replot'/>
-            <menuitem action='Edit'/>
+            <menuitem action='EditLayer'/>
             <separator/>
             <menuitem action='ExportViaMPL'/>
           </placeholder>
@@ -275,7 +294,7 @@ class MatplotlibWidget(gtk.VBox):
       </menubar>      
       <toolbar name='MainToolbar'>
         <placeholder name='MainToolbarEdit'>
-        <toolitem action='Edit'/>
+        <toolitem action='EditLayer'/>
         </placeholder>
         <toolitem action='ZoomRect'/>
         <separator/>              
@@ -425,8 +444,8 @@ class MatplotlibWidget(gtk.VBox):
     def _cb_replot(self, action):
         self.backend.draw()
 
-    def _cb_edit(self, action):
-        self.app.edit_layer( self.plot, self.plot.layers[0] )        
+    def on_edit_layer(self, action):
+        self.app.edit_layer( self.plot, self.backend.layer )
 
     #----------------------------------------------------------------------
 

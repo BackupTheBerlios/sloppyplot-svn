@@ -398,7 +398,7 @@ class GtkApplication(Application):
         # match_subwindow
         # request_subwindow
 
-        # evtl. schon als ToolWindow ???
+        # evtl. schon als Toolbox ???
         
 #             window = self.window.subwindow_match( \
 #                 (lambda win: isinstance(win, GnuplotWindow) and \
@@ -428,10 +428,10 @@ class GtkApplication(Application):
                 ##window.set_transient_for(self.window)
                 self.window.subwindow_add(window)
                 # TESTING
-                # Of course, the toolwindow might decide to not use the backend,
+                # Of course, the toolbox might decide to not use the backend,
                 # e.g. if there is an 'auto' button and it is not pressed. So I will
                 # need to change that then.
-                window.connect("focus-in-event", (lambda a,b: self.window.toolwindow.set_backend(window.get_backend())))
+                window.connect("focus-in-event", (lambda a,b: self.window.toolbox.set_backend(window.get_backend())))
 
             window.show()
             window.present()

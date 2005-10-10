@@ -47,7 +47,7 @@ def add_toggle_actions(uimanager, key, actions, map=None):
     actiongroup = gtk.ActionGroup(key)
     actiongroup.add_toggle_actions(actions)
     uimanager.insert_action_group(actiongroup, 0)
-
+    return actiongroup
 
 
 def map_actions(actions, map):

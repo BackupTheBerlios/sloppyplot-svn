@@ -85,7 +85,7 @@ class AppWindow( gtk.Window ):
 
         self.uimanager = self._construct_uimanager()
         self._construct_logwindow()
-        self.toolwindow = self._construct_toolwindow()
+        self.toolbox = self._construct_toolbox()
 
         # and build ui
         self.uimanager.add_ui_from_string(self.ui_string)
@@ -186,9 +186,9 @@ class AppWindow( gtk.Window ):
         return statusbar
 
 
-    def _construct_toolwindow(self):
+    def _construct_toolbox(self):
 
-        window = tools.ToolWindow(self.app, None)
+        window = tools.Toolbox(self.app, None)
         window.set_transient_for(self)
         window.set_destroy_with_parent(True)
         window.hide()
@@ -196,7 +196,7 @@ class AppWindow( gtk.Window ):
         def cb_toggle_window(action, window):
             if action.get_active() is True: window.show()
             else: window.hide()        
-        t = gtk.ToggleAction('ToggleToolWindow', 'Show tools window', None, None)
+        t = gtk.ToggleAction('ToggleToolbox', 'Show tools window', None, None)
         t.connect("toggled", cb_toggle_window, window)
         uihelper.get_action_group(self.uimanager, 'Application').add_action(t)
 
@@ -664,7 +664,7 @@ class AppWindow( gtk.Window ):
           <menuitem action='ExperimentalPlot'/>
         </menu>
         <menu action='ViewMenu'>
-          <menuitem action='ToggleToolWindow'/>
+          <menuitem action='ToggleToolbox'/>
           <menuitem action='ToggleLogwindow'/>          
           <separator/>
         </menu>        

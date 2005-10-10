@@ -50,30 +50,31 @@ logger = logging.getLogger('Gtk.tools')
 
 
 #------------------------------------------------------------------------------
-# ToolWindow
+# Toolbox
 #
 
-class ToolWindow(gtk.Window):
+class Toolbox(gtk.Window):
 
-    """ The ToolWindow holds a dock with a number of Tools.
+    """ The Toolbox holds a dock with a number of Tools.
 
     Since each Tool refers to a backend and to the backend's active
-    layer, the ToolWindow has the task to set these two values for all
+    layer, the Toolbox has the task to set these two values for all
     of its tools.
 
-    The ToolWindow also provides a combobox, so that the user may switch
+    The Toolbox also provides a combobox, so that the user may switch
     the active backend.  The active layer of this backend can not be
-    manipulated by the ToolWindow.  However, the ToolWindow catches any
+    manipulated by the Toolbox.  However, the Toolbox catches any
     change of this active layer and sends it to its tools.
     
     @ivar project: project.
-    @ivar backend: currently active backend as displayed in the ToolWindow combo.
+    @ivar backend: currently active backend as displayed in the Toolbox combo.
     @ivar layer: currently active layer.
     """
 
     def __init__(self, app, project=None):
         gtk.Window.__init__(self)
-
+        self.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_UTILITY)
+        
         self.app = app
 
         self.project = project or -1
@@ -147,7 +148,7 @@ class ToolWindow(gtk.Window):
         Signals.connect(self.app, "write-config", self.write_toolwindow_config)
 
         # TODO: read config data
-        eWindow = app.eConfig.find('ToolWindow')
+        eWindow = app.eConfig.find('Toolbox')
         if eWindow is not None:
             pass
 
@@ -257,14 +258,14 @@ class ToolWindow(gtk.Window):
 
             
     def write_toolwindow_config(self, app):
-        eToolWindow = app.eConfig.find("ToolWindow")
-        if eToolWindow is None:
-            eToolWindow = SubElement(app.eConfig, "ToolWindow")
+        eToolbox = app.eConfig.find("Toolbox")
+        if eToolbox is None:
+            eToolbox = SubElement(app.eConfig, "Toolbox")
         else:
-            eToolWindow.clear()
+            eToolbox.clear()
 
         # get information about dockables/dockbooks
-        eDock = config.SubElement(eToolWindow, "Dock")
+        eDock = config.SubElement(eToolbox, "Dock")
         for dockbook in self.dock.dockbooks:
             eDockbook = config.SubElement(eDock, "Dockbook")        
             for dockable in dockbook.get_children():
@@ -572,7 +573,7 @@ def test2():
     app = application.GtkApplication(filename)
     plot = app.project.get_plot(0)
 
-    win = ToolWindow(app, app.project)
+    win = Toolbox(app, app.project)
     win.connect("destroy", gtk.main_quit)
 
     win.show()
