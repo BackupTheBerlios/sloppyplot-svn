@@ -1,0 +1,14 @@
+- check XPS and PFC imports
+
+- check if toolbox is visible and adjust the state of the togglebutton on creation of mpl_window.
+
+- set default values
+
+- implement linestyles in gnuplot.
+
+- importer: _first_ remove beginning and end of line using a regular expression,
+  _then_ split the remaining string according to the delimiter. (This
+  way, we can avoid problems with comments, different linebreaks,...)
+  When constructing the delimiter, always append '\s*' ?
+
+
