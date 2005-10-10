@@ -34,7 +34,8 @@ from Sloppy.Lib.Props import *
 
 types_numeric2netcdf = {'d' : NC.DOUBLE,
                         'f' : NC.FLOAT,
-                        'l' : NC.INT}
+                        'l' : NC.INT,
+                        'i' : NC.INT}
 
 
 

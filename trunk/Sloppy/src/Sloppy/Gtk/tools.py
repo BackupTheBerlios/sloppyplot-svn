@@ -201,15 +201,13 @@ class ToolWindow(gtk.Window):
                 # make sure we keep track of changes to the active layer
                 self.backend_signals.append(
                     Signals.connect(backend, "notify::layer",
-                                    (lambda sender, layer: self.set_backend(layer)))
+                                    (lambda sender, layer: self.set_layer(layer)))
                     )
             else:
                 self.layer = None
 
             # propagate the new backend to all tools
-            print "PROPAGATING ", self.backend
             self.dock.foreach((lambda tool: tool.set_backend(self.backend)))
-            print "DONE"
             
             # Adjust the active index of the combobox so that the new
             # backend is displayed.
@@ -350,11 +348,13 @@ class LayerTool(Tool):
         
         treeview.append_column(column)
         #treeview.connect("row-activated", (lambda a,b,c:self.on_edit(a)))
+        treeview.connect("cursor-changed", self.on_cursor_changed)
         treeview.show()
-        self.add(treeview)
+        self.add(treeview)        
         
         # remember for further reference
         self.treeview = treeview
+
 
 
     def set_layer(self, layer):
@@ -373,20 +373,41 @@ class LayerTool(Tool):
     def update_backend(self):
         if self.backend is None:
             self.treeview.set_sensitive(False)
-            return
-        
+            return        
         self.treeview.set_sensitive(True)
-        
+
         # check_in
         model = self.treeview.get_model()
         model.clear()
         for layer in self.backend.plot.layers:
              model.append((layer,))
+
+        # connect to change of current layer
+        self.backend_signals.append(
+            Signals.connect(self.backend, "notify::layer",
+                            (lambda sender, layer: self.set_layer(layer)))
+            )
+        
              
     def update_layer(self):
         # mark active layer
-        print "MARKING ACTIVE LAYER"
+        model = self.treeview.get_model()
+        iter = model.get_iter_first()
+        while iter is not None:
+            value = model.get_value(iter, 0)
+            if value == self.layer:
+                self.treeview.get_selection().select_iter(iter)
+                break
+            iter = model.iter_next(iter)
+        else:
+            self.treeview.get_selection().unselect_all()
 
+    def on_cursor_changed(self, treeview):
+        model, iter = treeview.get_selection().get_selected()
+        layer = model.get_value(iter,0)
+        if layer is not None:
+            self.backend.layer = layer
+        
             
         
 class LabelsTool(Tool):

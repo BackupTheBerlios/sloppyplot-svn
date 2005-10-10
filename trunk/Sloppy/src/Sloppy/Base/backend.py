@@ -270,7 +270,7 @@ class Backend(object):
         if layer is None or layer in self.plot.layers:
             self._layer = layer
             # TODO: only when it changes!
-            Signals.emit(self, "notify::current_layer", layer)
+            Signals.emit(self, "notify::layer", layer)
         else:
             raise ValueError("Layer %s can't be set as current, because it is not part of the Plot!" % layer)
 
