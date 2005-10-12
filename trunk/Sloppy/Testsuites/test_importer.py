@@ -4,6 +4,7 @@ import unittest
 from Sloppy.Base.dataio import ImporterRegistry
 from Sloppy.Base.table import Table
 
+from Numeric import array
 
 
 class TestCase(unittest.TestCase):
@@ -11,15 +12,11 @@ class TestCase(unittest.TestCase):
     def setUp(self):
         self.tables = [('./data/1.dat',
                         ImporterRegistry['ASCII'](),
-                        Table([[1,2,3],[2,4,8],[3,9,27],[4,16,64]])
+                        Table(array([[1,2,3],[2,4,8],[3,9,27],[4,16,64]],'d'))
                         ),
                        ('./data/2.dat',
                         ImporterRegistry['ASCII'](),
-                        Table([[1,1,1],[2,2,2],[3,3,3]])
-                        ),
-                       ('./data/3.dat',
-                        ImporterRegistry['ASCII'](),
-                        Table([[1,3],[2,8],[3,27],[4,64]])
+                        Table(array([[1,1,1],[2,2,2],[3,3,3]],'d'))
                         )
                        ]
 
@@ -32,6 +29,8 @@ class TestCase(unittest.TestCase):
                 print ">>>"
                 print "File: ", filename
                 print tbl
+                print "==="
+                print result
                 print "<<<"
                 raise
 
