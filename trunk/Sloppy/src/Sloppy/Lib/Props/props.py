@@ -72,12 +72,15 @@ class MetaAttribute(object):
         self.key = key
         self.prop = prop
 
-    def __get__(self, inst, cls=None):
+    def __get__(self, inst, default=None):
         rv = inst._values[self.key]
         if rv is not None:
             return rv
         else:
-            return self.prop.on_default()
+            if default is None:
+                return self.prop.on_default()
+            else:
+                return self.prop.check(default)
 
     def __set__(self, owner, value):
         try:
@@ -255,6 +258,8 @@ class CheckValid(Check):
         self.values = as_list(values)
         
     def __call__(self, value):
+        if value is None:
+            return
         if (value in self.values) is False:
             raise ValueError("Value %s is not in the list of valid values: %s" % (value, self.values))
 
@@ -271,6 +276,8 @@ class CheckInvalid(Check):
         self.values = as_list(values)       
 
     def __call__(self, value):
+        if value is None:
+            return
         if value in self.values:
             raise ValueError("Value %s in in the list of invalid values: %s" % (value, self.values))    
 
