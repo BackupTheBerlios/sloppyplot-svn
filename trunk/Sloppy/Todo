@@ -1,36 +1,58 @@
 
-- The two zoom buttons don't work.  The reason is simple: The zoom
-functions determine the layer based on the position of the mouse.
-When you click on the toolbar, this will not yield any layer!
+Plans for 0.4.5
+===============
 
- There is a 'current layer' in the plot. Should I really use that? 
- After all, this is just something needed for editing and nothing
- that needs to be saved.
+- Zoom functions should respect the current layer!
 
- Another possibility would be to put this into the backend! I think
- this would make a lot more sense.  But then, the layer tool would
- have a problem... I should sleep about this problem for a while.
+- What happens if I toggle the visibility of a layer?  Will it disappear?
 
- Right now, the layer refers to a Plot object.  Now, if there is no
- backend opened, then it makes no sense to edit the active layer. After all,
- the user does not know, what the active layer is. OR?
- 
- Then, one might ask, it is ambigiuous, to what backend we are referring.
- No, it isn't , because matplotlib is the only _interactive_ backend.
 
- Only drawback: The backend needs to be activated to manipulate the
- plot. Well, if this is not requested, one might simply use the
- Edit-Window!
+!!!  Notice that projectio will need to use get_value(default=None) if it does
+  not want to save all settings!
 
+- check XPS and PFC imports
+
+- check if toolbox is visible and adjust the state of the togglebutton on creation of mpl_window.
+
+- implement linestyles in gnuplot.
+
+- importer: _first_ remove beginning and end of line using a regular expression,
+  _then_ split the remaining string according to the delimiter. (This
+  way, we can avoid problems with comments, different linebreaks,...)
+  When constructing the delimiter, always append '\s*' ?
 
 
 
-PLANS FOR 0.4.5:
 
-- allow to open tool window from mpl window and make the corresponding
-plot the active plot in the tool window.
 
-  => add accelerator to 'toggle logwindow'
+Plans for 0.4.6
+===============
+
+- different types for columns: allow changing types
+- allow strings
+- allow dates
+
+- allow to create a gnuplot export directory containing a gnuplot file
+  and the data files
+- allow to include arbitrary data at specific positions into the gnuplot.
+
+
+
+PLANS FOR 0.4.x:
+================
+
+- Something to think about: 
+
+  notify::labels -> the _contents_ of the prop labels (which is a
+    ListProp or a DictProp) has changed.
+
+  notify -> the _contents_ of the object has changed (i.e. at least one
+    of its Props has changed).  The changed properties should be listed 
+    in an additional argument.
+
+  BUT right now we have notify::layer and notify::project, where layer
+  is not even a Prop.
+
 
 - consistency: ValueDict and ValueList (i.e. remove CheckValue)
 
@@ -46,9 +68,18 @@ deprecate propwidgets.
 
 - add documentation for objects.
 
+
+
+THINK ABOUT THIS: MAYBE FOR 0.5.x series ???
+
 - don't update tools window if it is hidden, i.e. disconnect signals!
 
 - what about Signals in classes?  HasSignals?
+
+- Signals.connect_once -> requires an additional flag in the SignalContainer
+
+
+
 
 
 
@@ -57,11 +88,6 @@ deprecate propwidgets.
 #EVERYTHING BELOW THIS POINT IS JUST A COLLECTION OF IDEAS
 
 #----------------------------------------------------------------------
-
-
-
-- Signals.connect_once -> requires an additional flag in the SignalContainer
-
 
 - we might want to change cx, cy to a string of the form
 
