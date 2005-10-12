@@ -637,22 +637,22 @@ class LinesTab(AbstractTab):
 
 
     def model_row_from_line(self, line):
-        source = uwrap.get(line, 'source')
+        source = line.source
         if source is not None: source_key = source.key
         else: source_key = ""
         return [line,
-                uwrap.get(line, 'visible'),
+                line.visible,
                 line.label or "",
                 line.style or "",
                 line.marker or "",
                 line.width or "",
                 source_key,
-                str(uwrap.get(line, 'cx',"")),
-                str(uwrap.get(line, 'cy',"")),
-                str(uwrap.get(line, 'row_first',"")),
-                str(uwrap.get(line, 'row_last',"")),                
-                str(uwrap.get(line, 'cxerr',"")),
-                str(uwrap.get(line, 'cyerr',""))]
+                str(line.get_value('cx',"")),
+                str(line.get_value('cy',"")),
+                str(line.get_value('row_first',"")),
+                str(line.get_value('row_last',"")),                
+                str(line.get_value('cxerr',"")),
+                str(line.get_value('cyerr',""))]
 
 
     #----------------------------------------------------------------------

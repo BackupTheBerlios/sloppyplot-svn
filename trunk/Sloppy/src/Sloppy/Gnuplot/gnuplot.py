@@ -34,7 +34,7 @@ logger = logging.getLogger('Gnuplot.gnuplot')
 from Sloppy.Base import objects
 from Sloppy.Base.dataset import Dataset
 from Sloppy.Base.dataio import ExporterRegistry
-from Sloppy.Base import utils, uwrap, backend
+from Sloppy.Base import utils, backend
 
 from terminal import XTerminal, DumbTerminal, PostscriptTerminal
 
@@ -253,16 +253,16 @@ class Backend(backend.Backend):
         rv = []
 
         # visible
-        if uwrap.get(layer, 'visible') is False:
+        if layer.visible is False:
             return rv
         
         # title
-        title = uwrap.get(layer, 'title')
+        title = layer.title
         if title is not None: rv.append('set title "%s"' % title)
         else: rv.append("unset title")
 
         # grid
-        grid = uwrap.get(layer, 'grid')
+        grid = layer.grid
         if grid is True: rv.append('set grid')
         else: rv.append('unset grid')
         
@@ -290,8 +290,8 @@ class Backend(backend.Backend):
             cmd_list.append( "set multiplot" )
             for layer in self.plot.layers:
                 group_info = {}
-                x, y = uwrap.get(layer, 'x'), uwrap.get(layer, 'y')
-                width, height = uwrap.get(layer, 'width'), uwrap.get(layer, 'height')
+                x, y = layer.x, layer.y
+                width, height = layer.width, layer.height
                 cmd_list.append("set origin %.2f,%.2f" % (x,y))
                 cmd_list.append("set size %.2f,%.2f" % (width, height))
                 cmd_list += self.build_layer(layer, group_info)
@@ -344,22 +344,22 @@ class Backend(backend.Backend):
         # axes
         for key, axis in layer.axes.iteritems():            
             # axis format
-            format = uwrap.get(axis, 'format')
+            format = axis.format
             if format is not None: cl.append('set format %s "%s"' % (key, format))
             else: cl.append('set format %s' % key)
 
             # axis label
-            label = uwrap.get(axis, 'label')
+            label = axis.label
             if label is not None: cl.append('set %slabel "%s"' % (key, label))
             else: cl.append('unset %slabel' % key)
 
             # axis range
-            start = uwrap.get(axis, 'start','*')
-            end = uwrap.get(axis, 'end','*')
+            start = axis.get_value('start', '*')
+            end = axis.get_value(axis, 'end','*')
             cl.append('set %srange [%s:%s]' % (key,start,end))
 
             # axis scale
-            scale = uwrap.get(axis, 'scale')
+            scale = axis.scale
             if scale == 'linear': cl.append('unset log %s' % key)
             elif scale == 'log': cl.append('set log %s' % key)
             else:
@@ -377,7 +377,7 @@ class Backend(backend.Backend):
         line_cache = []
         for line in layer.lines:
             try:
-                if uwrap.get(line, 'visible') is False: continue
+                if line.visible is False: continue
 
                 ds = self.get_line_source(line)
                 table = self.get_table(ds)
@@ -397,7 +397,7 @@ class Backend(backend.Backend):
 
                 # TODO: support 'style' and 'marker'
                 # with-clause
-                type = uwrap.get(line, 'style')
+                type = line.style
                 type_mappings = {'solid': 'w l'}
                 try:
                     with = type_mappings[type]
@@ -406,7 +406,7 @@ class Backend(backend.Backend):
                     logger.error('line type "%s" not supported by this backend.' % type )
 
                 # line width
-                width = uwrap.get(line, 'width')
+                width = line.width
                 width = 'lw %s' % str(width)
             except backend.BackendError, msg:
                 logger.error("Error while processing line: %s" % msg)
@@ -433,18 +433,18 @@ class Backend(backend.Backend):
         cl = []
         #:legend
         # (aka key in gnuplot)
-        legend = uwrap.get(layer, 'legend')
+        legend = legend.layer
         if legend is not None:
             #:legend.visible
-            visible = uwrap.get(legend, 'visible')
+            visible = legend.visible
             if visible is True:
                 #:legend.label
-                label = uwrap.get(legend, 'label')                
+                label = legend.label
                 if label is not None: key_title = 'title "%s"' % label
                 else: key_title = ""
 
                 #:legend.border:OK
-                border = uwrap.get(legend, 'border')
+                border = legend.border
                 if border is True: key_border = "box"
                 else: key_border = "nobox"
 
@@ -461,15 +461,14 @@ class Backend(backend.Backend):
                     'lower center' : 'graph 0.5, graph 0.0',
                     'outside' : 'outside'
                     }
-                pos = uwrap.get(legend, 'position')
+                pos = legend.position
                 if pos == 'best':
                     key_pos = ''
                 elif pos == 'at position':
                     if legend.x is None and legend.y is None:
                         key_pos = ''
                     else:
-                        x = uwrap.get(legend, 'x')
-                        y = uwrap.get(legend, 'y')
+                        x,y = legend.x, legend.y
                         key_pos = 'graph %.2f, graph %.2f' % (x, y)
                 else:
                     key_pos = position_mapping[pos]

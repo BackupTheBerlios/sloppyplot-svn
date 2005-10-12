@@ -174,8 +174,8 @@ class Toolbox(gtk.Window):
             self.project_signals.extend(
                 [Signals.connect(project, 'notify::backends',
                                  (lambda sender: self.update_combobox())),
-                 Signals.connect(project.app, 'notify::current_backend',
-                                 (lambda sender, backend: self.set_backend(backend)))
+                 #Signals.connect(project.app, 'backend-changed',
+                 #                (lambda sender, backend: self.set_backend(backend)))
                  ])
 
         self.dock.foreach((lambda tool: tool.set_data('project', project)))

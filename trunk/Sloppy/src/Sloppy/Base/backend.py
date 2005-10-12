@@ -28,7 +28,6 @@ import logging, os
 
 from Sloppy.Lib import Signals
 
-from Sloppy.Base import uwrap
 from Sloppy.Base.table import Table
 
 
@@ -142,7 +141,7 @@ class Backend(object):
         self.redraw()
         
     def cb_project_closed(self, sender):
-        logging.debug("The project '%s' is closing. The Backend will close as well." % uwrap.get(sender, 'label'))
+        logging.debug("The project '%s' is closing. The Backend will close as well." % sender.label)
         if self.connected is True:
             self.disconnect()
 
@@ -221,9 +220,9 @@ class Backend(object):
         if label is None:
             if table is not None and cy is not None:
                 column = table.column(cy)
-                label = column.label or column.key or uwrap.get(line, 'label')
+                label = column.label or column.key or line.label
             else:
-                label = uwrap.get(line, 'label')
+                label = line.label
         return label
 
 

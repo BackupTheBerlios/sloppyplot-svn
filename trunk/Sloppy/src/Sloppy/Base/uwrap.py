@@ -29,7 +29,6 @@ import logging
 from Sloppy.Lib.Undo import UndoList, UndoInfo, NullUndo
 from Sloppy.Lib import Signals
 
-from Sloppy.Base.const import default_params
 
 
 def set(container, *args, **kwargs):
@@ -92,29 +91,7 @@ def smart_set(container, *args, **kwargs):
 
 
 
-def get(self, key, default=None):
-    """
-    Return value of given option or `default` value.
-    If no default value is given, the default from const.py
-    is returned.
-    """
-    try:
-        value = getattr(self, key)
-        if value == None:
-            raise AttributeError
-        return value
-    except (AttributeError, TypeError):
-        # TypeError may be raised if 'None' is an invalid value for the
-        # given property.
-        if default is not None:
-            return default
-        else:
-            try:
-                key = ("%s.%s" % (self.__class__.__name__, key)).lower()
-                return default_params[key]
-            except KeyError:
-                logging.error("No default key for key: %s" % key)
-                return None
+
 
 
 def emit(sender, name, *args, **kwargs):

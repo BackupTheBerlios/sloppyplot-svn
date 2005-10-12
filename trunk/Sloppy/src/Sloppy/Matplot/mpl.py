@@ -47,7 +47,7 @@ from matplotlib.text import Text
 
 from Sloppy.Base import backend
 from Sloppy.Base import objects
-from Sloppy.Base import utils, uwrap
+from Sloppy.Base import utils
 from Sloppy.Base.dataset import Dataset
 
 from Sloppy.Lib import Signals
@@ -231,10 +231,10 @@ class Backend( backend.Backend ):
             #:axis.scale
             #:axis.start
             #:axis.end
-            label = uwrap.get(axis, 'label')            
-            scale = uwrap.get(axis, 'scale')
-            start = uwrap.get(axis, 'start')
-            end = uwrap.get(axis, 'end')
+            label = axis.label
+            scale = axis.scale
+            start = axis.start
+            end = axis.end
 
             logger.debug("start = %s; end = %s" % (start, end))
             
@@ -257,18 +257,17 @@ class Backend( backend.Backend ):
             if end is not None: set_end(end)
             
         #:layer.visible
-        if uwrap.get(layer, 'visible') is False:
+        if layer.visible is False:
             return
 
         # TODO
         #:layer.title
-        title = uwrap.get(layer, 'title', None)
+        title = layer.title
         if title is not None:
             axes.set_title(title)
 
         #:layer.grid
-        grid = uwrap.get(layer, 'grid', None)        
-        axes.grid(grid)
+        axes.grid(layer.grid)
                     
         #:layer.legend:OK
         self.update_legend(layer)
@@ -293,7 +292,7 @@ class Backend( backend.Backend ):
         data_to_plot = []
 
         #:line.visible
-        if uwrap.get(line, 'visible') is False:
+        if line.visible is False:
             if line in axes.lines:
                 axes.lines.remove(line)
                 line_cache.remove(line)
@@ -320,21 +319,18 @@ class Backend( backend.Backend ):
 
         #:line.style
         global linestyle_mappings
-        style = uwrap.get(line, 'style', 'solid')
-        style = linestyle_mappings[style]
-
+        style = linestyle_mappings[line.style]
 
         #:line.marker
         global linemarker_mappings
-        marker = uwrap.get(line, 'marker', 'None')
-        marker = linemarker_mappings[marker]
+        marker = linemarker_mappings[line.marker]
 
         #:line.width:OK
 
         #:line.color
         N = len(layer.group_colors)
         index = layer.lines.index(line)
-        color = uwrap.get(line, 'color', layer.group_colors[index%N])
+        color = line.get_value('color', default=layer.group_colors[index%N])
 
 
         #--- PLOT LINE ---
@@ -445,21 +441,21 @@ class Backend( backend.Backend ):
         'visible' must be popped and set via set_visible
         """
 
-        visible = uwrap.get(legend, 'visible')
+        visible = legend.visible
                     
         #:legend.label:TODO
-        label = uwrap.get(legend, 'visible')
+        label = legend.label
         if label is not None:
             pass
 
         #:legend.border:OK
         # (see below but keep it here!)
-        border = uwrap.get(legend, 'border')
+        border = legend.border
 
         #:legend.position TODO
-        position = uwrap.get(legend, 'position', 'best')
+        position = legend.position
         if position == 'at position':
-            position = (uwrap.get(legend, 'x'), uwrap.get(legend, 'y'))
+            position = (legend.x, legend.y)
 
         # create legend entries from line labels
         line_cache = self.line_caches[layer]

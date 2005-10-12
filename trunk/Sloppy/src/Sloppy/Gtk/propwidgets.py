@@ -124,7 +124,8 @@ class PW(object):
     #--- ACCESSORS --------------------------------------------------------
 
     def get_value(self):
-        return getattr( self.container, self.key)
+        return self.container.get_value(self.key)
+    
     def get_prop(self):
         return self.container.get_prop(self.key)
     prop = property(get_prop)

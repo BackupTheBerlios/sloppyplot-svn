@@ -61,7 +61,7 @@ class Plugin:
             uwrap.set(axis, scale='log', undolist=ul)
             updateinfo.update['scale'] = 'log'
             
-            start = uwrap.get(axis, 'start')
+            start = axis.start
             if start is not None and start < 0:
                 uwrap.set(axis, start=None, undolist=ul)
                 updateinfo.update['start'] = None
