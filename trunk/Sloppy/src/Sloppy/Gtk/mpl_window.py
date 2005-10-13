@@ -264,6 +264,10 @@ class MatplotlibWidget(gtk.VBox):
         ('SelectLine', None, 'Select Line', 's', '', '_cb_select_line'),
         ('ZoomAxes', None, 'Zoom Axes', 'z', '', '_cb_zoom_axes')
         ],
+        'Experimental':
+        [
+        ('PeakFinder', None, 'Find Peaks', None, '', 'on_action_PeakFinder')
+        ]
         }
 
     uistring = """
@@ -279,6 +283,8 @@ class MatplotlibWidget(gtk.VBox):
         </menu>        
         <menu action='AnalysisMenu'>
           <menuitem action='DataCursor'/>
+          <separator/>
+          <menuitem action='PeakFinder'/>
         </menu>        
         <menu action='DisplayMenu'>
           <menuitem action='ToggleLogScale'/>
@@ -706,6 +712,38 @@ class MatplotlibWidget(gtk.VBox):
             self.backend.canvas.print_figure(fname)
 
 
+    def on_action_PeakFinder(self, action):
+        self.abort_selection()
 
+        # TESTING
+        # we will simply take the first line available.
+        layer = self.backend.layer
+        line = layer.lines[0]
+
+        print "USING LINE ", line
+
+        p = self.app.get_plugin('PeakFinder')
+        data = line.source.get_data()
+        print p.find_peaks(data[line.cx], data[line.cy], 600, 5)
+
+        # a dialog should ask for the following:
+
+        # Line (=> cx and cy will be automatically determined)
+        # threshold
+        # accuracy
+        # max. nr. of points before aborting.
+
+        # It should then have a list view with the list of points
+        # and some options, e.g. 'add as label'.
+
+        # In the next step, we will have a SIMS isotope library in
+        # the SIMS plugin.  The SIMS plugin can then utilize the find_peak
+        # method, look up the isotopes and determine the possible isotopes
+        # from that!
+
+
+#==============================================================================
 gobject.type_register(MatplotlibWidget)        
         
+
+

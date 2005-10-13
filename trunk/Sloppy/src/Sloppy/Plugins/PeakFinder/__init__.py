@@ -19,15 +19,8 @@
 # $Id: __init__.py 5 2005-08-12 07:27:46Z niklasv $
 
 
-from Sloppy.Base.plugin import PluginRegistry
-
 import logging
 logger = logging.getLogger('plugin.PeakFinder')
 
-try:
-    import pygsl
-except ImportError:
-    logger.error("Could not find pygsl. Plugin 'PeakFinder' skipped.")
-else:
-    from main import *
+from main import *
 
