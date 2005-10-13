@@ -343,7 +343,8 @@ class Backend( backend.Backend ):
         omap[line] = l        
 
         label = self.get_line_label(line, table=table, cy=cy)
-        l.set_label(label)
+        if label is not None:
+            l.set_label(label)
 
     
     #----------------------------------------------------------------------
