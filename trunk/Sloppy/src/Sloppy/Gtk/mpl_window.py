@@ -256,8 +256,8 @@ class MatplotlibWidget(gtk.VBox):
         ('DisplayMenu', None, '_Display'),
         ('ZoomIn', gtk.STOCK_ZOOM_IN, '_Zoom In', 'plus', 'Zoom', '_cb_zoom_in'),
         ('ZoomOut', gtk.STOCK_ZOOM_OUT, '_Zoom Out', 'minus', 'Zoom', '_cb_zoom_out'),
-        ('ZoomFit', gtk.STOCK_ZOOM_FIT, '_Zoom Fit', '0', 'Zoom', '_cb_zoom_fit'),
-        ('ZoomRect', gtk.STOCK_ZOOM_FIT, '_Zoom Rectangle', 'r', 'Zoom', '_cb_zoom_rect'),
+        ('ZoomFit', gtk.STOCK_ZOOM_FIT, '_Zoom Fit', '0', 'Zoom', 'on_action_ZoomFit'),
+        ('ZoomRect', gtk.STOCK_ZOOM_FIT, '_Zoom Rectangle', 'r', 'Zoom', 'on_action_ZoomRect'),
         ('ToggleLogScale', None, 'Toggle Logarithmic Scale', 'l', 'Toggle Logscale', '_cb_toggle_logscale'),
         ('MovePlot', None, 'Move Plot', 'm', '', '_cb_move_plot'),
         ('DataCursor', None, 'Data Cursor (EXPERIMENTAL!)', 'c', '', '_cb_data_cursor'),
@@ -531,7 +531,7 @@ class MatplotlibWidget(gtk.VBox):
 
     #------------------------------------------------------------------------------
         
-    def _cb_zoom_rect(self, action):
+    def on_action_ZoomRect(self, action):
 
         def finish_zooming(sender):
             self.statusbar.pop(
@@ -551,16 +551,11 @@ class MatplotlibWidget(gtk.VBox):
         self.select(s)
 
 
-    def _cb_zoom_fit(self, action):
+    def on_action_ZoomFit(self, action):
         self.abort_selection()
 
-
-        x,y,state = self.backend.canvas.window.get_pointer()
-        y = self.backend.canvas.figure.bbox.height() - y
-        axes = self.axes_from_xy(x,y)
-        
-        if axes is not None:
-            layer = self.backend.axes_to_layer[axes]            
+        layer = self.backend.layer
+        if layer is not None:
             region = (None,None,None,None)
             self.zoom_to_region(layer, region, undolist=self.app.project.journal)
 
