@@ -2,24 +2,33 @@
 Plans for 0.4.5
 ===============
 
-- Zoom functions should respect the current layer!
+- More importantly: Existing functions should work:
 
-- What happens if I toggle the visibility of a layer?  Will it disappear?
+  - Zoom functions should respect the current layer!
+    There are some selectors which pick the layer themselves.  I will have
+    to decide, if that is o.k. or not.  I might have the following:
+
+     If the application specifies the layer in the __init__, then
+     the first click (or whatever toggles the action) will not be
+     responsible for specifying the layer.  Instead, the click is only
+     accepted, if it was inside of the layer!
+
+  - What happens if I toggle the visibility of a layer?  Will it disappear?
+
+  - check XPS and PFC imports
+
+  - check if toolbox is visible and adjust the state of the togglebutton on creation of mpl_window.
 
 
-!!!  Notice that projectio will need to use get_value(default=None) if it does
-  not want to save all settings!
+- implement linestyles in gnuplot..
 
-- check XPS and PFC imports
-
-- check if toolbox is visible and adjust the state of the togglebutton on creation of mpl_window.
-
-- implement linestyles in gnuplot.
+- Implement line markers in gnuplot.
 
 - importer: _first_ remove beginning and end of line using a regular expression,
   _then_ split the remaining string according to the delimiter. (This
   way, we can avoid problems with comments, different linebreaks,...)
   When constructing the delimiter, always append '\s*' ?
+
 
 
 
