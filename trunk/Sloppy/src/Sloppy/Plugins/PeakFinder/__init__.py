@@ -15,11 +15,19 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-# $HeadURL$
-# $Id$
+# $HeadURL: svn+ssh://niklasv@svn.berlios.de/svnroot/repos/sloppyplot/trunk/Sloppy/src/Sloppy/Plugins/Pygsl/__init__.py $
+# $Id: __init__.py 5 2005-08-12 07:27:46Z niklasv $
 
 
-import Default
-import Sims
-import Pygsl
-import PeakFinder
+from Sloppy.Base.plugin import PluginRegistry
+
+import logging
+logger = logging.getLogger('plugin.PeakFinder')
+
+try:
+    import pygsl
+except ImportError:
+    logger.error("Could not find pygsl. Plugin 'PeakFinder' skipped.")
+else:
+    from main import *
+
