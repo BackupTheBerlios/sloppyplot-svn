@@ -254,8 +254,8 @@ class MatplotlibWidget(gtk.VBox):
         'Display':
         [
         ('DisplayMenu', None, '_Display'),
-        ('ZoomIn', gtk.STOCK_ZOOM_IN, '_Zoom In', 'plus', 'Zoom', '_cb_zoom_in'),
-        ('ZoomOut', gtk.STOCK_ZOOM_OUT, '_Zoom Out', 'minus', 'Zoom', '_cb_zoom_out'),
+        ('ZoomIn', gtk.STOCK_ZOOM_IN, '_Zoom In', 'plus', 'Zoom', 'on_action_ZoomIn'),
+        ('ZoomOut', gtk.STOCK_ZOOM_OUT, '_Zoom Out', 'minus', 'Zoom', 'on_action_ZoomOut'),
         ('ZoomFit', gtk.STOCK_ZOOM_FIT, '_Zoom Fit', '0', 'Zoom', 'on_action_ZoomFit'),
         ('ZoomRect', gtk.STOCK_ZOOM_FIT, '_Zoom Rectangle', 'r', 'Zoom', 'on_action_ZoomRect'),
         ('ToggleLogScale', None, 'Toggle Logarithmic Scale', 'l', 'Toggle Logscale', '_cb_toggle_logscale'),
@@ -560,28 +560,22 @@ class MatplotlibWidget(gtk.VBox):
             self.zoom_to_region(layer, region, undolist=self.app.project.journal)
 
 
-    def _cb_zoom_in(self, action):
+    def on_action_ZoomIn(self, action):
         self.abort_selection()
 
-        x,y,state = self.backend.canvas.window.get_pointer()
-        y = self.backend.canvas.figure.bbox.height() - y
-        axes = self.axes_from_xy(x,y)
-        
-        if axes is not None:
-            layer = self.backend.axes_to_layer[axes]            
+        layer = self.backend.layer
+        if layer is not None:
+            axes = self.backend.layer_to_axes[layer]
             region = self.calculate_zoom_region(axes)
             self.zoom_to_region(layer, region, undolist=self.app.project.journal)
         
         
-    def _cb_zoom_out(self, action):
+    def on_action_ZoomOut(self, action):
         self.abort_selection()
 
-        x,y,state = self.backend.canvas.window.get_pointer()
-        y = self.backend.canvas.figure.bbox.height() - y
-        axes = self.axes_from_xy(x,y)
-        
-        if axes is not None:
-            layer = self.backend.axes_to_layer[axes]
+        layer = self.backend.layer
+        if layer is not None:
+            axes = self.backend.layer_to_axes[layer]
             region = self.calculate_zoom_region(axes, dx=-0.1, dy=-0.1)
             self.zoom_to_region(layer, region, undolist=self.app.project.journal)
 
