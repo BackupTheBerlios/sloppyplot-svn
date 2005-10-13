@@ -581,7 +581,7 @@ class AppWindow( gtk.Window ):
         ('DatasetAddToPlot', None, 'Add Datasets to Plot', None, 'Add Datasets to Plot', '_cb_add_datasets_to_plot'),
         ('DatasetImport', None, 'Import Dataset', '<control>I', 'Import a dataset', '_cb_import_dataset'),
         ('NewDataset', gtk.STOCK_ADD, 'New Dataset', None, 'Create a new dataset', '_cb_new_dataset'),
-        ('ExperimentalPlot', None, 'Experimental Plotting', None, None, '_cb_experimental_plot'),
+        ('ExperimentalPlot', None, 'Create Multiplot (EXPERIMENTAL!)', None, None, '_cb_experimental_plot'),
         ]
 
     actions_appwin = [        

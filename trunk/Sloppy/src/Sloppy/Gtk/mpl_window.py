@@ -260,13 +260,13 @@ class MatplotlibWidget(gtk.VBox):
         ('ZoomRect', gtk.STOCK_ZOOM_FIT, '_Zoom Rectangle', 'r', 'Zoom', '_cb_zoom_rect'),
         ('ToggleLogScale', None, 'Toggle Logarithmic Scale', 'l', 'Toggle Logscale', '_cb_toggle_logscale'),
         ('MovePlot', None, 'Move Plot', 'm', '', '_cb_move_plot'),
-        ('DataCursor', None, 'Data Cursor', 'c', '', '_cb_data_cursor'),
+        ('DataCursor', None, 'Data Cursor (EXPERIMENTAL!)', 'c', '', '_cb_data_cursor'),
         ('SelectLine', None, 'Select Line', 's', '', '_cb_select_line'),
         ('ZoomAxes', None, 'Zoom Axes', 'z', '', '_cb_zoom_axes')
         ],
         'Experimental':
         [
-        ('PeakFinder', None, 'Find Peaks', None, '', 'on_action_PeakFinder')
+        ('PeakFinder', None, 'Find Peaks (EXPERIMENTAL!)', None, '', 'on_action_PeakFinder')
         ]
         }
 
@@ -724,7 +724,13 @@ class MatplotlibWidget(gtk.VBox):
 
         p = self.app.get_plugin('PeakFinder')
         data = line.source.get_data()
-        print p.find_peaks(data[line.cx], data[line.cy], 600, 5)
+
+        print
+        print "Peak Search:"
+        peaks = p.find_peaks(data[line.cx], data[line.cy], 600, 5)
+        for x, y in peaks:
+            print "  %f : %f" % (x,y)
+        print
 
         p = self.app.get_plugin('PeakFinder::GTK::DialogBuilder')
         dialog = p.new_dialog()
