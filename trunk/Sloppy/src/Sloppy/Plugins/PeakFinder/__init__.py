@@ -25,8 +25,8 @@ logger = logging.getLogger('plugin.PeakFinder')
 from main import *
 
 try:
-    import pygtk
+    import gtk    
 except ImportError:
     logger.info("No pygtk found. PeakFinder GTK GUI skipped.")
 else:
-    import gtk
+    import gui_gtk
