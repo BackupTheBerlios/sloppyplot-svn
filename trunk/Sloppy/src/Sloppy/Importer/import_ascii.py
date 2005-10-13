@@ -69,7 +69,7 @@ class Importer(dataio.Importer):
                         default=None)
 
     typecodes = Prop(CheckType(basestring, list),
-                     default='l')
+                     default='d')
 
     growth_offset = pInteger(CheckBounds(min=10), default=100)
 

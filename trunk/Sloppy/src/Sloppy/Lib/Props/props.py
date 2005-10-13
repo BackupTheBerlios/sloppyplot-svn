@@ -72,15 +72,12 @@ class MetaAttribute(object):
         self.key = key
         self.prop = prop
 
-    def __get__(self, inst, default=None):
+    def __get__(self, inst, nd=False):
         rv = inst._values[self.key]
-        if rv is not None:
+        if rv is not None or nd is True:
             return rv
         else:
-            if default is None:
-                return self.prop.on_default()
-            else:
-                return self.prop.check(default)
+            return self.prop.on_default()
 
     def __set__(self, owner, value):
         try:
@@ -96,8 +93,8 @@ class MetaAttribute(object):
 
 class WeakMetaAttribute(MetaAttribute):
     
-    def __get__(self, owner, cls=None):
-        value = MetaAttribute.__get__(self, owner,cls)
+    def __get__(self, owner, nd=False):
+        value = MetaAttribute.__get__(self, owner, nd)
         if value is not None:
             return value()
         else:
@@ -508,7 +505,7 @@ class pKeyword(Prop):
     def __init__(self, **kwargs):
         Prop.__init__(self,
                       CheckType(basestring), #
-                      CheckRegexp('^\w*$'),
+                      CheckRegexp('^[\-\.\s\w]*$'),
                       **kwargs)
 
 class pString(Prop):
@@ -597,16 +594,16 @@ class HasProps(object):
         else:
             object.__setattr__(self, key, value)
     
-    def __getattribute__(self, key, default=None):        
+    def __getattribute__(self, key, nd=False):
+        """ `nd` = nodefault = ignore Prop's default value. """                         
         if key in ('_props','_values'):
             return object.__getattribute__(self, key)
         else:
             prop = object.__getattribute__(self, '_props').get(key,None)
             if prop is not None and isinstance(prop, Prop):
-                return prop.meta_attribute(key).__get__(self, default)
+                return prop.meta_attribute(key).__get__(self, nd=nd)
             else:
-                return object.__getattribute__(self, key)
-
+                return object.__getattribute__(self, key)                       
 
     #----------------------------------------------------------------------
     # Value Handling
@@ -626,10 +623,13 @@ class HasProps(object):
             self.__setattr__(key, value)
 
                    
-                   
-    def get_value(self, key, default=None):
-        return self.__getattribute__(key, default)
 
+    def get_value(self, key):
+        return self.__getattribute__(key)
+
+    get = get_value
+
+    
     def get_values(self, include=None, exclude=None):
         if include is None:
             include = self._values.keys()        
@@ -641,6 +641,20 @@ class HasProps(object):
             rv[key] = self.__getattribute__(key)
 
         return rv
+
+    mget = get_values
+
+    
+    def rget(self, key, default=None):
+        """ raw get = use other default value. 
+         Return the value of the given prop or `default` if it is None.
+         """
+        value = self.__getattribute__(key, nd=True)
+        if value is None:
+            return default
+        else:
+            return value        
+
 
 
     #----------------------------------------------------------------------

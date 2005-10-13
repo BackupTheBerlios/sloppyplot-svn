@@ -112,6 +112,7 @@ class Table(object):
         if data is not None:
             data = AsArray(_rank=2)(data)
             self._columns = [Column(data=c) for c in data]
+            
         else:
             if ncols > 0:
                 if isinstance(typecodes, basestring) and len(typecodes) > 1:
@@ -121,7 +122,7 @@ class Table(object):
                     if len(typecodes) != ncols:
                         raise ValueError("When specifying the number of columns, you may either specify a single typecode or a list with that many entries.")
                 elif typecodes is None:
-                    tc = 'l'
+                    tc = 'd'
                     typecodes = list()
                     for i in range(ncols):
                         typecodes.append(tc)

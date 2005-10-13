@@ -40,12 +40,12 @@ def set(container, *args, **kwargs):
     while len(arglist) > 1:
         key = arglist.pop(0)
         value = arglist.pop(0)
-        olditems[key] = container.get_value(key, None)
+        olditems[key] = container.rget(key)
         setattr(container, key, value)
         changeset.append(key)
 
     for (key, value) in kwargs.iteritems():
-        olditems[key] = container.get_value(key, None)            
+        olditems[key] = container.rget(key)
         setattr(container, key, value)
         changeset.append(key)
 
@@ -68,12 +68,12 @@ def smart_set(container, *args, **kwargs):
     changed_props = []
 
     def do_set(key, value):
-        old_value = container.get_value(key, None)
+        old_value = container.rget(key)
         setattr(container, key, value)
-        if old_value != container.get_value(key, None):
+        if old_value != container.rget(key):
             olditems[key] = old_value
             changed_props.append(key)
-            print "Prop '%s' has changed from '%s' to '%s'." % (key, container.get_value(key, None), old_value)
+            print "Prop '%s' has changed from '%s' to '%s'." % (key, container.rget(key), old_value)
 
     arglist = list(args)
     while len(arglist) > 1:

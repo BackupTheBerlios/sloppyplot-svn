@@ -330,8 +330,7 @@ class Backend( backend.Backend ):
         #:line.color
         N = len(layer.group_colors)
         index = layer.lines.index(line)
-        color = line.get_value('color', default=layer.group_colors[index%N])
-
+        color = line.rget('color', layer.group_colors[index%N])
 
         #--- PLOT LINE ---
         l, = axes.plot( xdata, ydata,
@@ -461,11 +460,14 @@ class Backend( backend.Backend ):
         line_cache = self.line_caches[layer]
         labels = [l.get_label() for l in line_cache]
 
-        return {'handles' : line_cache,
+        rv =  {'handles' : line_cache,
                 'labels' : labels,
                 'loc' : position,
                 'border' : border,
                 'visible' : visible}
+        print "LEGEND"
+        print rv
+        return rv
 
 
 

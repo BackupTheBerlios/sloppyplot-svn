@@ -354,8 +354,8 @@ class Backend(backend.Backend):
             else: cl.append('unset %slabel' % key)
 
             # axis range
-            start = axis.get_value('start', '*')
-            end = axis.get_value(axis, 'end','*')
+            start = axis.rget('start', '*')
+            end = axis.rget(axis, 'end','*')
             cl.append('set %srange [%s:%s]' % (key,start,end))
 
             # axis scale

@@ -647,12 +647,12 @@ class LinesTab(AbstractTab):
                 line.marker or "",
                 line.width or "",
                 source_key,
-                str(line.get_value('cx',"")),
-                str(line.get_value('cy',"")),
-                str(line.get_value('row_first',"")),
-                str(line.get_value('row_last',"")),                
-                str(line.get_value('cxerr',"")),
-                str(line.get_value('cyerr',""))]
+                str(line.rget('cx',"")),
+                str(line.rget('cy',"")),
+                str(line.rget('row_first',"")),
+                str(line.rget('row_last',"")),                
+                str(line.rget('cxerr',"")),
+                str(line.rget('cyerr',""))]
 
 
     #----------------------------------------------------------------------

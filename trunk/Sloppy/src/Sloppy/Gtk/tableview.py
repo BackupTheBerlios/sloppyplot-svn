@@ -58,7 +58,7 @@ class TableModel(gtk.GenericTreeModel):
         rv =  map(lambda col, n:
                    "%d:\n%s (%s)\n%s" %
                   (n,
-                   col.get_value('key', "unnamed"),
+                   col.rget('key', "unnamed"),
                    col.get_value('designation'),
                    col.get_value('label')
                    ),

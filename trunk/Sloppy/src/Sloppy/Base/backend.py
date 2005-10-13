@@ -216,7 +216,7 @@ class Backend(object):
 
     def get_line_label(self, line, table=None, cy=None):
         #:line.label:OK
-        label = line.label
+        label = line.rget('label')
         if label is None:
             if table is not None and cy is not None:
                 column = table.column(cy)

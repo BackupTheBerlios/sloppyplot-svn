@@ -220,10 +220,12 @@ def fromTree(tree):
 
 def toElement(project):
 
-    # helper function
-    def safe_set(element, key, value):
-        if value is not None: # and isinstance(value, basestring):
-            element.set(key, str(value))    
+    def SIV(element, key, value):        
+        " Set If Valid -- only set element attribute if value is not None. "
+        if value is not None:
+            print " KEY: %s => %s" % (key, str(value))
+            element.set(key, str(value))
+
 
     eProject = Element("Project")
     eProject.attrib['version'] = FILEFORMAT
@@ -237,8 +239,8 @@ def toElement(project):
             tbl = ds.data
             
             eData = SubElement(eDatasets, 'Table')            
-            safe_set(eData, 'ncols', tbl.ncols)
-            safe_set(eData, 'typecodes', tbl.typecodes_as_string)
+            SIV(eData, 'ncols', tbl.ncols)
+            SIV(eData, 'typecodes', tbl.typecodes_as_string)
 
             # We write all Column properties except for the
             # key and the data to the element tree, because
@@ -248,11 +250,11 @@ def toElement(project):
                 kw = column.get_values(exclude=['key','data'])
                 if len(kw) > 0:
                     eColumn = SubElement(eData, 'Column')
-                    safe_set(eColumn, 'n', n)
+                    SIV(eColumn, 'n', n)
                     for k,v in kw.iteritems():
                         if v is not None:
                             eInfo = SubElement(eColumn, 'Info')
-                            safe_set(eInfo, 'key', k)
+                            SIV(eInfo, 'key', k)
                             eInfo.text = v
                 n += 1
                 
@@ -262,7 +264,7 @@ def toElement(project):
         else:
             raise RuntimeError("Invalid dataset", ds)
         
-        safe_set(eData, 'key', ds.key)
+        SIV(eData, 'key', ds.rget('key'))
 
         if len(ds.metadata) > 0:
             eMetadata = SubElement(eData, "Metadata")
@@ -274,50 +276,49 @@ def toElement(project):
     ePlots = SubElement(eProject, "Plots")
     for plot in project.plots:
         ePlot = SubElement(ePlots, plot.__class__.__name__)
-        safe_set(ePlot, 'key', plot.key)
-        safe_set(ePlot, 'title', plot.title)
+        SIV(ePlot, 'key', plot.rget('key'))
+        SIV(ePlot, 'title', plot.rget('title'))
 
-        if hasattr(plot, "comment"):
+        comment = plot.rget('comment')
+        if comment is not None:
             eComment = SubElement(ePlot, "comment")
-            eComment.text = plot.comment
+            eComment.text = comment
 
         eLayers = SubElement(ePlot, "Layers")
         for layer in plot.layers:
             
             eLayer = SubElement(eLayers, "Layer")
-            safe_set(eLayer, 'type', layer.type)
-            safe_set(eLayer, 'grid', layer.grid)
-            safe_set(eLayer, 'title', layer.title)
-            safe_set(eLayer, 'visible', layer.visible)
-            
-                
+            SIV(eLayer, 'type', layer.rget('type'))
+            SIV(eLayer, 'grid', layer.rget('grid'))
+            SIV(eLayer, 'title', layer.rget('title'))
+            SIV(eLayer, 'visible', layer.rget('visible'))
+                            
             for (key, axis) in layer.axes.iteritems():
                 eAxis = SubElement(eLayer, "Axis")
                 eAxis.set('key', key)
-                safe_set(eAxis, 'label', axis.label)
-                safe_set(eAxis, 'scale', axis.scale)
-                safe_set(eAxis, 'start', axis.start)
-                safe_set(eAxis, 'end', axis.end)
-
-                safe_set(eAxis, 'format', axis.format)
+                SIV(eAxis, 'label', axis.rget('label'))
+                SIV(eAxis, 'scale', axis.rget('scale'))
+                SIV(eAxis, 'start', axis.rget('start'))
+                SIV(eAxis, 'end', axis.rget('end'))
+                SIV(eAxis, 'format', axis.rget('format'))
 
             legend = layer.legend
             if legend is not None:
                 eLegend = SubElement(eLayer, "Legend")
-                safe_set(eLegend, 'label', legend.label)
-                safe_set(eLegend, 'position', legend.position)
-                safe_set(eLegend, 'visible', legend.visible)
-                safe_set(eLegend, 'border', legend.border)
-                safe_set(eLegend, 'x', legend.x)
-                safe_set(eLegend, 'y', legend.y)
+                SIV(eLegend, 'label', legend.rget('label'))
+                SIV(eLegend, 'position', legend.rget('position'))
+                SIV(eLegend, 'visible', legend.rget('visible'))
+                SIV(eLegend, 'border', legend.rget('border'))
+                SIV(eLegend, 'x', legend.rget('x'))
+                SIV(eLegend, 'y', legend.rget('y'))
                                      
             for line in layer.lines:
                 eLine = SubElement(eLayer, "Line")
 
-                safe_set(eLine, 'label', line.label)
-                safe_set(eLine, 'style', line.style)
-                safe_set(eLine, 'type', line.marker)
-                safe_set(eLine, 'visible', line.visible)
+                SIV(eLine, 'label', line.rget('label'))
+                SIV(eLine, 'style', line.rget('style'))
+                SIV(eLine, 'type', line.rget('marker'))
+                SIV(eLine, 'visible', line.rget('visible'))
 
                 # For the line source we must check first
                 # if this is not a temporary source.
@@ -326,32 +327,30 @@ def toElement(project):
                 # or add the temporary dataset to the project.
                 if line.source is not None:
                     if project.has_dataset(key=line.source.key):
-                        safe_set(eLine, 'source', line.source.key)
+                        SIV(eLine, 'source', line.source.rget('key'))
                     else:
                         logger.warn("Invalid line source. Skipped source.")
                 
-                safe_set(eLine, 'width', line.width)                
+                SIV(eLine, 'width', line.rget('width'))
 
-                safe_set(eLine, 'cx', line.cx)
-                safe_set(eLine, 'cy', line.cy)
-                safe_set(eLine, 'row_first', line.row_first)
-                safe_set(eLine, 'row_last', line.row_last)
-                #safe_set(eLine, 'value_range', line.value_range)
-                
-                safe_set(eLine, 'cxerr', line.cxerr)                
-                safe_set(eLine, 'cyerr', line.cyerr)
+                SIV(eLine, 'cx', line.rget('cx'))
+                SIV(eLine, 'cy', line.rget('cy'))
+                SIV(eLine, 'row_first', line.rget('row_first'))
+                SIV(eLine, 'row_last', line.rget('row_last'))
+                SIV(eLine, 'cxerr', line.rget('cxerr'))
+                SIV(eLine, 'cyerr', line.rget('cyerr'))
 
             # layer.labels
             if len(layer.labels) > 0:
                 eLabels = SubElement(eLayer, "Labels")
                 for label in layer.labels:
                     eLabel = SubElement(eLabels, "Label")
-                    safe_set(eLabel, 'x', label.x)
-                    safe_set(eLabel, 'y', label.y)
-                    safe_set(eLabel, 'system', label.system)
-                    safe_set(eLabel, 'valign', label.valign)
-                    safe_set(eLabel, 'halign', label.halign)
-                    eLabel.text = label.text                              
+                    SIV(eLabel, 'x', label.rget('x'))
+                    SIV(eLabel, 'y', label.rget('y'))
+                    SIV(eLabel, 'system', label.rget('system'))
+                    SIV(eLabel, 'valign', label.rget('valign'))
+                    SIV(eLabel, 'halign', label.rget('halign'))
+                    eLabel.text = label.rget('text')
 
     # beautify the XML output by inserting some newlines
     def insert_newlines(element):
