@@ -317,7 +317,7 @@ def toElement(project):
 
                 SIV(eLine, 'label', line.rget('label'))
                 SIV(eLine, 'style', line.rget('style'))
-                SIV(eLine, 'type', line.rget('marker'))
+                SIV(eLine, 'marker', line.rget('marker'))
                 SIV(eLine, 'visible', line.rget('visible'))
 
                 # For the line source we must check first

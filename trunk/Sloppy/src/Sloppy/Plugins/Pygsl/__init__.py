@@ -27,14 +27,7 @@ logger = logging.getLogger('plugin')
 try:
     import pygsl
 except ImportError:
-    logger.error("Could not find pygsl. Plugin skipped.")
+    logger.error("Could not find pygsl. Plugin 'Pygsl' skipped.")
 else:
-    logger.info("pygsl successfully loaded.")
-    pygsl.import_all()
+    import main
 
-    class Plugin:        
-        def __init__(self, app):
-            self.app = app
-            self.pygsl = pygsl
-        
-    PluginRegistry.register("pygsl", Plugin)

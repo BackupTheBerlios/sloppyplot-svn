@@ -19,6 +19,4 @@
 # $Id$
 
 
-from Sloppy.Base import klassregistry
-
-PluginRegistry = klassregistry.Registry()
+PluginRegistry = dict()

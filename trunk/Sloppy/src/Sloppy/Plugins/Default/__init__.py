@@ -132,4 +132,4 @@ class Plugin:
 
 
 
-PluginRegistry.register("Default", Plugin)
+PluginRegistry["Default"] = Plugin

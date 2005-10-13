@@ -173,8 +173,8 @@ class Application(object):
     # PLUGIN HANDLING
     
     def init_plugins(self):
-        for key in PluginRegistry.iterkeys():
-            self.plugins[key] = PluginRegistry.new_instance(key, app=self)
+        for key, plugin in PluginRegistry.iteritems():
+            self.plugins[key] = plugin(app=self)
 
     def get_plugin(self, key):
         try:

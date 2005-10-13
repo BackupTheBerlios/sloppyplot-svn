@@ -163,4 +163,4 @@ class Plugin:
 
 
 #------------------------------------------------------------------------------
-PluginRegistry.register("SIMS", Plugin)
+PluginRegistry["SIMS"] = Plugin
