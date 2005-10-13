@@ -258,7 +258,7 @@ class MatplotlibWidget(gtk.VBox):
         ('ZoomOut', gtk.STOCK_ZOOM_OUT, '_Zoom Out', 'minus', 'Zoom', 'on_action_ZoomOut'),
         ('ZoomFit', gtk.STOCK_ZOOM_FIT, '_Zoom Fit', '0', 'Zoom', 'on_action_ZoomFit'),
         ('ZoomRect', gtk.STOCK_ZOOM_FIT, '_Zoom Rectangle', 'r', 'Zoom', 'on_action_ZoomRect'),
-        ('ToggleLogScale', None, 'Toggle Logarithmic Scale', 'l', 'Toggle Logscale', '_cb_toggle_logscale'),
+        ('ToggleLogScaleY', None, 'Toggle Logarithmic Scale', 'l', 'Toggle Logscale', 'on_action_ToggleLogScaleY'),
         ('MovePlot', None, 'Move Plot', 'm', '', '_cb_move_plot'),
         ('DataCursor', None, 'Data Cursor (EXPERIMENTAL!)', 'c', '', '_cb_data_cursor'),
         ('SelectLine', None, 'Select Line', 's', '', '_cb_select_line'),
@@ -287,7 +287,7 @@ class MatplotlibWidget(gtk.VBox):
           <menuitem action='PeakFinder'/>
         </menu>        
         <menu action='DisplayMenu'>
-          <menuitem action='ToggleLogScale'/>
+          <menuitem action='ToggleLogScaleY'/>
           <separator/>
           <menuitem action='ZoomRect'/>
           <menuitem action='ZoomIn'/>
@@ -581,11 +581,13 @@ class MatplotlibWidget(gtk.VBox):
 
               
 
-    def _cb_toggle_logscale(self, action):
+    def on_action_ToggleLogScaleY(self, action):
         self.abort_selection()
         
-        p = self.app.plugins['Default']
-        p.toggle_logscale_y(self.plot, self.plot.layers[0])
+        layer = self.backend.layer
+        if layer is not None:        
+            p = self.app.plugins['Default']
+            p.toggle_logscale_y(self.plot, layer)
 
         
 

@@ -56,15 +56,16 @@ class Plugin:
             
         ul = UndoList().describe("Toggle logarithmic scale")
 
+        updateinfo = {}
         axis = layer.yaxis
         if axis.scale != 'log':
             uwrap.set(axis, scale='log', undolist=ul)
-            updateinfo.update['scale'] = 'log'
+            updateinfo['scale'] = 'log'
             
             start = axis.start
             if start is not None and start < 0:
                 uwrap.set(axis, start=None, undolist=ul)
-                updateinfo.update['start'] = None
+                updateinfo['start'] = None
         else:
             uwrap.set(axis, scale='linear', undolist=ul)
 
