@@ -726,8 +726,9 @@ class MatplotlibWidget(gtk.VBox):
         data = line.source.get_data()
         print p.find_peaks(data[line.cx], data[line.cy], 600, 5)
 
-        p = self.app.get_plugin('PeakFinderGTKDialog')
-        p.run()
+        p = self.app.get_plugin('PeakFinder::GTK::DialogBuilder')
+        dialog = p.new_dialog()
+        dialog.run()
 
         # a dialog should ask for the following:
 
