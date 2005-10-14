@@ -275,49 +275,49 @@ class Backend(backend.Backend):
 
 
             
-    def redraw(self, rebuild_cache=True):
+#     def redraw(self, rebuild_cache=True):
 
-        # All commands for gnuplot are appended to the cmd_list,
-        # so that they can be executed at the very end.
-        cmd_list = []
-        cmd_list.append('cd "%s"' % self.tmpdir)
-	cmd_list.append( "set encoding %s" % self.encoding )
+#         # All commands for gnuplot are appended to the cmd_list,
+#         # so that they can be executed at the very end.
+#         cmd_list = []
+#         cmd_list.append('cd "%s"' % self.tmpdir)
+# 	cmd_list.append( "set encoding %s" % self.encoding )
 
-        cmd_list += self.terminal.build(self)     
+#         cmd_list += self.terminal.build(self)     
 
-        # multiplot ?
-        if len(self.plot.layers) > 1:
-            cmd_list.append( "set multiplot" )
-            for layer in self.plot.layers:
-                group_info = {}
-                x, y = layer.x, layer.y
-                width, height = layer.width, layer.height
-                cmd_list.append("set origin %.2f,%.2f" % (x,y))
-                cmd_list.append("set size %.2f,%.2f" % (width, height))
-                cmd_list += self.build_layer(layer, group_info)
-            cmd_list.append( "unset multiplot" )
-        else:
-            # Single plot!
-            # create plotting commands from the Layer information
-            group_info = {}
-            cmd_list += self.build_layer(self.plot.layers[0], group_info)
+#         # multiplot ?
+#         if len(self.plot.layers) > 1:
+#             cmd_list.append( "set multiplot" )
+#             for layer in self.plot.layers:
+#                 group_info = {}
+#                 x, y = layer.x, layer.y
+#                 width, height = layer.width, layer.height
+#                 cmd_list.append("set origin %.2f,%.2f" % (x,y))
+#                 cmd_list.append("set size %.2f,%.2f" % (width, height))
+#                 cmd_list += self.build_layer(layer, group_info)
+#             cmd_list.append( "unset multiplot" )
+#         else:
+#             # Single plot!
+#             # create plotting commands from the Layer information
+#             group_info = {}
+#             cmd_list += self.build_layer(self.plot.layers[0], group_info)
 
-        self.export_datasets()
+#         self.export_datasets()
        
-        # Now execute all collected commands.
-        print "cmd list is: "
-        for cmd in cmd_list:
-            print "   ", cmd
-        print
+#         # Now execute all collected commands.
+#         print "cmd list is: "
+#         for cmd in cmd_list:
+#             print "   ", cmd
+#         print
         
-        Signals.emit(self, 'gnuplot-start-plotting')
-        logger.info("Gnuplot command list:\n\n%s" % "\n".join(cmd_list))
-        for cmd in cmd_list:
-            self(cmd)
+#         Signals.emit(self, 'gnuplot-start-plotting')
+#         logger.info("Gnuplot command list:\n\n%s" % "\n".join(cmd_list))
+#         for cmd in cmd_list:
+#             self(cmd)
 
-        Signals.emit(self,'gnuplot-after-plot', window_title=self.window_title)
+#         Signals.emit(self,'gnuplot-after-plot', window_title=self.window_title)
         
-    draw = redraw        
+#     draw = redraw        
         
 
     #######################################################################
@@ -502,30 +502,40 @@ class Backend(backend.Backend):
     def update_layer(self, layer):        
         pass
     
-    def Xdraw(self):
+    def draw(self):
         self.check_connection()
         logger.debug("Gnuplot.draw")                
              
         ##if self.plot.layers != self.layers_cache:
         ##    self.arrange()
 
+        #
         # TODO: build layers_cache
+        #
         #for
 
         # clear command list
-        cd = self.cmd_dict = []
+        cd = self.cmd_dict = {}
 
         cd['tempdir'] = ['cd "%s"' % self.tmpdir]
         cd['encoding'] = ['set encoding %s' % self.encoding]
-        cd['terminal'] = [self.terminal.build(self)]
+        cd['terminal'] = self.terminal.build(self)
         
         for layer in self.plot.layers:
             self.update_layer(layer)
 
         self.execute_queue()
 
+    redraw = draw
 
-    def build_queue(self):
+    def build_queue(self, adict, build_order):
+        """
+        @param adict: command dictionary
+        
+        @param build_order: list with the keys of adict in the
+          requested order.
+        """
+                    
         # right now we will build the complete cmd_dict in a certain
         # order.  The long term goal should be, that the update functions
         # not only update the appropriate section in the cmd_dict, but
@@ -537,12 +547,31 @@ class Backend(backend.Backend):
         # for now.
         #
         
-        # 'lines' is last and contains the plot commands
-        order = ['tempdir', 'encoding', 'terminal', 'axes', 'labels', 'layer',
-                 'lines']
+        queue = []
+        for key in build_order:
+            try:
+                queue += adict[key]
+            except KeyError:
+                logger.debug("Section '%s' not found in command dictionary." % key)
+
+        logger.debug("Command queue has been built:\n%s" % queue)
+        return queue
+        
 
     def execute_queue(self):
-        pass
+        # 'lines' is last and contains the plot commands        
+        order = ['tempdir', 'encoding', 'terminal', 'axes', 'labels', 'layer',
+                 'lines']        
+        queue = self.build_queue(self.cmd_dict, order)
+
+        Signals.emit(self, 'gnuplot-start-plotting')
+        for cmd in queue:
+            logger.debug("Sending cmd to gnuplot: %s" % cmd)
+            self(cmd)
+
+        Signals.emit(self,'gnuplot-after-plot', window_title=self.window_title)
+        
+
 
 
 

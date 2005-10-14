@@ -4,21 +4,11 @@ Plans for 0.4.5
 
 - More importantly: Existing functions should work:
 
-  - Zoom functions should respect the current layer!
-    There are some selectors which pick the layer themselves.  I will have
-    to decide, if that is o.k. or not.  I might have the following:
-
-     If the application specifies the layer in the __init__, then
-     the first click (or whatever toggles the action) will not be
-     responsible for specifying the layer.  Instead, the click is only
-     accepted, if it was inside of the layer!
-
-  - What happens if I toggle the visibility of a layer?  Will it disappear?
-
   - check XPS and PFC imports
 
   - check if toolbox is visible and adjust the state of the togglebutton on creation of mpl_window.
 
+- GNUPLOT in NEW STYLE: line 514 in gnuplot.py
 
 - implement linestyles in gnuplot..
 
@@ -49,6 +39,8 @@ Plans for 0.4.6
 
 PLANS FOR 0.4.x:
 ================
+
+- What happens if I toggle the visibility of a layer?  Will it disappear?
 
 - Something to think about: 
 
