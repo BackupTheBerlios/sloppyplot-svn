@@ -275,8 +275,23 @@ class SelectPoint( Cursor ):
         
 class SelectRegion( Selector, BufferedRedraw ):
 
-    def __init__(self, figure, button=1):
-        Selector.__init__(self, figure=figure)
+    """    
+    Selector that allows to choose a (rectangular) region by clicking
+    on a position and then dragging the mouse to the second position.
+    The current selection is indicated by a dashed rectangle.
+    """
+    
+    def __init__(self, figure, axes=None, button=1):
+        """
+        @param figure: Figure object to use.
+        
+        @param axes: Axes object.  If None, the axes are automatically
+          determined from the mouse position on the first mouse click.
+
+        @button: Mouse button that starts the selection.          
+        """
+        
+        Selector.__init__(self, figure=figure, axes=axes)
         BufferedRedraw.__init__(self)
               
         self.x0, self.y0 = 0,0
@@ -294,10 +309,8 @@ class SelectRegion( Selector, BufferedRedraw ):
         
 
     def init(self):
-        self.canvas.window.set_cursor(self.cursor)
-        
+        self.canvas.window.set_cursor(self.cursor)        
         self.mpl_connect("button_press_event", self.on_button_press)
-        self.mpl_connect('button_release_event', self.on_button_release)
 
 
     def finish(self, abort=False):
@@ -310,9 +323,16 @@ class SelectRegion( Selector, BufferedRedraw ):
 
             
     def on_button_press(self, event):
+        # self.axes may not yet be set after 'init'.  In that
+        # case, we will determine the axes from the mouse coordinates.
+        if self.axes is None:
+            if event.inaxes is None:
+                return
+            else:
+                self.axes = event.inaxes
+        ax = self.axes
 
-        if event.button == self.button and event.inaxes is not None:
-            self.axes = event.inaxes
+        if event.button == self.button and event.inaxes is ax:
             self.mpl_connect('motion_notify_event', self.on_motion_notify)
             
             # remember starting position
@@ -322,6 +342,8 @@ class SelectRegion( Selector, BufferedRedraw ):
 
             self.xdata0 = self.xdata1 = event.xdata
             self.ydata0 = self.ydata1 = event.ydata
+
+            self.mpl_connect('button_release_event', self.on_button_release)
         
 
     def on_button_release(self, event):
@@ -368,7 +390,29 @@ class SelectRegion( Selector, BufferedRedraw ):
 
 class SelectLine(Selector, BufferedRedraw):
 
+    """    
+    Selector that follows mouse movement with a vertical, a horizontal
+    line or with both.  This allows the user to select only an x or a
+    y value or in the last case to easily select a point.
+
+    Note that once the Selector is started, there is no need for the
+    user to click with the mouse.  The line position automatically
+    follows the user's movements and a mouse click indicates that a
+    point is selected.    
+    """
+    
     def __init__(self, figure, axes=None, mode=SELECTLINE_VERTICAL):
+        """        
+        @param figure: Figure object.
+        
+        @param axes: Axes object.  If None, the axes are automatically
+          determined on the first motion_notify event.  This is useful
+          if you enable the Selector while the mouse is already on the
+          graph.
+
+        @param mode: One of SELECTLINE_xxx.        
+        """
+        
         Selector.__init__(self, figure=figure, axes=axes)
         BufferedRedraw.__init__(self)
         
@@ -438,9 +482,15 @@ class ChangeViewRegion(Selector):
 
     " Base class for any Selector that changes the viewed region. "
     
-    def __init__(self, figure):
-
-        Selector.__init__(self, figure=figure, axes=None)
+    def __init__(self, figure, axes=None):
+        """        
+        @param figure: Figure object.
+        
+        @param axes: Axes object.  If None, the axes are automatically
+          determined from the mouse position on the first mouse click.
+        """
+        
+        Selector.__init__(self, figure, axes)
 
         self.cursor = gtk.gdk.Cursor(gtk.gdk.FLEUR)
         self._imageBack = None
@@ -469,10 +519,14 @@ class ChangeViewRegion(Selector):
 
         
     def on_button_press(self, event):
-        if event.inaxes is None:
-            return
 
-        self.axes = event.inaxes
+        # self.axes may not yet be set after 'init'.  In that
+        # case, we will determine the axes from the mouse coordinates.
+        if self.axes is None:
+            self.axes = event.inaxes
+
+        if not self.axes:
+            return
 
         self.mpl_connect("button_release_event", self.on_button_release)
         self.mpl_connect("motion_notify_event", self.on_motion_notify_event)
@@ -525,6 +579,11 @@ class ChangeViewRegion(Selector):
 
 
 class MoveAxes( ChangeViewRegion ):
+
+    """
+    Selector to shift the start and end range of an Axes object.
+    Note that logarithmic plots are supported!
+    """
     
     def calculate_region(self, event):
                 
@@ -568,9 +627,24 @@ class MoveAxes( ChangeViewRegion ):
 
 class ZoomAxes(ChangeViewRegion):
 
+    """
+    Selector that allows zooming in and out by clicking on an Axes
+    and then dragging the mouse.
+    """
     
-    def __init__(self, figure, acceleration=0.5):
-        ChangeViewRegion.__init__(self, figure=figure)
+    def __init__(self, figure, axes=None, acceleration=0.5):
+        """        
+        @param figure: Figure object.
+        
+        @param axes: Axes object.  If None, the axes are automatically
+          determined from the mouse position on the first mouse click.
+
+        @acceleration: value that determines how much each mouse
+          movement will zoom into/or out of the axes. A positive value
+          indicates zooming out, a negative value zooming in.
+        """
+        
+        ChangeViewRegion.__init__(self, figure, axes)
         self.acceleration = acceleration
         
     def calculate_region(self, event):
@@ -615,8 +689,25 @@ class ZoomAxes(ChangeViewRegion):
 
 class DataCursor( Cursor, BufferedRedraw ):
 
-    def __init__(self, figure):
-        Selector.__init__(self, figure=figure)
+    """
+    Selector that tries to set a crosshair cursor at the data point
+    that is closest to the user's mouse clicks.  The data point is
+    determined from all visible lines. Logarithmic axes are supported.
+
+    Once the cursor has been set on a line, it is possible to move this
+    cursor with the cursor keys or alternatively using 'j' and 'k'.
+    Pressing 'shift' will accelerate the movement.
+    """
+    
+    def __init__(self, figure, axes=None):
+        """        
+        @param figure: Figure object.
+        
+        @param axes: Axes object.  If None, the axes are automatically
+          determined from the mouse position on the first mouse click.
+        """
+        
+        Selector.__init__(self, figure, axes)
         BufferedRedraw.__init__(self)
         
         self.index = -1
@@ -676,17 +767,6 @@ class DataCursor( Cursor, BufferedRedraw ):
             Signals.emit(self, "update-position", self.line, self.index, self.point)
             self.draw()
             
-            
-    def mouse_move(self, event):
-        if not event.inaxes:
-            return 
-        ax = event.inaxes
-        minx, maxx = ax.get_xlim()
-        miny, maxy = ax.get_ylim()
-
-        x, y = event.xdata, event.ydata
-        Signals.emit("move", x, y)
-        
 
     def button_press_event(self, event):
         if event.button != 1 or event.inaxes is None:
@@ -694,8 +774,8 @@ class DataCursor( Cursor, BufferedRedraw ):
 
         if self.axes is not None and self.axes != event.inaxes:
             return
-       
-        self.axes = event.inaxes
+        else:      
+            self.axes = event.inaxes
                 
         def transform(x,y):
             return self.axes.transData.inverse_xy_tup((x, y))

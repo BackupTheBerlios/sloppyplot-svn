@@ -243,9 +243,9 @@ class MatplotlibWidget(gtk.VBox):
         'Plot':
         [
         ('PlotMenu', None, '_Plot'),
-        ('Replot', 'sloppy-replot', '_Replot', '<control>R', 'Replot', '_cb_replot'),
-        ('EditLayer', gtk.STOCK_PROPERTIES, '_Edit Layer', '<control>E', 'Edit Layer', 'on_edit_layer'),
-        ('ExportViaMPL', gtk.STOCK_SAVE_AS, 'Export via matplotlib...', None, 'Export via Matplotlib', 'on_export_via_matplotlib'),
+        ('Replot', 'sloppy-replot', '_Replot', '<control>R', 'Replot', 'on_action_Replot'),
+        ('EditLayer', gtk.STOCK_PROPERTIES, '_Edit Layer', '<control>E', 'Edit Layer', 'on_action_EditLayer'),
+        ('ExportViaMPL', gtk.STOCK_SAVE_AS, 'Export via matplotlib...', None, 'Export via Matplotlib', 'on_action_ExportViaMPL'),
         ],
         'Analysis':
         [
@@ -259,10 +259,10 @@ class MatplotlibWidget(gtk.VBox):
         ('ZoomFit', gtk.STOCK_ZOOM_FIT, '_Zoom Fit', '0', 'Zoom', 'on_action_ZoomFit'),
         ('ZoomRect', gtk.STOCK_ZOOM_FIT, '_Zoom Rectangle', 'r', 'Zoom', 'on_action_ZoomRect'),
         ('ToggleLogScaleY', None, 'Toggle Logarithmic Scale', 'l', 'Toggle Logscale', 'on_action_ToggleLogScaleY'),
-        ('MovePlot', None, 'Move Plot', 'm', '', '_cb_move_plot'),
-        ('DataCursor', None, 'Data Cursor (EXPERIMENTAL!)', 'c', '', '_cb_data_cursor'),
-        ('SelectLine', None, 'Select Line', 's', '', '_cb_select_line'),
-        ('ZoomAxes', None, 'Zoom Axes', 'z', '', '_cb_zoom_axes')
+        ('MoveAxes', None, 'Move Plot', 'm', '', 'on_action_MoveAxes'),
+        ('DataCursor', None, 'Data Cursor (EXPERIMENTAL!)', 'c', '', 'on_action_DataCursor'),
+        ('SelectLine', None, 'Select Line', 's', '', 'on_action_SelectLine'),
+        ('ZoomAxes', None, 'Zoom Axes', 'z', '', 'on_action_ZoomAxes')
         ],
         'Experimental':
         [
@@ -295,7 +295,8 @@ class MatplotlibWidget(gtk.VBox):
           <menuitem action='ZoomFit'/>
           <menuitem action='ZoomAxes'/>          
           <separator/>
-          <menuitem action='MovePlot'/>
+          <menuitem action='MoveAxes'/>
+          <menuitem action='SelectLine'/>
         </menu>        
       </menubar>      
       <toolbar name='MainToolbar'>
@@ -447,10 +448,10 @@ class MatplotlibWidget(gtk.VBox):
 
         
     #----------------------------------------------------------------------
-    def _cb_replot(self, action):
+    def on_action_Replot(self, action):
         self.backend.draw()
 
-    def on_edit_layer(self, action):
+    def on_action_EditLayer(self, action):
         self.app.edit_layer( self.plot, self.backend.layer )
 
     #----------------------------------------------------------------------
@@ -530,7 +531,8 @@ class MatplotlibWidget(gtk.VBox):
 
 
     #------------------------------------------------------------------------------
-        
+
+    # current layer: OK
     def on_action_ZoomRect(self, action):
 
         def finish_zooming(sender):
@@ -541,8 +543,10 @@ class MatplotlibWidget(gtk.VBox):
             layer = self.backend.axes_to_layer[sender.axes]
             self.zoom_to_region(layer, sender.region, undolist=ul)
             self.project.journal.add_undo(ul)           
-        
-        s = mpl_selector.SelectRegion(self.backend.figure)
+
+        layer = self.backend.layer
+        axes = self.backend.layer_to_axes[layer]
+        s = mpl_selector.SelectRegion(self.backend.figure, axes=axes)
         Signals.connect(s, 'finished', finish_zooming)
         self.statusbar.push(
             self.statusbar.get_context_id('action-zoom'),
@@ -551,6 +555,7 @@ class MatplotlibWidget(gtk.VBox):
         self.select(s)
 
 
+    # current layer: OK
     def on_action_ZoomFit(self, action):
         self.abort_selection()
 
@@ -560,6 +565,7 @@ class MatplotlibWidget(gtk.VBox):
             self.zoom_to_region(layer, region, undolist=self.app.project.journal)
 
 
+    # current layer: OK            
     def on_action_ZoomIn(self, action):
         self.abort_selection()
 
@@ -568,8 +574,9 @@ class MatplotlibWidget(gtk.VBox):
             axes = self.backend.layer_to_axes[layer]
             region = self.calculate_zoom_region(axes)
             self.zoom_to_region(layer, region, undolist=self.app.project.journal)
+
         
-        
+    # current layer: OK    
     def on_action_ZoomOut(self, action):
         self.abort_selection()
 
@@ -580,7 +587,7 @@ class MatplotlibWidget(gtk.VBox):
             self.zoom_to_region(layer, region, undolist=self.app.project.journal)
 
               
-
+    # current layer: OK
     def on_action_ToggleLogScaleY(self, action):
         self.abort_selection()
         
@@ -590,25 +597,29 @@ class MatplotlibWidget(gtk.VBox):
             p.toggle_logscale_y(self.plot, layer)
 
         
-
-    def _cb_move_plot(self, action):
+    # current layer: OK
+    def on_action_MoveAxes(self, action):
 
         def finish_moving(sender):
             ul = UndoList().describe("Move Graph")
             layer = self.backend.axes_to_layer[sender.axes]
             self.zoom_to_region(layer, sender.region, undolist=ul)
             self.project.journal.add_undo(ul)           
-           
-        s = mpl_selector.MoveAxes(self.backend.figure)        
+
+        layer = self.backend.layer
+        axes = self.backend.layer_to_axes[layer]
+        s = mpl_selector.MoveAxes(self.backend.figure, axes)
         Signals.connect(s, "finished", finish_moving)
 
         self.select(s)
         
 
+    # current layer: OK
+    def on_action_DataCursor(self, action):
 
-    def _cb_data_cursor(self, action):
-
-        s = mpl_selector.DataCursor(self.backend.figure)
+        layer = self.backend.layer
+        axes = self.backend.layer_to_axes[layer]
+        s = mpl_selector.DataCursor(self.backend.figure, axes)
 
         def abort_selector(sender, context_id):
             self.statusbar.pop(context_id)
@@ -632,26 +643,33 @@ class MatplotlibWidget(gtk.VBox):
         self.select(s)
 
 
-    def _cb_select_line(self, action):
+    # current layer: OK
+    def on_action_SelectLine(self, action):
             
         def finish_select_line(sender):
             print "FINISHED SELECT LINE", sender.line
 
-        s = mpl_selector.SelectLine(self.backend.figure,mode=mpl_selector.SELECTLINE_VERTICAL)
+        layer = self.backend.layer
+        axes = self.backend.layer_to_axes[layer]
+        s = mpl_selector.SelectLine(self.backend.figure, axes,
+                                    mode=mpl_selector.SELECTLINE_VERTICAL)
         Signals.connect(s, "finished", finish_select_line)
         
         self.select(s)
 
 
-    def _cb_zoom_axes(self, action):
+    # current layer: OK
+    def on_action_ZoomAxes(self, action):
 
         def finish_moving(sender):
             ul = UndoList().describe("Zoom Axes")
             layer = self.backend.axes_to_layer[sender.axes]
             self.zoom_to_region(layer, sender.region, undolist=ul)
             self.project.journal.add_undo(ul)           
-           
-        s = mpl_selector.ZoomAxes(self.backend.figure)
+
+        layer = self.backend.layer
+        axes = self.backend.layer_to_axes[layer]
+        s = mpl_selector.ZoomAxes(self.backend.figure, axes)
         Signals.connect(s, "finished", finish_moving)
 
         self.select(s)
@@ -694,7 +712,7 @@ class MatplotlibWidget(gtk.VBox):
    # other callbacks
 
    
-    def on_export_via_matplotlib(self, action):
+    def on_action_ExportViaMPL(self, action):
         self.abort_selection()
 
         # TODO: pick filename based on self.get_plot().key
@@ -703,10 +721,12 @@ class MatplotlibWidget(gtk.VBox):
             self.backend.canvas.print_figure(fname)
 
 
+    #
+    # TESTING
+    #
     def on_action_PeakFinder(self, action):
         self.abort_selection()
 
-        # TESTING
         # we will simply take the first line available.
         layer = self.backend.layer
         line = layer.lines[0]
