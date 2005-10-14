@@ -41,7 +41,19 @@ from terminal import XTerminal, DumbTerminal, PostscriptTerminal
 from Sloppy.Lib import Signals
 
 
-    
+"""
+Maybe it is even simpler!
+
+queue.append( adict, key, cmd, unset_cmd )
+
+- cmd is stored in adict[key]
+- if the change is going to be immediate, then we call
+    gp(unset_cmd)
+    gp(set_cmd)
+
+"""
+
+
 class Backend(backend.Backend):
 
     tmpdir = None  
@@ -70,7 +82,8 @@ class Backend(backend.Backend):
         # in the order that they should be executed
         self.cmd_list = []
         self.cmd_dict = {}
-
+        self.cmd_queue = []
+        self.execution_order = []
     
     def connect(self):
         logger.debug( "Opening new gnuplot session." )
@@ -243,82 +256,7 @@ class Backend(backend.Backend):
     def clear(self):
         self('reset')
 
-    def build_layer(self, layer, group_info):
-        """
-        Returns a list of gnuplot commands that need to be executed
-        to draw this layer.
-        group_info is a dictionary containing information for grouped lines.        
-        """
-
-        rv = []
-
-        # visible
-        if layer.visible is False:
-            return rv
-        
-        # title
-        title = layer.title
-        if title is not None: rv.append('set title "%s"' % title)
-        else: rv.append("unset title")
-
-        # grid
-        grid = layer.grid
-        if grid is True: rv.append('set grid')
-        else: rv.append('unset grid')
-        
-        rv.extend(self.update_legend(layer))
-        rv.extend(self.update_axes(layer))
-        rv.extend(self.update_labels(layer))
-        rv.extend(self.update_lines(layer))
-
-        return rv
-
-
-            
-#     def redraw(self, rebuild_cache=True):
-
-#         # All commands for gnuplot are appended to the cmd_list,
-#         # so that they can be executed at the very end.
-#         cmd_list = []
-#         cmd_list.append('cd "%s"' % self.tmpdir)
-# 	cmd_list.append( "set encoding %s" % self.encoding )
-
-#         cmd_list += self.terminal.build(self)     
-
-#         # multiplot ?
-#         if len(self.plot.layers) > 1:
-#             cmd_list.append( "set multiplot" )
-#             for layer in self.plot.layers:
-#                 group_info = {}
-#                 x, y = layer.x, layer.y
-#                 width, height = layer.width, layer.height
-#                 cmd_list.append("set origin %.2f,%.2f" % (x,y))
-#                 cmd_list.append("set size %.2f,%.2f" % (width, height))
-#                 cmd_list += self.build_layer(layer, group_info)
-#             cmd_list.append( "unset multiplot" )
-#         else:
-#             # Single plot!
-#             # create plotting commands from the Layer information
-#             group_info = {}
-#             cmd_list += self.build_layer(self.plot.layers[0], group_info)
-
-#         self.export_datasets()
-       
-#         # Now execute all collected commands.
-#         print "cmd list is: "
-#         for cmd in cmd_list:
-#             print "   ", cmd
-#         print
-        
-#         Signals.emit(self, 'gnuplot-start-plotting')
-#         logger.info("Gnuplot command list:\n\n%s" % "\n".join(cmd_list))
-#         for cmd in cmd_list:
-#             self(cmd)
-
-#         Signals.emit(self,'gnuplot-after-plot', window_title=self.window_title)
-        
-#     draw = redraw        
-        
+         
 
     #######################################################################
     # reimplementation
@@ -340,39 +278,42 @@ class Backend(backend.Backend):
 
     def update_axes(self, layer, updateinfo={}):
         # updateinfo is ignored
-        cl = []
+        cd = self.cmd_dict[layer]        
+        queue = self.cmd_queue
+        
+        cmd = []
         # axes
         for key, axis in layer.axes.iteritems():            
             # axis format
             format = axis.format
-            if format is not None: cl.append('set format %s "%s"' % (key, format))
-            else: cl.append('set format %s' % key)
+            if format is not None: cmd.append('set format %s "%s"' % (key, format))
+            else: cmd.append('set format %s' % key)
 
             # axis label
             label = axis.label
-            if label is not None: cl.append('set %slabel "%s"' % (key, label))
-            else: cl.append('unset %slabel' % key)
+            if label is not None: cmd.append('set %slabel "%s"' % (key, label))
+            else: cmd.append('unset %slabel' % key)
 
             # axis range
             start = axis.rget('start', '*')
-            end = axis.rget(axis, 'end','*')
-            cl.append('set %srange [%s:%s]' % (key,start,end))
+            end = axis.rget('end','*')
+            cmd.append('set %srange [%s:%s]' % (key,start,end))
 
             # axis scale
             scale = axis.scale
-            if scale == 'linear': cl.append('unset log %s' % key)
-            elif scale == 'log': cl.append('set log %s' % key)
+            if scale == 'linear': cmd.append('unset log %s' % key)
+            elif scale == 'log': cmd.append('set log %s' % key)
             else:
                 logger.error("Axis scale '%s' not supported by this backend." % scale)
 
-        self.cmd_dict['axes'] = cl                
-        return cl
+        queue.append((cd, 'axes', cmd, None))
 
     
     def update_lines(self, layer, updateinfo={}):
         # updateinfo is ignored
+        cd = self.cmd_dict[layer]        
+        queue = self.cmd_queue
 
-        cl = []
         # lines
         line_cache = []
         for line in layer.lines:
@@ -417,23 +358,22 @@ class Backend(backend.Backend):
 
         # construct plot command from line_cache
         if len(line_cache) > 0:
-            cl.append("plot " + ",\\\n".join(line_cache))
-            #rv = "\n".join(rv)
-            self.cmd_dict['lines'] = cl
-            return cl
+            cmd = "plot " + ",\\\n".join(line_cache)            
+            queue.append((cd, 'lines', cmd, None))
         else:            
             logger.warn("Emtpy layer!")
-            self.cmd_dict['lines'] = []            
-            return []
+            queue.append((cd, 'lines', None, None))
 
 
     def update_legend(self, layer, updateinfo={}):
         # updateinfo is ignored
+        cd = self.cmd_dict[layer]        
+        queue = self.cmd_queue
 
-        cl = []
+        cmd = []
         #:legend
         # (aka key in gnuplot)
-        legend = legend.layer
+        legend = layer.legend
         if legend is not None:
             #:legend.visible
             visible = legend.visible
@@ -473,18 +413,21 @@ class Backend(backend.Backend):
                 else:
                     key_pos = position_mapping[pos]
 
-                cl.append("set key %(key_pos)s %(key_title)s %(key_border)s" % locals())
+                cmd.append("set key %(key_pos)s %(key_title)s %(key_border)s" % locals())
             else:
-                cl.append("unset key")                
+                cmd.append("unset key")                
 
-        self.cmd_dict['legend'] = cl
-        return cl
+        queue.append((cd, 'legend', cmd, None))
+        return cmd
 
 
     def update_labels(self, layer, updateinfo={}):
+        # updateinfo is ignored
+        cd = self.cmd_dict[layer]        
+        queue = self.cmd_queue
 
-        cl = []
         #:layer.labels
+        cmd = []
         for label in layer.labels:                                    
             if label.system == 0: # 0: data
                 coords = "at first %.2f, first %.2f" % (label.x, label.y)
@@ -493,40 +436,170 @@ class Backend(backend.Backend):
 
             map_align = {0:'center', 1:'left', 2:'right'}
             align = map_align[label.halign]
-            cl.append('set label "%s" %s %s' % (label.text, coords, align) )
+            cmd += ['set label "%s" %s %s' % (label.text, coords, align)]
 
-        self.cmd_dict['labels'] = cl
-        return cl
+        queue.append((cd, 'labels', cmd, 'unset labels'))
 
         
-    def update_layer(self, layer):        
-        pass
+    def update_layer(self, layer, updateinfo={}):
+        # updateinfo is ignored
+        cd = self.cmd_dict[layer]        
+        queue = self.cmd_queue
+        
+        # visible
+        if layer.visible is False:
+            queue.append((self.cmd_dict, layer, {}, None))
+            return
+        
+        # title
+        title = layer.title
+        if title is not None:
+            queue.append((cd, 'title', 'set title "%s"' % title, None))
+        else:
+            print "************"
+            queue.append((cd, 'title', None, 'unset title'))
+
+        # grid
+        grid = layer.grid
+        if grid is True:
+            queue.append((cd, 'grid', 'set grid', None))
+        else:
+            queue.append((cd, 'grid', None, 'unset grid'))
+        
+        self.update_legend(layer)
+        self.update_axes(layer)
+        self.update_labels(layer)
+        self.update_lines(layer)
+
+
     
     def draw(self):
         self.check_connection()
         logger.debug("Gnuplot.draw")                
-             
-        ##if self.plot.layers != self.layers_cache:
-        ##    self.arrange()
 
-        #
-        # TODO: build layers_cache
-        #
-        #for
-
-        # clear command list
         cd = self.cmd_dict = {}
-
-        cd['tempdir'] = ['cd "%s"' % self.tmpdir]
-        cd['encoding'] = ['set encoding %s' % self.encoding]
-        cd['terminal'] = self.terminal.build(self)
+        cd['start'] = {}
+        cd['end'] = {}
         
+        #
+        # The queue is a list of operations that
+        # will be performed on the cmd_list.
+        #
+        queue = self.cmd_queue = []
+
+        queue.append((cd, 'tempdir', 'cd "%s"' % self.tmpdir, None))
+        queue.append((cd, 'encoding', 'set encoding %s' % self.encoding, None))
+        queue.append((cd, 'terminal', self.terminal.build(self), None))
+
         for layer in self.plot.layers:
+            if self.cmd_dict.has_key(layer) is False:
+                self.cmd_dict[layer] = {}                        
             self.update_layer(layer)
 
-        self.execute_queue()
+        def apply_queue(queue):
+            logger.debug("Applying Queue...")
+            print "QUEUE ", len(queue)
+            while len(queue) > 0:
+                item = queue.pop()
+                # (adict, key, set, unset)
+                adict, key, set, unset = item
+
+                if unset is not None:
+                    print "Performing unset ", unset
+                    self(unset)
+
+                if set is not None:
+                    adict[key] = set
+                elif adict.has_key(key):
+                    adict.pop(key)
+
+        apply_queue(queue)
+        logger.debug("Executing command dict...")
+
+        #
+        # determine execution order
+        #
+        order = self.execution_order = ['tempdir', 'encoding', 'terminal']
+
+        for layer in self.plot.layers:
+            order.append(layer)
+
+        order += ['multiplot-start',
+                 'title',
+                 'grid',
+                 'axes',
+                 'labels',
+                 'layer',
+                 'lines',
+                 'multiplot-end']
+                
+        print "QUEUE:"
+        print cd
+
+        self.export_datasets()
+        self.execute(cd)
+
+        print "---"
+        layer = self.plot.layers[0]
+        layer.title = None
+        self.update_layer(layer)
+        apply_queue(queue)
+        self("replot")
+        #self.execute(cd)
+            
+                     
+        
+#         #
+#         # Create command dict for each layer.
+#         # If we have multiple layers, then we also need to
+#         # add multiplot commands before the first layer
+#         # and after the last layer
+#         #
+        
+#         # multiplot ?
+#         if len(self.plot.layers) > 1:
+#             cd['multiplot-start'] = ["set multiplot"]
+#             cd['multiplot-end'] = ["unset multiplot"]
+#             for layer in self.plot.layers:
+#                 cl = self.cmd_dict[layer] = {}                
+#                 self.update_layer(layer)
+
+#                 x, y, width, height = layer.x, layer.y, layer.width, layer.height                
+#                 self.cmd_dict[layer]['multiplot-start'] = \
+#                   ["set origin %.2f,%.2f" % (x,y),
+#                    "set size %.2f,%.2f" % (width, height)]                
+#         else:
+#             # Single plot!
+#             # create plotting commands from the Layer information
+#             layer = self.plot.layers[0]
+#             cl = self.cmd_dict[layer] = {}
+#             self.update_layer(layer)
+        
+        
+#         for layer in self.plot.layers:
+#             self.update_layer(layer)
+
+#self.execute_queue()
 
     redraw = draw
+
+    def execute(self, item):
+        def execute_list(alist):
+            for item in alist:
+                self.execute(item)
+                
+        def execute_dict(adict):
+            for key in self.execution_order:
+                if adict.has_key(key):
+                    self.execute(adict[key])
+
+        if isinstance(item, dict):
+            execute_dict(item)
+        elif isinstance(item, list):
+            execute_list(item)
+        else: # => should be a string
+            print "Calling ", item
+            self(item)
 
     def build_queue(self, adict, build_order):
         """
@@ -554,15 +627,28 @@ class Backend(backend.Backend):
             except KeyError:
                 logger.debug("Section '%s' not found in command dictionary." % key)
 
-        logger.debug("Command queue has been built:\n%s" % queue)
+        logger.debug("Built queue:\n%s" % queue)
         return queue
         
 
     def execute_queue(self):
         # 'lines' is last and contains the plot commands        
-        order = ['tempdir', 'encoding', 'terminal', 'axes', 'labels', 'layer',
-                 'lines']        
-        queue = self.build_queue(self.cmd_dict, order)
+        order = ['tempdir',
+                 'encoding',
+                 'terminal',
+                 #
+                 'multiplot-start',
+                   'title',
+                   'grid',
+                   'axes',
+                   'labels',
+                   'layer',
+                   'lines',
+                 'multiplot-end']
+
+        queue = []
+        for key in ['start'] + self.plot.layers + ['end']:
+            queue += self.build_queue(self.cmd_dict, order)
 
         Signals.emit(self, 'gnuplot-start-plotting')
         for cmd in queue:
