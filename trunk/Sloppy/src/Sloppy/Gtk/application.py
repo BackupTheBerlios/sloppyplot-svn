@@ -514,17 +514,14 @@ class GtkApplication(Application):
             
         try:
             result = dialog.run()
-            if response == gtk.RESPONSE_ACCEPT:            
+            if result == gtk.RESPONSE_ACCEPT:            
                 dialog.check_out()
             else:
                 return
-            terminal = dialog.container
+            terminal = dialog.owner
         finally:
             dialog.destroy()
 
-        if result != gtk.RESPONSE_ACCEPT:
-            return
-        
 
         #
         # now check if mode and filename extension match

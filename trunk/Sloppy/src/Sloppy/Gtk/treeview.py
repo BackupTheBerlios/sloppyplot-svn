@@ -275,21 +275,15 @@ class ProjectTreeView( gtk.TreeView ):
         """
         When an object key is edited, we need to check whether
         the key is valid. If so, the key is changed.
-        """        
+        """
         model = self.get_model()
         object = model[path][self.COL_OBJECT]
 
         ul = UndoList()
         if isinstance(object , Dataset):
-            if new_text not in [dataset.key for dataset in self.project.datasets]:
-                ul.describe("Edit Dataset key")
-                uwrap.set(object, key=new_text, undolist=ul)
-                uwrap.emit_last(self.project.datasets, "notify", undolist=ul)
+            self.project.rename_dataset(object, new_text, undolist=ul)
         elif isinstance(object, Plot):
-            if new_text not in [plot.key for plot in self.project.plots]:
-                ul.describe("Edit Plot key")
-                uwrap.set(object, key=new_text, undolist=ul)
-                uwrap.emit_last(self.project.plots, "notify", undolist=ul)
+            self.project.rename_plot(object, new_text, undolist=ul)
 
         if len(ul) > 0:
             self.project.journal.append(ul)        

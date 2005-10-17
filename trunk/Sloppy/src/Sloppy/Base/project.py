@@ -202,7 +202,12 @@ class Project(HasProps):
             else:
                 removed_datasets.append(dataset)
                 
-        undolist.append( UndoInfo(self.add_datasets, removed_datasets).describe("Remove Dataset") )
+        undolist.append(UndoInfo(self.add_datasets, removed_datasets))
+        if len(datasts) == 1:
+            undolist.describe("Remove Dataset")
+        else:
+            undolist.describe("Remove Datasets")
+            
         Signals.emit(self, "notify::datasets") 
 
 
@@ -227,7 +232,12 @@ class Project(HasProps):
             else:
                 removed_plots.append(plot)
 
-        undolist.append( UndoInfo(self.add_plots, removed_plots).describe("Remove Plot") )
+        undolist.append(UndoInfo(self.add_plots, removed_plots))
+        if len(plots) == 1:
+            undolist.describe("Remove Plot")
+        else:
+            undolist.describe("Remove Plots")
+            
         Signals.emit(self, "notify::plots")
 
 
@@ -250,8 +260,14 @@ class Project(HasProps):
         dslist = [ds for ds in self.datasets]
         dslist.remove(dataset)
         new_key = pdict.unique_key(dslist, new_key)
+
+        ui = UndoInfo(self.rename_dataset, dataset, dataset.key)
+        ui.describe("Rename Dataset")
+
+        dataset.key = new_key
+        undolist.append(ui)        
+        Signals.emit(self, "notify::datasets")
         
-        uwrap.set(dataset, 'key', new_key, undolist=undolist)
         return dataset
 
 
@@ -264,8 +280,14 @@ class Project(HasProps):
         plot = self.get_plot(xn_plot)
         plotlist.remove(plot)
         new_key = pdict.unique_key(plotlist, new_key)
+
+        ui = UndoInfo(self.rename_plot, plot, plot.key)
+        ui.describe("Rename Plot")
         
-        uwrap.set(plot, 'key', new_key, undolist=undolist)
+        plot.key = new_key
+        undolist.append(ui)
+        Signals.emit(self, "notify::plots")
+
         return plot
 
     #----------------------------------------------------------------------
@@ -421,7 +443,7 @@ class Project(HasProps):
 
         # if you add an option confirm, make sure that it is False
         # when GtkApplication calls it.
-        ul = UndoList().describe("Remove objects")
+        ul = UndoList()
         
         datasets = list()
         plots = list()
@@ -432,10 +454,12 @@ class Project(HasProps):
                 plots.append(obj)
 
         if len(datasets) > 0:
-            self.remove_datasets(datasets, undolist=ul)
-            
+            self.remove_datasets(datasets, undolist=ul)            
         if len(plots) > 0:
             self.remove_plots(plots, undolist=ul)
+
+        if len(ul) > 2:
+            ul.describe("Remove objects")            
         
         undolist.append(ul)
         

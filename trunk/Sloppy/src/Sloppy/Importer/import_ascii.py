@@ -82,6 +82,14 @@ class Importer(dataio.Importer):
     #
     
     def read_table_from_stream(self, fd):
+
+        # Used compiled regular expressions (cre_):
+        #  cre_row used to remove comments, linebreaks, whitespace, ...
+        #  cre_rowsplit used to split the remaining row into its fields
+        #  cre_commentline used to identify a comment-only line
+        cre_row = re.compile('^\s*(.*?)(#.*)?$')
+        #cre_rowsplit is set below, after the delimiter has been determined
+        cre_commentline = re.compile('^\s*(#.*)?$')
        
         # determine optional arguments
         typecodes = self.typecodes
@@ -93,10 +101,9 @@ class Importer(dataio.Importer):
             line = fd.readline()
             header_lines -= 1
 
-        # TODO: use given expression and re
         # skip comments
         line = '#'
-        while len(line) > 0 and line[0] == '#':
+        while len(line) > 0 and cre_commentline.match(line) is not None:
             rewind = fd.tell()
             line = fd.readline()
         fd.seek(rewind)
@@ -126,8 +133,10 @@ class Importer(dataio.Importer):
                 line = fd.readline()
 
                 # split off comments
-                # TODO: This will not work for text entries "Example #Test"
-                line = line.split('#')[0]
+                try:
+                    line = cre_row.match(line).groups()[0]
+                except AttributeError:
+                    ncols = 2
 
                 cregexp = re.compile(delimiter)
                 matches = [match for match in cregexp.split(line) if len(match) > 0]
@@ -176,10 +185,6 @@ class Importer(dataio.Importer):
             column.designation = designations[n]
             n += 1
         
-        # Create compiled regular expressions (cre_):
-        #  cre_row used to remove comments, linebreaks, whitespace, ...
-        #  cre_rowsplit used to split the remaining row into its fields
-        cre_row = re.compile('^\s*(.*?)(#.*)?$')
         cre_rowsplit = re.compile(delimiter)
 
 
