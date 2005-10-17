@@ -17,6 +17,10 @@ class TestCase(unittest.TestCase):
                        ('./data/2.dat',
                         ImporterRegistry['ASCII'](),
                         Table(array([[1,1,1],[2,2,2],[3,3,3]],'d'))
+                        ),
+                       ('./data/3.dat',
+                        ImporterRegistry['ASCII'](),
+                        Table(array([[1,1,1],[2,2,2],[3,3,3]],'d'))
                         )
                        ]
 
