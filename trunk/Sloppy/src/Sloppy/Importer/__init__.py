@@ -21,5 +21,4 @@
 
 import import_ascii
 import import_pfc
-import import_xps
 import import_sif
