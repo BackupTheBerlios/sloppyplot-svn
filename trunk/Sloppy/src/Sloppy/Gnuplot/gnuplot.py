@@ -553,15 +553,13 @@ class Backend(backend.Backend):
         self.export_datasets()
         self.execute(cd)
 
-        print "---"
-        layer = self.plot.layers[0]
-        layer.title = None
-        self.update_layer(layer)
-        apply_queue(queue)
-        self("replot")
-        #self.execute(cd)
-            
-                     
+#         # The following snippet shows how to update a single attribute:        
+#         print "---"
+#         layer = self.plot.layers[0]
+#         layer.title = None
+#         self.update_layer(layer)
+#         apply_queue(queue)
+#         self("replot")
         
 #         #
 #         # Create command dict for each layer.
