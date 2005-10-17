@@ -125,7 +125,7 @@ class MatplotlibWindow( gtk.Window ):
         t = gtk.ToggleAction('ToggleToolbox', 'Toolbox', 'ToggleToolbox visibility', gtk.STOCK_PROPERTIES)
         t.connect("toggled", on_toggled, toolbox)
         uihelper.get_action_group(self.uimanager, 'ViewMenu').add_action(t)
-
+        t.set_active(toolbox.get_property('visible'))
 
         # ...and now that all action groups are created,
         # we can create the actual ui for the window 
