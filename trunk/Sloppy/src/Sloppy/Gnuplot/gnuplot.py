@@ -548,10 +548,31 @@ class Backend(backend.Backend):
         queue.append((cd, 'encoding', 'set encoding %s' % self.encoding, None))
         queue.append((cd, 'terminal', self.terminal.build(self), None))
 
-        for layer in self.plot.layers:
-            if self.cdict.has_key(layer) is False:
-                self.cdict[layer] = {}                        
+       
+        # Create commands for each layer.  If we have multiple
+        # layers, then we also need to add multiplot commands before
+        # the first layer and after the last layer
+        
+        # multiplot ?
+        if len(self.plot.layers) > 1:
+            cd['multiplot-start'] = ["set multiplot"]
+            cd['multiplot-end'] = ["unset multiplot"]
+            for layer in self.plot.layers:
+                # TODO: maybe add a command to the queue to clear cdict[layer]?
+                self.cdict[layer] = {} 
+                self.update_layer(layer)
+
+                x, y, width, height = layer.x, layer.y, layer.width, layer.height                
+                self.cdict[layer]['multiplot-start'] = \
+                 ["set origin %.2f,%.2f" % (x,y),
+                  "set size %.2f,%.2f" % (width, height)]                
+        else:
+            # Single plot!
+            # create plotting commands from the Layer information
+            layer = self.plot.layers[0]
+            self.cdict[layer] = {}
             self.update_layer(layer)
+
 
         def apply_queue(queue):
             logger.debug("Applying Queue...")
@@ -573,18 +594,17 @@ class Backend(backend.Backend):
         #
         # determine execution order
         #
-        order = self.execution_order = ['tempdir', 'encoding', 'terminal']
+        order = self.execution_order = ['tempdir', 'encoding', 'terminal', 'multiplot-start']
 
         for layer in self.plot.layers:
             order.append(layer)
 
-        order += ['multiplot-start',
-                 'title',
-                 'grid',
-                 'axes',
-                 'labels',
-                 'layer',
-                 'lines',
+        order += ['title',
+                  'grid',
+                  'axes',
+                  'labels',
+                  'layer',
+                  'lines',
                  'multiplot-end']
                 
         print "QUEUE:"
@@ -601,36 +621,8 @@ class Backend(backend.Backend):
 #         self.update_layer(layer)
 #         apply_queue(queue)
 #         self("replot")
-        
-#         #
-#         # Create command dict for each layer.
-#         # If we have multiple layers, then we also need to
-#         # add multiplot commands before the first layer
-#         # and after the last layer
-#         #
-        
-#         # multiplot ?
-#         if len(self.plot.layers) > 1:
-#             cd['multiplot-start'] = ["set multiplot"]
-#             cd['multiplot-end'] = ["unset multiplot"]
-#             for layer in self.plot.layers:
-#                 cl = self.cdict[layer] = {}                
-#                 self.update_layer(layer)
+                
 
-#                 x, y, width, height = layer.x, layer.y, layer.width, layer.height                
-#                 self.cdict[layer]['multiplot-start'] = \
-#                   ["set origin %.2f,%.2f" % (x,y),
-#                    "set size %.2f,%.2f" % (width, height)]                
-#         else:
-#             # Single plot!
-#             # create plotting commands from the Layer information
-#             layer = self.plot.layers[0]
-#             cl = self.cdict[layer] = {}
-#             self.update_layer(layer)
-        
-        
-#         for layer in self.plot.layers:
-#             self.update_layer(layer)
 
 #self.execute_queue()
 
