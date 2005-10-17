@@ -2,22 +2,9 @@
 Plans for 0.4.5
 ===============
 
-- More importantly: Existing functions should work:
+- let Christoph test the rc
 
-- check PFC imports
-  Try to improve ASCII import and allow parsing of the header.
-  This way, PFC import would just be a special case of ASCII:
-  - 1 header line
-  - column names in header are separated by whitespace
-
-- importer: _first_ remove beginning and end of line using a regular expression,
-  _then_ split the remaining string according to the delimiter. (This
-  way, we can avoid problems with comments, different linebreaks,...)
-
-- When constructing the delimiter, always append '\s*' ?
-
-
-
+- implement multiplot for gnuplot!
 
 
 
@@ -32,7 +19,11 @@ Plans for 0.4.6
   and the data files
 - allow to include arbitrary data at specific positions into the gnuplot.
 
-
+- check PFC imports
+  Try to improve ASCII import and allow parsing of the header.
+  This way, PFC import would just be a special case of ASCII:
+  - 1 header line
+  - column names in header are separated by whitespace
 
 PLANS FOR 0.4.x:
 ================
