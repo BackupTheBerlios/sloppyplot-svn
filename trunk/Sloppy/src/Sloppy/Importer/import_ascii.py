@@ -176,8 +176,11 @@ class Importer(dataio.Importer):
             column.designation = designations[n]
             n += 1
         
-        # Create regular expression used to match the lines.
-        cregexp = re.compile(delimiter)
+        # Create compiled regular expressions (cre_):
+        #  cre_row used to remove comments, linebreaks, whitespace, ...
+        #  cre_rowsplit used to split the remaining row into its fields
+        cre_row = re.compile('^\s*(.*?)(#.*)?$')
+        cre_rowsplit = re.compile(delimiter)
 
 
         #
@@ -187,12 +190,21 @@ class Importer(dataio.Importer):
         skipcount = 0
         row = fd.readline()        
         while len(row) > 0:
-            # split off comments
-            # TODO: This will not work for text entries "Example #Test"
-            row = row.split('#')[0]
+            # Split off comments using a regular expression.
+            # This is a more robust solution than the former
+            #  row = row.split('#')[0]
+            # TODO: Be careful when we have string fields, then a #
+            # might not be what it looks like -- it might be contained
+            # in quotes!
+            try:
+                row = cre_row.match(row).groups()[0]
+            except AttributeError:
+                logger.error("Skipped row: %s" % row)
+                row = fd.readline()
+                continue
             
-            matches = [match for match in cregexp.split(row) if len(match) > 0]
-            logger.debug("MATCHES = %s" % str(matches))
+            matches = [match for match in cre_rowsplit.split(row) if len(match) > 0]
+            #logger.debug("MATCHES = %s" % str(matches))
             if len(matches) == 0:
                 skipcount += 1
                 if skipcount > 100:
