@@ -4,13 +4,13 @@ Plans for 0.4.5
 
 - More importantly: Existing functions should work:
 
-  - check XPS and PFC imports => drop support for XPS, it is silly anyway.
-    Instead try to improve ASCII import and allow parsing of the header.
-    This way, PFC import would just be a special case of ASCII:
-    - 1 header line
-    - column names in header are separated by whitespace
+- check PFC imports
+  Try to improve ASCII import and allow parsing of the header.
+  This way, PFC import would just be a special case of ASCII:
+  - 1 header line
+  - column names in header are separated by whitespace
 
-  - check if toolbox is visible and adjust the state of the togglebutton on creation of mpl_window.
+- check if toolbox is visible and adjust the state of the togglebutton on creation of mpl_window.
 
 - implement linestyles in gnuplot..
 
