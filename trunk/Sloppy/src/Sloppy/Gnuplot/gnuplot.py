@@ -323,16 +323,57 @@ class Backend(backend.Backend):
 
                 using = 'using %s:%s' % (cx+1,cy+1)
 
-                # TODO: support 'style' and 'marker'
+                #
                 # with-clause
-                type = line.style
-                type_mappings = {'solid': 'w l'}
+                #
+                
+                # the 'linestyle' is a line type in gnuplot
+                linestyle_mappings = \
+                  {'None'               : "with points",
+                   "solid"              : "with linespoints",
+                   "dashed"             : "with linespoints ls 1",
+                   "dash-dot"           : "with linespoints ls 2",
+                   "dotted"             : "with linespoints ls 3",
+                   "steps"              : "with steps"
+                   }                
                 try:
-                    with = type_mappings[type]
+                    with = linestyle_mappings[line.style]
                 except KeyError:
                     with = ''
                     logger.error('line type "%s" not supported by this backend.' % type )
 
+                # line.marker
+                linemarker_mappings = \
+                {# 'None' is a special case treated below
+                 "points"                  : "pt 1",
+                 "pixels"                  : "pt 2",
+                 "circle symbols"          : "pt 3",
+                 "triangle up symbols"     : "pt 4",
+                 "triangle down symbols"   : "pt 5",
+                 "triangle left symbols"   : "pt 6",
+                 "triangle right symbols"  : "pt 7",
+                 "square symbols"          : "pt 8",             
+                 "plus symbols"            : "pt 9",
+                 "cross symbols"           : "pt 1",
+                 "diamond symbols"         : "pt 2",
+                 "thin diamond symbols"    : "pt 3",
+                 "tripod down symbols"     : "pt 4",
+                 "tripod up symbols"       : "pt 5",
+                 "tripod left symbols"     : "pt 6",
+                 "tripod right symbols"    : "pt 7",
+                 "hexagon symbols"         : "pt 8",
+                 "rotated hexagon symbols" : "pt 9",
+                 "pentagon symbols"        : "pt 1",
+                 "vertical line symbols"   : "pt 2",
+                 "horizontal line symbols" : "pt 3"
+                 }
+                marker = line.marker
+                if marker == 'None':
+                    with = with.replace('linespoints', 'lines')
+                    point_type = ''
+                else:
+                    point_type = linemarker_mappings[marker] + " ps 2"
+                
                 # line width
                 width = line.width
                 width = 'lw %s' % str(width)
@@ -341,7 +382,7 @@ class Backend(backend.Backend):
                 continue
             else:
                 # merge all of the above into a nice gnuplot command
-                line_cache.append( " ".join([source,using,with,width,title]) )
+                line_cache.append( " ".join([source,using,with,point_type,width,title]) )
 
         # construct plot command from line_cache
         if len(line_cache) > 0:
