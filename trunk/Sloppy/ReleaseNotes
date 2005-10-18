@@ -1,5 +1,23 @@
 
 
+Release Notes for SloppyPlot 0.4.5 (released 2005-10-18)
+========================================================
+
+This release is the fifth one in the 0.4.x series that slowly
+evolved into a series of major feature and productivity
+enhancements.  The Gnuplot backend has been modularized. Even though
+this change is not very visible to the user, it allows further
+modifications in future releases!  A lot of work has been put
+into supporting multiple layers.  Basically, all zoom functions have
+been rewritten using the so called 'active layer'.  While it is
+possible to change the active layer in the experimental multiplot,
+it is not yet possible to create or remove layers -- but all
+preparations have been done.
+Apart from that, some fixes for very subtle bugs and the decision
+to drop support for XPS files, which were my personal playground
+anyway.
+
+
 Release Notes for SloppyPlot 0.4.4 (released 2005-10-06)
 ========================================================
 
