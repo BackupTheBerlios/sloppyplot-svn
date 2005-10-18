@@ -122,7 +122,9 @@ def new_line(spj, element):
         logger.warn("Dataset %s not found" % source)
         element.attrib['source'] = None
 
+    print "NEW LINE WITH ATTRIBUTES ", element.attrib
     line = Line(**element.attrib)
+    print "NEW LINE HAS VISIBILITY : ", line.visible
     return line
 
 

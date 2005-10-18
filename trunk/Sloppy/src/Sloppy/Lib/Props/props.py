@@ -42,7 +42,7 @@ __all__ = ["HasProps",
            #
            "ValueDict", # experimental
            #
-           "Check", "Transformation", "Coerce", "CheckRegexp", "CheckType",
+           "Check", "Transformation", "Coerce", "CoerceBool", "CheckRegexp", "CheckType",
            "CheckTuple", "CheckAll", "CheckBounds", "CheckValid", "CheckInvalid"
            ]
 
@@ -153,6 +153,23 @@ class Coerce(Transformation):
         return "Coerce to: %s" % self.type
 
 
+
+class CoerceBool(Transformation):
+
+    def __init__(self):
+        pass
+
+    def __call__(self, value):
+        if value is None:
+            return None
+        else:
+            if isinstance(value, basestring):
+                if "true".find(value.lower()) > -1:
+                    return True
+                elif "false".find(value.lower()) > -1:
+                    return False
+            else:
+                return bool(value)
 
 class CheckRegexp(Check):
     
@@ -496,7 +513,7 @@ pDict = pDictionary
 
 class pBoolean(Prop):
     def __init__(self, **kwargs):
-        Prop.__init__(self, Coerce(bool), **kwargs)
+        Prop.__init__(self, CoerceBool(), **kwargs)
 
 pBool = pBoolean
 
