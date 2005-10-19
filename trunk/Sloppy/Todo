@@ -1,16 +1,8 @@
-
-Plans for 0.4.5
-===============
-
-- let Christoph test the beta2
-
-- implement multiplot for gnuplot!
-
-  => move mpl.arrange method to plot.arrange_layers! ?
-
-
 Plans for 0.4.6
 ===============
+
+
+== GROUP PROPERTIES ==
 
 - group properties for line properties:
   - all lines can have the same width
@@ -30,13 +22,23 @@ Plans for 0.4.6
 
 
 
+== TABLE COLUMN TYPES ==
+
 - different types for columns: allow changing types
-- allow strings
+- allow strings (=> This would cause trouble with the splitting of comments)
 - allow dates
+
+
+
+== CUSTOM GNUPLOT EXPORT ==
 
 - allow to create a gnuplot export directory containing a gnuplot file
   and the data files
 - allow to include arbitrary data at specific positions into the gnuplot.
+
+
+
+== HEADER LINES SUPPORT FOR ASCII IMPORT ==
 
 - check PFC imports
   Try to improve ASCII import and allow parsing of the header.
@@ -44,10 +46,29 @@ Plans for 0.4.6
   - 1 header line
   - column names in header are separated by whitespace
 
+
+
 PLANS FOR 0.4.x:
 ================
 
+- implement multiplot for gnuplot!
+  => move mpl.arrange method to plot.arrange_layers! ?
+
 - What happens if I toggle the visibility of a layer?  Will it disappear?
+
+- consistency: ValueDict and ValueList (i.e. remove CheckValue)
+
+- let layerwindow use pwconnect (or whatever it is called) and
+deprecate propwidgets.
+
+- add the possibility in statusbar to show the column label/key
+
+- add documentation for objects.
+
+
+== SIGNALS ==
+
+- what about Signals in classes?  HasSignals?
 
 - Something to think about: 
 
@@ -61,23 +82,7 @@ PLANS FOR 0.4.x:
   BUT right now we have notify::layer and notify::project, where layer
   is not even a Prop.
 
-
-- consistency: ValueDict and ValueList (i.e. remove CheckValue)
-
-- let layerwindow use pwconnect (or whatever it is called) and
-deprecate propwidgets.
-
-- add the possibility in statusbar to show the column label/key
-
-- add documentation for objects.
-
-
-
-THINK ABOUT THIS: MAYBE FOR 0.5.x series ???
-
 - don't update tools window if it is hidden, i.e. disconnect signals!
-
-- what about Signals in classes?  HasSignals?
 
 - Signals.connect_once -> requires an additional flag in the SignalContainer
 
@@ -89,8 +94,6 @@ THINK ABOUT THIS: MAYBE FOR 0.5.x series ???
 
 ###############################################################################
 #EVERYTHING BELOW THIS POINT IS JUST A COLLECTION OF IDEAS
-
-#----------------------------------------------------------------------
 
 - we might want to change cx, cy to a string of the form
 
@@ -195,17 +198,10 @@ Minor fixes
    tar-zip temporary directory
 
 
-
-------------------------------------------------------------------------------
-
 #==============================================================================
 # Plotting Enhancements
 
 - add line.color and implement it in matplotlib
-
-- try to have Gnuplot and Matplotlib do the same thing...
-  => Feature Matrix ?
-
 
 => we might want to implement hlines and vlines in the Plot.
    Then we can combine the methods to select a line with the method
