@@ -324,6 +324,31 @@ class Backend(backend.Backend):
                 using = 'using %s:%s' % (cx+1,cy+1)
 
                 #
+                # Group Properties
+                #
+                line_index = layer.lines.index(line)
+
+                #:line.style
+                #:layer.group_linestyle
+                style = self.get_group_value(line, 'style',
+                                              layer.group_linestyle, line_index)
+
+                #:line.marker
+                #:layer.group_linemarker
+                marker = self.get_group_value(line, 'marker',
+                                               layer.group_linemarker, line_index)
+
+                #:line.width
+                #:layer.group_linewidth
+                width = self.get_group_value(line, 'width',
+                                              layer.group_linewidth, line_index)
+
+                #:line.color
+                #:layer.group_linecolor
+                color = self.get_group_value(line, 'color',
+                                              layer.group_linecolor, line_index)
+
+                #
                 # with-clause
                 #
                 
@@ -337,7 +362,7 @@ class Backend(backend.Backend):
                    "steps"              : "with steps"
                    }                
                 try:
-                    with = linestyle_mappings[line.style]
+                    with = linestyle_mappings[style]
                 except KeyError:
                     with = ''
                     logger.error('line type "%s" not supported by this backend.' % type )
@@ -367,7 +392,6 @@ class Backend(backend.Backend):
                  "vertical line symbols"   : "pt 2",
                  "horizontal line symbols" : "pt 3"
                  }
-                marker = line.marker
                 if marker == 'None':
                     with = with.replace('linespoints', 'lines')
                     point_type = ''
@@ -375,7 +399,6 @@ class Backend(backend.Backend):
                     point_type = linemarker_mappings[marker] + " ps 2"
                 
                 # line width
-                width = line.width
                 width = 'lw %s' % str(width)
             except backend.BackendError, msg:
                 logger.error("Error while processing line: %s" % msg)

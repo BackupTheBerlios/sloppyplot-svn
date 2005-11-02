@@ -43,6 +43,8 @@ from matplotlib import *
 
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_gtk import FigureCanvasGTK as FigureCanvas
+#from matplotlib.backends.backend_gtkcairo import FigureCanvasGTKCairo as FigureCanvas
+
 from matplotlib.text import Text
 
 from Sloppy.Base import backend
@@ -316,25 +318,36 @@ class Backend( backend.Backend ):
         xdata = limit_data(xdata, start, end)
         ydata = limit_data(ydata, start, end)
 
+        line_index = layer.lines.index(line)
 
         #:line.style
+        #:layer.group_linestyle
+        style = self.get_group_value(line, 'style',
+                                      layer.group_linestyle, line_index)
         global linestyle_mappings
-        style = linestyle_mappings[line.style]
+        style = linestyle_mappings[style]
 
         #:line.marker
+        #:layer.group_linemarker
+        marker = self.get_group_value(line, 'marker',
+                                       layer.group_linemarker, line_index)
         global linemarker_mappings
-        marker = linemarker_mappings[line.marker]
-
-        #:line.width:OK
-
+        marker = linemarker_mappings[marker]
+        
+        #:line.width
+        #:layer.group_linewidth
+        width = self.get_group_value(line, 'width',
+                                      layer.group_linewidth, line_index)
+        
         #:line.color
-        N = len(layer.group_colors)
-        index = layer.lines.index(line)
-        color = line.rget('color', layer.group_colors[index%N])
+        #:layer.group_linecolor
+        color = self.get_group_value(line, 'color',
+                                      layer.group_linecolor, line_index)
+
 
         #--- PLOT LINE ---
         l, = axes.plot( xdata, ydata,
-                        linewidth=line.width,
+                        linewidth=width,
                         linestyle=style,
                         marker=marker,
                         color=color)

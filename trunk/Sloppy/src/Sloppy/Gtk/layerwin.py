@@ -418,7 +418,7 @@ class LinesTab(AbstractTab):
         
         # set up model with all available line styles
         linestyle_model = gtk.ListStore(str)
-        value_list = collect_values(Line.style)
+        value_list = [None] + collect_values(Line.style)
         for style in value_list:
             linestyle_model.append( (style or "",) )
 
@@ -436,7 +436,7 @@ class LinesTab(AbstractTab):
 
         # set up model with all available markers
         marker_model = gtk.ListStore(str)
-        value_list = collect_values(Line.marker)
+        value_list = [None] + collect_values(Line.marker)
         for marker in value_list:
             marker_model.append( (marker or "",) )
 
@@ -643,9 +643,9 @@ class LinesTab(AbstractTab):
         return [line,
                 line.visible,
                 line.label or "",
-                line.style or "",
-                line.marker or "",
-                line.width or "",
+                line.rget('style', ""),
+                line.rget('marker', ""),
+                line.rget('width', ""),
                 source_key,
                 str(line.rget('cx',"")),
                 str(line.rget('cy',"")),

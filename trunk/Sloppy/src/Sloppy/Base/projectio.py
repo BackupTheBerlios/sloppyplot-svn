@@ -225,7 +225,7 @@ def toElement(project):
     def SIV(element, key, value):        
         " Set If Valid -- only set element attribute if value is not None. "
         if value is not None:
-            print " KEY: %s => %s" % (key, str(value))
+            #print " KEY: %s => %s" % (key, str(value))
             element.set(key, str(value))
 
 

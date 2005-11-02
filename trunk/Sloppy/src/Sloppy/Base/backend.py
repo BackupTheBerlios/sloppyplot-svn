@@ -29,6 +29,7 @@ import logging, os
 from Sloppy.Lib import Signals
 
 from Sloppy.Base.table import Table
+from Sloppy.Base import objects
 
 
 #------------------------------------------------------------------------------
@@ -241,6 +242,25 @@ class Backend(object):
             raise BackendError("Y-Index out of range (%s). Line skipped." % cy)
 
         return xdata, ydata
+
+
+    def get_group_value(self, container, propname, group, line_index):
+
+        # All options allow manual override if allow_override is true
+        # and if the line specifies its own value.
+        if group.allow_override is True and container.rget(propname) is not None:
+            return container.get(propname)
+
+        type = group.type
+        if type == objects.GROUP_TYPE_CYCLE:
+            return group.cycle_list[line_index % len(group.cycle_list)]
+        elif type == objects.GROUP_TYPE_FIXED:
+            return group.value
+        elif type == objects.GROUP_TYPE_INCREMENT:
+            return group.increment * line_index
+        else:
+            logger.error("Undefined type of group property: %s" % type)
+            return container.get(propname)
 
 
     #----------------------------------------------------------------------

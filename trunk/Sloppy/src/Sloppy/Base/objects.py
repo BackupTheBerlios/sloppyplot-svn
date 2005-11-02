@@ -35,6 +35,13 @@ map_system = {'data' : 0, 'graph': 1, 'screen': 2, 'display': 3}
 map_valign = {'center':0, 'top':1, 'bottom':2}
 map_halign = {'center':0, 'left':1, 'right': 2}
 
+(GROUP_TYPE_CYCLE,
+ GROUP_TYPE_FIXED,
+ GROUP_TYPE_INCREMENT) = range(3)
+
+map_groupproperty_types = {'cycle': GROUP_TYPE_CYCLE,
+                           'fixed': GROUP_TYPE_FIXED,
+                           'increment': GROUP_TYPE_INCREMENT}
 
 
 # ----------------------------------------------------------------------
@@ -77,6 +84,20 @@ PV = {
 # BASE OBJECTS
 #
 
+class Group(HasProps):
+    type = pInteger(ValueDict(map_groupproperty_types), default=0)
+    allow_override = pBoolean(default=True)
+
+def create_group(prop):
+    class G(Group):
+        value = Prop(prop.check, default=prop.on_default)
+        cycle_list = pList(prop.check)
+        increment = pFloat(default=1.0)
+    return G
+
+        
+
+                    
 class TextLabel(HasProps):
     " Single text label. "
     text = pUnicode(blurb="Displayed Text")
@@ -113,14 +134,13 @@ class Line(HasProps):
     cxerr = pInteger(CheckBounds(min=0))
     cyerr = pInteger(CheckBounds(min=0))
     source = Prop(CheckType(Dataset))
-    width = pFloat(CheckBounds(min=0, max=10),
-                   default=1)
-    style = Prop(CheckValid(PV['line.style']),
-                 default=PV['line.style'][0])
-    marker = Prop(CheckValid(PV['line.marker']),
-                  default=PV['line.marker'][0])
-    color = pString(default='g')
+
     visible = pBoolean(default=True)
+    
+    style = Prop(CheckValid(PV['line.style']), default=PV['line.style'][0])    
+    marker = Prop(CheckValid(PV['line.marker']), default=PV['line.marker'][0])
+    width = pFloat(CheckBounds(min=0, max=10), default=1)   
+    color = pString(default='g')
 
 
 class Legend(HasProps):
@@ -149,9 +169,27 @@ class Layer(HasProps):
     width = pFloat(CheckBounds(min=0.0, max=1.0), default=0.775)
     height = pFloat(CheckBounds(min=0.0, max=1.0), default=0.79)
 
-    group_colors = pString(default='bgrcmyk')
-    group_styles = pList(CheckType(str))# TODO: list default, default=['solid', 'dashed'])
-    group_markers = pList(CheckType(str)) # TODO: list default, default=['points'])
+    #
+    # group properties
+    #
+    gLineStyle = create_group(Line.style)
+    group_linestyle = Prop(CheckType(gLineStyle),
+                           reset=gLineStyle(type=GROUP_TYPE_FIXED))
+
+    gLineMarker = create_group(Line.marker)
+    group_linemarker = Prop(CheckType(gLineMarker),
+                            reset=gLineMarker(type=GROUP_TYPE_FIXED))
+
+    gLineWidth = create_group(Line.width)
+    group_linewidth = Prop(CheckType(gLineWidth),
+                           reset=gLineWidth(type=GROUP_TYPE_FIXED))
+
+    gLineColor = create_group(Line.color)
+    group_linecolor = Prop(CheckType(gLineColor),
+                           reset=gLineColor(type=GROUP_TYPE_CYCLE,
+                                            cycle_list=['g','b','r']))
+    #
+    
 
     labels = pList(CheckType(TextLabel))
 
