@@ -315,9 +315,10 @@ class Project(HasProps):
         lines = []
         for dataset in datasets:
             dataset = self.get_dataset(dataset)
-            table = dataset.data
+            # TODO: dataset.get_table()
+            table = dataset.get_data()
             if not isinstance(table, Table):
-                raise TypeError("Dataset data is not a Table object.")
+                raise TypeError("Dataset %s has data, which is not a Table object, but %s" % (dataset, type(table)) )
 
             cx = None
             j = -1
