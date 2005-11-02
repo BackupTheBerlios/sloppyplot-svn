@@ -1,26 +1,9 @@
 Plans for 0.4.6
 ===============
 
-
 == GROUP PROPERTIES ==
 
-- group properties for line properties:
-  - all lines can have the same width
-  - all lines can have the same width, except the ones that are specified otherwise
-  - all lines can have incrementing width, with a given starting value
- 
-  Group Property:
-     property = line width
-     value = float,...
-     type = one of [FIXED, INCREMENT, CYCLE]
-     increment (for 'INCREMENT') = float,...
-     allow_overrride = True or False
-     
-  value and increment should have the same checks as the property!
-
-  line colors : cycle
-
-
+- Allow setting group properties in layerwin (above lines widgets).
 
 == TABLE COLUMN TYPES ==
 
