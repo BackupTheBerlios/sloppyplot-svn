@@ -21,85 +21,18 @@
 """ Signal/Slot mechanism for SloppyPlot. """
 
 
-# register signal => new entry in self._signals
-# connect signal => new entry in self._slots
-# maybe write a class HasSignals, that has signals and slots
-# and has methods 'connect', 'disconnect' and so on.  It would
-# _be_ the sender.
+import weakref
+import inspect
 
-
-# class Signal:
-
-#     def __init__(self, name, callback, *args, **kwargs):
-#         logger.debug("new signal...")
-
-#         self.name = name
-
-#         # TODO: use inspect for this
-        
-#         # Signal.receiver is a weak reference to the receiving object.
-#         # The user should not explicitly provide this object, so
-#         # we need to extract this information from the given callback.
-#         # We perform this separation of object and unbound method via
-#         # the methods im_self and im_func. If `callback` is only
-#         # a method, not a method bound to an object, then an
-#         # AttributeError is raised, caught and the receiver is set to
-#         # the so called Anonymous receiver.
-#         try:
-#             # Try bound method.
-#             # If unbound, an AttributeError will occur
-#             receiver = callback.im_self
-#             callback = callback.im_func
-#             logger.debug("(bound to object)")
-#         except AttributeError:
-#             # unbound method
-#             receiver = Anonymous
-#             callback = callback
-#             logger.debug("(unbound)")
-
-#         self.callback = callback
-#         self.receiver = weakref.ref(receiver)
-        
-#         self.args = args
-#         self.kwargs = kwargs
+import logging
+logger = logging.getLogger('Signals')
 
 
 
-
-#     def connect_signal(self, signal_name, callback, *args, **kwargs):
-#         new_signal = Signal(signal_name, callback, *args, **kwargs)
-#         self._signals.append(new_signal)
-#         return newSignal
-
-#     def disconnect_signal(self, signal=None, signal_name=None, receiver=None):
-#         """ Disconnect all signals matching the given criteria. """
-#         if signal is not None:
-#             signals = [signal]
-#         else:
-#             signals = self.get_signals(receiver=receiver, signal_name=signal_name)
-
-#         for signal in signals:
-#             try:
-#                 self._signals.remove(signal)
-#             except ValueError:
-#                 logger.error("disconnect_signal: signal not found!")
-
-#     def disconnect_signals(self, signal_list):
-#         """ Disconnect all given signals. """
-#         while len(signals) > 0:
-#             self.disconnect_signal(signal_list.pop(0))
-
-#     def emit_signal(self, signal_name, *args, **kwargs):
-#         pass
-
-#     def get_signals(self, receiver=None, signal_name=None):
-#         """ Return all signals that match the given criteria. """
-#         signals = self.signals
-#         if receiver is not None:
-#             signals = [signal for signal in signals if id(signal.receiver()) == id(receiver)]
-#         if signal_name is not None:
-#             signals = [signal for signal in signals if id(signal.name) == id(signal_name)]
-#         return signals                       
+class AnonymousReceiver:
+    pass
+class SignalError(Exception):
+    pass
 
 
 class Signal:
@@ -107,26 +40,86 @@ class Signal:
         self.args = args
         self.kwargs = kwargs
 
+
+class Callback:
+    
+    def __init__(self, cb, *args, **kwargs):
         
+        if inspect.ismethod(cb) is True:
+            # method 
+            self.receiver = weakref.ref(cb.im_self)
+            self.callback = cb.im_func
+        else:
+            # function
+            self.receiver = (lambda: AnonymousReceiver)
+            self.callback = cb
+
+        self.args = args
+        self.kwargs = kwargs
+
+        
+                 
 class HasSignals:
 
     def __init__(self):
         self._signals = {} # dictionary of Signal objects (keys: signal names)
         self._callbacks = {} # dictionary of callbacks (keys: signal names)
 
-    def register_signal(self, signal_name):   
-        self._signals[signal_name] = Signal()
-        self._slots[signal_name] = []
+    def sig_register(self, signal):
+        self._signals[signal] = Signal()
+        self._callbacks[signal] = []
+        
+    def sig_connect(self, signal, callback, *args, **kwargs):
+        print "Connect!"        
+        self.sig_check(signal)
+        self._callbacks[signal].append(Callback(callback, *args, **kwargs))
 
-    def connect_signal(self, signal_name, callback):
-        pass
-                                       
+    def sig_emit(self, signal, *args, **kwargs):
+        print "Emit!"        
+        self.sig_check(signal)
+        deprecated = []
+        
+        for cb in self._callbacks[signal]:
+            all_args = args + cb.args
+            all_kwargs = kwargs.copy()
+            all_kwargs.update( cb.kwargs )
+            
+            # returns None if referenced object does not exist anymore
+            receiver = cb.receiver()
+            
+            if receiver is None:
+                logger.debug("emit: receiver for signal is gone. signal marked for deletion.")
+                deprecated.append(cb)
+                continue
 
+            try:
+                if receiver == AnonymousReceiver:
+                    cb.callback(self, *all_args, **all_kwargs)
+                else:
+                    cb.callback(receiver, self, *all_args, **all_kwargs)
+            except:
+                print ("Caught exception while trying to call callback [%s,%s,%s] during emission of signal '%s'." %
+                                  (receiver, all_args, all_kwargs, self))
+                raise
+
+        # remove all obsolete signals
+        for cb in deprecated:
+            logger.debug("emit: -- removing Callback --")
+            self._callbacks.pop(signal)
+            
+
+
+    def sig_check(self, signal):
+        if self._signals.has_key(signal) is False:
+            raise SignalError("Signal '%s' is not registered for object '%s'" % (signal, self))        
+
+
+#------------------------------------------------------------------------------
 def test():
     class TestClass(HasSignals):
-        pass
-
-    def receiver(self, sender, value):
+        def on_notify(self, sender, value):
+            print "Class Receiver received value %s" % value
+    def receiver(sender, value):
         print "Signal with value %s" % value
         
         
@@ -134,7 +127,8 @@ def test():
     tc.sig_register("notify")
 
     tc.sig_connect("notify", receiver)
-    tc.sig_emit("notify")
+    tc.sig_connect("notify", tc.on_notify)
+    tc.sig_emit("notify", 10)
     
     
 if __name__ == "__main__":
