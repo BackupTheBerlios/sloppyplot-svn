@@ -107,27 +107,39 @@ class GnuplotWindow( gtk.Window ):
         Signals.disconnect_list(self._signals)
         self.backend is not None and self.backend.disconnect()
 
-        if plot is None:
+        if id(plot) == self.plot:
             return
 
-        
+        # disconnect signals of old plot
+        if self.plot is not None:
+            cblist = self.plot.sig_cblist(receiver=self)
+            print
+            print "DISCONNECTING CALLBACKS"
+            print cblist
+            print
+            self.plot.sig_disconnect(cblist)            
+
         self.plot = plot
-        self.set_title( "Plot: %s" % plot.key )
+
+        if plot is None:
+            self.set_title("No plot")
+            return
+        else:        
+            self.set_title( "Plot: %s" % plot.key )
         
         self.backend = project.new_backend('gnuplot/x11', plot=plot)
 
         # connect signals for treeview
         # these are disconnect by the backend if it closes
+
+        # TODO: New style signals
         Signals.connect(self.backend, 'gnuplot-send-cmd', self.on_send_cmd)
         Signals.connect(self.backend, 'gnuplot-finish-cmd', self.on_finish_cmd)
         Signals.connect(self.backend, 'gnuplot-start-plotting', self.on_start_plotting)
 
         # connect signal for plot
-        # these should be disconnected before the plot needs to do it.
-        self._signals += [
-            Signals.connect(plot, "plot-changed", (lambda sender: self.backend.draw())),
-            Signals.connect(plot, "closed", (lambda sender: self.destroy()))
-            ]
+        plot.sig_connect('closed', (lambda sender: self.destroy()))
+        plot.sig_connect('changed', (lambda sender: self.backend.draw()))
 
         self.backend.draw()
 
@@ -293,7 +305,7 @@ class GnuplotWindow( gtk.Window ):
         uwrap.set(yaxis, 'start', ystart, undolist=ul)
         uwrap.set(yaxis, 'end', yend, undolist=ul)
 
-        uwrap.emit_last( self.plot, "plot-changed", undolist=ul )
+        uwrap.emit_last( self.plot, "changed", undolist=ul )
         undolist.append(ul)
 
 
@@ -313,7 +325,7 @@ class GnuplotWindow( gtk.Window ):
         uwrap.set(yaxis,'start', None, undolist=ul)
         uwrap.set(yaxis,'end', None, undolist=ul)
 
-        uwrap.emit_last( self.plot, "plot-changed", undolist=ul )            
+        uwrap.emit_last( self.plot, "changed", undolist=ul )            
         undolist.append(ul)    
 
 

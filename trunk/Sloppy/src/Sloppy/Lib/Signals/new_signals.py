@@ -25,8 +25,7 @@ import weakref
 import inspect
 
 import logging
-logger = logging.getLogger('Signals')
-
+logger = logging.getLogger('NewSignals')
 
 
 class AnonymousReceiver:
@@ -36,50 +35,87 @@ class SignalError(Exception):
 
 
 class Signal:
-    def __init__(self, *args, **kwargs):
-        self.args = args
-        self.kwargs = kwargs
-
+    def __init__(self):
+        pass
+    
 
 class Callback:
     
-    def __init__(self, cb, *args, **kwargs):
+    def __init__(self, owner, signal, cb, *args, **kwargs):
         
         if inspect.ismethod(cb) is True:
             # method 
             self.receiver = weakref.ref(cb.im_self)
-            self.callback = cb.im_func
+            self.func = cb.im_func
         else:
             # function
             self.receiver = (lambda: AnonymousReceiver)
-            self.callback = cb
+            self.func = cb
 
         self.args = args
         self.kwargs = kwargs
 
+        self.signal = signal
+        self.owner = owner
+
+
+    def disconnect(self):
+        self.owner.sig_disconnect(self)
         
                  
 class HasSignals:
 
     def __init__(self):
         self._signals = {} # dictionary of Signal objects (keys: signal names)
-        self._callbacks = {} # dictionary of callbacks (keys: signal names)
+        self._callbacks = [] # list of all callbacks
+
 
     def sig_register(self, signal):
         self._signals[signal] = Signal()
-        self._callbacks[signal] = []
-        
-    def sig_connect(self, signal, callback, *args, **kwargs):
-        print "Connect!"        
-        self.sig_check(signal)
-        self._callbacks[signal].append(Callback(callback, *args, **kwargs))
 
+        
+    def sig_connect(self, signal, func, *args, **kwargs):
+        logger.debug("Connecting '%s' to signal '%s' of object '%s'." % (func, signal, self))
+        self.sig_check(signal)
+        cb = Callback(self, signal, func, *args, **kwargs)
+        self._callbacks.append(cb)
+        return cb
+
+    
+    def sig_disconnect(self, cblist):
+        if not isinstance(cblist, (tuple, list)):
+            cblist = [cblist]            
+
+        for cb in cblist:
+            logger.debug("Disconnecting callback '%s' of object '%s'." % (cb, self))
+            self._callbacks.remove(cb)
+
+
+    def sig_cblist(self, signal=None, receiver=None, func=None):
+        cblist = self._callbacks
+
+        if signal is not None:
+            cblist = [cb for cb in cblist if cb.signal == signal]            
+
+        if receiver is not None:
+            cblist = [cb for cb in cblist if id(cb.receiver) == id(receiver)]
+
+        if func is not None:
+            if inspect.ismethod(func):
+                cblist = [cb for cb in cblist if cb.func == func.im_func]
+            else:
+                cblist = [cb for cb in cblist if cb.func == func]
+
+        return cblist
+                                
+                    
     def sig_emit(self, signal, *args, **kwargs):
-        print "Emit!"        
+
         self.sig_check(signal)
         deprecated = []
-        
-        for cb in self._callbacks[signal]:
+
+        logger.debug("Emitting signal '%s' of object '%s'." % (signal, self))
+        for cb in [c for c in self._callbacks if c.signal == signal]:
             all_args = args + cb.args
             all_kwargs = kwargs.copy()
             all_kwargs.update( cb.kwargs )
@@ -92,11 +128,13 @@ class HasSignals:
                 deprecated.append(cb)
                 continue
 
+            logger.debug("  => Callback to function '%s' of '%s'" % (cb.func, cb.receiver))
+            
             try:
                 if receiver == AnonymousReceiver:
-                    cb.callback(self, *all_args, **all_kwargs)
+                    cb.func(self, *all_args, **all_kwargs)
                 else:
-                    cb.callback(receiver, self, *all_args, **all_kwargs)
+                    cb.func(receiver, self, *all_args, **all_kwargs)
             except:
                 print ("Caught exception while trying to call callback [%s,%s,%s] during emission of signal '%s'." %
                                   (receiver, all_args, all_kwargs, self))
@@ -105,8 +143,7 @@ class HasSignals:
         # remove all obsolete signals
         for cb in deprecated:
             logger.debug("emit: -- removing Callback --")
-            self._callbacks.pop(signal)
-            
+            self._callbacks.remove(cb)            
 
 
     def sig_check(self, signal):
@@ -117,18 +154,49 @@ class HasSignals:
 #------------------------------------------------------------------------------
 def test():
     class TestClass(HasSignals):
+        def __init__(self):
+            HasSignals.__init__(self)
+            self.sig_register("notify")
+            
         def on_notify(self, sender, value):
             print "Class Receiver received value %s" % value
+
+            
     def receiver(sender, value):
-        print "Signal with value %s" % value
-        
+        print "Signal with value %s" % value                
         
     tc = TestClass()
-    tc.sig_register("notify")
+    tc2 = TestClass()
 
     tc.sig_connect("notify", receiver)
-    tc.sig_connect("notify", tc.on_notify)
+    tc.sig_connect("notify", tc2.on_notify)
     tc.sig_emit("notify", 10)
+
+    del tc2
+    tc.sig_emit("notify", 12)
+
+    del receiver
+    tc.sig_emit("notify", 8)
+    #----------
+
+    tc = TestClass()
+    cb = tc.sig_connect("notify", tc.on_notify)
+    tc.sig_emit("notify", 14)
+    tc.sig_disconnect(cb)
+    tc.sig_emit("notify", 16)
+    #----------
+    tc = TestClass()
+    tc.sig_connect("notify", tc.on_notify)
+    tc.sig_connect("notify", tc.on_notify)
+    tc.sig_connect("notify", tc.on_notify)
+    tc.sig_emit("notify", 18)
+    cblist = tc.sig_cblist(func=tc.on_notify)
+    tc.sig_disconnect(cblist)
+    tc.sig_emit("notify", 20)
+
+    #----------
+    #tc.sig_connect("notfy", tc.on_notify) # a misspelled signal!
+    
     
     
 if __name__ == "__main__":

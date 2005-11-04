@@ -213,7 +213,7 @@ class LayerWindow(gtk.Window):
         ul = ul.simplify(preserve_list=True)
         
         if len(ul) > 0:
-            uwrap.emit_last(self.plot, "plot-changed", undolist=ul)            
+            uwrap.emit_last(self.plot, "changed", undolist=ul)            
         else:
             ul = NullUndo()
             

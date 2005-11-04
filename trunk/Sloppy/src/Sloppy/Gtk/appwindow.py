@@ -426,8 +426,10 @@ class AppWindow( gtk.Window ):
     def add_plotwidget(self, widget):
         n = self.plotbook.append_page(widget)
         self.plotbook.set_tab_label_text(widget, "Plot")
+
         # TODO: this signal should be a gobject signal
         Signals.connect(widget, "closed", self.detach_plotwidget)
+        
 
         for ag in widget.get_actiongroups():            
             self.uimanager.insert_action_group(ag,0)            

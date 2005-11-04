@@ -27,6 +27,7 @@ from Sloppy.Base.dataset import Dataset
 
 
 from Sloppy.Lib import Signals
+from Sloppy.Lib.Signals.new_signals import HasSignals
 from Sloppy.Lib.Undo import udict
 from Sloppy.Lib.Props import *
        
@@ -207,7 +208,7 @@ class View(HasProps):
     end = pFloat(blurb='End')
     
 
-class Plot(HasProps):
+class Plot(HasProps, HasSignals):
     key = pKeyword(blurb="Key")
 
     title = pUnicode(blurb="Title")
@@ -228,14 +229,20 @@ class Plot(HasProps):
 
     def __init__(self, *args, **kwargs):
         HasProps.__init__(self, *args, **kwargs)
+
+        HasSignals.__init__(self)
+        self.sig_register("closed")
+        self.sig_register("changed")
         
     #----------------------------------------------------------------------
     
     def close(self):
-        Signals.emit(self, 'closed')
+        self.sig_emit('closed')        
+        Signals.emit(self, 'closed') # TBR
 
     def detach(self):
-        Signals.emit(self, 'closed')
+        self.sig_emit('closed')        
+        Signals.emit(self, 'closed') # TBR
     
 
 

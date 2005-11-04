@@ -168,7 +168,7 @@ class MatplotlibWindow( gtk.Window ):
         self.mpl_widget.connect("edit-mode-started", self.disable_interaction)
         self.mpl_widget.connect("edit-mode-ended", self.enable_interaction)
                                       
-        self.connect("destroy", (lambda sender: self.destroy()))
+        self.connect("destroy", (lambda sender: self.destroy()))        
         Signals.connect(self.mpl_widget, "closed", (lambda sender: self.destroy()))
 
 
@@ -345,7 +345,9 @@ class MatplotlibWidget(gtk.VBox):
         self.plot = None
         self.backend = None
         self.cursor = None
+
         self._signals = []
+        self.cblist = []
 
         self.set_plot(plot)
         Signals.connect(self.project, "close", (lambda sender: self.destroy()))
@@ -420,6 +422,10 @@ class MatplotlibWidget(gtk.VBox):
         for signal in self._signals:
             Signals.disconnect(signal)
         self._signals = []
+
+        for cb in self.cblist:
+            cb.disconnect()
+        self.cblist = []
         
         if self.cursor is not None:
             self.cursor.finish()
@@ -430,10 +436,11 @@ class MatplotlibWidget(gtk.VBox):
 
 
         if backend is not None:
-            self._signals.extend(
-                [Signals.connect(plot, "plot-changed", (lambda sender: backend.draw())),
-                 Signals.connect(plot, "closed", (lambda sender: Signals.emit(self, 'closed')))]
-                )
+            self.cblist += [
+                plot.sig_connect("changed", (lambda sender: backend.draw())),
+                plot.sig_connect("closed", (lambda sender: Signals.emit(self, 'closed')))
+                ]
+            
             try:
                 backend.draw()
             except:
@@ -491,7 +498,7 @@ class MatplotlibWidget(gtk.VBox):
         set_axis(layer.xaxis, x0, x1)
         set_axis(layer.yaxis, y0, y1)
         
-        uwrap.emit_last( self.plot, "plot-changed", undolist=ul )
+        uwrap.emit_last( self.plot, "changed", undolist=ul )
         
         undolist.append(ul)
 

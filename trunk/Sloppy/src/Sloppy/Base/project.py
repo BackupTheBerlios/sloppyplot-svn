@@ -28,7 +28,7 @@ from os.path import abspath,isfile,isdir,join, basename
 from shutil import rmtree
 
 from Sloppy.Lib.Undo import *
-from Sloppy.Lib import Signals
+from Sloppy.Lib.Signals.new_signals import HasSignals
 from Sloppy.Lib.Props import *
 
 from Sloppy.Base.objects import Plot, Axis, Line, Layer, new_lineplot2d
@@ -66,7 +66,7 @@ about netCDF, see
 
 
 
-class Project(HasProps):
+class Project(HasProps, HasSignals):
 
     label = pUnicode()
     comment = pUnicode()
@@ -78,7 +78,11 @@ class Project(HasProps):
     
     
     def __init__(self,*args,**kwargs):
-        HasProps.__init__(self, **kwargs)       
+        HasProps.__init__(self, **kwargs)
+
+        HasSignals.__init__(self)
+        self.sig_connect("close")
+            
         self.journal = UndoRedo()
         self._archive = None
         self.app = None
@@ -98,7 +102,7 @@ class Project(HasProps):
         for backend in self.backends:
             backend.disconnect()
        
-        Signals.emit(self, 'close')
+        self.sig_emit('close')
         self.app = None # TODO: this should be unnecessary if the app catches the signal
 
     #----------------------------------------------------------------------        
@@ -208,7 +212,7 @@ class Project(HasProps):
         else:
             undolist.describe("Remove Datasets")
             
-        Signals.emit(self, "notify::datasets") 
+        self.sig_emit("notify::datasets") 
 
 
     def remove_dataset(self, dataset, undolist=None):
@@ -237,8 +241,8 @@ class Project(HasProps):
             undolist.describe("Remove Plot")
         else:
             undolist.describe("Remove Plots")
-            
-        Signals.emit(self, "notify::plots")
+
+        self.sig_emit("notify::plots")
 
 
     def remove_plot(self, plot, undolist=None):
@@ -266,7 +270,7 @@ class Project(HasProps):
 
         dataset.key = new_key
         undolist.append(ui)        
-        Signals.emit(self, "notify::datasets")
+        self.sig_emit("notify::datasets")
         
         return dataset
 
@@ -286,7 +290,7 @@ class Project(HasProps):
         
         plot.key = new_key
         undolist.append(ui)
-        Signals.emit(self, "notify::plots")
+        self.sig_emit("notify::plots")
 
         return plot
 
@@ -380,7 +384,7 @@ class Project(HasProps):
             line = Line(source=dataset, label = dataset.key)
             ulist.append( layer.lines, line, undolist=ul )
 
-        uwrap.emit_last(self.plot, "plot-changed", undolist=ul)
+        uwrap.emit_last(self.plot, "changed", undolist=ul)
         undolist.append( ul )
         
         return plot
@@ -408,7 +412,7 @@ class Project(HasProps):
         ds.data = Table(nrows=1,ncols=2)
         ds.data.column(0).designation = 'X'
         ds.data.column(1).designation = 'Y'        
-        Signals.emit(self, "notify::datasets")
+        self.sig_emit("notify::datasets")
 
         ui = UndoInfo(self.remove_objects, [ds], False)
         ui.describe("Create new Dataset '%s'" % key)
@@ -429,7 +433,7 @@ class Project(HasProps):
         ui = UndoInfo(self.remove_plot, new_plot).describe("New Plot")
         undolist.append(ui)
 
-        Signals.emit(self, "notify::plots")
+        self.sig_emit("notify::plots")
         
         return new_plot    
 
@@ -490,13 +494,13 @@ class Project(HasProps):
         else:
             backend = BackendRegistry[key](project=self, plot=plot)            
             self.backends.append(backend)
-            Signals.emit(self, 'notify::backends')
+            self.sig_emit('notify::backends')
             return backend
         
     def remove_backend(self, backend):
         try:
             self.backends.remove(backend)
-            Signals.emit(self, 'notify::backends')
+            self.sig_emit('notify::backends')
         except ValueError:
             logger.warn("remove_backend: Could not find Backend %s in Project." % backend)
             

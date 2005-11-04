@@ -71,7 +71,7 @@ class Plugin:
 
         # TODO: replace by something like
         #uwrap.emit_last(layer, "notify::axes", updateinfo=updateinfo, undolist=ul)
-        uwrap.emit_last( plot, "plot-changed", undolist=ul )
+        uwrap.emit_last( plot, "changed", undolist=ul )
         undolist.append(ul)
 
 

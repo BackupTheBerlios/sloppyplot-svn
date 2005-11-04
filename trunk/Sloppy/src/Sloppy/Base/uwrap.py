@@ -29,6 +29,8 @@ import logging
 from Sloppy.Lib.Undo import UndoList, UndoInfo, NullUndo
 from Sloppy.Lib import Signals
 
+from Sloppy.Lib.Signals.new_signals import HasSignals
+
 
 
 def set(container, *args, **kwargs):
@@ -98,9 +100,13 @@ def emit(sender, name, *args, **kwargs):
     " undo wrapper around emit. "
     undolist = kwargs.pop('undolist', [])
     Signals.emit(sender, name, *args, **kwargs)
+    if isinstance(sender, HasSignals):
+        sender.sig_emit(name, *args, **kwargs)        
     undolist.append(UndoInfo(emit, sender, name, *args, **kwargs))
 
 def emit_last(sender, name, *args, **kwargs):
     ul = kwargs.pop('undolist', [])
     Signals.emit(sender, name, *args, **kwargs)
+    if isinstance(sender, HasSignals):
+        sender.sig_emit(name, *args, **kwargs)        
     ul.insert(0, UndoInfo(emit_last, sender, name, *args, **kwargs))
