@@ -81,7 +81,7 @@ class Project(HasProps, HasSignals):
         HasProps.__init__(self, **kwargs)
 
         HasSignals.__init__(self)
-        self.sig_connect("close")
+        self.sig_register("close")
             
         self.journal = UndoRedo()
         self._archive = None
