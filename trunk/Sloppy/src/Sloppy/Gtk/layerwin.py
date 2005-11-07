@@ -542,14 +542,41 @@ class LinesTab(AbstractTab):
         #
         gb = GroupBox(self.layer, 'group_linestyle')
         gb.show()
+
+        gb2 = GroupBox(self.layer, 'group_linemarker')
+        gb2.show()
+
+        gb3 = GroupBox(self.layer, 'group_linewidth')
+        gb3.show()
+
+        gb4 = GroupBox(self.layer, 'group_linecolor')
+        gb4.show()
+
+        gblist = [gb,gb2,gb3,gb4]
         
-        # Wrap group boxes into a frame.
-        vbox = gtk.VBox()
-        vbox.add(gb)
-        vbox.show()
+        # Wrap group boxes into a table
+        table = gtk.Table(rows=len(gblist), columns=3)
+
+        n = 0
+        for widget in gblist:
+            label = gtk.Label(widget.propname)
+            label.show()
+            
+            table.attach(label, 0, 1, n, n+1,
+                         xoptions=gtk.FILL,
+                         yoptions=0,
+                         xpadding=5,
+                         ypadding=1)            
+            table.attach(widget, 1, 2, n, n+1,
+                         xoptions=gtk.EXPAND|gtk.FILL,
+                         yoptions=0,
+                         xpadding=5,
+                         ypadding=1)
+            n += 1
+        table.show()
         
         frame = gtk.Frame('Grouped Properties')
-        frame.add(vbox)
+        frame.add(table)
         frame.show()        
 
         #
@@ -685,7 +712,7 @@ class LinesTab(AbstractTab):
 
     def _cb_edited_text(self, cell, path, new_text, model, column, prop_key):
         # check if the new_text is appropriate for the property
-        prop = Line().get_prop(prop_key)
+        prop = objects.Line().get_prop(prop_key)
         try:
             if new_text == "": new_text = None
             new_text = prop.check(new_text)
@@ -714,7 +741,7 @@ class LinesTab(AbstractTab):
         else:
             source = None
 
-        new_line = Line(source=source)
+        new_line = objects.Line(source=source)
         
         iter = model.append(None, self.model_row_from_line(new_line))
 
@@ -735,7 +762,7 @@ class LinesTab(AbstractTab):
 
 
 
-class GroupBox(gtk.VBox, PWContainer):
+class GroupBox(gtk.HBox, PWContainer):
 
     """    
     A group of widgets for so called 'Group' properties.
@@ -743,16 +770,13 @@ class GroupBox(gtk.VBox, PWContainer):
     """
 
     def __init__(self, layer, propname):
+
+        gtk.HBox.__init__(self)
+        
         self.layer = layer
         self.propname = propname        
         self.prop = layer.get_prop(propname)
         
-        # create widgets
-        gtk.VBox.__init__(self)
-
-        label = gtk.Label(self.prop.doc or self.prop.blurb or "(unnamed group property)")
-        label.show()
-
         #
         # create widgets and put them into a horizontal box
         #
@@ -772,28 +796,24 @@ class GroupBox(gtk.VBox, PWContainer):
         for k,v in map_group_type.iteritems():
             liststore.append( (k,v) )
 
+        # entries
+        entry_value = gtk.Entry()
+        #entry_value.show()
+
+        entry_increment = gtk.Entry()
+        entry_increment.show()
+
         # check button
         cbutton_allow_override = gtk.CheckButton("allow override")
         cbutton_allow_override.show()
 
-        # entries
-        entry_value = gtk.Entry()
-        entry_value.show()
-
-        entry_increment = gtk.Entry()
-        entry_increment.show()
         
 
-        hbox = gtk.HBox()
-        hbox.add(cbox_type)
-        hbox.add(cbutton_allow_override)
-        hbox.add(entry_value)
-        hbox.add(entry_increment)
-        hbox.show()
-
-
-        self.add(label)
-        self.add(hbox)
+        self.add(cbox_type)
+        self.add(entry_value)
+        self.add(entry_increment)
+        self.add(cbutton_allow_override)
+        self.show()
         
 
     
