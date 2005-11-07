@@ -34,7 +34,6 @@ from Sloppy.Base.backend import BackendRegistry
 from Sloppy.Base.plugin import PluginRegistry
 
 from Sloppy.Lib.Undo import UndoList, NullUndo, ulist
-from Sloppy.Lib import Signals
 
 
 
@@ -168,10 +167,9 @@ class MatplotlibWindow( gtk.Window ):
         self.mpl_widget.connect("edit-mode-started", self.disable_interaction)
         self.mpl_widget.connect("edit-mode-ended", self.enable_interaction)
                                       
-        self.connect("destroy", (lambda sender: self.destroy()))        
-        Signals.connect(self.mpl_widget, "closed", (lambda sender: self.destroy()))
-
-
+        self.connect("destroy", (lambda sender: self.destroy()))
+        self.mpl_widget.connect("destroy", (lambda sender: self.destroy()))
+        
 
     def destroy(self):
         self.mpl_widget.set_plot(None)
@@ -350,7 +348,7 @@ class MatplotlibWidget(gtk.VBox):
         self.cblist = []
 
         self.set_plot(plot)
-        Signals.connect(self.project, "close", (lambda sender: self.destroy()))
+        self.project.sig_connect("close", (lambda sender: self.destroy()))
 
         # set up file selector for export dialog
         # TODO: this could be put into a plugin, since it is desirable to have
@@ -419,10 +417,6 @@ class MatplotlibWidget(gtk.VBox):
         if self.backend is not None and self.backend != backend:
             self.backend.disconnect()
 
-        for signal in self._signals:
-            Signals.disconnect(signal)
-        self._signals = []
-
         for cb in self.cblist:
             cb.disconnect()
         self.cblist = []
@@ -438,7 +432,7 @@ class MatplotlibWidget(gtk.VBox):
         if backend is not None:
             self.cblist += [
                 plot.sig_connect("changed", (lambda sender: backend.draw())),
-                plot.sig_connect("closed", (lambda sender: Signals.emit(self, 'closed')))
+                plot.sig_connect("closed", (lambda sender: self.destroy()))
                 ]
             
             try:
@@ -449,8 +443,7 @@ class MatplotlibWidget(gtk.VBox):
 
             # Cursor
             self.cursor = mpl_selector.Cursor(self.backend.figure)
-            Signals.connect(self.cursor, "move",
-                            (lambda sender,x,y: self.set_coords(x,y)))
+            self.cursor.sig_connect("move", (lambda sender,x,y: self.set_coords(x,y)))
             self.cursor.init()
 
         
@@ -554,7 +547,7 @@ class MatplotlibWidget(gtk.VBox):
         layer = self.backend.layer
         axes = self.backend.layer_to_axes[layer]
         s = mpl_selector.SelectRegion(self.backend.figure, axes=axes)
-        Signals.connect(s, 'finished', finish_zooming)
+        s.sig_connect('finished', finish_zooming)
         self.statusbar.push(
             self.statusbar.get_context_id('action-zoom'),
             "Use the left mouse button to zoom.")
@@ -616,7 +609,7 @@ class MatplotlibWidget(gtk.VBox):
         layer = self.backend.layer
         axes = self.backend.layer_to_axes[layer]
         s = mpl_selector.MoveAxes(self.backend.figure, axes)
-        Signals.connect(s, "finished", finish_moving)
+        s.sig_connect("finished", finish_moving)
 
         self.select(s)
         
@@ -643,9 +636,9 @@ class MatplotlibWidget(gtk.VBox):
                                 (x, y, index))
 
         context_id = self.statusbar.get_context_id("data_cursor")
-        Signals.connect(s, "update-position", update_position, context_id)
-        Signals.connect(s, "finished", finish_selector, context_id)
-        Signals.connect(s, "aborted", abort_selector, context_id)
+        s.sig_connect("update-position", update_position, context_id)
+        s.sig_connect("finished", finish_selector, context_id)
+        s.sig_connect("aborted", abort_selector, context_id)
         
         self.select(s)
 
@@ -660,7 +653,7 @@ class MatplotlibWidget(gtk.VBox):
         axes = self.backend.layer_to_axes[layer]
         s = mpl_selector.SelectLine(self.backend.figure, axes,
                                     mode=mpl_selector.SELECTLINE_VERTICAL)
-        Signals.connect(s, "finished", finish_select_line)
+        s.sig_connect("finished", finish_select_line)
         
         self.select(s)
 
@@ -677,7 +670,7 @@ class MatplotlibWidget(gtk.VBox):
         layer = self.backend.layer
         axes = self.backend.layer_to_axes[layer]
         s = mpl_selector.ZoomAxes(self.backend.figure, axes)
-        Signals.connect(s, "finished", finish_moving)
+        s.sig_connect("finished", finish_moving)
 
         self.select(s)
         
@@ -708,9 +701,9 @@ class MatplotlibWidget(gtk.VBox):
 
         self.btn_cancel.set_sensitive(True)
         self.btn_cancel.connect("clicked", (lambda sender: self.abort_selection()))
-        
-        Signals.connect(selector, "finished", on_finish)
-        Signals.connect(selector, "aborted", on_finish)
+
+        selector.sig_connect("finished", on_finish)
+        selector.sig_connect("aborted", on_finish)
         self._current_selector = selector
         selector.init()
 

@@ -25,7 +25,7 @@ logger = logging.getLogger('application')
 import os
 
 from Sloppy.Lib.Undo import *
-from Sloppy.Lib import Signals
+from Sloppy.Lib.Signals.new_signals import HasSignals
 from Sloppy.Lib.ElementTree.ElementTree import Element, SubElement
 
 from Sloppy.Base.objects import Plot, Axis, Line, Layer, new_lineplot2d
@@ -44,14 +44,19 @@ from Sloppy.Base.plugin import PluginRegistry
 
 
         
-class Application(object):
+class Application(object, HasSignals):
 
     def __init__(self, project=None):
 	" 'project' may be a Project object or a filename. "
+        object.__init__(self)
 
+        HasSignals.__init__(self)
+        self.sig_register('write-config')
+        self.sig_register('notify::project')
+        self.sig_register('update-recent-files')
         
         self.eConfig = config.read_configfile(self, const.CONFIG_FILE)
-        Signals.connect(self, "write-config",
+        self.sig_connect("write-config",
                         (lambda sender: self.write_recentfiles()))
         
         self.plugins = dict()
@@ -79,7 +84,7 @@ class Application(object):
         self.set_project(None, confirm=True)
 
 	# inform all other objects to update the config file elements
-        Signals.emit(self, "write-config")
+        self.sig_emit("write-config")
         config.write_configfile(self.eConfig, const.CONFIG_FILE)
         
         
@@ -111,11 +116,10 @@ class Application(object):
                     self._project = None
                     
             # TODO: connect_once would be nice.
-            Signals.connect(project, 'close', detach_project)
+            project.sig_connect('close', detach_project)
 
         if has_changed is True:
-            Signals.emit(self, 'notify::project', self._project)
-        
+            self.sig_emit('notify::project', self._project)        
 
 
     # be careful when redefining get_project in derived classes -- it will
@@ -166,7 +170,7 @@ class Application(object):
                 self.recent_files.insert(0, new_filename)
                 if len(self.recent_files) > 10:
                     self.recent_files.pop(-1)
-                Signals.emit(self, "update-recent-files")
+                self.sig_emit("update-recent-files")
 
                 
     #----------------------------------------------------------------------
@@ -188,7 +192,7 @@ class Application(object):
 
     def clear_recent_files(self):
         self.recent_files = list()
-        Signals.emit(self, 'update-recent-files')
+        self.sig_emit('update-recent-files')
 
     def read_recentfiles(self):
         ruf = []

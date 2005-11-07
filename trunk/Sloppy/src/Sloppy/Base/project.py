@@ -82,6 +82,9 @@ class Project(HasProps, HasSignals):
 
         HasSignals.__init__(self)
         self.sig_register("close")
+        self.sig_register("notify::plots")
+        self.sig_register("notify::datasets")        
+        self.sig_register("notify::backends")        
             
         self.journal = UndoRedo()
         self._archive = None

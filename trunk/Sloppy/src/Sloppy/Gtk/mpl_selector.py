@@ -26,12 +26,12 @@ a rectangle or a line, ...).
 """
 
 
-from Sloppy.Lib import Signals
-
 import gtk
 import gobject
 
 import math
+
+from Sloppy.Lib.Signals.new_signals import HasSignals
 
 
 #------------------------------------------------------------------------------
@@ -106,7 +106,7 @@ def draw_crosshair(self, gc, x, y, size=5):
 #------------------------------------------------------------------------------
 # Base Selector Class
 
-class Selector:
+class Selector(HasSignals):
     
     " Base class for any Selector. "
 
@@ -116,6 +116,10 @@ class Selector:
         self.axes = axes
         self._mpl_events = {}
 
+        HasSignals.__init__(self)
+        self.sig_register("aborted")
+        self.sig_register("finished")
+        
     
     def init(self):
         pass
@@ -124,9 +128,9 @@ class Selector:
     def finish(self, abort=False):
         self.mpl_disconnect_all()
         if abort is True:
-            Signals.emit(self, "aborted")
+            self.sig_emit("aborted")
         else:
-            Signals.emit(self, "finished")
+            self.sig_emit("finished")
 
 
     def abort(self):
@@ -197,7 +201,11 @@ class BufferedRedraw:
 
 class Cursor( Selector ):
 
-    def init(self):        
+    def __init__(self, figure, axes=None):
+        Selector.__init__(self, figure, axes)
+        self.sig_register('move')
+        
+    def init(self):
         self.mpl_connect('motion_notify_event', self.mouse_move)
 
     def mouse_move(self, event):
@@ -208,7 +216,7 @@ class Cursor( Selector ):
         miny, maxy = ax.get_ylim()
 
         x, y = event.xdata, event.ydata
-        Signals.emit(self, "move", x, y)
+        self.sig_emit("move", x, y)
 
 
 
@@ -216,12 +224,13 @@ class ObjectPicker( Selector ):
 
     def init(self):
         self.mpl_connect('button_press_event', self.button_press)
-
+        self.sig_register('picked-axes')
+        
     def button_press(self, event):
         ax = event.inaxes
        
         if event.button == 3:
-            Signals.emit(self, "picked-axes", ax)
+            self.sig_emit("picked-axes", ax)
                 
         elif event.button == 1:
             if ax is not None:
@@ -240,7 +249,8 @@ class SelectPoint( Cursor ):
 
         self.button = button
         self.point = None  # return value
-        
+
+        self.sig_register("newcoords")
 
     def init(self):
         self.mpl_connect('button_press_event', self.button_press)
@@ -260,7 +270,7 @@ class SelectPoint( Cursor ):
         miny, maxy = ax.get_ylim()
 
         x, y = event.xdata, event.ydata
-        Signals.emit("newcoords", x, y)
+        self.sig_emit("newcoords", x, y)
 
         # return value
         self.point = (x, y)
@@ -719,7 +729,8 @@ class DataCursor( Cursor, BufferedRedraw ):
         self._imageBack = None
         
         self.point = None  # return value
-        
+
+        self.sig_register("update-position")
 
     def init(self):
         self.mpl_connect('button_press_event', self.button_press_event)
@@ -764,7 +775,7 @@ class DataCursor( Cursor, BufferedRedraw ):
             
             self.coords = self.axes.transData.xy_tup((xdata,ydata))
 
-            Signals.emit(self, "update-position", self.line, self.index, self.point)
+            self.sig_emit("update-position", self.line, self.index, self.point)
             self.draw()
             
 

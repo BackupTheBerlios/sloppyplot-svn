@@ -38,7 +38,7 @@ from Sloppy.Base import utils, backend
 
 from terminal import XTerminal, DumbTerminal, PostscriptTerminal
 
-from Sloppy.Lib import Signals
+from Sloppy.Lib.Signals import new_signals
 
 
 """
@@ -81,6 +81,10 @@ class Backend(backend.Backend):
         self.cdict = {}
         self.queue = []
         self.execution_order = [] # ?
+
+        self.sig_register('gnuplot-send-cmd')
+        self.sig_register('gnuplot-finish-cmd')
+        
     
     def connect(self):
         logger.debug( "Opening new gnuplot session." )
@@ -153,7 +157,7 @@ class Backend(backend.Backend):
         encoded_cmd = cmd.encode( self.encoding )
         #encoded_cmd = cmd
         self.gpout.flush()
-        Signals.emit(self, 'gnuplot-send-cmd', cmd=cmd)
+        self.emit('gnuplot-send-cmd', cmd=cmd)
         self.gpwrite.write(encoded_cmd + "\n")
         self.gpwrite.write("print '<--END-->'\n")
         self.gpwrite.flush()
@@ -170,7 +174,7 @@ class Backend(backend.Backend):
             result = result[:-1]
             
         self.history.append( (encoded_cmd, result) )
-        Signals.emit(self, 'gnuplot-finish-cmd', cmd=cmd, result=result)
+        self.emit('gnuplot-finish-cmd', cmd=cmd, result=result)
         return result
             
 

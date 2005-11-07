@@ -27,8 +27,6 @@ Commonly used Undo wrappers.
 import logging
 
 from Sloppy.Lib.Undo import UndoList, UndoInfo, NullUndo
-from Sloppy.Lib import Signals
-
 from Sloppy.Lib.Signals.new_signals import HasSignals
 
 
@@ -53,11 +51,8 @@ def set(container, *args, **kwargs):
 
     undolist.append( UndoInfo(set, container, **olditems) )      
 
-    if len(changeset) > 0:
-        Signals.emit(container, "notify", changeset)
-
-        # TODO: remove, it's deprecated
-        Signals.emit(container, "prop-changed", changeset) 
+    if len(changeset) > 0 and isinstance(container, HasSignals):
+        container.sig_emit("notify", changeset)
 
 
 def smart_set(container, *args, **kwargs):
@@ -86,8 +81,9 @@ def smart_set(container, *args, **kwargs):
 
 
     if len(changed_props) > 0:
-        undolist.append( UndoInfo(smart_set, container, **olditems) )      
-        Signals.emit(container, "prop-changed", changed_props)
+        undolist.append( UndoInfo(smart_set, container, **olditems) )
+        if len(changed_props) > 0 and isinstance(container, HasSignals):
+            container.sig_emit("notify", changed_props)
     else:
         undolist.append( NullUndo() )
 
@@ -98,15 +94,13 @@ def smart_set(container, *args, **kwargs):
 
 def emit(sender, name, *args, **kwargs):
     " undo wrapper around emit. "
-    undolist = kwargs.pop('undolist', [])
-    Signals.emit(sender, name, *args, **kwargs)
+    undolist = kwargs.pop('undolist', [])    
     if isinstance(sender, HasSignals):
         sender.sig_emit(name, *args, **kwargs)        
     undolist.append(UndoInfo(emit, sender, name, *args, **kwargs))
 
 def emit_last(sender, name, *args, **kwargs):
     ul = kwargs.pop('undolist', [])
-    Signals.emit(sender, name, *args, **kwargs)
     if isinstance(sender, HasSignals):
         sender.sig_emit(name, *args, **kwargs)        
     ul.insert(0, UndoInfo(emit_last, sender, name, *args, **kwargs))

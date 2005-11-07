@@ -30,7 +30,6 @@ from Sloppy.Base.objects import *
 from Sloppy.Base.dataset import *
 from Sloppy.Base import pdict, uwrap
 
-from Sloppy.Lib import Signals
 
 #------------------------------------------------------------------------------
 import logging
@@ -130,7 +129,7 @@ class ProjectTreeView( gtk.TreeView ):
         if not self._project:
             return
 
-	logger.debug("self._project: %s" % self._project)
+	logger.debug("self._project: %s" % object.__str__(self._project))
 	
         # add Plots
         def add_plot_object(plots, model, parent=None):            
@@ -165,8 +164,8 @@ class ProjectTreeView( gtk.TreeView ):
 
         # TODO: remove old signals
         if self.project is not None:
-            Signals.connect(self.project, "notify::datasets", self.populate_treeview)
-            Signals.connect(self.project, "notify::plots", self.populate_treeview)
+            self.project.sig_connect("notify::datasets", self.populate_treeview)
+            self.project.sig_connect("notify::plots", self.populate_treeview)
             
         
     project = property(get_project,set_project)

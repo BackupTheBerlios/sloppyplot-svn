@@ -38,7 +38,6 @@ from Sloppy.Base.backend import BackendRegistry
 
 
 from Sloppy.Lib.Undo import UndoInfo, UndoList, ulist
-from Sloppy.Lib import Signals
 
 import gtkutils
 
@@ -54,7 +53,7 @@ class GnuplotWindow( gtk.Window ):
         self.project = project
         self.plot = None # will be set after everything else is set up
         self.backend = None
-        self._signals = list()
+        self.cblist = []
         
         # some icons are not right at all....
         groups = {
@@ -99,12 +98,15 @@ class GnuplotWindow( gtk.Window ):
 
         self.connect("destroy", (lambda sender: self.destroy()))
 
-        Signals.connect(self.project, "close", (lambda sender: self.destroy()))        
+        self.project.sig_connect("close", (lambda sender: self.destroy()))
         self.set_plot(plot)
 
     def set_plot(self, plot):
 
-        Signals.disconnect_list(self._signals)
+        for cb in self.cblist:
+            cb.disconnect()
+        self.cblist = []
+
         self.backend is not None and self.backend.disconnect()
 
         if id(plot) == self.plot:
@@ -132,14 +134,15 @@ class GnuplotWindow( gtk.Window ):
         # connect signals for treeview
         # these are disconnect by the backend if it closes
 
-        # TODO: New style signals
-        Signals.connect(self.backend, 'gnuplot-send-cmd', self.on_send_cmd)
-        Signals.connect(self.backend, 'gnuplot-finish-cmd', self.on_finish_cmd)
-        Signals.connect(self.backend, 'gnuplot-start-plotting', self.on_start_plotting)
+        self.cblist = [
+            # backend signals
+            self.backend.sig_connect('gnuplot-send-cmd', self.on_send_cmd),
+            self.backend.sig_connect('gnuplot-finish-cmd', self.on_finish_cmd),
 
-        # connect signal for plot
-        plot.sig_connect('closed', (lambda sender: self.destroy()))
-        plot.sig_connect('changed', (lambda sender: self.backend.draw()))
+            # connect signal for plot
+            plot.sig_connect('closed', (lambda sender: self.destroy())),
+            plot.sig_connect('changed', (lambda sender: self.backend.draw()))
+            ]
 
         self.backend.draw()
 

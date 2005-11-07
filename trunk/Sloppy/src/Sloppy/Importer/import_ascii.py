@@ -26,7 +26,6 @@ from Sloppy.Base import dataio
 from Sloppy.Base.table import Table
 
 from Sloppy.Lib.Props import *
-from Sloppy.Lib.Signals import *
 
 
 # This must be at the end, because otherwise we might import the
@@ -213,7 +212,8 @@ class Importer(dataio.Importer):
             if len(matches) == 0:
                 skipcount += 1
                 if skipcount > 100:
-                    Signals.emit("ask-for-confirmation", "Warning: More than 100 lines skipped recently. Should we continue with this file?")
+                    # TODO: implement question!
+                    #Signals.emit("ask-for-confirmation", "Warning: More than 100 lines skipped recently. Should we continue with this file?")
                     skipcount = 0
             else:
                 try:

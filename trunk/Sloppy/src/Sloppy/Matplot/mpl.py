@@ -52,7 +52,7 @@ from Sloppy.Base import objects
 from Sloppy.Base import utils
 from Sloppy.Base.dataset import Dataset
 
-from Sloppy.Lib import Signals
+from Sloppy.Lib.Signals import new_signals
 
 
 linestyle_mappings = \
@@ -108,7 +108,7 @@ class Backend( backend.Backend ):
         self.layer_to_axes = {}
         self.axes_to_layer = {}
         self.layers_cache = [] # copy of self.plot.layers
-        self.layer_signals = {}
+        self.layer_cblists = {}
         
         self.line_caches = {}
         self.omaps = {}
@@ -167,10 +167,10 @@ class Backend( backend.Backend ):
         self.axes_to_layer.clear()
         self.layers_cache = []
 
-        for signal_list in self.layer_signals.itervalues():
-            for signal in signal_list:
-                Signals.disconnect(signal)
-        self.layer_signals = {}
+        for cblist in self.layer_cblists.itervalues():
+            for cb in cblist:
+                cb.disconnect()
+        self.layer_cblists = {}
         
         j = 1
         for layer in layers:
@@ -181,9 +181,10 @@ class Backend( backend.Backend ):
             self.layers_cache.append(layer)
 
             print "Connecting to notify of ", layer
-            self.layer_signals[layer] = \
-              [Signals.connect(layer, 'notify', self.on_update_layer),
-               Signals.connect(layer, 'notify::labels', self.on_update_labels)]
+            self.layer_cblists[layer] = \
+              [layer.sig_connect('notify', self.on_update_layer),
+               layer.sig_connect('notify::labels', self.on_update_labels)
+               ]
 
             j += 1
 

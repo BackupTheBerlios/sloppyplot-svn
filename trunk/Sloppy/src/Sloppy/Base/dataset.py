@@ -28,7 +28,7 @@ from Sloppy.Base.error import NoData
 from Sloppy.Base.dataio import ImporterRegistry, read_table_from_stream, read_table_from_file
 from Sloppy.Base.table import Table
 
-from Sloppy.Lib import Signals
+from Sloppy.Lib.Signals.new_signals import HasSignals
 from Sloppy.Lib.Undo import UndoInfo, UndoList
 from Sloppy.Lib.Props import *
 
@@ -37,7 +37,7 @@ from Numeric import ArrayType
 
 #------------------------------------------------------------------------------
 
-class Dataset(HasProps):
+class Dataset(HasProps, HasSignals):
 
     """
     A Dataset is a wrapper for any data used for plotting.
@@ -88,15 +88,20 @@ class Dataset(HasProps):
         self.__is_valid = True
         self._table_import = None
 
+        HasSignals.__init__(self)
+        self.sig_register('closed')
+        self.sig_register('notify')
+        
+
     #----------------------------------------------------------------------
     def revert_change(self, undolist=[]):
         self.change_counter -= 1
-        Signals.emit(self, 'notify')
+        self.sig_emit('notify')
         undolist.append( UndoInfo(self.notify_change).describe("Notify") )
         
     def notify_change(self, undolist=[]):
-        self.change_counter += 1        
-        Signals.emit(self, 'notify')
+        self.change_counter += 1
+        self.sig_emit('notify')        
         undolist.append( UndoInfo(self.revert_change).describe("Notify") )
 
     def has_changes(self, counter):
@@ -105,11 +110,11 @@ class Dataset(HasProps):
     #----------------------------------------------------------------------
         
     def close(self):
-        Signals.emit(self, 'closed')
+        self.sig_emit('closed')        
         self.data = None
 
     def detach(self):
-        Signals.emit(self, 'closed')
+        self.sig_emit('closed')                
 
     def is_empty(self):
         " Returns True if the Dataset has no data or if that data is empty. "

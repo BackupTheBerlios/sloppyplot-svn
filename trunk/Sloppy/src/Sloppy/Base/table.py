@@ -26,7 +26,7 @@ Table class (list of 1d arrays)
 from Numeric import *
 
 
-from Sloppy.Lib import Signals
+from Sloppy.Lib.Signals.new_signals import HasSignals
 from Sloppy.Lib.Props import *
 
 
@@ -80,7 +80,7 @@ class Column(HasProps):
 
 
 
-class Table(object):
+class Table(object, HasSignals):
 
     def __init__(self, data=None, ncols=0, nrows=0, typecodes=None):
         """
@@ -106,6 +106,9 @@ class Table(object):
           the same as the `ncols` given.
           
         """        
+
+        HasSignals.__init__(self)
+        self.sig_register('update-columns')
         
         self._columns = []
 
@@ -363,7 +366,7 @@ class Table(object):
         type_map = {'d': float, 'f': float, 'O': str, 'l': long, 'i': int}
         self._converters = map(lambda tc: type_map[tc], self._typecodes)
 
-        Signals.emit(self, 'update-columns') # FIXME
+        self.sig_emit('update-columns') # FIXME ???
             
 
     def update_rows(self):

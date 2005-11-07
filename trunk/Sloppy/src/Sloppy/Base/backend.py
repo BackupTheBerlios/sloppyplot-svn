@@ -26,7 +26,7 @@ See documentation of the Backend class for details.
 
 import logging, os
 
-from Sloppy.Lib import Signals
+from Sloppy.Lib.Signals.new_signals import HasSignals
 
 from Sloppy.Base.table import Table
 from Sloppy.Base import objects
@@ -44,7 +44,7 @@ class BackendError(Exception):
 # Backend
 #
 
-class Backend(object):
+class Backend(object, HasSignals):
     """
     'Backend' is the abstract base class for any plotting backend.
     Any actual implementation should use this as a base class.
@@ -97,6 +97,14 @@ class Backend(object):
         Do not overwrite this method, use self.init() for custom
         initialization!
         """
+
+        object.__init__(self)
+
+        HasSignals.__init__(self)
+        self.sig_register("backend-closed")
+        self.sig_register("notify::layer")
+        self.cblist = []
+        
         # set options and merge keywords from BackendRegistry.register
         self.options = dict(kw)
         if extrakw:
@@ -108,7 +116,6 @@ class Backend(object):
         
         self.project = None
         self.plot = None
-        self.Signals = {}
 
         self._layer = None
         
@@ -119,21 +126,18 @@ class Backend(object):
         logging.debug("Assigning project %s to Backend" % repr(project))
 
         # if necessary, detach messages from old project
-        for signal in self.Signals:
-            Signals.disconnect(signal)
-        self.Signals.clear()
+        for cb in self.cblist:
+            cb.disconnect()
+        self.cblist = []
             
         # assign project and plot
         self.plot = plot
         self.project = project
         if self.project is not None:
-            logging.debug("Connecting Signals.")
-            self.Signals['close'] = Signals.connect(
-                self.project, 'close', self.cb_project_closed)
-            self.Signals['plot-changed'] = Signals.connect(
-                self.plot, 'plot-changed', self.cb_plot_changed)
-            self.Signals['plot-closed'] = Signals.connect(
-                self.plot, 'closed', (lambda sender: self.disconnect()))
+            self.project.sig_connect('close', self.cb_project_closed)
+            self.plot.sig_connect('changed', self.cb_plot_changed)
+            #self.project.sig_connect('plot-changed', self.cb_plot_changed)
+            self.plot.sig_connect('closed', (lambda sender: self.disconnect()))
 
     def cb_plot_changed(self, sender):
         """
@@ -166,9 +170,15 @@ class Backend(object):
             self.project.remove_backend(self)
         self.set(None,None)        
         self.connected = False
-        Signals.emit(self, 'backend-closed')
-        Signals.disconnect(sender=self)
-        Signals.disconnect(receiver=self)
+
+        self.sig_emit('backend-closed')
+        
+        for cb in self.cblist:
+            cb.disconnect()
+        self.cblist = []
+
+        self.sig_disconnect_all()
+        
     
     def check_connection(self):
         """ Connect (only) if necessary. """
@@ -289,7 +299,7 @@ class Backend(object):
         if layer is None or layer in self.plot.layers:
             self._layer = layer
             # TODO: only when it changes!
-            Signals.emit(self, "notify::layer", layer)
+            self.sig_emit("notify::layer", layer)
         else:
             raise ValueError("Layer %s can't be set as current, because it is not part of the Plot!" % layer)
 

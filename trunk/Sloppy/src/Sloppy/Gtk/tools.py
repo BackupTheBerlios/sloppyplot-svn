@@ -34,7 +34,7 @@ from dock import *
 from options_dialog import OptionsDialog
 
 
-from Sloppy.Lib import Signals
+from Sloppy.Lib.Signals.new_signals import HasSignals
 from Sloppy.Lib.Undo import ulist, UndoList
 from Sloppy.Lib.ElementTree.ElementTree import Element, SubElement
 
@@ -78,8 +78,8 @@ class Toolbox(gtk.Window):
         self.app = app
 
         self.project = project or -1
-        self.project_signals = []
-        self.backend_signals = []
+        self.project_cblist = []
+        self.backend_cblist = []
 
         self.backend = None
         self.layer = None
@@ -145,7 +145,7 @@ class Toolbox(gtk.Window):
         self.set_project(project)
 
         # for config file
-        Signals.connect(self.app, "write-config", self.write_toolwindow_config)
+        self.app.sig_connect("write-config", self.write_toolwindow_config)
 
         # TODO: read config data
         eWindow = app.eConfig.find('Toolbox')
@@ -168,11 +168,14 @@ class Toolbox(gtk.Window):
         if project == self.project:
             return
 
-        Signals.disconnect_list(self.project_signals)            
+        for cb in self.project_cblist:
+            cb.disconnect()
+        self.project_cblist = []
+
         if project is not None:
             # update combobox again if plots change
-            self.project_signals.extend(
-                [Signals.connect(project, 'notify::backends',
+            self.project_cblist.extend(
+                [project.sig_connect('notify::backends',
                                  (lambda sender: self.update_combobox())),
                  #Signals.connect(project.app, 'backend-changed',
                  #                (lambda sender, backend: self.set_backend(backend)))
@@ -188,7 +191,9 @@ class Toolbox(gtk.Window):
     def set_backend(self, backend):
         """ Set the backend to the new value (implies setting a new layer). """
         if self.backend != backend:
-            Signals.disconnect_list(self.backend_signals)
+            for cb in self.backend_cblist:
+                cb.disconnect()
+            self.backend_cblist = []
 
             self.backend = backend
 
@@ -200,8 +205,8 @@ class Toolbox(gtk.Window):
                 self.layer = self.backend.layer
 
                 # make sure we keep track of changes to the active layer
-                self.backend_signals.append(
-                    Signals.connect(backend, "notify::layer",
+                self.backend_cblist.append(
+                    backend.sig_connect("notify::layer",
                                     (lambda sender, layer: self.set_layer(layer)))
                     )
             else:
@@ -298,14 +303,17 @@ class Tool(Dockable):
 
         self.backend = -1
         self.layer = -1
-        self.backend_signals = []
-        self.layer_signals = []
+        self.backend_cblist = []
+        self.layer_cblist = []
 
     def set_backend(self, backend):
         if backend == self.backend:
             return
-        
-        Signals.disconnect_list(self.backend_signals)
+
+        for cb in self.backend_cblist:
+            cb.disconnect()
+        self.backend_cblist = []
+
         self.backend = backend
         self.update_backend()
         
@@ -361,8 +369,11 @@ class LayerTool(Tool):
     def set_layer(self, layer):
         if layer == self.layer:
             return
-        
-        Signals.disconnect_list(self.layer_signals)
+
+        for cb in self.layer_cblist:
+            cb.disconnect()
+        self.layer_cblist = []
+
         self.layer = layer
         
         if layer is not None:
@@ -384,8 +395,8 @@ class LayerTool(Tool):
              model.append((layer,))
 
         # connect to change of current layer
-        self.backend_signals.append(
-            Signals.connect(self.backend, "notify::layer",
+        self.backend_cblist.append(
+            self.backend.sig_connect("notify::layer",
                             (lambda sender, layer: self.set_layer(layer)))
             )
         
@@ -460,12 +471,14 @@ class LabelsTool(Tool):
         if layer == self.layer:
             return
         
-        Signals.disconnect_list(self.layer_signals)
+        for cb in self.layer_cblist:
+            cb.disconnect()
+        self.layer_cblist = []
         self.layer = layer
         
         if layer is not None:
-            self.layer_signals.append(
-                Signals.connect(self.layer, "notify::labels", self.on_notify_labels)
+            self.layer_cblist.append(
+                self.layer.sig_connect("notify::labels", self.on_notify_labels)
                 )
         self.update_layer()
         

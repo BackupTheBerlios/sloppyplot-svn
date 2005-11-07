@@ -38,7 +38,6 @@ from Sloppy.Base.dataset import Dataset
 from Sloppy.Base.backend import BackendRegistry
 
 from Sloppy.Gtk.mpl_window import MatplotlibWidget
-from Sloppy.Lib import Signals
 
 from Sloppy.Lib.ElementTree.ElementTree import Element, SubElement
 
@@ -61,7 +60,7 @@ class AppWindow( gtk.Window ):
         self._windowlist_merge_id = None
         self._recentfiles_merge_id = None
 
-        Signals.connect(self.app, "write-config", self.write_appwindow_config)
+        self.app.sig_connect("write-config", self.write_appwindow_config)
 
         # restore position
         self.set_gravity(gtk.gdk.GRAVITY_NORTH_WEST)
@@ -126,7 +125,7 @@ class AppWindow( gtk.Window ):
 
 
         self._refresh_windowlist()
-        Signals.connect(self.app, "update-recent-files", (lambda sender: self._refresh_recentfiles()))
+        self.app.sig_connect("update-recent-files", (lambda sender: self._refresh_recentfiles()))
 
     def _construct_uimanager(self):
 
@@ -207,7 +206,7 @@ class AppWindow( gtk.Window ):
 
         def on_notify_project(sender, project, toolwin):
             toolwin.set_project(project)
-        Signals.connect(self.app, 'notify::project', on_notify_project, window)
+        self.app.sig_connect('notify::project', on_notify_project, window)
         
         return window
 
@@ -428,8 +427,8 @@ class AppWindow( gtk.Window ):
         self.plotbook.set_tab_label_text(widget, "Plot")
 
         # TODO: this signal should be a gobject signal
-        Signals.connect(widget, "closed", self.detach_plotwidget)
-        
+        # TODO: Does this actually work?
+        widget.connect("closed", self.detach_plotwidget)       
 
         for ag in widget.get_actiongroups():            
             self.uimanager.insert_action_group(ag,0)            

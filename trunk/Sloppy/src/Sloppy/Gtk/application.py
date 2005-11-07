@@ -62,7 +62,6 @@ from Sloppy.Gnuplot.terminal import PostscriptTerminal
 from options_dialog import OptionsDialog, NoOptionsError
 
 from Sloppy.Lib.Undo import *
-from Sloppy.Lib import Signals
 
    
 #------------------------------------------------------------------------------
@@ -295,7 +294,7 @@ class GtkApplication(Application):
         self._project.journal.clear()
 
         self.recent_files.append(os.path.abspath(filename))
-        Signals.emit(self, 'update-recent-files')
+        self.sig_emit('update-recent-files')
 
 
     def quit(self):

@@ -22,7 +22,6 @@
 import gtk
 
 from Sloppy.Lib.Undo import UndoList, UndoInfo, FakeUndoInfo, NullUndo, ulist
-from Sloppy.Lib import Signals
 
 from Sloppy.Base.objects import Line
 from Sloppy.Base import pdict, uwrap
@@ -460,8 +459,9 @@ class LinesTab(AbstractTab):
             for ds in self.app.project.datasets:
                 model.append( (ds.key,) )
         refresh_dataset_model(self, self.app.project, dataset_model)
-        Signals.connect(self.app.project.datasets, "notify", refresh_dataset_model,
-                        self.app.project, dataset_model)        
+
+        self.app.project.sig_connect("notify::datasets", refresh_dataset_model,
+                                         self.app.project, dataset_model)
         
         cell = gtk.CellRendererCombo()
         cell.set_property('editable', True)

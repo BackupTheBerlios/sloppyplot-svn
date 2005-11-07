@@ -75,7 +75,7 @@ class HasSignals:
 
         
     def sig_connect(self, signal, func, *args, **kwargs):
-        logger.debug("Connecting '%s' to signal '%s' of object '%s'." % (func, signal, self))
+        logger.debug("Connecting '%s' to signal '%s' of object '%s'." % (func, signal, object.__str__(self)))
         self.sig_check(signal)
         cb = Callback(self, signal, func, *args, **kwargs)
         self._callbacks.append(cb)
@@ -87,7 +87,13 @@ class HasSignals:
             cblist = [cblist]            
 
         for cb in cblist:
-            logger.debug("Disconnecting callback '%s' of object '%s'." % (cb, self))
+            logger.debug("Disconnecting callback '%s' of object '%s'." % (cb, object.__str__(self)))
+            self._callbacks.remove(cb)
+
+
+    def sig_disconnect_all(self):
+        for cb in self._callbacks:
+            logger.debug("Disconnecting callback '%s' of object '%s'." % (cb, object.__str__(self)))
             self._callbacks.remove(cb)
 
 
@@ -114,7 +120,7 @@ class HasSignals:
         self.sig_check(signal)
         deprecated = []
 
-        logger.debug("Emitting signal '%s' of object '%s'." % (signal, self))
+        logger.debug("Emitting signal '%s' of object '%s'." % (signal, object.__str__(self)))
         for cb in [c for c in self._callbacks if c.signal == signal]:
             all_args = args + cb.args
             all_kwargs = kwargs.copy()
@@ -128,7 +134,7 @@ class HasSignals:
                 deprecated.append(cb)
                 continue
 
-            logger.debug("  => Callback to function '%s' of '%s'" % (cb.func, cb.receiver))
+            logger.debug("  => Callback to function '%s' of '%s'" % (cb.func, object.__str__(cb.receiver)))
             
             try:
                 if receiver == AnonymousReceiver:
@@ -137,7 +143,7 @@ class HasSignals:
                     cb.func(receiver, self, *all_args, **all_kwargs)
             except:
                 print ("Caught exception while trying to call callback [%s,%s,%s] during emission of signal '%s'." %
-                                  (receiver, all_args, all_kwargs, self))
+                                  (object.__str__(receiver), all_args, all_kwargs, self))
                 raise
 
         # remove all obsolete signals
@@ -148,7 +154,7 @@ class HasSignals:
 
     def sig_check(self, signal):
         if self._signals.has_key(signal) is False:
-            raise SignalError("Signal '%s' is not registered for object '%s'" % (signal, self))        
+            raise SignalError("Signal '%s' is not registered for object '%s'." % (signal, object.__str__(self)))
 
 
 #------------------------------------------------------------------------------

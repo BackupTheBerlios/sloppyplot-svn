@@ -26,7 +26,6 @@ Collection of all basic data objects used for SloppyPlot.
 from Sloppy.Base.dataset import Dataset
 
 
-from Sloppy.Lib import Signals
 from Sloppy.Lib.Signals.new_signals import HasSignals
 from Sloppy.Lib.Undo import udict
 from Sloppy.Lib.Props import *
@@ -155,7 +154,7 @@ class Legend(HasProps):
     y = pFloat(CheckBounds(min=0.0, max=1.0), default=0.0)
 
 
-class Layer(HasProps):
+class Layer(HasProps, HasSignals):
     type = pString(CheckValid(PV['layer.type']),
                    default=PV['layer.type'][0])
     title = pUnicode(blurb="Title")
@@ -201,7 +200,14 @@ class Layer(HasProps):
     def get_axes(self):
         return {'x':self.xaxis, 'y':self.yaxis}
     axes = property(get_axes)
-    
+
+    def __init__(self, **kwargs):
+        HasProps.__init__(self, **kwargs)
+
+        HasSignals.__init__(self)
+        self.sig_register('notify')
+        self.sig_register('notify::labels')
+        
 
 class View(HasProps):
     start = pFloat(blurb='Start')
@@ -238,11 +244,9 @@ class Plot(HasProps, HasSignals):
     
     def close(self):
         self.sig_emit('closed')        
-        Signals.emit(self, 'closed') # TBR
 
     def detach(self):
         self.sig_emit('closed')        
-        Signals.emit(self, 'closed') # TBR
     
 
 

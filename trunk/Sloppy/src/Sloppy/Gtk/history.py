@@ -24,8 +24,6 @@ logger = logging.getLogger('Gtk.history')
 
 import gtk
 
-from Sloppy.Lib import Signals
-
 
 # TODO
 

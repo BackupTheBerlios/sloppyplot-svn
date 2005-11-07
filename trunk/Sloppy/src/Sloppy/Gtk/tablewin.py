@@ -30,7 +30,6 @@ from Sloppy.Base.dataset import Dataset
 from Sloppy.Base import uwrap, utable
 
 from Sloppy.Lib.Undo import UndoList, UndoInfo
-from Sloppy.Lib import Signals
 
 import Numeric
 
@@ -115,7 +114,7 @@ class DatasetWindow( gtk.Window ):
         self.set_transient_for(app.window)
         self.app = app
         
-        self._signals = []
+        self.cblist = []
 
         self.uimanager = self._construct_uimanager()
         self.menubar = self._construct_menubar()
@@ -149,8 +148,9 @@ class DatasetWindow( gtk.Window ):
         self._dataset = None
         self.dataset = dataset
 
-        Signals.connect(self.project, "close", (lambda sender: self.destroy()))
-        Signals.connect(self.dataset, "closed", (lambda sender: self.destroy()))
+        
+        self.project.sig_connect("close", (lambda sender: self.destroy()))
+        self.dataset.sig_connect("closed", (lambda sender: self.destroy()))
 
         self.tableview.emit('cursor_changed')                
 
@@ -223,13 +223,14 @@ class DatasetWindow( gtk.Window ):
             raise TypeError("TableWindow can only use Datasets with a Table as data.")
         self.tableview.set_table(table)
 
-        for signal in self._signals:
-            Signals.disconnect(signal)
+        for cb in self.cblist:
+            cb.disconnect()
+        self.cblist = []
 
-        self._signals += [
-            Signals.connect(table, 'update-columns',
+        self.cblist += [
+            table.sig_connect('update-columns',
                             (lambda sender: self.tableview.setup_columns())),
-            Signals.connect(dataset,'notify',
+            dataset.sig_connect('notify',
                             (lambda sender: self.tableview.queue_draw()))
             ]
 
@@ -473,7 +474,8 @@ class DatasetWindow( gtk.Window ):
             
         # set new Dataset
         self.project.datasets.append( Dataset(key="Niklas", data=new_table) )
-        Signals.emit(self.project.datasets, "changed")        
+    
+        self.project.sig_emit('notify::datasets')
         
         
 
