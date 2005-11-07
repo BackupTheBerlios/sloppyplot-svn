@@ -174,7 +174,8 @@ class Layer(HasProps, HasSignals):
     #
     gLineStyle = create_group(Line.style)
     group_linestyle = Prop(CheckType(gLineStyle),
-                           reset=gLineStyle(type=GROUP_TYPE_FIXED))
+                           reset=gLineStyle(type=GROUP_TYPE_FIXED),
+                           blurb="Line Style")
 
     gLineMarker = create_group(Line.marker)
     group_linemarker = Prop(CheckType(gLineMarker),

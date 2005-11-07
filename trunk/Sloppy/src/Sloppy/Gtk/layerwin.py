@@ -21,9 +21,9 @@
 
 import gtk
 
-from Sloppy.Lib.Undo import UndoList, UndoInfo, FakeUndoInfo, NullUndo, ulist
+from Sloppy.Lib.Undo import UndoList, UndoInfo, NullUndo, ulist
 
-from Sloppy.Base.objects import Line
+from Sloppy.Base import objects
 from Sloppy.Base import pdict, uwrap
 
 from propwidgets import *
@@ -417,7 +417,7 @@ class LinesTab(AbstractTab):
         
         # set up model with all available line styles
         linestyle_model = gtk.ListStore(str)
-        value_list = [None] + collect_values(Line.style)
+        value_list = [None] + collect_values(objects.Line.style)
         for style in value_list:
             linestyle_model.append( (style or "",) )
 
@@ -435,7 +435,7 @@ class LinesTab(AbstractTab):
 
         # set up model with all available markers
         marker_model = gtk.ListStore(str)
-        value_list = [None] + collect_values(Line.marker)
+        value_list = [None] + collect_values(objects.Line.marker)
         for marker in value_list:
             marker_model.append( (marker or "",) )
 
@@ -529,18 +529,42 @@ class LinesTab(AbstractTab):
 #         column.set_attributes(cell, text=self.COL_CYERR)
 #         tv.append_column(column)
 
-        # put treeview in a scrolled window
+        # put treeview 'tv' in a scrolled window 'sw'
         sw = gtk.ScrolledWindow()
         sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
         sw.add(tv)
+        tv.show()        
+        sw.show()    
 
-        self.widget = sw
-        self.treeview = tv
-        self.label = gtk.Label("None")
-
-        tv.show()
+        #
+        # Below the scrolled window, we add some boxes for group
+        # properties.
+        #
+        gb = GroupBox(self.layer, 'group_linestyle')
+        gb.show()
         
-        return sw
+        # Wrap group boxes into a frame.
+        vbox = gtk.VBox()
+        vbox.add(gb)
+        vbox.show()
+        
+        frame = gtk.Frame('Grouped Properties')
+        frame.add(vbox)
+        frame.show()        
+
+        #
+        # Put everything in a vertical box...
+        #
+        vbox = gtk.VBox()
+        vbox.pack_start(sw, expand=True, fill=True)
+        vbox.pack_start(frame, expand=False, fill=True)
+        vbox.show()
+
+        # for further reference        
+        self.widget = vbox
+        self.label = gtk.Label("None")
+        self.treeview = tv        
+        return vbox
 
 
     def construct_btnbox(self):
@@ -711,6 +735,68 @@ class LinesTab(AbstractTab):
 
 
 
+class GroupBox(gtk.VBox, PWContainer):
+
+    """    
+    A group of widgets for so called 'Group' properties.
+    See Base.objects.Group for details.
+    """
+
+    def __init__(self, layer, propname):
+        self.layer = layer
+        self.propname = propname        
+        self.prop = layer.get_prop(propname)
+        
+        # create widgets
+        gtk.VBox.__init__(self)
+
+        label = gtk.Label(self.prop.doc or self.prop.blurb or "(unnamed group property)")
+        label.show()
+
+        #
+        # create widgets and put them into a horizontal box
+        #
+
+        # combo box
+        liststore = gtk.ListStore(str, int)
+        cbox_type = gtk.ComboBox(liststore)
+        cell = gtk.CellRendererText()
+        cbox_type.pack_start(cell, True)
+        cbox_type.add_attribute(cell, 'text', 0)
+        cbox_type.show()
+
+        # populate combo box
+        map_group_type = {'cycle value': objects.GROUP_TYPE_CYCLE,
+                          'fixed value': objects.GROUP_TYPE_FIXED,
+                          'increment value': objects.GROUP_TYPE_INCREMENT}
+        for k,v in map_group_type.iteritems():
+            liststore.append( (k,v) )
+
+        # check button
+        cbutton_allow_override = gtk.CheckButton("allow override")
+        cbutton_allow_override.show()
+
+        # entries
+        entry_value = gtk.Entry()
+        entry_value.show()
+
+        entry_increment = gtk.Entry()
+        entry_increment.show()
+        
+
+        hbox = gtk.HBox()
+        hbox.add(cbox_type)
+        hbox.add(cbutton_allow_override)
+        hbox.add(entry_value)
+        hbox.add(entry_increment)
+        hbox.show()
+
+
+        self.add(label)
+        self.add(hbox)
+        
+
+    
 
 
 
