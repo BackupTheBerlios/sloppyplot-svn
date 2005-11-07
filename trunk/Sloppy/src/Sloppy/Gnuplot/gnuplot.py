@@ -38,9 +38,6 @@ from Sloppy.Base import utils, backend
 
 from terminal import XTerminal, DumbTerminal, PostscriptTerminal
 
-from Sloppy.Lib.Signals import new_signals
-
-
 """
 Maybe it is even simpler!
 
@@ -157,7 +154,7 @@ class Backend(backend.Backend):
         encoded_cmd = cmd.encode( self.encoding )
         #encoded_cmd = cmd
         self.gpout.flush()
-        self.emit('gnuplot-send-cmd', cmd=cmd)
+        self.sig_emit('gnuplot-send-cmd', cmd=cmd)
         self.gpwrite.write(encoded_cmd + "\n")
         self.gpwrite.write("print '<--END-->'\n")
         self.gpwrite.flush()
@@ -174,7 +171,7 @@ class Backend(backend.Backend):
             result = result[:-1]
             
         self.history.append( (encoded_cmd, result) )
-        self.emit('gnuplot-finish-cmd', cmd=cmd, result=result)
+        self.sig_emit('gnuplot-finish-cmd', cmd=cmd, result=result)
         return result
             
 

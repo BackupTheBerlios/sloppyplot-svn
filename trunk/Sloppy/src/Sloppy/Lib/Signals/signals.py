@@ -25,7 +25,7 @@ import weakref
 import inspect
 
 import logging
-logger = logging.getLogger('NewSignals')
+logger = logging.getLogger('Lib.Signals')
 
 
 class AnonymousReceiver:

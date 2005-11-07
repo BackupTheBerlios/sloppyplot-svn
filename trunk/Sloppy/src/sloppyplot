@@ -16,6 +16,10 @@ formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
 console.setFormatter(formatter)
 logging.getLogger('').addHandler(console)
 
+# turn off logger Lib.Signals because it is just too much!
+logging.getLogger('Lib.Signals').setLevel(logging.ERROR)
+
+
 #------------------------------------------------------------------------------
 # Parse Options
 #
@@ -76,7 +80,6 @@ import Sloppy
 # path itself.  How?
 from Sloppy.Base import const
 const.set_path(Sloppy.__path__[0])
-
 
 # only support gtk frontend right now
 if options.use == 'gtk':

@@ -27,7 +27,7 @@ Commonly used Undo wrappers.
 import logging
 
 from Sloppy.Lib.Undo import UndoList, UndoInfo, NullUndo
-from Sloppy.Lib.Signals.new_signals import HasSignals
+from Sloppy.Lib.Signals import HasSignals
 
 
 

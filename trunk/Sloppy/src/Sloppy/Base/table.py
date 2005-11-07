@@ -26,7 +26,7 @@ Table class (list of 1d arrays)
 from Numeric import *
 
 
-from Sloppy.Lib.Signals.new_signals import HasSignals
+from Sloppy.Lib.Signals import HasSignals
 from Sloppy.Lib.Props import *
 
 

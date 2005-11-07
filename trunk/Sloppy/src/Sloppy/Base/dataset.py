@@ -28,7 +28,7 @@ from Sloppy.Base.error import NoData
 from Sloppy.Base.dataio import ImporterRegistry, read_table_from_stream, read_table_from_file
 from Sloppy.Base.table import Table
 
-from Sloppy.Lib.Signals.new_signals import HasSignals
+from Sloppy.Lib.Signals import HasSignals
 from Sloppy.Lib.Undo import UndoInfo, UndoList
 from Sloppy.Lib.Props import *
 

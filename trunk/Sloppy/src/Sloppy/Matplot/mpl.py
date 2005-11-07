@@ -52,8 +52,6 @@ from Sloppy.Base import objects
 from Sloppy.Base import utils
 from Sloppy.Base.dataset import Dataset
 
-from Sloppy.Lib.Signals import new_signals
-
 
 linestyle_mappings = \
 {'None'               : "None",
@@ -475,14 +473,11 @@ class Backend( backend.Backend ):
         line_cache = self.line_caches[layer]
         labels = [l.get_label() for l in line_cache]
 
-        rv =  {'handles' : line_cache,
-                'labels' : labels,
-                'loc' : position,
-                'border' : border,
-                'visible' : visible}
-        print "LEGEND"
-        print rv
-        return rv
+        return  {'handles' : line_cache,
+                 'labels' : labels,
+                 'loc' : position,
+                 'border' : border,
+                 'visible' : visible}
 
 
 

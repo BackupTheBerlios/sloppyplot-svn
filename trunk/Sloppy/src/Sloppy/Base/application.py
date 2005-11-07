@@ -25,7 +25,7 @@ logger = logging.getLogger('application')
 import os
 
 from Sloppy.Lib.Undo import *
-from Sloppy.Lib.Signals.new_signals import HasSignals
+from Sloppy.Lib.Signals import HasSignals
 from Sloppy.Lib.ElementTree.ElementTree import Element, SubElement
 
 from Sloppy.Base.objects import Plot, Axis, Line, Layer, new_lineplot2d

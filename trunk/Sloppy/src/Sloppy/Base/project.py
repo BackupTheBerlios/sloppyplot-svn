@@ -28,7 +28,7 @@ from os.path import abspath,isfile,isdir,join, basename
 from shutil import rmtree
 
 from Sloppy.Lib.Undo import *
-from Sloppy.Lib.Signals.new_signals import HasSignals
+from Sloppy.Lib.Signals import HasSignals
 from Sloppy.Lib.Props import *
 
 from Sloppy.Base.objects import Plot, Axis, Line, Layer, new_lineplot2d

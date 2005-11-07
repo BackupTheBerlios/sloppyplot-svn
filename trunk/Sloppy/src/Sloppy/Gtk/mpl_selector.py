@@ -31,7 +31,7 @@ import gobject
 
 import math
 
-from Sloppy.Lib.Signals.new_signals import HasSignals
+from Sloppy.Lib.Signals import HasSignals
 
 
 #------------------------------------------------------------------------------

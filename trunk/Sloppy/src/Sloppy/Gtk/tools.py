@@ -28,19 +28,18 @@ except ImportError:
 import gtk
 
 
-import uihelper
-from dock import *
+from Sloppy.Base import uwrap, error
 
-from options_dialog import OptionsDialog
-
-
-from Sloppy.Lib.Signals.new_signals import HasSignals
 from Sloppy.Lib.Undo import ulist, UndoList
 from Sloppy.Lib.ElementTree.ElementTree import Element, SubElement
-
-from Sloppy.Base import uwrap, error
 from Sloppy.Lib.Props.Gtk import pwconnect
 from Sloppy.Lib.Props import pBoolean
+
+
+import uihelper
+from dock import *
+from options_dialog import OptionsDialog
+
 
 #------------------------------------------------------------------------------
 import logging

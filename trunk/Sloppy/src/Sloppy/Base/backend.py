@@ -26,7 +26,7 @@ See documentation of the Backend class for details.
 
 import logging, os
 
-from Sloppy.Lib.Signals.new_signals import HasSignals
+from Sloppy.Lib.Signals import HasSignals
 
 from Sloppy.Base.table import Table
 from Sloppy.Base import objects
