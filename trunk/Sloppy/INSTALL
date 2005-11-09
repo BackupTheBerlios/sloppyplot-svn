@@ -17,7 +17,7 @@ Sloppyplot is developed and has been tested under Linux.  Windows
 environments are not yet supported, but will be once everything has
 been stabilized.
 
-Sloppyplot unfortunately has a lot of dependencies!
+Sloppyplot has a few dependencies which you should be aware of.
 
 The following applications and libraries have to to be installed
 before running the program.  Except for python, it is not necessary to
@@ -26,24 +26,17 @@ have these dependencies fulfilled at the time of installation.
 - python >= 2.4
   http://www.python.org
 
-- pygtk 2.6, 
+- pygtk >= 2.6, 
   http://www.pygtk.org
 
-- Numeric (any recent version should work), 
+- Numeric >= 23.8 (any recent version should work),
   http://numpy.sf.net
 
-- matplotlib 0.83.1
+- matplotlib >= 0.83.1
   http://matplotlib.sf.net
 
-- netCDF
-  http://my.unidata.ucar.edu/content/software/netcdf/index.html
 
-- python bindings for netCDF
-  http://pysclint.sourceforge.net/pycdf/
 
-Future versions of SloppyPlot might be able to use the netCDF bindings
-from ScientificPython.  If you are interested, please bug me about
-this!
 
 I am currently testing analysis functions.  For these, you need to
 have the Gnu Scientific Library (GSL) and its python bindings
