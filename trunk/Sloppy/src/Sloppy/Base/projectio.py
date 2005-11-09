@@ -43,7 +43,6 @@ import logging
 logger = logging.getLogger('Base.projectio')
 
 
-DEFAULT_FF = "SIF"
 FILEFORMAT = "0.4.3"
 
 """
@@ -57,14 +56,13 @@ class ParseError(Exception):
 
 
 
-def dataset_filename(key):
+def dataset_filename_ascii(key):
     """  The filename is dynamically created from the given key,
-    appended by the extension '.nc'. """
+    appended by the extension '.dat'. """
     #TODO: escape special characters, like '/'
     if not isinstance(key, basestring):
         raise TypeError("construct_filename: 'key' must be a valid string, but it is of %s" % type(key))
-    return "%s.nc" % key
-
+    return "%s.dat" % key
 
 
 #------------------------------------------------------------------------------
@@ -101,9 +99,9 @@ def new_dataset(spj, element):
                 if key is not None:
                     p[key] = unicode(eInfo.text)
 
-        filename = os.path.join('datasets', dataset_filename(ds.key))
-        # TODO: replace DEFAULT_FF with read value
-        ds.set_table_import(spj, filename, typecodes, column_props, DEFAULT_FF)
+        filename = os.path.join('datasets', dataset_filename_ascii(ds.key))
+        ds.set_table_import(spj, filename, typecodes, column_props, 'internal')
+        
     
     return ds
 
@@ -399,14 +397,15 @@ def save_project(spj, filename=None, path=None):
         #
 
         # add Dataset files to tempdir
-        exporter = ExporterRegistry[DEFAULT_FF]()
-
+        exporter_ascii = ExporterRegistry['ASCII']()
+        
         dsdir = os.path.join(tempdir, 'datasets')
         os.mkdir(dsdir)
         for ds in spj.datasets:
             try:
-                dspath = os.path.join(dsdir, dataset_filename(ds.key))
-                exporter.write_to_file(dspath, ds.data)
+                dspath = os.path.join(dsdir, dataset_filename_ascii(ds.key))
+                exporter_ascii.write_to_file(dspath, ds.data)
+                
             except AttributeError:
                 logger.error("Error while writing Dataset '%s'" % ds.key)
                 raise

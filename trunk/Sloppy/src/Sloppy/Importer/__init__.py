@@ -19,6 +19,7 @@
 # $Id$
 
 
+import import_internal
 import import_ascii
 import import_pfc
-import import_sif
+

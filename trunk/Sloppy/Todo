@@ -2,19 +2,35 @@
 Plans for 0.4.6
 ===============
 
+== FILE FORMAT ==
+
+- export_internal
+
+- export_internal and import_internal should get some information
+  about the file ? Well, read_table_from_file has the filename,
+  so we can distinguish between 'dat' and other extensions.
+  If we have .dat, then we call the ASCII importer.
+  
+
 == GROUP PROPERTIES ==
 
 - Allow setting group properties in layerwin
 
 
-
 == TABLE COLUMN TYPES ==
 
-- different types for columns: allow changing types
-- allow strings (=> This would cause trouble with the splitting of comments)
-- allow dates
+- different types for columns: allow changing types, but for now only
+  present Integer, Float32
+- make sure ascii import respects the data types.
 
 
+
+
+
+###############################################################################
+
+Plans for 0.4.7
+===============
 
 == CUSTOM GNUPLOT EXPORT ==
 
@@ -34,8 +50,11 @@ Plans for 0.4.6
 
 
 
-PLANS FOR 0.4.x:
-================
+PLANS FOR BEYOND:
+=================
+
+- allow strings (=> This would cause trouble with the splitting of comments)
+- allow dates  ???
 
 - implement multiplot for gnuplot!
   => move mpl.arrange method to plot.arrange_layers! ?

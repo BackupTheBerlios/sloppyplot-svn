@@ -90,10 +90,6 @@ class Importer(dataio.Importer):
         #cre_rowsplit is set below, after the delimiter has been determined
         cre_commentline = re.compile('^\s*(#.*)?$')
        
-        # determine optional arguments
-        typecodes = self.typecodes
-        ncols = self.ncols
-
         # skip header lines if requested
         header_lines = self.header_lines
         while header_lines > 0:
@@ -125,6 +121,10 @@ class Importer(dataio.Importer):
         # skip the column count determination and the creation of a
         # new table.
         if self.table is None:
+            # determine optional arguments
+            typecodes = self.typecodes
+            ncols = self.ncols
+            
             # if no column count is given, try to
             # determine nr. of ncols from first line
             if ncols is None:
@@ -149,7 +149,8 @@ class Importer(dataio.Importer):
         else:
             tbl = self.table
 
-        logger.debug("# of columns to be expected: %d" % ncols)
+        
+        logger.debug("# of columns to be expected: %d" % tbl.ncols)
 
         
         # make sure existing Table has at least one entry.
