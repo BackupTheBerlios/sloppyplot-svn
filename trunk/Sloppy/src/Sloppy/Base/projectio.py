@@ -43,12 +43,20 @@ import logging
 logger = logging.getLogger('Base.projectio')
 
 
-FILEFORMAT = "0.4.3"
+FILEFORMAT = "0.4.6"
 
 """
 File format history:
+
   - 0.3 -> 0.4: Table.cols -> Table.ncols  (transformation implemented)
+
   - 0.4 -> 0.4.3: added layer.labels (no conversion required)
+
+  - 0.4.5 -> 0.4.6: changed internal file format to netCDF.
+    This is an incompatible change, so I decided to drop the
+    prior conversions for 0.4.6. Sorry, but this is what Alpha
+    software really means.
+    
 """
 
 class ParseError(Exception):
@@ -72,7 +80,11 @@ def dataset_filename_ascii(key):
 def new_dataset(spj, element):
     ncols = int(element.attrib.pop('ncols',0))
     typecodes = element.attrib.pop('typecodes','')
-    
+
+    # TODO: pass fileformat_version to importer (somehow)
+    # TODO: how?
+    fileformat = element.attrib.pop('fileformat', 'internal')
+    fileformat_version = element.attrib.pop('fileformat_version', None)
     ds = Dataset(**element.attrib)
 
     # metadata
@@ -98,9 +110,9 @@ def new_dataset(spj, element):
                 key = eInfo.get('key', None)
                 if key is not None:
                     p[key] = unicode(eInfo.text)
-
+        
         filename = os.path.join('datasets', dataset_filename_ascii(ds.key))
-        ds.set_table_import(spj, filename, typecodes, column_props, 'internal')
+        ds.set_table_import(spj, filename, typecodes, column_props, fileformat)
         
     
     return ds
@@ -185,20 +197,13 @@ def fromTree(tree):
         return new_version
     
     while (version is not None and version != FILEFORMAT):
-        if version=='0.3':
-            eTables = tree.findall('Datasets/Table')
-            for eTable in eTables:
-                ncols = eTable.get('cols',None)
-                if ncols is not None:
-                    eTable.set('ncols',str(ncols))
-
-            version = raise_version('0.4')
-            continue
+        #elif version=='0.4':
+        #    version = raise_version('0.4.3')
+        #    continue
         #
-        elif version=='0.4':
-            version = raise_version('0.4.3')
+        if version=='0.4.3':
+            version = raise_version('0.4.6')
             continue
-        #
         else:
             raise IOError("Invalid Sloppy File Format Version %s. Aborting Import." % version)        
 
@@ -263,7 +268,8 @@ def toElement(project):
             raise RuntimeError("Invalid dataset", ds)
         
         SIV(eData, 'key', ds.rget('key'))
-
+        SIV(eData, 'fileformat', 'internal-%s' % FILEFORMAT )
+        
         if len(ds.metadata) > 0:
             eMetadata = SubElement(eData, "Metadata")
             for k,v in ds.metadata.iteritems():

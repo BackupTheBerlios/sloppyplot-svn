@@ -72,8 +72,8 @@ class Application(object, HasSignals):
 	if isinstance(project, basestring):
 	    try:
 		self.load_project(project)
-	    except IOError:
-                logger.error("Failed to load project '%s'\nSetting up an empty project instead." % project)                
+	    except IOError, msg:
+                logger.error("Failed to load project '%s'\nReason was:\n%s\nSetting up an empty project instead." % (project, msg))
 		self.set_project(Project())
         else:
             self.set_project(project)
