@@ -32,7 +32,7 @@ from Sloppy.Lib.Signals import HasSignals
 from Sloppy.Lib.Undo import UndoInfo, UndoList
 from Sloppy.Lib.Props import *
 
-from Numeric import ArrayType
+from scipy import ArrayType
 
 
 #------------------------------------------------------------------------------
@@ -57,7 +57,7 @@ class Dataset(HasProps, HasSignals):
 
     or alternatively
 
-        >>> from Numeric import ArrayType
+        >>> from scipy import ArrayType
         >>> if not isinstance(data, ArrayType): ...
 
     If you add a Dataset to a Project, then you must make sure that

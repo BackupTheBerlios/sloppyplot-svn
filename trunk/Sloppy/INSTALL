@@ -4,7 +4,6 @@ INSTALLATION HINTS
 
 1. Requirements
 2. Generic Installation Instructions
-3. Slackware Installation Instructions
 
 
 
@@ -29,13 +28,18 @@ have these dependencies fulfilled at the time of installation.
 - pygtk >= 2.6, 
   http://www.pygtk.org
 
-- Numeric >= 23.8 (any recent version should work),
+- Scipy Core 
+  (= the new scipy, please be careful not to use the old scipy)
   http://numpy.sf.net
 
 - matplotlib >= 0.83.1
   http://matplotlib.sf.net
 
 
+For the postscript export you need to have Gnuplot installed
+
+- Gnuplot
+  www.gnuplot.info
 
 
 I am currently testing analysis functions.  For these, you need to
@@ -50,14 +54,6 @@ installed.  These dependencies are totally optional!
 
 
 
-For the postscript export you need to have Gnuplot installed
-
-- Gnuplot
-  www.gnuplot.info
-
-
-
-
 
 2. Generic Installation Instructions
 ====================================
@@ -69,21 +65,4 @@ $ python setup.py install
 
 And you are done.  The executable is called sloppy-gtk
 
-
-
-
-3. Slackware Installation Instructions
-======================================
-
-Even without checkinstall (which you should try if you are using
-Slackware), you can create a Slackware-compatible package!
-
-$ python setup.py bdist
-
-will build a Slackware-compatible archive in the subdirectory dist.
-Just go there, rename the file and install it, e.g.:
-
-$ cd dist
-$ mv SloppyPlot-0.4.linux-i686.tar.gz SloppyPlot-0.4-i686-1.tgz
-% installpkg SloppyPlot-0.4-i686-1.tgz
 

@@ -36,7 +36,8 @@ import tempfile
 import os
 import shutil
 
-from Numeric import *
+import scipy
+
 
 #------------------------------------------------------------------------------
 import logging
@@ -262,7 +263,7 @@ def toElement(project):
                 n += 1
                 
             
-        elif isinstance(ds.data, ArrayType): # TODO: untested
+        elif isinstance(ds.data, scipy.ArrayType): # TODO: untested
             eData = SubElement(eDatasets, 'Array')
         else:
             raise RuntimeError("Invalid dataset", ds)

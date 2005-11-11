@@ -31,7 +31,7 @@ from Sloppy.Base import uwrap, utable
 
 from Sloppy.Lib.Undo import UndoList, UndoInfo
 
-import Numeric
+import scipy
 
 from tableview import TableView
 import uihelper
@@ -362,13 +362,13 @@ class DatasetWindow( gtk.Window ):
     def cb_column_insert(self, action):
         rownr, colnr, column_object = self.popup_info
         table = self.dataset.get_data()
-        column = table.new_column('d')
+        column = table.new_column(scipy.Float32)
         self.insert_column(table, colnr, column, undolist=self.project.journal)
 
     def cb_column_insert_after(self, action):
         rownr, colnr, column_object = self.popup_info
         table = self.dataset.get_data()
-        column = table.new_column('d')
+        column = table.new_column(scipy.Float32)
         self.insert_column(table, colnr+1, column, undolist=self.project.journal)
 
     def cb_column_remove(self, action):
@@ -455,7 +455,7 @@ class DatasetWindow( gtk.Window ):
         steps = table.nrows * 3
         start, end = x[0], x[-1]
         stepwidth = (end - start) / steps
-        new_x = Numeric.arange(start=start, stop=end+stepwidth, step=stepwidth)
+        new_x = scipy.arange(start=start, stop=end+stepwidth, step=stepwidth)
 
         new_table = Table(nrows=steps, ncols=2,
                           typecodes=[table.get_typecode(0),
@@ -536,7 +536,7 @@ class ColumnCalculator(gtk.Window):
     
         result = eval(expression,
                       {'__builtins__': {},
-                       'sin': Numeric.sin},
+                       'sin': scipy.sin},
                       {'col' : col,
                        'cc' : self.colnr
                        }
@@ -545,8 +545,8 @@ class ColumnCalculator(gtk.Window):
         # If the result is not an array, then it is probably a scalar.
         # We create an array from this by multiplying it with an array
         # that consists only of ones.
-        if not isinstance(result, Numeric.ArrayType):
-            o = Numeric.ones( (table.nrows,), table[self.colnr].typecode() )
+        if not isinstance(result, scipy.ArrayType):
+            o = scipy.ones( (table.nrows,), table[self.colnr].typecode() )
             result = o * result
             print "-- result is not an array --"
             print "==> converted to array"
@@ -624,7 +624,7 @@ class TableColumnView(gtk.TreeView):
                 column.data = old_column.data
             else:
                 # => new column
-                column.data = Numeric.zeros((self.table.nrows,), 'd')            
+                column.data = scipy.zeros((self.table.nrows,), scipy.Float32)
 
             columns.append(column)                
             iter = model.iter_next(iter)            

@@ -24,7 +24,7 @@ import os.path
 from Sloppy.Base.table import table_to_array, array_to_table, Table
 from Sloppy.Lib.Props import *
 
-from Numeric import ArrayType
+from scipy import ArrayType
 
 
 

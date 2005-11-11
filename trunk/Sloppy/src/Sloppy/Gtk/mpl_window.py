@@ -21,7 +21,6 @@
 
 import gtk
 import gobject
-import Numeric
 
 import uihelper
 import mpl_selector

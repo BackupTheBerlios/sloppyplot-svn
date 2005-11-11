@@ -14,13 +14,18 @@ Plans for 0.4.6
 
 == GROUP PROPERTIES ==
 
+- serialize group properties
+
 - Allow setting group properties in layerwin
 
 
 == TABLE COLUMN TYPES ==
 
-- different types for columns: allow changing types, but for now only
-  present Integer, Float32
+- different types for columns: 
+  -- display column type in column properties.
+     By default, we should use Float32 now,
+     and the column type combobox should be disabled for now.
+
 - make sure ascii import respects the data types.
 
 
@@ -204,8 +209,6 @@ Minor fixes
 #==============================================================================
 # Plotting Enhancements
 
-- add line.color and implement it in matplotlib
-
 => we might want to implement hlines and vlines in the Plot.
    Then we can combine the methods to select a line with the method
    to put a line into the plot :-)
@@ -233,7 +236,7 @@ Minor fixes
  
 ------------------------------------------------------------------------------
 
-- serialize group properties
+
 
 
 Export:

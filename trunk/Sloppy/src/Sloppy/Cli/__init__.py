@@ -14,7 +14,7 @@ from Sloppy.Base.project import Project
 from Sloppy.Base.table import Table
 
 from Sloppy.Base.dataio import read_table_from_file
-import Numeric
+import scipy
 
 
 # set up Application
