@@ -79,6 +79,8 @@ setup(name=NAME,
       # second argument of data_files tuples is a list!
       data_files = [(join(PATH_SHARED,'Examples'),
                      glob(join("Examples","*.spj"))),
+		    (join(PATH_SHARED,'Examples','Data'),
+		     glob(join("Examples","Data","*.dat"))),
                     (join(sys.prefix,'share','applications'),
 		     ['sloppyplot.desktop']),
                     (join(sys.prefix, 'share', 'pixmaps'),

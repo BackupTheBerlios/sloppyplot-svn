@@ -44,7 +44,7 @@ def internal_path(*path):
     return os.path.join( the_path[-1], *path )
 
 
-PATH_EXAMPLE  = os.path.join('../../Examples')
+PATH_EXAMPLE  = os.path.join('usr', 'share', 'Examples')
 PATH_DATA     = os.path.join('Base','Data')
 PATH_ICONS    = os.path.join('Gtk','Icons')
 

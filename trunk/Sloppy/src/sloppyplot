@@ -73,6 +73,7 @@ else:
 #
 
 import Sloppy
+Sloppy.init()
 
 # Set path to Sloppy package.
 # TODO: This solution seems rather awkward to me.  I would prefer, if

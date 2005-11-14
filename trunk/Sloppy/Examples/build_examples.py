@@ -10,8 +10,8 @@ logging.basicConfig()
 
 def demo_zno():
 
-    ds = Dataset(key = "ZnO-10-Abs1")
-    ds.data = read_table_from_file("Data/zn10abs1.abs", "ASCII", delimiter='\s*')
+    ds = Dataset(key = "Zn10Abs1")
+    ds.data = read_table_from_file("Data/sample_data_01.dat", "ASCII", delimiter='\s*')
 
     tbl = ds.data
     tbl.column(0).set_values('key', 'Wavelength', 'label', 'Wavelength (nm)')

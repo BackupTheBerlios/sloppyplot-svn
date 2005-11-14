@@ -23,13 +23,15 @@ logger = logging.getLogger()
 # add matplotlib backend ('mpl') if matplotlib is available
 #
 
-try:
-    import Matplot
-    __all__.append('Matplot')
-except ImportError:
-    logger.warn("matplotlib not found.")
-    raise
-import Gnuplot
+def init():
+    try:
+	import Matplot
+	__all__.append('Matplot')
+    except ImportError:
+	logger.warn("matplotlib not found.")
+	raise
+    
+    import Gnuplot
 
-import Importer
-import Exporter
+    import Importer
+    import Exporter

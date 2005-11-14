@@ -1,13 +1,10 @@
  
-Plans for 0.5.0
-===============
-
 BUGFIXES:
- - check zoom functions
+ - check zoom functions => ZoomAxes => check matplotlib.
 
-OTHER THINGS:
- - column properties: column type (default 'f')
-
+ - when adding a column, we can't edit.  Something about value_list
+ 
+ - 
 
 
 
@@ -43,6 +40,10 @@ Plans for 0.5.x
 
 PLANS FOR BEYOND:
 =================
+
+- column properties: column type (default 'f')
+  => We need to replace the column properties dialog by a dialog
+     that is not based on OptionsDialog...
 
 - allow strings (=> This would cause trouble with the splitting of comments)
 - allow dates  ???
