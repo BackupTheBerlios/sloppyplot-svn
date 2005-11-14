@@ -84,7 +84,7 @@ def new_dataset(spj, element):
 
     # TODO: pass fileformat_version to importer (somehow)
     # TODO: how?
-    fileformat = element.attrib.pop('fileformat', 'internal')
+    fileformat = element.attrib.pop('fileformat', 'CSV')
     fileformat_version = element.attrib.pop('fileformat_version', None)
     ds = Dataset(**element.attrib)
 
@@ -269,7 +269,7 @@ def toElement(project):
             raise RuntimeError("Invalid dataset", ds)
         
         SIV(eData, 'key', ds.rget('key'))
-        SIV(eData, 'fileformat', 'internal' )
+        SIV(eData, 'fileformat', 'CSV' )
         
         if len(ds.metadata) > 0:
             eMetadata = SubElement(eData, "Metadata")
@@ -404,7 +404,7 @@ def save_project(spj, filename=None, path=None):
         #
 
         # add Dataset files to tempdir
-        exporter_ascii = ExporterRegistry['ASCII']()
+        exporter_ascii = ExporterRegistry['CSV']()
         
         dsdir = os.path.join(tempdir, 'datasets')
         os.mkdir(dsdir)

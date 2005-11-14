@@ -35,13 +35,16 @@ logger = logging.getLogger('import.ascii')
 
 class Importer(dataio.Importer):
 
-    extensions = ['dat']
+    extensions = ['csv']
     author = "Niklas Volbers"
-    blurb = "SloppyPlot Internal Format"
+    blurb = "Comma Separated Value"
 
     #----------------------------------------------------------------------
     # Properties
     #
+
+    header_lines = pInteger(CheckBounds(min=0), default=0,
+                            blurb="Number of header lines")
 
     column_props = pList(types=dict)
 
@@ -55,8 +58,8 @@ class Importer(dataio.Importer):
                 column.set_value(k,v)
             j += 1
 
-        kwargs = {'delimiter' : '\\s*',
-                  'header_lines' : 0,
+        kwargs = {'delimiter' : ',',
+                  'header_lines' : self.header_lines,
                   'table' : table}
 
         importer = import_ascii.Importer(**kwargs)
@@ -64,4 +67,4 @@ class Importer(dataio.Importer):
 
 
 #------------------------------------------------------------------------------
-dataio.ImporterRegistry['internal'] = Importer
+dataio.ImporterRegistry['CSV'] = Importer

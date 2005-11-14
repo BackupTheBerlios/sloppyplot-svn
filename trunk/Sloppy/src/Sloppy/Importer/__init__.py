@@ -19,7 +19,7 @@
 # $Id$
 
 
-import import_internal
 import import_ascii
+import import_csv
 import import_pfc
 
