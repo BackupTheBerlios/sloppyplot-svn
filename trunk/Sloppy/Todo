@@ -2,25 +2,14 @@
 Plans for 0.5.0
 ===============
 
-== FILE FORMAT ==
+BUGFIXES:
+ - hiding the toolwindow and showing it again -> different position.
+ - check zoom functions
 
-- export_internal
+OTHER THINGS:
+ - settle on internal file format => csv? This would need no parameters
+ - column properties: column type (default 'f')
 
-- export_internal and import_internal should get some information
-  about the file ? Well, read_table_from_file has the filename,
-  so we can distinguish between 'dat' and other extensions.
-  If we have .dat, then we call the ASCII importer.
-  
-  csv ???
-  
-== TABLE COLUMN TYPES ==
-
-- different types for columns: 
-  -- display column type in column properties.
-     By default, we should use Float32 now,
-     and the column type combobox should be disabled for now.
-
-- make sure ascii import respects the data types.
   
 
 
