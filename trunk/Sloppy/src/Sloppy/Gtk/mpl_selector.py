@@ -520,10 +520,14 @@ class ChangeViewRegion(Selector):
     def finish(self, abort=False):
         self.canvas.window.set_cursor(None)
         if abort is True and self.axes is not None:
+            print "RESTORING"
             # restore original position
             self.axes.set_xlim((self.xmin, self.xmax))
             self.axes.set_ylim((self.ymin, self.ymax))
-            self.canvas.draw()
+            print "RESTORED"
+            self.canvas.draw()  # A BUG IN MATPLOTLIB 0.84 ???
+            print "REDRAWN"
+            
             
         Selector.finish(self, abort=abort)
 
