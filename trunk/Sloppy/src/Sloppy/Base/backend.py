@@ -101,7 +101,7 @@ class Backend(object, HasSignals):
         object.__init__(self)
 
         HasSignals.__init__(self)
-        self.sig_register("backend-closed")
+        self.sig_register("closed")
         self.sig_register("notify::layer")
         self.cblist = []
         
@@ -171,7 +171,7 @@ class Backend(object, HasSignals):
         self.set(None,None)        
         self.connected = False
 
-        self.sig_emit('backend-closed')
+        self.sig_emit('closed')
         
         for cb in self.cblist:
             cb.disconnect()

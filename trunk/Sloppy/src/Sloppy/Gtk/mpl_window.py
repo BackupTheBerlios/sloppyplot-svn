@@ -431,7 +431,8 @@ class MatplotlibWidget(gtk.VBox):
         if backend is not None:
             self.cblist += [
                 plot.sig_connect("changed", (lambda sender: backend.draw())),
-                plot.sig_connect("closed", (lambda sender: self.destroy()))
+                plot.sig_connect("closed", (lambda sender: self.destroy())),
+                backend.sig_connect("closed", (lambda sender: self.destroy()))
                 ]
             
             try:

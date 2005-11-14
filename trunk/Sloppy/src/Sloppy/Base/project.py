@@ -200,8 +200,9 @@ class Project(HasProps, HasSignals):
         removed_datasets = list()
         for dataset in datasets:
             try:
-                dataset = self.get_dataset(dataset)                
+                dataset = self.get_dataset(dataset)
                 self.datasets.remove(dataset)
+                dataset.close()
             except KeyError, msg:
                 logger.error(msg)
             except ValueError, msg:
@@ -210,7 +211,7 @@ class Project(HasProps, HasSignals):
                 removed_datasets.append(dataset)
                 
         undolist.append(UndoInfo(self.add_datasets, removed_datasets))
-        if len(datasts) == 1:
+        if len(datasets) == 1:
             undolist.describe("Remove Dataset")
         else:
             undolist.describe("Remove Datasets")
@@ -229,7 +230,7 @@ class Project(HasProps, HasSignals):
         removed_plots = list()
         for plot in plots:
             try:
-                plot = self.get_plot(plot)                                
+                plot = self.get_plot(plot)                
                 self.plots.remove(plot)
                 plot.close()
             except KeyError, msg:

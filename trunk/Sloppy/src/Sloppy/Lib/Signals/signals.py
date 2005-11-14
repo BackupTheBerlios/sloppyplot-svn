@@ -88,13 +88,19 @@ class HasSignals:
 
         for cb in cblist:
             logger.debug("Disconnecting callback '%s' of object '%s'." % (cb, object.__str__(self)))
-            self._callbacks.remove(cb)
+            try:
+                self._callbacks.remove(cb)
+            except ValueError:
+                logger.debug("Could not remove signal %s" % cb)
 
 
     def sig_disconnect_all(self):
         for cb in self._callbacks:
             logger.debug("Disconnecting callback '%s' of object '%s'." % (cb, object.__str__(self)))
-            self._callbacks.remove(cb)
+            try:
+                self._callbacks.remove(cb)
+            except ValueError:
+                logger.debug("Could not remove signal %s" % cb)
 
 
     def sig_cblist(self, signal=None, receiver=None, func=None):

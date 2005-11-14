@@ -146,11 +146,9 @@ class DatasetWindow( gtk.Window ):
 
         self.project = project  # immutable
         self._dataset = None
-        self.dataset = dataset
 
-        
+        self.set_dataset(dataset)        
         self.project.sig_connect("close", (lambda sender: self.destroy()))
-        self.dataset.sig_connect("closed", (lambda sender: self.destroy()))
 
         self.tableview.emit('cursor_changed')                
 
@@ -208,7 +206,7 @@ class DatasetWindow( gtk.Window ):
     #
     
     def set_dataset(self, dataset):
-        
+
         if dataset is None:
             self.set_title("(no dataset)")
         else:
@@ -231,7 +229,10 @@ class DatasetWindow( gtk.Window ):
             table.sig_connect('update-columns',
                             (lambda sender: self.tableview.setup_columns())),
             dataset.sig_connect('notify',
-                            (lambda sender: self.tableview.queue_draw()))
+                            (lambda sender: self.tableview.queue_draw())),
+            dataset.sig_connect('closed',
+                                (lambda sender: self.destroy()))
+            
             ]
 
         # TODO: set metadata widget       

@@ -269,7 +269,7 @@ def toElement(project):
             raise RuntimeError("Invalid dataset", ds)
         
         SIV(eData, 'key', ds.rget('key'))
-        SIV(eData, 'fileformat', 'internal-%s' % FILEFORMAT )
+        SIV(eData, 'fileformat', 'internal' )
         
         if len(ds.metadata) > 0:
             eMetadata = SubElement(eData, "Metadata")
