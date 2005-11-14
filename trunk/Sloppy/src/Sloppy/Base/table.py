@@ -23,7 +23,7 @@ Table class (list of 1d arrays)
 """
 
 
-from Numeric import array, ArrayType, zeros, rank
+from Numeric import array, ArrayType, zeros, rank, concatenate
 
 
 from Sloppy.Lib.Signals import HasSignals
