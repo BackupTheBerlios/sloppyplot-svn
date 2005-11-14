@@ -23,7 +23,7 @@ Table class (list of 1d arrays)
 """
 
 
-from Numeric import array, ArrayType
+from Numeric import array, ArrayType, zeros, rank
 
 
 from Sloppy.Lib.Signals import HasSignals
@@ -75,7 +75,7 @@ class Column(HasProps):
         return "%s (%s): %s" % (self.key, self.designation, self.label)
 
     def typecode(self):
-        return self.data.typecode
+        return self.data.typecode()
         
 
 
@@ -125,7 +125,7 @@ class Table(object, HasSignals):
                     if len(typecodes) != ncols:
                         raise ValueError("When specifying the number of columns, you may either specify a single typecode or a list with that many entries.")
                 elif typecodes is None:
-                    tc = 'd'
+                    tc = 'f'
                     typecodes = list()
                     for i in range(ncols):
                         typecodes.append(tc)
@@ -173,14 +173,14 @@ class Table(object, HasSignals):
         one-dimensional array of the length table.rows, with the
         `typecode` and only zeros.  If no typecode is given, then the
         typecode of the first existing column is used, or if there is
-        no column yet, 'd'.
+        no column yet, 'f'.
         Any keyword argument is passed on to the Column constructor.
         """
         if typecode is None:
             if self.typecodes is not None:
                 typecode = self.typecodes[0]
             else:
-                typecode = 'd'
+                typecode = 'f'
 
         return Column( data = zeros((self.nrows,), typecode), **kwargs)            
 
@@ -360,7 +360,7 @@ class Table(object, HasSignals):
         the type of a column.
         """
         self._ncols = len(self._columns)
-        self._typecodes = map(lambda x: x.typecode, self._columns)
+        self._typecodes = map(lambda x: x.typecode(), self._columns)
 
         # TODO: move to types.h
         type_map = {'d': float,
@@ -474,7 +474,7 @@ class RowIterator:
 #--- CONVENIENCE FUNCTIONS ----------------------------------------------------
 
 
-def table_to_array(tbl, typecode='d'):
+def table_to_array(tbl, typecode='f'):
     shape = (tbl.ncols, tbl.nrows)
     
     a = zeros( (tbl.ncols, tbl.nrows), typecode)
