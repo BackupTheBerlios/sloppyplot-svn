@@ -36,7 +36,7 @@ import tempfile
 import os
 import shutil
 
-import scipy
+from Numeric import ArrayType
 
 
 #------------------------------------------------------------------------------
@@ -44,7 +44,7 @@ import logging
 logger = logging.getLogger('Base.projectio')
 
 
-FILEFORMAT = "0.4.6"
+FILEFORMAT = "0.5"
 
 """
 File format history:
@@ -53,7 +53,7 @@ File format history:
 
   - 0.4 -> 0.4.3: added layer.labels (no conversion required)
 
-  - 0.4.5 -> 0.4.6: changed internal file format to netCDF.
+  - 0.4.5 -> 0.5: changed internal file format to netCDF.
     This is an incompatible change, so I decided to drop the
     prior conversions for 0.4.6. Sorry, but this is what Alpha
     software really means.
@@ -202,11 +202,11 @@ def fromTree(tree):
         #    version = raise_version('0.4.3')
         #    continue
         #
-        if version=='0.4.3':
-            version = raise_version('0.4.6')
-            continue
-        else:
-            raise IOError("Invalid Sloppy File Format Version %s. Aborting Import." % version)        
+        #if version=='0.4.3':
+        #    version = raise_version('0.4.6')
+        #    continue
+        #else:
+        raise IOError("Invalid Sloppy File Format Version %s. Aborting Import." % version)
 
     for eDataset in eProject.findall('Datasets/*'):
         spj.datasets.append( new_dataset(spj, eDataset))
@@ -263,7 +263,7 @@ def toElement(project):
                 n += 1
                 
             
-        elif isinstance(ds.data, scipy.ArrayType): # TODO: untested
+        elif isinstance(ds.data, ArrayType): # TODO: untested
             eData = SubElement(eDatasets, 'Array')
         else:
             raise RuntimeError("Invalid dataset", ds)

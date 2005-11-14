@@ -1,5 +1,5 @@
  
-Plans for 0.4.6
+Plans for 0.5.0
 ===============
 
 == FILE FORMAT ==
@@ -11,14 +11,8 @@ Plans for 0.4.6
   so we can distinguish between 'dat' and other extensions.
   If we have .dat, then we call the ASCII importer.
   
-
-== GROUP PROPERTIES ==
-
-- serialize group properties
-
-- Allow setting group properties in layerwin
-
-
+  csv ???
+  
 == TABLE COLUMN TYPES ==
 
 - different types for columns: 
@@ -27,6 +21,11 @@ Plans for 0.4.6
      and the column type combobox should be disabled for now.
 
 - make sure ascii import respects the data types.
+  
+
+
+
+
 
 
 
@@ -34,7 +33,7 @@ Plans for 0.4.6
 
 ###############################################################################
 
-Plans for 0.4.7
+Plans for 0.5.x
 ===============
 
 == CUSTOM GNUPLOT EXPORT ==
@@ -42,6 +41,12 @@ Plans for 0.4.7
 - allow to create a gnuplot export directory containing a gnuplot file
   and the data files
 - allow to include arbitrary data at specific positions into the gnuplot.
+
+== GROUP PROPERTIES ==
+
+- serialize group properties
+
+- Allow setting group properties in layerwin
 
 
 

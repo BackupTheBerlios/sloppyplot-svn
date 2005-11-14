@@ -23,7 +23,7 @@ Table class (list of 1d arrays)
 """
 
 
-import scipy
+from Numeric import array, ArrayType
 
 
 from Sloppy.Lib.Signals import HasSignals
@@ -38,7 +38,7 @@ class AsArray(Transformation):
 
     def __call__(self, value):
         # check type
-        if isinstance(value, scipy.ArrayType):
+        if isinstance(value, ArrayType):
             pass            
         elif isinstance(value, (tuple,list)):
             value = array(value)
@@ -364,7 +364,7 @@ class Table(object, HasSignals):
 
         # TODO: move to types.h
         type_map = {'d': float,
-                    scipy.Float32: float,
+                    'f': float, # scipy.float32
                     'O': str,
                     'l': long,
                     'i': int}

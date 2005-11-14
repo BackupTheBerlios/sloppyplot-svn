@@ -276,7 +276,7 @@ class Application(object, HasSignals):
 #------------------------------------------------------------------------------
 
 
-import scipy
+import Numeric
 
 def test_application():
     app = Application()
@@ -290,8 +290,8 @@ def test_application():
 
     data = ds.get_data()
     data.extend(20)
-    data[0] = scipy.arange(21)
-    data[1] = scipy.sin(data[0])
+    data[0] = Numeric.arange(21)
+    data[1] = Numeric.sin(data[0])
 
     layer = Layer(type='line2d',
                   lines=[Line(source=ds)],
