@@ -243,6 +243,7 @@ class MatplotlibWidget(gtk.VBox):
         ('Replot', 'sloppy-replot', '_Replot', '<control>R', 'Replot', 'on_action_Replot'),
         ('EditLayer', gtk.STOCK_PROPERTIES, '_Edit Layer', '<control>E', 'Edit Layer', 'on_action_EditLayer'),
         ('ExportViaMPL', gtk.STOCK_SAVE_AS, 'Export via matplotlib...', None, 'Export via Matplotlib', 'on_action_ExportViaMPL'),
+        ('ExportViaGnuplot', gtk.STOCK_SAVE_AS, 'Export via gnuplot...', None, 'Export via Gnuplot', 'on_action_ExportViaGnuplot'),
         ],
         'Analysis':
         [
@@ -276,6 +277,7 @@ class MatplotlibWidget(gtk.VBox):
             <menuitem action='EditLayer'/>
             <separator/>
             <menuitem action='ExportViaMPL'/>
+            <menuitem action='ExportViaGnuplot'/>
           </placeholder>
         </menu>        
         <menu action='AnalysisMenu'>
@@ -720,6 +722,12 @@ class MatplotlibWidget(gtk.VBox):
         if fname is not None:
             self.backend.canvas.print_figure(fname)
 
+
+    def on_action_ExportViaGnuplot(self, action):
+        self.abort_selection()
+
+        self.app.plot_postscript(self.project, self.plot)
+        
 
     #
     # TESTING
