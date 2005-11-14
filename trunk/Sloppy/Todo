@@ -3,18 +3,10 @@ Plans for 0.5.0
 ===============
 
 BUGFIXES:
- - hiding the toolwindow and showing it again -> different position.
  - check zoom functions
 
 OTHER THINGS:
- - settle on internal file format => csv? This would need no parameters
  - column properties: column type (default 'f')
-
-  
-
-
-
-
 
 
 
