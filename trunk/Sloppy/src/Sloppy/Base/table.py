@@ -74,15 +74,15 @@ class Column(HasProps):
     def __str__(self):
         return "%s (%s): %s" % (self.key, self.designation, self.label)
 
-    def dtypechar(self):
-        return self.data.dtypechar
+    def typecode(self):
+        return self.data.typecode
         
 
 
 
 class Table(object, HasSignals):
 
-    def __init__(self, data=None, ncols=0, nrows=0, dtypechars=None):
+    def __init__(self, data=None, ncols=0, nrows=0, typecodes=None):
         """
 
         You can either pass a tuple/array as 'data' argument and the
@@ -91,16 +91,16 @@ class Table(object, HasSignals):
 
         OR, you can specify some of the other keywords:
 
-        - A single dtypechar, e.g. 'f', will create a Table with `ncols`
+        - A single typecode, e.g. 'f', will create a Table with `ncols`
           columns of type 'f'. If `ncols` is unspecified, a Table with
           a single column will be created.
 
-        - A string of dtypechars, e.g. 'fdf' specifies the dtypechar for
+        - A string of typecodes, e.g. 'fdf' specifies the typecode for
           each column.  If `ncols` is provided, the length of the
           string must match the number of requested columns or a
           ValueError is raised.
 
-        - A list of dtypechars, e.g. ['f', 'd'] is equivalent to 'fd'.
+        - A list of typecodes, e.g. ['f', 'd'] is equivalent to 'fd'.
           Note however that ['f'] is not the same as 'f' since the
           list form will always require the length of the list to be
           the same as the `ncols` given.
@@ -118,27 +118,27 @@ class Table(object, HasSignals):
             
         else:
             if ncols > 0:
-                if isinstance(dtypechars, basestring) and len(dtypechars) > 1:
-                    dtypechars = list(dtypechars)
+                if isinstance(typecodes, basestring) and len(typecodes) > 1:
+                    typecodes = list(typecodes)
 
-                if isinstance(dtypechars, (list,tuple)):
-                    if len(dtypechars) != ncols:
-                        raise ValueError("When specifying the number of columns, you may either specify a single dtypechar or a list with that many entries.")
-                elif dtypechars is None:
+                if isinstance(typecodes, (list,tuple)):
+                    if len(typecodes) != ncols:
+                        raise ValueError("When specifying the number of columns, you may either specify a single typecode or a list with that many entries.")
+                elif typecodes is None:
                     tc = 'd'
-                    dtypechars = list()
+                    typecodes = list()
                     for i in range(ncols):
-                        dtypechars.append(tc)
+                        typecodes.append(tc)
                 else:
-                    tc = dtypechars
-                    dtypechars = list()
+                    tc = typecodes
+                    typecodes = list()
                     for i in range(ncols):
-                        dtypechars.append(tc)                    
+                        typecodes.append(tc)                    
 
             self._nrows = nrows
 
-            dtypechars = dtypechars or []
-            for tc in dtypechars:
+            typecodes = typecodes or []
+            for tc in typecodes:
                 self._columns.append( self.new_column(tc) )
 
         self.update_cols()        
@@ -166,23 +166,23 @@ class Table(object, HasSignals):
     def set_item(self, i, item):
         self.columns[i] = self.check_item(item)
         
-    def new_column(self, dtypechar=None, **kwargs):
+    def new_column(self, typecode=None, **kwargs):
         """        
-        Returns a new Column with the given dtypechar with the number
+        Returns a new Column with the given typecode with the number
         of rows that this Table requires, i.e. a Column with a
         one-dimensional array of the length table.rows, with the
-        `dtypechar` and only zeros.  If no dtypechar is given, then the
-        dtypechar of the first existing column is used, or if there is
+        `typecode` and only zeros.  If no typecode is given, then the
+        typecode of the first existing column is used, or if there is
         no column yet, 'd'.
         Any keyword argument is passed on to the Column constructor.
         """
-        if dtypechar is None:
-            if self.dtypechars is not None:
-                dtypechar = self.dtypechars[0]
+        if typecode is None:
+            if self.typecodes is not None:
+                typecode = self.typecodes[0]
             else:
-                dtypechar = 'd'
+                typecode = 'd'
 
-        return Column( data = zeros((self.nrows,), dtypechar), **kwargs)            
+        return Column( data = zeros((self.nrows,), typecode), **kwargs)            
 
 
     def get_value(self, col, row):
@@ -193,10 +193,10 @@ class Table(object, HasSignals):
 
 
     def is_equal(self, other_table):
-        # compare table sizes and dtypechars
+        # compare table sizes and typecodes
         if self.ncols != other_table.ncols:
             return False
-        if self.dtypechars != other_table.dtypechars:
+        if self.typecodes != other_table.typecodes:
             return False
 
         # compare column data -- the column keywords are not compared!
@@ -278,8 +278,8 @@ class Table(object, HasSignals):
     def insert_n_rows(self, i, n=1):
         " Insert `n` rows into each column at row `i`. "
         rows = list()
-        for tc in self.dtypechars:
-            rows.append( zeros((n,),dtypechar=tc) )
+        for tc in self.typecodes:
+            rows.append( zeros((n,),typecode=tc) )
         self.insert_rows(i, rows)
         self.update_rows()
 
@@ -360,7 +360,7 @@ class Table(object, HasSignals):
         the type of a column.
         """
         self._ncols = len(self._columns)
-        self._dtypechars = map(lambda x: x.dtypechar, self._columns)
+        self._typecodes = map(lambda x: x.typecode, self._columns)
 
         # TODO: move to types.h
         type_map = {'d': float,
@@ -368,7 +368,7 @@ class Table(object, HasSignals):
                     'O': str,
                     'l': long,
                     'i': int}
-        self._converters = map(lambda tc: type_map[tc], self._dtypechars)
+        self._converters = map(lambda tc: type_map[tc], self._typecodes)
 
         self.sig_emit('update-columns') # FIXME ???
             
@@ -384,11 +384,11 @@ class Table(object, HasSignals):
     nrows = property(get_nrows)
     def get_ncols(self): return self._ncols
     ncols = property(get_ncols)
-    def get_dtypechar(self, i): return self._dtypechars[i]
-    def get_dtypechars(self): return self._dtypechars
-    dtypechars = property(get_dtypechars)
-    def get_dtypechars_as_string(self): return reduce(lambda x,y: x+y, self.dtypechars)
-    dtypechars_as_string = property(get_dtypechars_as_string)
+    def get_typecode(self, i): return self._typecodes[i]
+    def get_typecodes(self): return self._typecodes
+    typecodes = property(get_typecodes)
+    def get_typecodes_as_string(self): return reduce(lambda x,y: x+y, self.typecodes)
+    typecodes_as_string = property(get_typecodes_as_string)
     def get_converters(self): return self._converters
     converters = property(get_converters)
     def get_converter(self, i): return self._converters[i]    
@@ -401,7 +401,7 @@ class Table(object, HasSignals):
     def __len__(self): return self.ncols
     
     def __str__(self):
-        rv = ["\nTable (%d ncols: '%s', %d nrows)" % (self.ncols, self.dtypechars_as_string, self.nrows) ]
+        rv = ["\nTable (%d ncols: '%s', %d nrows)" % (self.ncols, self.typecodes_as_string, self.nrows) ]
         j = 0
         for col in self.columns:
             rv.append( "  col %d: %s" % (j, str(col)) )
@@ -474,12 +474,12 @@ class RowIterator:
 #--- CONVENIENCE FUNCTIONS ----------------------------------------------------
 
 
-def table_to_array(tbl, dtypechar='d'):
+def table_to_array(tbl, typecode='d'):
     shape = (tbl.ncols, tbl.nrows)
     
-    a = zeros( (tbl.ncols, tbl.nrows), dtypechar)
+    a = zeros( (tbl.ncols, tbl.nrows), typecode)
     for j in range(tbl.ncols):
-        a[j] = tbl[j].astype(dtypechar)
+        a[j] = tbl[j].astype(typecode)
 
     return transpose(a)
 
@@ -491,7 +491,7 @@ def array_to_table(a):
     nrows, ncols =a.shape
     a = transpose(a)
     
-    tbl = Table(ncols=ncols, nrows=nrows, dtypechars=a.dtypechar)
+    tbl = Table(ncols=ncols, nrows=nrows, typecodes=a.typecode)
     for j in range(tbl.ncols):
         tbl[j] = a[j]
         
