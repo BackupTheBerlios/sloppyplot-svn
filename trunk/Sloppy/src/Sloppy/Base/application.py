@@ -35,7 +35,7 @@ from Sloppy.Base.projectio import load_project, save_project, ParseError
 from Sloppy.Base.backend import BackendRegistry
 from Sloppy.Base.table import Table
 from Sloppy.Base.dataio import ImporterRegistry, ExporterRegistry, importer_from_filename
-from Sloppy.Base import uwrap, const, utils
+from Sloppy.Base import uwrap, utils
 from Sloppy.Base.dataio import ImporterRegistry, ExporterRegistry, importer_from_filename, Importer, ImportError
 from Sloppy.Base import config, error
 

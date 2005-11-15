@@ -37,7 +37,7 @@ from Sloppy.Base.backend import Backend, BackendRegistry
 from Sloppy.Base.table import Table
 from Sloppy.Base.plugin import PluginRegistry
 
-from Sloppy.Base import pdict, uwrap, const, utils, error
+from Sloppy.Base import pdict, uwrap, utils, error
 
 
 import logging
@@ -476,7 +476,7 @@ class Project(HasProps, HasSignals):
 
 
     #----------------------------------------------------------------------
-    def plot(self, plot=0, key=const.DEFAULT_BACKEND):
+    def plot(self, plot=0, key='matplotlib'):
         plot = self.get_plot(plot)
         backend = self.request_backend(key, plot=plot)
         backend.draw()
