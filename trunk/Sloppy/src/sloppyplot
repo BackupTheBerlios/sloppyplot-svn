@@ -75,13 +75,6 @@ else:
 import Sloppy
 Sloppy.init()
 
-# Set path to Sloppy package.
-# TODO: This solution seems rather awkward to me.  I would prefer, if
-# Sloppy.Base.const could figure out its absolute path and set the
-# path itself.  How?
-from Sloppy.Base import const
-const.set_path(Sloppy.__path__[0])
-
 # only support gtk frontend right now
 if options.use == 'gtk':
     import Sloppy.Gtk.application

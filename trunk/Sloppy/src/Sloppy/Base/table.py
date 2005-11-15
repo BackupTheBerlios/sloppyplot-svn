@@ -64,7 +64,8 @@ class Column(HasProps):
 
     key = pKeyword()
     
-    designation = pString(CheckValid(['X','Y','XY','XERR', 'YERR', 'LABEL']))
+    designation = pString(CheckValid(['X','Y','XY','XERR', 'YERR', 'LABEL']),
+                          default='X')
     query = pString()
     label = pUnicode()
     data = pArray(rank=1)

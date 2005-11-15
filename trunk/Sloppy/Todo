@@ -2,9 +2,18 @@
 BUGFIXES:
  - check zoom functions => ZoomAxes => check matplotlib.
 
- - when adding a column, we can't edit.  Something about value_list
- 
- - 
+ - props: CheckValid, ValueDict -> better naming convention.
+ - props: There is a method layerwin.collect_values.  What is
+   different from Prop.valid_values() ?  Which one should I use?
+  
+ - We would like to have sloppyplot recognize the prefix given in setup.py
+   Possibilities
+   (1) Have setup.py manipulate version.py -> hmmm. not really nice.
+   (2) Have system-wide config file -> hmmm. One more layer of abstraction.
+   (3) Have setup.py manipulate the script 'sloppyplot' ?
+       Then it would still be possible to override this setting
+       when starting sloppyplot?
+
 
 
 

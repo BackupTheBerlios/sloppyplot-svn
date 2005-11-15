@@ -187,7 +187,7 @@ class ComboBox(Connector):
             value = self.get_value()
             index = self.value_list.index(value)
         except:
-            raise ValueError("Failed to retrieve prop value '%s' in list of available values '%s'" % (self.get_value(), value_list))
+            raise ValueError("Failed to retrieve prop value '%s' in list of available values '%s'" % (self.get_value(), self.value_list))
 
         model = self.widget.get_model()
         iter = model.get_iter((index,))
