@@ -4,7 +4,6 @@ import logging
 logger = logging.getLogger('Cli.main')
 
 from Sloppy.Base.project import *
-from Sloppy.Base import const
 from Sloppy.Backends import *
 
 import os.path
@@ -34,7 +33,7 @@ parser.add_option("-d","--debug",action="store_true", dest="debug",
                   default=True,help="print debug messages to stdout")
 
 
-args = ["-f", os.path.join(const.internal_path(const.PATH_EXAMPLE),"zno.spj"), "plot"]
+args =[] # TODO, e.g args = ["-f", '/usr/share...')
 (options,args) = parser.parse_args(args)
 
 #------------------------------------------------------------------------------

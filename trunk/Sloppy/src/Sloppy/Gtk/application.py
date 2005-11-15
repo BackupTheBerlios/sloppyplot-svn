@@ -46,7 +46,7 @@ from layerwin import LayerWindow
 
 import Sloppy
 from Sloppy.Base.application import Application
-from Sloppy.Base import const, utils, error, config
+from Sloppy.Base import utils, error, config
 from Sloppy.Base.objects import Plot, Axis, Line, Layer, new_lineplot2d
 from Sloppy.Base.dataset import Dataset
 from Sloppy.Base.project import Project
@@ -383,7 +383,7 @@ class GtkApplication(Application):
     def _cb_plot_matplotlib(self,widget): self.plot_current_objects('matplotlib')
 
 
-    def plot(self,plot,backend_name=const.DEFAULT_BACKEND):
+    def plot(self,plot,backend_name='matplotlib'):
         
         logger.debug("Backend name is %s" % backend_name)
         
@@ -440,7 +440,7 @@ class GtkApplication(Application):
             raise RuntimeError("Unknown backend %s" % backend_name)
         
 
-    def plot_current_objects(self, backend_name=const.DEFAULT_BACKEND, undolist=[]):
+    def plot_current_objects(self, backend_name='matplotlib', undolist=[]):
         (plots, datasets) = self.window.treeview.get_selected_plds()
         for plot in plots:
             self.plot(plot, backend_name)

@@ -575,14 +575,18 @@ class LabelsTool(Tool):
 #------------------------------------------------------------------------------
 
 import Sloppy
-from Sloppy.Base import const, objects
-import application
+from Sloppy.Base import objects
 
+import application
+import os.path
 
 def test2():
-    const.set_path(Sloppy.__path__[0])
-    filename = const.internal_path(const.PATH_EXAMPLE, 'example.spj')
-    app = application.GtkApplication(filename)
+
+    
+    app = application.GtkApplication()
+    filename = os.path.join(app.path('example_dir'), 'example.spj')
+    app.load_project(filename)
+    
     plot = app.project.get_plot(0)
 
     win = Toolbox(app, app.project)

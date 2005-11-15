@@ -32,7 +32,7 @@ import gtkutils
 
 import Sloppy
 
-from Sloppy.Base import const, utils, error, version, config
+from Sloppy.Base import utils, error, version, config
 from Sloppy.Base.objects import Plot
 from Sloppy.Base.dataset import Dataset
 from Sloppy.Base.backend import BackendRegistry
@@ -532,7 +532,7 @@ class AppWindow( gtk.Window ):
         #dialog.set_artists(["Artists"])
         #dialog.set_translator_credits("Whoever translated")
         #dialog.set_log_icon_name("SloppyPlot")
-        path = const.internal_path("Gtk", "Icons", "Plot.png")
+        path = os.path.join(self.app.path.get('icon_dir'), "Plot.png")
         logo = gtk.gdk.pixbuf_new_from_file(path)
         dialog.set_logo(logo)
 
