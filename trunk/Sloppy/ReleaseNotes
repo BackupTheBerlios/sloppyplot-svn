@@ -1,4 +1,27 @@
 
+Release Notes for SloppyPlot 0.5.0 (released 2005-11-16)
+========================================================
+
+After quite a while, here's another release of your
+favorite scientific plotting tool :-)
+
+IMPORTANT NOTE: There has been a drastic change in the 
+file format, which causes an incompatibility to existing
+.spj files.  If there is actually another person in this
+universe that uses .spj files, please don't hesitate to
+e-mail me and I will tell you how to convert from the 
+old to the new format.
+
+The good news is that SloppyPlot now has two dependencies
+less and should be relatively easy to install on a 
+modern Linux desktop.  Despite my initial idea to replace 
+Numeric with scipy, I decided to stick with Numeric
+for a while.
+
+There have not been any user-visible changes, except for
+the possibility to export via gnuplot from the interactive
+backend.
+
 
 Release Notes for SloppyPlot 0.4.5 (released 2005-10-18)
 ========================================================

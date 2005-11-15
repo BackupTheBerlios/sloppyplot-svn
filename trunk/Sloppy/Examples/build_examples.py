@@ -1,4 +1,7 @@
 
+import Sloppy
+Sloppy.init()
+
 from Sloppy.Base.dataset import *
 from Sloppy.Base.objects import *
 from Sloppy.Base.project import *
@@ -27,7 +30,7 @@ def demo_zno():
     
     spj = Project(plots=[pl], datasets=[ds])
 
-    save_project(spj, 'zno.spj')
+    save_project(spj, 'example_01.spj')
 
 
 if __name__ == "__main__":

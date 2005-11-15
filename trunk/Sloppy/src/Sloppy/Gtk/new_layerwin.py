@@ -143,7 +143,7 @@ import application
 def test():
 
     app = application.GtkApplication()
-    filename = os.path.join(app.path.get('example_dir', 'example.spj'))
+    filename = os.path.join(app.path.get('example_dir', 'example_01.spj'))
     app.load_project(filename)    
     plot = app.project.get_plot(0)
     

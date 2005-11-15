@@ -16,23 +16,22 @@ Sloppyplot is developed and has been tested under Linux.  Windows
 environments are not yet supported, but will be once everything has
 been stabilized.
 
-Sloppyplot has a few dependencies which you should be aware of.
+Sloppyplot unfortunately has a lot of dependencies!
 
 The following applications and libraries have to to be installed
-before running the program.  Except for python, it is not necessary to
-have these dependencies fulfilled at the time of installation.
+before running the program. 
+
 
 - python >= 2.4
   http://www.python.org
 
-- pygtk >= 2.6, 
+- pygtk 2.6, 
   http://www.pygtk.org
 
-- Scipy Core 
-  (= the new scipy, please be careful not to use the old scipy)
+- Numeric (any recent version should work), 
   http://numpy.sf.net
 
-- matplotlib >= 0.83.1
+- matplotlib 0.84
   http://matplotlib.sf.net
 
 
@@ -41,16 +40,6 @@ For the postscript export you need to have Gnuplot installed
 - Gnuplot
   www.gnuplot.info
 
-
-I am currently testing analysis functions.  For these, you need to
-have the Gnu Scientific Library (GSL) and its python bindings
-installed.  These dependencies are totally optional! 
-
-- Gnu Scientific Library 1.x
-  http://www.gnu.org/software/gsl/
-
-- Python Bindings for GSL
-  http://pygsl.sourceforge.net/
 
 
 
@@ -64,5 +53,4 @@ file and enter:
 $ python setup.py install
 
 And you are done.  The executable is called sloppy-gtk
-
 

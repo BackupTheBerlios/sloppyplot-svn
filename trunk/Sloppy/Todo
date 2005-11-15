@@ -1,15 +1,16 @@
  
-BUGFIXES:
- - props: CheckValid, ValueDict -> better naming convention.
- - props: There is a method layerwin.collect_values.  What is
-   different from Prop.valid_values() ?  Which one should I use?
-  
+
 
 
 ###############################################################################
 
-Plans for 0.5.x
+Plans for 0.5.1
 ===============
+
+BUGFIXES:
+ - props: CheckValid, ValueDict -> better naming convention.
+ - props: There is a method layerwin.collect_values.  What is
+   different from Prop.valid_values() ?  Which one should I use?
 
 == CUSTOM GNUPLOT EXPORT ==
 
