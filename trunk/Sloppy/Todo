@@ -24,6 +24,10 @@ Plans for 0.5.x
 - Allow setting group properties in layerwin
 
 
+== SOMETHING TO LOOK AT ==
+
+- status bar messages :-)
+
 
 == HEADER LINES SUPPORT FOR ASCII IMPORT ==
 
@@ -220,9 +224,6 @@ Minor fixes
  
 ------------------------------------------------------------------------------
 
-
-
-
 Export:
 
 (1) allow export templates => configuration file?
@@ -239,8 +240,6 @@ Export:
   - all backends need to check the data type before using the data
   - the treeview must display different icons
   - when editing an array, we can't use the tableview
-
-
 
 - When a project is saved, then naturally all data files, which have not
   yet been loaded, are first imported, and then exported.... This is 
@@ -293,62 +292,8 @@ gtk.accel_map_change_entry("<SomeName>/SomeName/SomeName/MenuItemName",
 gtk.gdk.keyval_from_name("S"), gtk.gdk.CONTROL_MASK, True)
 
 
-
-
 examples for format
 
 %3.0em    1e+03
 %2.0f     100.00
 %L        3
-
-
-
-            # from matplotlib zooming algorithm
-            #dx=(lastx-x)/float(a.bbox.width())
-            #dy=(lasty-y)/float(a.bbox.height())
-            #dx,dy=format_deltas(event,dx,dy)
-            #alphax = pow(10.0,dx)
-            #alphay = pow(10.0,dy)#use logscaling, avoid singularities and smother scaling...
-            #lastx, lasty = trans.inverse_xy_tup( (lastx, lasty) )
-            #if a.get_xscale()=='log':
-            #    xmin = lastx*(xmin/lastx)**alphax
-            #    xmax = lastx*(xmax/lastx)**alphax
-            #else:
-            #    xmin = lastx+alphax*(xmin-lastx)
-            #    xmax = lastx+alphax*(xmax-lastx)
-            #if a.get_yscale()=='log':
-            #    ymin = lasty*(ymin/lasty)**alphay
-            #    ymax = lasty*(ymax/lasty)**alphay
-            #else:
-            #    ymin = lasty+alphay*(ymin-lasty)
-            #    ymax = lasty+alphay*(ymax-lasty)
-
-
-#------------------------------------------------------------------------------
-
-            # x/y are absolute coordinates
-            # we need to be able to work with
-            #  - data coordinates
-            #  - relative graph positions (0-1)
-            #  - absolute screen positions (like it is right now)
-
-            def screen_from_data(ax, xdata, ydata):
-                return ax.transData.xy_tup((xdata,ydata))
-
-            def data_from_screen(ax, x, y):
-                return ax.transData.inverse_xy_tup((x,y))
-
-            def graph_from_screen(ax, x, y):
-                l,b,w,h = ax.bbox.get_bounds()
-
-                if x < l or x > (l+w):  x = None
-                else: x = (x-l)/w
-
-                if y < b or y > (b+h): y = None
-                else: y = (y-b)/h
-
-                return x,y
-
-            def screen_from_graph(ax, x, y):
-                l,b,w,h = ax.bbox.get_bounds()
-                return l+w*x, b+h*y

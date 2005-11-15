@@ -31,7 +31,7 @@ URL="http://sloppyplot.berlios.de"
 # Version information. Uncomment second line while developing.
 VERSION="0.4.5"
 VERSION= VERSION+".SVN $Rev$".replace("Rev: ","").replace(" $","")
- 
+
 DESCRIPTION = "A scientific plotting tool"
 LONG_DESCRIPTION="""\
 A scientific plotting tool that currently only supports 2d plots.  The
@@ -42,11 +42,15 @@ using gnuplot is available.
 
 
 LICENSES = \
-["""SloppyPlot is (C) 2004-2005 by Niklas Volbers and is distributed under
+["""
+This text includes two licenses: The one for SloppyPlot and then the
+one for ElementTree, which is packaged along with SloppyPlot.
+
+----------------------------------------------------------------------
+SloppyPlot is (C) 2004-2005 by Niklas Volbers and is distributed under
 the terms of the GNU General Public License as published by the Free
 Software Foundation; either version 2 of the License, or (at your
 option) any later version.
-
 ----------------------------------------------------------------------
 
 		    GNU GENERAL PUBLIC LICENSE
@@ -392,7 +396,6 @@ Public License instead of this License.
 
 
 ----------------------------------------------------------------------""",
-###
 """The ElementTree toolkit is
 
 Copyright (c) 1999-2004 by Fredrik Lundh
