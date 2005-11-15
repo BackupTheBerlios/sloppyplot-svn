@@ -27,42 +27,6 @@ Constant declarations.
 import logging
 logger = logging.getLogger('Base.const')
 
-import os
-
-#
-# path handling
-#
-
-class PathHandler:
-    def __init__(self): self.p = {}
-    def set(self, k,v): self.p[k] = v
-    def bset(self, k,v): self.p[k] = os.path.join(self.p['base'], v)
-    def get(self, k): return self.p[k]
-
-def set_path(internal_path):
-    global path
-    path = PathHandler()
-    path.set('base', internal_path)
-    path.set('example', os.path.join(os.path.sep, 'usr', 'share', 'sloppyplot', 'Examples'))
-    path.bset('data', os.path.join('Base','Data'))
-    path.bset('icons',  os.path.join('Gtk','Icons'))
-    
-
-
-
-
-# determine config path
-if os.environ.has_key('XDG_CONFIG_HOME'):
-    PATH_CONFIG = os.path.expandvars('${XDG_CONFIG_HOME}/SloppyPlot')
-else:
-    PATH_CONFIG = os.path.expanduser('~/.config/SloppyPlot')
-
-CONFIG_FILE = os.path.join(PATH_CONFIG, 'config.xml')
-
-
-# TODO: how to represent absolut dirs?
-LOGFILE = os.path.join('/','var','tmp','sloppyplot.log')
-
 DEBUG_SIGNALS = False
 DEBUG_FILTERS = False
 

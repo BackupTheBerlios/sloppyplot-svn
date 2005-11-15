@@ -109,7 +109,8 @@ class GtkApplication(Application):
     """
     
     def init(self):
-        register_all_png_icons(const.path.get('icons'), 'sloppy-')
+        self.path.bset('icon_dir',  'base_dir', os.path.join('Gtk','Icons'))                
+        register_all_png_icons(self.path.get('icon_dir'), 'sloppy-')
         
         self.window = AppWindow(self)
         self._clipboard = gtk.Clipboard()  # not implemented yet
@@ -215,7 +216,7 @@ class GtkApplication(Application):
                          gtk.STOCK_OPEN,
                          gtk.RESPONSE_OK))
             chooser.set_default_response(gtk.RESPONSE_OK)
-            chooser.set_current_folder( const.path.get('example') )
+            chooser.set_current_folder( self.path.get('current_dir') )
             chooser.set_select_multiple(False)
 
             filter = gtk.FileFilter()
@@ -230,7 +231,7 @@ class GtkApplication(Application):
             chooser.add_filter(filter)
             chooser.set_filter(filter) # default filter
 
-            shortcut_folder = const.path.get('example')
+            shortcut_folder = self.path.get('example_dir')
             if os.path.exists(shortcut_folder):
                 chooser.add_shortcut_folder( shortcut_folder )
 
@@ -261,7 +262,7 @@ class GtkApplication(Application):
                          gtk.STOCK_SAVE,
                          gtk.RESPONSE_OK))
             chooser.set_default_response(gtk.RESPONSE_OK)
-            chooser.set_current_folder( const.path.get('example') )
+            chooser.set_current_folder( self.path.get('example_dir') )
             chooser.set_select_multiple(False)
             chooser.set_filename(pj.filename or "unnamed.spj")
 
@@ -271,7 +272,7 @@ class GtkApplication(Application):
             chooser.add_filter(filter)
             chooser.set_filter(filter) # default filter
 
-            shortcut_folder = const.path.get('example')
+            shortcut_folder = self.path.get('example_dir')
             if os.path.exists(shortcut_folder):
                 chooser.add_shortcut_folder(shortcut_folder)
 
@@ -584,7 +585,7 @@ class GtkApplication(Application):
                      gtk.STOCK_OPEN,
                      gtk.RESPONSE_OK))
         chooser.set_default_response(gtk.RESPONSE_OK)
-        chooser.set_current_folder(const.path.get('data'))
+        chooser.set_current_folder(self.path.get('current_dir'))
         chooser.set_select_multiple(True)
 
         filter_keys = {} # used for reference later on
@@ -613,7 +614,7 @@ class GtkApplication(Application):
             filter_keys[blurb] = key
 
         # add shortcut folder to example path, if such exists
-        shortcut_folder = const.path.get('example')
+        shortcut_folder = self.path.get('data_dir')
         if os.path.exists(shortcut_folder):
             chooser.add_shortcut_folder(shortcut_folder)
 
@@ -855,17 +856,18 @@ class GtkApplication(Application):
 
 # ======================================================================    
 
-def main(filename):
-    print "---"
-    print const.path.get('base')
-    print "---"
-    filename = filename or os.path.join(const.path.get('example'), 'example.spj')
-    app = GtkApplication(filename)
+def main(filename=None):
+
+    app = GtkApplication()
+    filename = filename or os.path.join(app.path.get('example_dir'), 'example.spj')
+    try:
+        app.load_project(filename)
+    except IOError:
+        app.set_project(Project())    
     gtk.main()
 
     
 if __name__ == "__main__":
-    const.set_path(Sloppy.__path__[0])
     main()
     
     

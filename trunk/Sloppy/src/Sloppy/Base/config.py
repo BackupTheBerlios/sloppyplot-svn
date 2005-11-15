@@ -28,8 +28,6 @@ from Sloppy.Lib.ElementTree.ElementTree import ElementTree, Element, SubElement,
 
 import sys, os
 
-import const
-
 import logging
 logger = logging.getLogger('Base.config')
 
@@ -37,17 +35,17 @@ logger = logging.getLogger('Base.config')
 CONFIG_FILE_VERSION = "0.4.3"
 
 
-def check_path():
+def check_path(path):
     """ Make sure path to config file exists. """
-    if os.path.exists(const.PATH_CONFIG) is False:
+    if os.path.exists(path) is False:
         try:
-            os.mkdir(const.PATH_CONFIG)
+            os.mkdir(path)
         except IOError, msg:
             logging.error("Big Fat Warning: Could not create config path! Configuration will not be saved! Please check permissions for creating '%s'. (%s)" % (PATH_CONFIG, msg))
                 
         
-def read_configfile(app, filename=const.CONFIG_FILE):
-    check_path()
+def read_configfile(app, filename):
+    check_path(os.path.split(filename)[0])
 
     # open config file
     filename = os.path.expanduser(filename)
@@ -73,8 +71,8 @@ def read_configfile(app, filename=const.CONFIG_FILE):
     
 
 
-def write_configfile(eConfig, filename=const.CONFIG_FILE):
-    check_path()
+def write_configfile(eConfig, filename):
+    check_path(os.path.split(filename)[0])
 
     filename = os.path.expanduser(filename)
     fd = open(filename, 'w')

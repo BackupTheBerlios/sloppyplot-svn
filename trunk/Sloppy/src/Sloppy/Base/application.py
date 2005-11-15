@@ -39,30 +39,70 @@ from Sloppy.Base import uwrap, const, utils
 from Sloppy.Base.dataio import ImporterRegistry, ExporterRegistry, importer_from_filename, Importer, ImportError
 from Sloppy.Base import config, error
 
+import Sloppy
+
 from Sloppy import Plugins
 from Sloppy.Base.plugin import PluginRegistry
 
 
-        
+#------------------------------------------------------------------------------
+
+class PathHandler:
+    def __init__(self): self.p = {}
+    def set(self, k,v): self.p[k] = v
+    def bset(self, k1, k2, v): self.p[k1] = os.path.join(self.p[k2], v)
+    def get(self, k): return self.p[k]
+
+
+#------------------------------------------------------------------------------        
 class Application(object, HasSignals):
 
     def __init__(self, project=None):
 	" 'project' may be a Project object or a filename. "
         object.__init__(self)
 
+        # init signals
         HasSignals.__init__(self)
         self.sig_register('write-config')
         self.sig_register('notify::project')
         self.sig_register('update-recent-files')
+
+        # init path handler
+        self.path = PathHandler()
+        internal_path = Sloppy.__path__[0]
+        self.path.set('base_dir', internal_path)
+        self.path.set('example_dir', os.path.join(os.path.sep, 'usr', 'share', 'sloppyplot', 'Examples'))
+        self.path.bset('data_dir', 'example_dir', 'Data')
+        self.path.set('logfile', os.path.join(os.path.sep, 'var', 'tmp', 'sloppyplot.log'))
+        self.path.set('current_dir', os.path.curdir)
         
-        self.eConfig = config.read_configfile(self, const.CONFIG_FILE)
-        self.sig_connect("write-config",
-                        (lambda sender: self.write_recentfiles()))
+        # determine config path
+        if os.environ.has_key('XDG_CONFIG_HOME'):
+            xdg_path = os.path.expandvars('${XDG_CONFIG_HOME}')
+            cfg_path = os.path.join(xdg_path, 'SloppyPlot')
+        else:
+            home_path = os.path.expanduser('~')
+            cfg_path = os.path.join(home_path, '.config', 'SloppyPlot')
+
+        self.path.set('config_dir', cfg_path)
+        self.path.bset('config', 'config_dir', 'config.xml')
         
+        print "CONFIG DIR ", self.path.get('config_dir')
+
+
+        # init config file
+        self.eConfig = config.read_configfile(self, self.path.get('config'))
+
+        # set up plugins
+        # initialization is done at then end (TODO: why?)
         self.plugins = dict()
 
+        # init recent files
         self.recent_files = list()
         self.read_recentfiles()
+        self.sig_connect("write-config",
+                         (lambda sender: self.write_recentfiles()))
+
 
         # init() is a good place for initialization of derived class
         self.init()
@@ -85,7 +125,7 @@ class Application(object, HasSignals):
 
 	# inform all other objects to update the config file elements
         self.sig_emit("write-config")
-        config.write_configfile(self.eConfig, const.CONFIG_FILE)
+        config.write_configfile(self.eConfig, self.path.get('config'))
         
         
     #----------------------------------------------------------------------
