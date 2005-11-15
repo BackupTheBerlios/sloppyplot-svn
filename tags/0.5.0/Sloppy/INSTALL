@@ -1,0 +1,56 @@
+
+INSTALLATION HINTS
+==================
+
+1. Requirements
+2. Generic Installation Instructions
+
+
+
+------------------------------------------------------------------------------
+
+1. Requirements
+===============
+
+Sloppyplot is developed and has been tested under Linux.  Windows
+environments are not yet supported, but will be once everything has
+been stabilized.
+
+Sloppyplot unfortunately has a lot of dependencies!
+
+The following applications and libraries have to to be installed
+before running the program. 
+
+
+- python >= 2.4
+  http://www.python.org
+
+- pygtk 2.6, 
+  http://www.pygtk.org
+
+- Numeric (any recent version should work), 
+  http://numpy.sf.net
+
+- matplotlib 0.84
+  http://matplotlib.sf.net
+
+
+For the postscript export you need to have Gnuplot installed
+
+- Gnuplot
+  www.gnuplot.info
+
+
+
+
+
+2. Generic Installation Instructions
+====================================
+
+To install, stay in the directory where you found this INSTALL.txt
+file and enter:
+
+$ python setup.py install
+
+And you are done.  The executable is called sloppy-gtk
+

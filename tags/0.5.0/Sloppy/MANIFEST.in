@@ -1,0 +1,8 @@
+include *.txt
+include AUTHORS COPYING ChangeLog INSTALL README ReleaseNotes
+recursive-include Licenses *.txt
+recursive-include src *.png
+include Examples *.spj
+include sloppyplot.desktop
+
+

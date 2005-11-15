@@ -1,0 +1,116 @@
+
+Release Notes for SloppyPlot 0.5.0 (released 2005-11-16)
+========================================================
+
+After quite a while, here's another release of your
+favorite scientific plotting tool :-)
+
+IMPORTANT NOTE: There has been a drastic change in the 
+file format, which causes an incompatibility to existing
+.spj files.  If there is actually another person in this
+universe that uses .spj files, please don't hesitate to
+e-mail me and I will tell you how to convert from the 
+old to the new format.
+
+The good news is that SloppyPlot now has two dependencies
+less and should be relatively easy to install on a 
+modern Linux desktop.  Despite my initial idea to replace 
+Numeric with scipy, I decided to stick with Numeric
+for a while.
+
+There have not been any user-visible changes, except for
+the possibility to export via gnuplot from the interactive
+backend.
+
+
+Release Notes for SloppyPlot 0.4.5 (released 2005-10-18)
+========================================================
+
+This release is the fifth one in the 0.4.x series that slowly
+evolved into a series of major feature and productivity
+enhancements.  The Gnuplot backend has been modularized. Even though
+this change is not very visible to the user, it allows further
+modifications in future releases!  A lot of work has been put
+into supporting multiple layers.  Basically, all zoom functions have
+been rewritten using the so called 'active layer'.  While it is
+possible to change the active layer in the experimental multiplot,
+it is not yet possible to create or remove layers -- but all
+preparations have been done.
+Apart from that, some fixes for very subtle bugs and the decision
+to drop support for XPS files, which were my personal playground
+anyway.
+
+
+Release Notes for SloppyPlot 0.4.4 (released 2005-10-06)
+========================================================
+
+This release is the fourth one in the 0.4.x series that was supposed
+to focus on code cleanup and api documentation.  Since 0.4.3 was
+terribly unstable and many functions were broken, it is very much
+recommended to upgrade to 0.4.4 which has been tested now for quite a
+while and should work well.  
+
+The toolbox is now fully functional, even though there is currently
+only a labels tool available.  The output works on both backends, even
+though the gnuplot backend is not yet automatically redrawn.
+
+Some dialogs have been rewritten, so that they now show tooltips
+(e.g. the postscript export).
+
+The Undo and Redo text is now properly displayed for most functions.
+
+
+Release Notes for SloppyPlot 0.4.3 (released 2005-09-21)
+========================================================
+
+This release is the third one in the 0.4.x series that was supposed to
+focus on code cleanup and api documentation.  Well, things changed a
+little!  I needed labels for my own graphs, so I added a nifty labels
+tool.  This tool is very similar to the toolbox found in the GIMP.
+Since I was annoyed by the fact that I had to place all windows again
+and again to a proper position, I also rewrote the configuration file.
+It is now XML-based and remembers the position of the main window and
+of the tool window.
+
+Note that the Labels tool does not yet work with gnuplot!
+
+
+Release Notes for SloppyPlot 0.4.2 (released 2005-09-11)
+========================================================
+
+This release is the second one in the 0.4.x series that will focus on
+code cleanup and api documentation.  There are _no_ user visible
+changes, _but_ the Props system (similar to basicproperty or to the
+traits system) has been reworked, restructured and is even documented!
+
+
+Release Notes for SloppyPlot 0.4.1 (released 2005-09-06)
+========================================================
+
+This release is the first one in the 0.4.x series that will focus on
+code cleanup and api documentation. The only real visible feature will
+probably be the gradual improvement of the ASCII import dialog, which
+has already started with this release. 
+
+
+
+Release Notes for SloppyPlot 0.4 (released 2005-08-28)
+======================================================
+
+This release features once again many stability fixes.  Most
+importantly, I decided to settle on the current file format: Using an
+old .spj file will not be a problem in future releases. The location
+of the config file has changed according the freedesktop
+specifications.
+
+
+
+Release Notes for SloppyPlot 0.3 (released 2005-08-24)
+======================================================
+
+This release features a lot of bug fixes and little improvements to
+the user interface.  The biggest visible change is the addition of a
+dialog to modify the dataset columns (add/remove/move/edit).
+
+It is recommended to update matplotlib to the newest version (0.83.1)
+
