@@ -42,20 +42,6 @@ _all__ = ["PWContainer", "PWTableBox",
 
 
 
-def collect_values(prop):
-    """ Collect all values of the prop specified by CheckValid. """
-    value_list = []
-    #print "Checking prop ", prop
-    try:
-        for item in prop.check.items:
-            if isinstance(item, CheckValid):
-                value_list.extend(item.values)
-    except AttributeError:
-        pass
-    return value_list
-        
-    
-
 class PWContainer:
 
     def __init__(self):
@@ -259,7 +245,7 @@ class PWComboBox(PW):
     def check_in(self):
         try:
             #print "Checking in from ", self.container
-            value_list = collect_values(self.prop)
+            value_list = self.prop.valid_values()
             index = value_list.index(self.get_value())
             self.widget.set_active(index)
         except:
@@ -283,7 +269,7 @@ class PWComboBox(PW):
     def fill_combo(self):
         model = self.widget.get_model()
         model.clear()
-        value_list = collect_values(self.prop)
+        value_list = self.prop.valid_values()
         for value in value_list:
             model.append( (value or "<None>", value) )
         
@@ -416,7 +402,7 @@ class PWCheckButton(PW):
 def construct_pw(container, key):
     prop = container.get_prop(key)
 
-    value_list = collect_values(prop)
+    value_list = prop.valid_values()
     if value_list:
         pw = PWComboBox(container, key)
     elif isinstance(prop, pBoolean):
