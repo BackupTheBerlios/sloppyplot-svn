@@ -32,21 +32,24 @@ import os
 #
 # path handling
 #
-the_path = []
-def set_path(path):
-    global the_path
-    the_path.append(path)
-def internal_path(*path):
-    global the_path
-    if len(the_path) == 0:
-	logger.error("Fatal Error: internal path not set up properly!")
-	raise SystemExit
-    return os.path.join( the_path[-1], *path )
+
+class PathHandler:
+    def __init__(self): self.p = {}
+    def set(self, k,v): self.p[k] = v
+    def bset(self, k,v): self.p[k] = os.path.join(self.p['base'], v)
+    def get(self, k): return self.p[k]
+
+def set_path(internal_path):
+    global path
+    path = PathHandler()
+    path.set('base', internal_path)
+    path.set('example', os.path.join(os.path.sep, 'usr', 'share', 'sloppyplot', 'Examples'))
+    path.bset('data', os.path.join('Base','Data'))
+    path.bset('icons',  os.path.join('Gtk','Icons'))
+    
 
 
-PATH_EXAMPLE  = os.path.join('usr', 'share', 'Examples')
-PATH_DATA     = os.path.join('Base','Data')
-PATH_ICONS    = os.path.join('Gtk','Icons')
+
 
 # determine config path
 if os.environ.has_key('XDG_CONFIG_HOME'):
