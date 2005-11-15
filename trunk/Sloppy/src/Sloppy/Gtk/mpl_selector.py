@@ -506,7 +506,9 @@ class ChangeViewRegion(Selector):
         self._imageBack = None
         
         self.x, self.y = 0,0
-        self.xmin, self.xmax, self.ymin, self.ymax = 0,0,0,0
+        
+        # self.xmin is set to None to indicate that it has not yet been set
+        self.xmin, self.xmax, self.ymin, self.ymax = None,0,0,0
 
         self._idleId = 0
 
@@ -514,20 +516,19 @@ class ChangeViewRegion(Selector):
         
     def init(self):
         self.canvas.window.set_cursor(self.cursor)
+
+        # If no axes has been specified in __init__, then the
+        # axes is determined from the first user mouse click.
         self.mpl_connect("button_press_event", self.on_button_press)
 
         
     def finish(self, abort=False):
         self.canvas.window.set_cursor(None)
-        if abort is True and self.axes is not None:
-            print "RESTORING"
+        if abort is True and self.axes is not None and self.xmin is not None:
             # restore original position
             self.axes.set_xlim((self.xmin, self.xmax))
             self.axes.set_ylim((self.ymin, self.ymax))
-            print "RESTORED"
-            self.canvas.draw()  # A BUG IN MATPLOTLIB 0.84 ???
-            print "REDRAWN"
-            
+            self.canvas.draw()
             
         Selector.finish(self, abort=abort)
 
@@ -539,14 +540,13 @@ class ChangeViewRegion(Selector):
         if self.axes is None:
             self.axes = event.inaxes
 
-        if not self.axes:
+        if not self.axes or event.inaxes != self.axes:
             return
 
+        self.mpl_disconnect("button_press_event")    
         self.mpl_connect("button_release_event", self.on_button_release)
         self.mpl_connect("motion_notify_event", self.on_motion_notify_event)
-        self.mpl_disconnect("button_press_event")
 
-        # current pixel position and pixel widths
         self.x, self.y = event.x, event.y
         self.width = self.axes.bbox.width()
         self.height = self.axes.bbox.height()

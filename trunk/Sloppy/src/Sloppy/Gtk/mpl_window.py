@@ -695,10 +695,10 @@ class MatplotlibWidget(gtk.VBox):
 
         self._current_selector = None
         
-        def on_finish(sender):
+        def on_finish(sender):            
             # Be careful not to call self.abort_selection() in this place.
             print "---"
-            print "ABORTING"
+            print "ABORTING"            
             self._current_selector = None
             self.btn_cancel.set_sensitive(False)
             self.emit("edit-mode-ended")
