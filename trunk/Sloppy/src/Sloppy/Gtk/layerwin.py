@@ -540,51 +540,48 @@ class LinesTab(AbstractTab):
         # Below the scrolled window, we add some boxes for group
         # properties.
         #
-        gb = GroupBox(self.layer, 'group_linestyle')
-        gb.show()
+        self.gblist = [GroupBox(self.layer, 'group_linestyle'),
+                       GroupBox(self.layer, 'group_linemarker'),
+                       GroupBox(self.layer, 'group_linewidth'),
+                        GroupBox(self.layer, 'group_linecolor')]
 
-        gb2 = GroupBox(self.layer, 'group_linemarker')
-        gb2.show()
-
-        gb3 = GroupBox(self.layer, 'group_linewidth')
-        gb3.show()
-
-        gb4 = GroupBox(self.layer, 'group_linecolor')
-        gb4.show()
-
-        gblist = [gb,gb2,gb3,gb4]
+        # TODO: we re-think the whole layerwin implementation before
+        # actually displaying the table with the group boxes.
+        for gb in self.gblist:
+            gb.show()
         
         # Wrap group boxes into a table
-        table = gtk.Table(rows=len(gblist), columns=3)
+        table = gtk.Table(rows=len(self.gblist), columns=3)
 
-        n = 0
-        for widget in gblist:
-            label = gtk.Label(widget.propname)
-            label.show()
+#         n = 0
+#         for widget in gblist:
+#             label = gtk.Label(widget.propname)
+#             label.show()
             
-            table.attach(label, 0, 1, n, n+1,
-                         xoptions=gtk.FILL,
-                         yoptions=0,
-                         xpadding=5,
-                         ypadding=1)            
-            table.attach(widget, 1, 2, n, n+1,
-                         xoptions=gtk.EXPAND|gtk.FILL,
-                         yoptions=0,
-                         xpadding=5,
-                         ypadding=1)
-            n += 1
-        table.show()
+#             table.attach(label, 0, 1, n, n+1,
+#                          xoptions=gtk.FILL,
+#                          yoptions=0,
+#                          xpadding=5,
+#                          ypadding=1)            
+#             table.attach(widget, 1, 2, n, n+1,
+#                          xoptions=gtk.EXPAND|gtk.FILL,
+#                          yoptions=0,
+#                          xpadding=5,
+#                          ypadding=1)
+#             n += 1
+#         table.show()
         
-        frame = gtk.Frame('Grouped Properties')
-        frame.add(table)
-        frame.show()        
+         
+#         frame = gtk.Frame('Grouped Properties')
+#         frame.add(table)
+#         frame.show()        
 
         #
         # Put everything in a vertical box...
         #
         vbox = gtk.VBox()
         vbox.pack_start(sw, expand=True, fill=True)
-        vbox.pack_start(frame, expand=False, fill=True)
+#         vbox.pack_start(frame, expand=False, fill=True)
         vbox.show()
 
         # for further reference        
@@ -674,7 +671,12 @@ class LinesTab(AbstractTab):
         for line in self.layer.lines:
             if line not in model_lines:
                 ulist.remove( self.layer.lines, line, undolist=ul)
-            
+
+        # group boxes
+        for gb in self.gblist:
+            print "CHECKING OUT"
+            #gb.check_out()
+        
         undolist.append(ul)
 
             
@@ -686,6 +688,9 @@ class LinesTab(AbstractTab):
         for line in lines:            
             model.append(None, self.model_row_from_line(line))
 
+        # group boxes
+        for gb in self.gblist:
+            gb.check_in()
 
     def model_row_from_line(self, line):
         source = line.source
@@ -807,15 +812,25 @@ class GroupBox(gtk.HBox, PWContainer):
         cbutton_allow_override = gtk.CheckButton("allow override")
         cbutton_allow_override.show()
 
-        
 
         self.add(cbox_type)
         self.add(entry_value)
         self.add(entry_increment)
         self.add(cbutton_allow_override)
         self.show()
-        
 
+        PWContainer.__init__(self)
+        
+    def check_in(self):
+        pass
+        #allow_override = self.prop.allow_override
+        #cbutton_allow_override.set_active(allow_override)
+
+    def check_out(self):
+        pass
+        #allow_override = cbutton_allow_override.get_active()
+        #self.prop.allow_override = allow_override
+        
     
 
 
