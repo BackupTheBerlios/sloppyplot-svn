@@ -73,19 +73,40 @@ setup(name=NAME,
                 'Sloppy.Lib.Props',
 		'Sloppy.Lib.Props.Gtk'
                 ],
+		
+      # the package_data determines what to put into the
+      # source tarball.  So if you include anything below
+      # in the data_files section, make sure to have it 
+      # in here as well.      
       package_data = {'Sloppy.Gtk' :
                        [join('Data', 'explorer.xml'),
                         join('Icons', '*.png')]},
+			
       # second argument of data_files tuples is a list!
-      data_files = [(join(PATH_SHARED,'Examples'),
-                     glob(join("Examples","*.spj"))),
-		    (join(PATH_SHARED,'Examples','Data'),
-		     glob(join("Examples","Data","*.dat"))),
-                    (join(sys.prefix,'share','applications'),
-		     ['sloppyplot.desktop']),
-                    (join(sys.prefix, 'share', 'pixmaps'),
-                     [join("src", "Sloppy", "Gtk", "Icons", "sloppyplot.png")])
-		     ],
+      data_files = [
+        # example files
+        (join(PATH_SHARED,'Examples'),
+	glob(join("Examples","*.spj"))),
+	# example data
+        (join(PATH_SHARED,'Examples','Data'),
+         glob(join("Examples","Data","*.dat"))),
+	# pixmaps (=icons used within the application)
+        (join(PATH_SHARED, 'pixmaps', 'sloppyplot'),
+	glob(join("src", "Sloppy", "Gtk", "Icons", "*.png"))),
+	# icons (=icons used e.g. to display .spj files in the file manager)
+	(join(PATH_SHARED, 'icons', 'hicolor', '24x24', 'apps'), 
+	[join("Icons", "hicolor", "24x24", "sloppyplot.png")]),
+	(join(PATH_SHARED, 'icons', 'hicolor', '48x48', 'apps'), 
+	[join("Icons", "hicolor", "48x48", "sloppyplot.png")]),
+	(join(PATH_SHARED, 'icons', 'hicolor', 'scalable', 'apps'), 
+	[join("Icons", "hicolor", "scalable", "sloppyplot.svg")]),
+	# mime info and .desktop info
+	(join(sys.prefix, 'share', 'mime', 'packages'),
+	['sloppyplot.xml']),
+	(join(sys.prefix,'share','applications'),
+	['sloppyplot.desktop'])
+	],
+	
       scripts = [ join('src', 'sloppyplot') ],
 
       # see http://python.org/pypi?%3Aaction=list_classifiers

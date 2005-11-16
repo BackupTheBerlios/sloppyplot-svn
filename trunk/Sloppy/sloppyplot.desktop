@@ -1,10 +1,13 @@
 [Desktop Entry]
+Type=Application
 Encoding=UTF-8
 Name=SloppyPlot
+Comment=Scientific Plotting Tool
 GenericName=Scientific Plotting Tool
 GenericName[de]=Wissenschaftliches Zeichenwerkzeug
-Icon=/usr/share/pixmaps/sloppyplot.png
-Exec=sloppyplot
+Icon=sloppyplot
+Exec=sloppyplot %f
 Terminal=False
-Type=Application
-Categories=Science
+StartupNotify=true
+MimeType=application/x-sloppyplot
+Categories=Application;Utility;Science

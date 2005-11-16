@@ -109,7 +109,7 @@ class GtkApplication(Application):
     """
     
     def init(self):
-        self.path.bset('icon_dir',  'base_dir', os.path.join('Gtk','Icons'))                
+        self.path.bset('icon_dir',  'system_prefix_dir', os.path.join('share', 'pixmaps', 'sloppyplot'))
         register_all_png_icons(self.path.get('icon_dir'), 'sloppy-')
         
         self.window = AppWindow(self)
