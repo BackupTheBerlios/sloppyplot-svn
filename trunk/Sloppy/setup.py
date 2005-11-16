@@ -32,7 +32,8 @@ import sys
 
 # Place to put shared data.
 # TODO: This should be adjusted for windows.
-PATH_SHARED=join(sys.prefix,'share','sloppyplot')
+PATH_SHARE=join(sys.prefix,'share')
+PATH_SLOPPYSHARE=join(sys.prefix,'share','sloppyplot')
 
 # Much information is taken from Sloppy.Base.version, as we
 # don't want to write down all of it twice!  The next lines
@@ -85,25 +86,36 @@ setup(name=NAME,
       # second argument of data_files tuples is a list!
       data_files = [
         # example files
-        (join(PATH_SHARED,'Examples'),
+        (join(PATH_SLOPPYSHARE,'Examples'),
 	glob(join("Examples","*.spj"))),
 	# example data
-        (join(PATH_SHARED,'Examples','Data'),
+        (join(PATH_SLOPPYSHARE,'Examples','Data'),
          glob(join("Examples","Data","*.dat"))),
+	#
 	# pixmaps (=icons used within the application)
-        (join(PATH_SHARED, 'pixmaps', 'sloppyplot'),
+        (join(PATH_SHARE, 'pixmaps', 'sloppyplot'),
 	glob(join("src", "Sloppy", "Gtk", "Icons", "*.png"))),
-	# icons (=icons used e.g. to display .spj files in the file manager)
-	(join(PATH_SHARED, 'icons', 'hicolor', '24x24', 'apps'), 
-	[join("Icons", "hicolor", "24x24", "sloppyplot.png")]),
-	(join(PATH_SHARED, 'icons', 'hicolor', '48x48', 'apps'), 
-	[join("Icons", "hicolor", "48x48", "sloppyplot.png")]),
-	(join(PATH_SHARED, 'icons', 'hicolor', 'scalable', 'apps'), 
-	[join("Icons", "hicolor", "scalable", "sloppyplot.svg")]),
+	# icons for the application sloppyplot
+	(join(PATH_SHARE, 'icons', 'hicolor', '24x24', 'apps'), 
+	[join("Icons", "hicolor", "24x24", "apps", "sloppyplot.png")]),
+	(join(PATH_SHARE, 'icons', 'hicolor', '48x48', 'apps'), 
+	[join("Icons", "hicolor", "48x48", "apps", "sloppyplot.png")]),
+	(join(PATH_SHARE, 'icons', 'hicolor', 'scalable', 'apps'), 
+	[join("Icons", "hicolor", "scalable", "apps", "sloppyplot.svg")]),
+	# mime icons (=icons used for .spj files)
+	(join(PATH_SHARE, 'icons', 'hicolor', '24x24', 'mimetypes'), 
+	[join("Icons", "hicolor", "24x24", "mimetypes", "application-x-sloppyplot.png"),
+	 join("Icons", "hicolor", "24x24", "mimetypes", "gnome-mime-application-x-sloppyplot.png")]),
+	(join(PATH_SHARE, 'icons', 'hicolor', '48x48', 'mimetypes'), 
+	[join("Icons", "hicolor", "48x48", "mimetypes", "application-x-sloppyplot.png"),
+	 join("Icons", "hicolor", "48x48", "mimetypes", "gnome-mime-application-x-sloppyplot.png"),]),
+	(join(PATH_SHARE, 'icons', 'hicolor', 'scalable', 'mimetypes'),
+	[join("Icons", "hicolor", "scalable", "mimetypes", "application-x-sloppyplot.svg"),
+	 join("Icons", "hicolor", "scalable", "mimetypes", "gnome-mime-application-x-sloppyplot.svg")]),
 	# mime info and .desktop info
-	(join(sys.prefix, 'share', 'mime', 'packages'),
+	(join(PATH_SHARE, 'mime', 'packages'),
 	['sloppyplot.xml']),
-	(join(sys.prefix,'share','applications'),
+	(join(PATH_SHARE, 'applications'),
 	['sloppyplot.desktop'])
 	],
 	

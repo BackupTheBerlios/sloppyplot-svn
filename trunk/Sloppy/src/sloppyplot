@@ -77,6 +77,7 @@ Sloppy.init()
 
 # only support gtk frontend right now
 if options.use == 'gtk':
+    logger.info("Filename passed: %s", filename)
     import Sloppy.Gtk.application
     Sloppy.Gtk.application.main(filename)
 else:
