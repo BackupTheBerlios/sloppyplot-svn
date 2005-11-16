@@ -72,7 +72,7 @@ class Application(object, HasSignals):
         internal_path = Sloppy.__path__[0]
         self.path.set('base_dir', internal_path)
 	# TODO: determine from sys.prefix somehow
-	self.path.set('system_prefix_dir', 'usr')
+	self.path.set('system_prefix_dir', os.path.join(os.path.sep, 'usr'))
         self.path.set('example_dir', os.path.join(os.path.sep, 'usr', 'share', 'sloppyplot', 'Examples'))
         self.path.bset('data_dir', 'example_dir', 'Data')
         self.path.set('logfile', os.path.join(os.path.sep, 'var', 'tmp', 'sloppyplot.log'))
