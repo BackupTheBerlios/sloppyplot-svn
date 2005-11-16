@@ -295,7 +295,7 @@ class Application(object, HasSignals):
 
             root, ext = os.path.splitext(os.path.basename(filename))
             filename = utils.encode_as_key(root)
-            ds = Dataset(key=filename, data=tbl)
+            ds = Dataset(key=filename, data=tbl, metadata=importer.result_metadata)
             ds.metadata['Import-Source'] = unicode(filename)
             ds.metadata['Import-Filter'] = unicode(importer.blurb)
 

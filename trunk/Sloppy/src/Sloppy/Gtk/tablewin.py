@@ -236,7 +236,11 @@ class DatasetWindow( gtk.Window ):
             ]
 
         # TODO: set metadata widget       
-            
+        print
+        print "========== METADATA =========="
+        print dataset.metadata
+        print
+        
         self._dataset = dataset
             
     def get_dataset(self):

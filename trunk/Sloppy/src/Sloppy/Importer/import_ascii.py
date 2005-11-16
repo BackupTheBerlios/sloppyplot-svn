@@ -55,7 +55,7 @@ class Importer(dataio.Importer):
     ncols = pInteger(CheckBounds(min=0), default=None,
                       blurb="Number of columns")
 
-    header_lines = pInteger(CheckBounds(min=0), default=0,
+    header_lines = pInteger(CheckBounds(min=0), 
                             blurb="Number of header lines")
 
     table = Prop(CheckType(Table))
@@ -72,6 +72,9 @@ class Importer(dataio.Importer):
 
     growth_offset = pInteger(CheckBounds(min=10), default=100)
 
+    result_metadata = pDict(Coerce(unicode))
+    
+    #----
     public_props = ['delimiter', 'custom_delimiter', 'ncols', 'header_lines']
 
     
@@ -81,24 +84,105 @@ class Importer(dataio.Importer):
     #
     
     def read_table_from_stream(self, fd):
+        self.parse_header(fd)
+        self.parse_body(fd)        
+        logger.info("Finished reading ASCII file.")
 
-        # Used compiled regular expressions (cre_):
-        #  cre_row used to remove comments, linebreaks, whitespace, ...
-        #  cre_rowsplit used to split the remaining row into its fields
-        #  cre_commentline used to identify a comment-only line
-        cre_row = re.compile('^\s*(.*?)(#.*)?$')
-        #cre_rowsplit is set below, after the delimiter has been determined
-        cre_commentline = re.compile('^\s*(#.*)?$')
-       
-        # skip header lines if requested
+        print "result_metadata = ", self.result_metadata
+        
+        return self.table
+
+
+    def parse_header(self, fd):
+        """
+        Parse the header of the stream, i.e. the part with the result_metadata.
+        """
+
+        n = 0
+        self.result_metadata = {}
+
+        # list of uncompiled regular expressions
+        rlist = ['#\s*humidity\s*:\s*(?P<humidity>.*?)\s*']
+        
+        # list of compiled regular expressions
+        crlist = []
+        for r in rlist:
+            try:
+                crlist.append(re.compile(r))
+            except:
+                logger.error("Failed to compile regular expression '%s'" % r)
+
+        # function to extract result_metadata from header line
+        def extract(line):
+            for cr in crlist:
+                m = cr.match(line)
+                if m is not None:
+                    logger.info("Found result_metadata: %s" % m.groupdict())
+                    self.result_metadata.update(m.groupdict())
+                    break
+
+        # Parsing the header:
+
+        # - How long is the header?
+        #   -> if header_lines is given, then we assume that
+        #      the header is that many lines long
+        #   -> if header_end is given, then we assume that
+        #      the header stops when the given regular expression
+        #      matches
+        #   -> header_end has a default value, which matches
+        #      if a number appears.
+
+        # - How is the header information interpreted?
+        #   -> using the given regular expressions, which must
+        #      contain named groups, e.g. (?P<groupname>.*).
+        #      The collected data is put into the result_metadata dictionary
+        #      of the table.
+
+        # The result_metadata is put into self.result_metadata.
+        # The importing function is responsible for putting this
+        # into dataset.result_metadata
+
+        self.result_metadata = {}
+        line = "--"
         header_lines = self.header_lines
-        while header_lines > 0:
-            line = fd.readline()
-            header_lines -= 1
+        if header_lines is not None:
+            # skip header_lines 
+            while header_lines > 0 and len(line) > 1:
+                line = fd.readline()
+                extract(line)
+                header_lines -= 1
+                n += 1
+        else:
+            # skip until regular expression is matched
+            cr_header_end = re.compile('\s*[+-]?\d+.*')
+            while len(line) > 1:
+                line = fd.readline()
+                match = cr_header_end.match(line)
+                if match is not None:
+                    break
+                extract(line)
+                n += 1
+
+        logger.debug("End of header reached: %d lines", n)            
+
+        
+
+    def parse_body(self, fd):
+        """
+        Parse the body of the stream, i.e. the data part.
+        """
+        
+        # Used compiled regular expressions (cr_):
+        #  cr_trim used to remove comments, linebreaks, whitespace, ...
+        #  cr_split used to split the remaining row into its fields
+        #  cr_comment used to identify a comment-only line
+        cr_trim = re.compile('^\s*(.*?)(#.*)?$')
+        #cr_split is set below, after the delimiter has been determined
+        cr_comment = re.compile('^\s*(#.*)?$')
 
         # skip comments
         line = '#'
-        while len(line) > 0 and cre_commentline.match(line) is not None:
+        while len(line) > 0 and cr_comment.match(line) is not None:
             rewind = fd.tell()
             line = fd.readline()
         fd.seek(rewind)
@@ -133,7 +217,7 @@ class Importer(dataio.Importer):
 
                 # split off comments
                 try:
-                    line = cre_row.match(line).groups()[0]
+                    line = cr_trim.match(line).groups()[0]
                 except AttributeError:
                     ncols = 2
 
@@ -185,9 +269,9 @@ class Importer(dataio.Importer):
             column.designation = designations[n]
             n += 1
         
-        cre_rowsplit = re.compile(delimiter)
+        cr_split = re.compile(delimiter)
 
-
+        
         #
         # read in file line by line
         #
@@ -202,13 +286,13 @@ class Importer(dataio.Importer):
             # might not be what it looks like -- it might be contained
             # in quotes!
             try:
-                row = cre_row.match(row).groups()[0]
+                row = cr_trim.match(row).groups()[0]
             except AttributeError:
                 logger.error("Skipped row: %s" % row)
                 row = fd.readline()
                 continue
             
-            matches = [match for match in cre_rowsplit.split(row) if len(match) > 0]
+            matches = [match for match in cr_split.split(row) if len(match) > 0]
             #logger.debug("MATCHES = %s" % str(matches))
             if len(matches) == 0:
                 skipcount += 1
@@ -244,14 +328,11 @@ class Importer(dataio.Importer):
 
             row = fd.readline()
 
-        logger.info("Finished reading ASCII file.")
-        
         # Resize dataset to real size, i.e. the number
         # of rows that have actually been read.
         tbl.resize(nrows=iter.row)
 
-        return tbl
-
+        self.table = tbl
 
 
 #------------------------------------------------------------------------------
