@@ -4,7 +4,7 @@ INSTALLATION HINTS
 
 1. Requirements
 2. Generic Installation Instructions
-
+3. Post Installation Instructions 
 
 
 ------------------------------------------------------------------------------
@@ -54,3 +54,19 @@ $ python setup.py install
 
 And you are done.  The executable is called sloppy-gtk
 
+
+
+
+3. Post Installation Instructions 
+=================================
+
+After an installation you should run the following commands
+as root:
+
+
+$ update-desktop-database
+$ update-mime-database /usr/share/mime
+
+and maybe
+
+$ gtk-update-icon-cache /usr/share/icons
