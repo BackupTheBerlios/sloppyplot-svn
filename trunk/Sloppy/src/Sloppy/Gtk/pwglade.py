@@ -18,14 +18,16 @@
 # $HeadURL$
 # $Id$
 
-""" I have been using the propwidgets.py module to automate the
+""" Helper module to use Connector objects from pwconnect along with glade.
+
+Note: I have been using the propwidgets.py module to automate the
 creation of widgets and corresponding labels for Props.  From a user's
 point of view, this worked fine, even though it did not look so nice.
 This module aims to be a reimplementation of such a mechanism, but it
 needs to be different in some ways.  We need to be able to use a UI
 designed by a glade file, specify a Container and its Props, and have
 this module automagically find the corresponding input widgets, fill
-in the data (e.g. the Prop's value_list for a ComboBox and attach
+in the data (e.g. the Prop's value_list for a ComboBox) and attach
 callbacks!
 """
 
@@ -48,16 +50,29 @@ import pwconnect
 
 class ConnectorFactory:
 
-    def create_from_glade_tree(self, container, tree):
+    def create_from_glade_tree(self, container, tree, prefix='pw_'):
+        """
+        Find the widgets in the glade file that match the props
+        of the given Container.  If e.g. the prop key is 'filename',
+        and the prefix is 'pw_', then we are looking for a widget
+        called 'pw_filename'.        
+
+        If the widget is found, then a Connector that matches the
+        widget's type is created.  This is based on the class name
+        of the widget.
+
+        Currently there is no way to specify a certain Connector for a
+        certain widget.  I guess it would be better to put this into a
+        separate method that creates Connectors based on a dictionary
+        of widget names.
+
+        Returns the created connectors.
+        """
         
-        # Find the widgets in the glade file that match the props
-        # of the given Container.  If e.g. the prop key is 'filename',
-        # then we are looking for a widget called 'pw_filename'.
-        # A Connector that matches the widget's type is created.
         connectors = {}
         keys = container.get_props().keys()
         for key in keys:
-            widget_key = 'pw_%s' % key
+            widget_key = prefix + key
             widget = tree.get_widget(widget_key)
             if widget is None:
                 logger.error("No widget found for prop '%s'" % key)
@@ -76,16 +91,21 @@ class ConnectorFactory:
 #------------------------------------------------------------------------------
 
 def check_in(connectors):
+    " Check in multiple Connectors. "
     for connector in connectors.itervalues():
         connector.check_in()
 
 def check_out(connectors):
+    " Check out multiple Connectors. "
     for connector in connectors.itervalues():
         connector.check_out()
 
 
 def create_changeset(container, working_copy):
-    # find differences to old Container
+    """ Find differences between old container and the working copy.
+    Returns a 'changeset' dictionary with the names of the props
+    that have been changed as keys and the new value as values.
+    """
     changeset = {}
     for key, value in working_copy.get_values().iteritems():
         old_value = container.get_value(key)

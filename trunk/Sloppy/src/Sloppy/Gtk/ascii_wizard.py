@@ -52,6 +52,9 @@ class Wizard(gtk.Dialog):
         self.nb.show()        
         self.vbox.pack_start(self.nb,True,True)
 
+        self.init()
+        
+
     def add_page(self, wizardpage):
         self.nb.append_page(wizardpage)
 
@@ -61,9 +64,22 @@ class Wizard(gtk.Dialog):
             page = pages[0]
             page.show()
 
-        gtk.Dialog.run(self)
-        
+        gtk.Dialog.run(self)                
 
+
+
+class AsciiWizard(Wizard):
+
+    def init(self):
+        self.add_page(AsciiWizardPage('test.dat'))
+        self.set_size_request(640,480)
+
+    def run(self):
+        Wizard.run(self)
+        for page in self.nb.get_children():
+            pwglade.check_out(page.connectors)
+            print page.importer.get_values()
+        
 
 class WizardPage(gtk.VBox):
     pass
@@ -84,7 +100,7 @@ class AsciiWizardPage(WizardPage):
        
         # Set up import object which hold the options and
         # create the connection to the GUI.
-        self.importer = ImporterRegistry.new_instance('ASCII')             
+        self.importer = ImporterRegistry['ASCII']()
         cf = pwglade.ConnectorFactory()
         self.connectors = cf.create_from_glade_tree(self.importer, tree)
         pwglade.check_in(self.connectors)
@@ -161,9 +177,10 @@ class AsciiWizardPage(WizardPage):
 
 if __name__ == "__main__":
 
-    dlg = Wizard()
-    page = AsciiWizardPage('test.dat')
-    dlg.add_page(page)
+    import Sloppy
+    Sloppy.init()
+    
+    dlg = AsciiWizard()
     dlg.run()
 
     
