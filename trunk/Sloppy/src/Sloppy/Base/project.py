@@ -27,7 +27,7 @@ import os
 from os.path import abspath,isfile,isdir,join, basename
 from shutil import rmtree
 
-from Sloppy.Lib.Undo import *
+from Sloppy.Lib.Undo import Journal, UndoInfo, NullUndo, UndoList
 from Sloppy.Lib.Signals import HasSignals
 from Sloppy.Lib.Props import *
 
@@ -86,7 +86,7 @@ class Project(HasProps, HasSignals):
         self.sig_register("notify::datasets")        
         self.sig_register("notify::backends")        
             
-        self.journal = UndoRedo()
+        self.journal = Journal()
         self._archive = None
         self.app = None
 

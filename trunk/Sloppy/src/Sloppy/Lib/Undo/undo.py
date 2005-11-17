@@ -29,7 +29,7 @@
 ## - UndoInfo.check_info
 
 
-__all__ = ["NullUndo", "UndoInfo", "UndoRedo", "UndoList", "UndoError", "FakeUndoInfo"]
+__all__ = ["NullUndo", "UndoInfo", "Journal", "UndoRedo", "UndoList", "UndoError", "FakeUndoInfo"]
 
 import logging
 logger = logging.getLogger('Base.undo')
@@ -208,7 +208,7 @@ class UndoList( UserList.UserList, UndoInfo ):
         self.data = list()
         
 
-class UndoRedo:
+class Journal:
 
     def __init__(self):        
         self.__undolist = UndoList()
@@ -269,7 +269,7 @@ class UndoRedo:
     def dump(self, detailed=False, indent=0):
         rv = []
         rv.append( "" )
-        rv.append( "Dumping UndoRedo object:" )
+        rv.append( "Dumping Journal object:" )
         rv.append( "" )
         rv.append( "UndoList `undolist`" )
         rv.append( self.__undolist.dump(detailed=detailed, indent=indent+2) )
@@ -279,7 +279,9 @@ class UndoRedo:
         rv = [item for item in rv if item is not None]
         return ("\n"+indent*" ").join(rv)
 
-            
+
+# for backward compatibility, TBR
+UndoRedo = Journal
 
 
 class FakeUndoInfo(UndoInfo):
