@@ -1,6 +1,19 @@
 CHANGELOG
 =========
 
+2005- SloppyPlot 0.5.1
+===========================
+
+  * Added complete desktop integration, i.e. SloppyPlot will appear in your
+desktop menu and .spj project files should have an icon and be clickable
+from any modern file manager.
+
+  * API changes: 
+    * Undo.UndoRedo -> Undo.Journal
+    * removed deprecated Gtk/gtkutils.py
+
+
+
 2005-11-16 SloppyPlot 0.5.0
 ===========================
 

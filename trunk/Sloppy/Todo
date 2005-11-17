@@ -1,4 +1,8 @@
- 
+TOP PRIORTIES:
+
+- Metadata
+- Error Handling (-> show message window)
+- ASCII Import
 
 
 
@@ -9,8 +13,7 @@ Plans for 0.5.1
 
 BUGFIXES:
  - props: CheckValid, ValueDict -> better naming convention.
- - props: There is a method layerwin.collect_values.  What is
-   different from Prop.valid_values() ?  Which one should I use?
+
 
 == CUSTOM GNUPLOT EXPORT ==
 

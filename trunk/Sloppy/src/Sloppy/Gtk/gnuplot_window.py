@@ -39,7 +39,7 @@ from Sloppy.Base.backend import BackendRegistry
 
 from Sloppy.Lib.Undo import UndoInfo, UndoList, ulist
 
-import gtkutils
+import uihelper
 
 
 
@@ -191,7 +191,7 @@ class GnuplotWindow( gtk.Window ):
         for (group, group_actions) in actiongroups.iteritems():
             ag = gtk.ActionGroup(group)
             if fix_actions is True:
-                group_actions = gtkutils.fix_actions(group_actions, self)
+                group_actions = uihelper.map_actions(group_actions, self)
             ag.add_actions(group_actions)
             self._actiongroups[group] = ag
 

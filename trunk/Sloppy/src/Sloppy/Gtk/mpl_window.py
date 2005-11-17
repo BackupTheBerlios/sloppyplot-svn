@@ -440,7 +440,6 @@ class MatplotlibWidget(gtk.VBox):
             try:
                 backend.draw()
             except:
-                #gtkutils.info_msg("Nothing to plot.")
                 raise            
 
             # Cursor

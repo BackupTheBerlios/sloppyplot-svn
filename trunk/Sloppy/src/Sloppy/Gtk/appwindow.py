@@ -28,8 +28,6 @@ import uihelper
 
 import tools
 
-import gtkutils
-
 import Sloppy
 
 from Sloppy.Base import utils, error, version, config

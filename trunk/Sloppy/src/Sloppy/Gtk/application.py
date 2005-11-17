@@ -31,7 +31,7 @@ pygtk.require('2.0') # TBR
 import gtk, gobject, pango
 import gtkexcepthook
 
-import gtkutils, uihelper
+import uihelper
 from gidlethread import *
 
 

@@ -24,7 +24,6 @@ pygtk.require('2.0') # TBR
 
 import gtk, gobject
 import sys, glob, os.path
-import gtkutils
 
 from Sloppy.Base.objects import *
 from Sloppy.Base.dataset import *
