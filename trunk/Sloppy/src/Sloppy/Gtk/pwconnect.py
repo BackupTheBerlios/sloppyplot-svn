@@ -18,8 +18,21 @@
 # $HeadURL$
 # $Id$
 
-"""
-Create widgets (or use existing widgets) to enter values for Props.
+"""Create widgets (or use existing widgets) to enter values for Props.
+
+>>> # Get a Connector instance
+>>> c = connectors['ComboBox'](container, 'propname')
+
+>>> # either create a widget
+>>> c.create_widget()
+>>> w = c.widget
+
+>>> # or reuse your own widget
+>>> c.use_widget(my_widget)
+
+>>> # check in / check out data into the container
+>>> c.check_in()
+>>> c.check_out()
 """
 
 import logging
@@ -42,8 +55,12 @@ __all__ = ['Connector', 'connectors',
 
 class Connector(object):
 
-    """ Abstract base class for all wrappers.  Derived class must set
-    the attribute 'widget_type' and must implement 'use_widget' """
+    """ Abstract base class for all wrappers.  
+    
+    Derived class must set the attribute 'widget_type' and must implement
+    'use_widget'.  Of course, for the widget to be useful, it should
+    also implement 'check_in' and 'check_out'.    
+    """
 
     widget_type = None
     
