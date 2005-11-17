@@ -40,7 +40,7 @@ except ImportError:
 
 import gtk
 
-from Sloppy.Lib.Props.Gtk import pwconnect
+import pwconnect
 
 
 

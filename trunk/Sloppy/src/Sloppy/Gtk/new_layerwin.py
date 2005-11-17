@@ -27,7 +27,7 @@ except ImportError:
 import gtk, gtk.glade
 
 import pwglade
-from Sloppy.Lib.Props.Gtk import pwconnect
+import pwconnect
 
 
 
