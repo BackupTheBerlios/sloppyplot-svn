@@ -1,10 +1,20 @@
+
 TOP PRIORTIES:
 
-- Metadata
-- Error Handling (-> show message window)
-- ASCII Import
+- be able to save and load ASCII import filters. This would
+  be a great feature to have!
+
+- display metadata
 
 - make sure Importer and Exporter objects are used only once?
+  => clear result_xxx before any read operation.
+
+- derive import_csv from import_ascii ? Or should csv be strict csv
+  w/o comments and so on?
+  
+- open Dataset window after import, if we have only one dataset.
+
+- Error Handling (-> msgwin.py)
 
 
 
@@ -12,42 +22,6 @@ TOP PRIORTIES:
 ABOUT ASCII IMPORT:
 
 How should the import dialog look like?
-
-
-SECTION HEADER:
-===============
-
-- Number of header lines 
-  _or_ 
-  regular expression marking the last header line (or first data line?)
-
-- Regular Expressions to interpret the header lines
-
-- TODO: Column name interpretation
-
-
-SECTION DATA
-============
-
-- Number of columns
-
-- Delimiters: X, Y, XY, XYY..  TODO: need to implement repeating parts
-
-- Data types (currently only float32)
-
-
-
-So maybe for the beginning, I should not do a multi-step import dialog,
-but only one window with a preview option ?
-
-----------------------------------------------------------------
-
-
-
-
-
-
-- 
 
 
 ###############################################################################

@@ -85,10 +85,15 @@ class Importer(dataio.Importer):
 
     header_keytrim_re = \
      pString(
-        default='\s*[#]?\s*(?P<keys>.*)',
+        default='\s*[#]?\s*(?P<keys>.*)\s*',
         doc=""
         )
 
+    header_metadata_re = \
+     pString(
+        default = '\s*[\#]?\s*(?P<key>.*?)\s*:\s*(?P<value>.*)\s*',
+        doc = "Regular expression to match metadata key-value pairs."
+        )
     
     # Data 
 
@@ -144,7 +149,7 @@ class Importer(dataio.Importer):
     # results
     result_metadata = pDict(pUnicode().check)
     result_keys = pList(pKeyword().check)
-    
+    result_header_size = pInteger()
     
     #----
     public_props = ['delimiter', 'custom_delimiter', 'ncols', 'header_size',
@@ -157,110 +162,117 @@ class Importer(dataio.Importer):
     #
     
     def read_table_from_stream(self, fd):
+
         self.parse_header(fd)
         self.parse_body(fd)        
         logger.info("Finished reading ASCII file.")
 
-        print "result_metadata = ", self.result_metadata
+        # self.result_keys
+        if len(self.result_keys) > 0:
+            if len(self.result_keys) == len(self.table.columns):
+                logger.info("Setting column keys according to header.")
+                i = 0
+                for c in self.table.get_columns():
+                    c.key = self.result_keys[i]
+                    i+=1
+            else:
+                logger.warn("Number of column keys from header and number of read columns do not match!")
 
-        # TOOD: maybe use results here?
-        # assign column keys and metadata?
-        
         return self.table
 
 
     def parse_header(self, fd):
         """
         Parse the header of the stream, i.e. the part with the result_metadata.
+
+        Fills the following variables:
+        - result_metadata
+        - result_keys
+        - result_header_size
         """
 
-        n = 0
         self.result_metadata = {}
 
-        # TODO: Try
-        cr_header_keytrim_re = re.compile(self.header_keytrim_re)
-        cr_header_keysplit_re = re.compile(self.header_keysplit_re)
-        cr_header_end = re.compile(self.header_end_re)
-        
-        # list of uncompiled regular expressions
-        rlist = ['#\s*humidity\s*:\s*(?P<humidity>.*?)\s*']
-        
-        # list of compiled regular expressions
-        crlist = []
-        for r in rlist:
+        # compile regular expressions
+        def safe_compile(expression):
             try:
-                crlist.append(re.compile(r))
+                return re.compile(expression)
             except:
-                logger.error("Failed to compile regular expression '%s'" % r)
+                logger.error("Failed to compile regular expression: %s" % expression)
+                raise
+
+        cr_keytrim = safe_compile(self.header_keytrim_re)
+        cr_keysplit = safe_compile(self.header_keysplit_re)
+        cr_end = safe_compile(self.header_end_re)
+        cr_metadata = safe_compile(self.header_metadata_re)
 
         # function to extract result_metadata from header line
         def parse_line(line, n):
-            print "n is ", n, " ", self.header_keys_ln
             if n == self.header_keys_ln:
                 # try to extract key names
-                m = cr_header_keytrim_re.match(line)
+                m = cr_keytrim.match(line)
                 if m is None:
                     logger.info("Column keys could not be trimmed.")
                 else:
                     line = m.groupdict()['keys']
-                self.result_keys = cr_header_keysplit_re.split(line)
+                self.result_keys = cr_keysplit.split(line)
                 logger.info("Found column keys: %s", self.result_keys)
 
             else:
                 # try to extract metadata
-                for cr in crlist:
-                    m = cr.match(line)
-                    if m is not None:
-                        logger.info("Found result_metadata: %s" % m.groupdict())
-                        self.result_metadata.update(m.groupdict())
-                        break
+                m = cr_metadata.match(line)
+                if m is not None:
+                    gd = m.groupdict()
+                    k,v = gd['key'], gd['value']
+                    logger.info("Found metadata: %s = %s" % (k,v) )
+                    self.result_metadata[k] = v
 
+        #
         # Parsing the header:
+        #
 
         # - How long is the header?
         #   -> if header_size is given, then we assume that
         #      the header is that many lines long
-        #   -> if header_end is given, then we assume that
+        #   -> if header_end_re is given, then we assume that
         #      the header stops when the given regular expression
         #      matches
-        #   -> header_end has a default value, which matches
+        #   -> header_end_re has a default value, which matches
         #      if a number appears.
-
-        # - How is the header information interpreted?
-        #   -> using the given regular expressions, which must
-        #      contain named groups, e.g. (?P<groupname>.*).
-        #      The collected data is put into the result_metadata dictionary
-        #      of the table.
-
-        # The result_metadata is put into self.result_metadata.
-        # The importing function is responsible for putting this
-        # into dataset.result_metadata
+        #   -> The regular expression can either be part of the header
+        #      or can be the first non-header line. The var
+        #      self.header_include indicates this.
 
         self.result_metadata = {}
         line = "--"
+        n = 1 # current line
         header_size = self.header_size
         if header_size is not None:
             # skip header_size 
-            while header_size > 0: ### and len(line) > 1:
+            while header_size > 0 and len(line) > 0:
                 line = fd.readline()
                 parse_line(line,n)
                 header_size -= 1
                 n += 1
         else:
             # skip until regular expression is matched
-            while len(line) > 1:
+            while len(line) > 0:
                 pos = fd.tell()
                 line = fd.readline()
-                match = cr_header_end.match(line)
+                match = cr_end.match(line)
                 if match is not None:
                     # rewind if the match does not belong to the header
                     if self.header_include_end is False:
                         fd.seek(pos)
+                    else:
+                        n+=1
                     break
                 parse_line(line,n)
                 n += 1
 
-        logger.debug("End of header reached: %d lines", n)            
+
+        self.result_header_size = n
+        logger.debug("End of header reached: %d lines", self.result_header_size)
 
         
 

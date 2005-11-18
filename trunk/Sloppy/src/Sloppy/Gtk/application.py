@@ -713,7 +713,7 @@ class GtkApplication(Application):
 
                 iter = buffer.get_start_iter()        
                 try:
-                    for j in range(100):
+                    for j in range(1,100):
                         line = fd.readline()
                         if len(line) == 0:
                             break
