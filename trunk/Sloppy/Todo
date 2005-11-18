@@ -4,6 +4,50 @@ TOP PRIORTIES:
 - Error Handling (-> show message window)
 - ASCII Import
 
+- make sure Importer and Exporter objects are used only once?
+
+
+
+
+ABOUT ASCII IMPORT:
+
+How should the import dialog look like?
+
+
+SECTION HEADER:
+===============
+
+- Number of header lines 
+  _or_ 
+  regular expression marking the last header line (or first data line?)
+
+- Regular Expressions to interpret the header lines
+
+- TODO: Column name interpretation
+
+
+SECTION DATA
+============
+
+- Number of columns
+
+- Delimiters: X, Y, XY, XYY..  TODO: need to implement repeating parts
+
+- Data types (currently only float32)
+
+
+
+So maybe for the beginning, I should not do a multi-step import dialog,
+but only one window with a preview option ?
+
+----------------------------------------------------------------
+
+
+
+
+
+
+- 
 
 
 ###############################################################################

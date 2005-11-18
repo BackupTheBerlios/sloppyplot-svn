@@ -72,7 +72,6 @@ setup(name=NAME,
                 'Sloppy.Lib.Signals',
                 'Sloppy.Lib.Undo',
                 'Sloppy.Lib.Props',
-		'Sloppy.Lib.Props.Gtk'
                 ],
 		
       # the package_data determines what to put into the

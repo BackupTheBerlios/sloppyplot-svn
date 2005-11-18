@@ -26,3 +26,18 @@ import logging
 logger = logging.getLogger('gtk.uihelper')
 
 
+"""
+
+Brainstorming, or 'How is this going to work?':
+
+msgwin shoudl provide the following:
+
+- display an error dialog whenever an exception occurs _EXCEPT_ for
+  the case, that we have a UserAbort
+
+- display an error (where?) whenever an error message is logged.
+
+
+
+
+"""
