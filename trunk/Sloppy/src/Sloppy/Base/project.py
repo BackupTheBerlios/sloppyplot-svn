@@ -27,7 +27,7 @@ import os
 from os.path import abspath,isfile,isdir,join, basename
 from shutil import rmtree
 
-from Sloppy.Lib.Undo import Journal, UndoInfo, NullUndo, UndoList
+from Sloppy.Lib.Undo import Journal, UndoInfo, NullUndo, UndoList, ulist
 from Sloppy.Lib.Signals import HasSignals
 from Sloppy.Lib.Props import *
 

@@ -43,7 +43,7 @@ class Importer(dataio.Importer):
     # Properties
     #
 
-    header_lines = pInteger(CheckBounds(min=0), default=0,
+    header_size = pInteger(CheckBounds(min=0), default=0,
                             blurb="Number of header lines")
 
     column_props = pList(types=dict)
@@ -59,7 +59,7 @@ class Importer(dataio.Importer):
             j += 1
 
         kwargs = {'delimiter' : ',',
-                  'header_lines' : self.header_lines,
+                  'header_size' : self.header_size,
                   'table' : table}
 
         importer = import_ascii.Importer(**kwargs)

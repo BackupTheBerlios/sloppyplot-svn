@@ -734,7 +734,7 @@ class GtkApplication(Application):
                 try:
                     result = dialog.run()
                     if result == gtk.RESPONSE_ACCEPT:
-                        dialog.check_out
+                        dialog.check_out()
                     else:
                         return
                 finally:

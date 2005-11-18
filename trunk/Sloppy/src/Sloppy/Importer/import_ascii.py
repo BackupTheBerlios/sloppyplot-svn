@@ -21,15 +21,13 @@
 
 import re
 
-from Sloppy.Base.dataset import *
+from Sloppy.Base.dataset import Dataset
 from Sloppy.Base import dataio
 from Sloppy.Base.table import Table
 
 from Sloppy.Lib.Props import *
 
 
-# This must be at the end, because otherwise we might import the
-# logger object in the import statements above!
 import logging
 logger = logging.getLogger('import.ascii')
 
@@ -44,19 +42,79 @@ class Importer(dataio.Importer):
     #----------------------------------------------------------------------
     # Properties
     #
-    
-    delimiter = pString(CheckValid([None,',', '\t',';', '\s*']),
-                        blurb ="Delimiter",
-                        doc="Column delimiter that separates the columns.")
-    
-    custom_delimiter = pString(blurb="Custom Delimiter",
-                               doc="Custom delimiter used if delimiter is None.")
-    
-    ncols = pInteger(CheckBounds(min=0), default=None,
-                      blurb="Number of columns")
 
-    header_lines = pInteger(CheckBounds(min=0), 
-                            blurb="Number of header lines")
+    # Prefixes
+    #  header_
+    #  data_
+    #  result_
+
+    # Suffixes
+    #  ln  (linenumber)
+    #  re  (regular expression)
+    #  
+
+    # Header
+    header_size = \
+     pInteger(
+        CheckBounds(min=0), 
+        doc="Number of header lines"
+        )
+
+    header_end_re = \
+     pString(
+        default='\s*[+-]?\d+.*',
+        doc=""
+        )
+
+    header_include_end = \
+     pBoolean(
+        default=False,
+        doc="Whether to include the last line of the header in the header."
+        )
+
+    header_keys_ln = \
+     pInteger(
+        doc="Number of line that contains the column keys."
+        )
+
+    header_keysplit_re = \
+     pString(
+        default="\s*,\s*",
+        doc="Regular expression that splits up the column keys."
+        )
+
+    header_keytrim_re = \
+     pString(
+        default='\s*[#]?\s*(?P<keys>.*)',
+        doc=""
+        )
+
+    
+    # Data 
+
+    
+    # Other
+    
+    delimiter = \
+     pString(
+        CheckValid([None,',', '\t',';', '\s*']),
+        blurb ="Delimiter",
+        doc="Column delimiter that separates the columns."
+        )
+    
+    custom_delimiter = \
+     pString(
+        blurb="Custom Delimiter",
+        doc="Custom delimiter used if delimiter is None."
+        )
+    
+    ncols = \
+     pInteger(
+        CheckBounds(min=0),
+        default=None,
+        blurb="Number of columns"
+        )
+
 
     table = Prop(CheckType(Table))
     
@@ -64,18 +122,33 @@ class Importer(dataio.Importer):
 
     labels = pList()
     
-    designations = Prop(CheckType(list),
-                        default=None)
+    designations = \
+     Prop(
+        CheckType(list),
+        default=None
+        )
 
-    typecodes = Prop(CheckType(basestring, list),
-                     default='d')
+    typecodes = \
+     Prop(
+        CheckType(basestring, list),
+        default='d'
+        )
 
-    growth_offset = pInteger(CheckBounds(min=10), default=100)
+    growth_offset = \
+     pInteger(
+        CheckBounds(min=10),
+        default=100
+        )
 
-    result_metadata = pDict(Coerce(unicode))
+
+    # results
+    result_metadata = pDict(pUnicode().check)
+    result_keys = pList(pKeyword().check)
+    
     
     #----
-    public_props = ['delimiter', 'custom_delimiter', 'ncols', 'header_lines']
+    public_props = ['delimiter', 'custom_delimiter', 'ncols', 'header_size',
+                    'header_keys_ln']
 
     
 
@@ -89,6 +162,9 @@ class Importer(dataio.Importer):
         logger.info("Finished reading ASCII file.")
 
         print "result_metadata = ", self.result_metadata
+
+        # TOOD: maybe use results here?
+        # assign column keys and metadata?
         
         return self.table
 
@@ -101,6 +177,11 @@ class Importer(dataio.Importer):
         n = 0
         self.result_metadata = {}
 
+        # TODO: Try
+        cr_header_keytrim_re = re.compile(self.header_keytrim_re)
+        cr_header_keysplit_re = re.compile(self.header_keysplit_re)
+        cr_header_end = re.compile(self.header_end_re)
+        
         # list of uncompiled regular expressions
         rlist = ['#\s*humidity\s*:\s*(?P<humidity>.*?)\s*']
         
@@ -113,18 +194,31 @@ class Importer(dataio.Importer):
                 logger.error("Failed to compile regular expression '%s'" % r)
 
         # function to extract result_metadata from header line
-        def extract(line):
-            for cr in crlist:
-                m = cr.match(line)
-                if m is not None:
-                    logger.info("Found result_metadata: %s" % m.groupdict())
-                    self.result_metadata.update(m.groupdict())
-                    break
+        def parse_line(line, n):
+            print "n is ", n, " ", self.header_keys_ln
+            if n == self.header_keys_ln:
+                # try to extract key names
+                m = cr_header_keytrim_re.match(line)
+                if m is None:
+                    logger.info("Column keys could not be trimmed.")
+                else:
+                    line = m.groupdict()['keys']
+                self.result_keys = cr_header_keysplit_re.split(line)
+                logger.info("Found column keys: %s", self.result_keys)
+
+            else:
+                # try to extract metadata
+                for cr in crlist:
+                    m = cr.match(line)
+                    if m is not None:
+                        logger.info("Found result_metadata: %s" % m.groupdict())
+                        self.result_metadata.update(m.groupdict())
+                        break
 
         # Parsing the header:
 
         # - How long is the header?
-        #   -> if header_lines is given, then we assume that
+        #   -> if header_size is given, then we assume that
         #      the header is that many lines long
         #   -> if header_end is given, then we assume that
         #      the header stops when the given regular expression
@@ -144,23 +238,26 @@ class Importer(dataio.Importer):
 
         self.result_metadata = {}
         line = "--"
-        header_lines = self.header_lines
-        if header_lines is not None:
-            # skip header_lines 
-            while header_lines > 0 and len(line) > 1:
+        header_size = self.header_size
+        if header_size is not None:
+            # skip header_size 
+            while header_size > 0: ### and len(line) > 1:
                 line = fd.readline()
-                extract(line)
-                header_lines -= 1
+                parse_line(line,n)
+                header_size -= 1
                 n += 1
         else:
             # skip until regular expression is matched
-            cr_header_end = re.compile('\s*[+-]?\d+.*')
             while len(line) > 1:
+                pos = fd.tell()
                 line = fd.readline()
                 match = cr_header_end.match(line)
                 if match is not None:
+                    # rewind if the match does not belong to the header
+                    if self.header_include_end is False:
+                        fd.seek(pos)
                     break
-                extract(line)
+                parse_line(line,n)
                 n += 1
 
         logger.debug("End of header reached: %d lines", n)            
