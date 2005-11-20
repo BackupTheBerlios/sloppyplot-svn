@@ -60,12 +60,11 @@ class Importer(HasProps):
 
     """
     
-    # additional meta-information
-    extensions = ['foo']
-    blurb = "Sample Import Format"
     author = "your name"       
     filemode = '' # set to 'b' for binary objects
 
+    # Still experimental:
+    # These two properties can be used to interact with the application
     app = Prop(CheckType(object))
     progress_indicator = Prop(CheckType(object))
     
@@ -137,7 +136,17 @@ class Exporter(HasProps):
 
 #------------------------------------------------------------------------------
 ImporterRegistry = {}
+ImporterTemplateRegistry = {}
+
 ExporterRegistry = {}
+
+
+class IOTemplate(HasProps):
+    defaults = pDict()
+    extensions = pList(pUnicode().check)
+    blurb = pUnicode()
+
+
 
 
 #------------------------------------------------------------------------------
@@ -169,5 +178,15 @@ def importer_from_filename(filename):
 
     return matches
     
+
+def new_importer(key, subkey=None):
+    if subkey is None:
+        return ImporterRegistry[key]()
+    else:
+        template = ImporterTemplateRegistry[key][subkey]
+        # TODO: using defaults.data is a workaround, because the **
+        # TODO: operator expects a real dict, while it would
+        # TODO: get a TypedDictionary.
+        return ImporterRegistry[key](**template.defaults.data)
 
 

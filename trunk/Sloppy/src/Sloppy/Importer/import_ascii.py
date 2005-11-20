@@ -35,9 +35,7 @@ logger = logging.getLogger('import.ascii')
             
 class Importer(dataio.Importer):
 
-    extensions = ['dat', 'txt']
     author = "Niklas Volbers"
-    blurb = "ASCII"
 
     #----------------------------------------------------------------------
     # Properties
@@ -446,4 +444,27 @@ class Importer(dataio.Importer):
 
 #------------------------------------------------------------------------------
 dataio.ImporterRegistry['ASCII'] = Importer
+dataio.ImporterTemplateRegistry['ASCII'] = {}
+dataio.ImporterTemplateRegistry['ASCII']['default'] = \
+  dataio.IOTemplate(extensions=['dat', 'txt'],
+                    blurb="ASCII")
 
+
+
+#----------------------------------------------------------------------
+# for testing: PFC template
+dataio.ImporterTemplateRegistry['ASCII']['pfc'] = \
+  dataio.IOTemplate(extensions=['pfc'],
+                    blurb="SIMS Profiles",
+                    defaults={'header_size' : 1, 'header_keys_ln' : 1})
+                               
+
+def debug_list_templates(key):
+    print
+    print "Listing templates for key '%s':" % key
+    for key, template in dataio.ImporterTemplateRegistry[key].iteritems():
+        print " %8s: %s " % (key, template.get_values())
+    print
+
+
+debug_list_templates('ASCII')

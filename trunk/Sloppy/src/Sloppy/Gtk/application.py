@@ -53,10 +53,13 @@ from Sloppy.Base.project import Project
 from Sloppy.Base.projectio import load_project, save_project, ParseError
 from Sloppy.Base.backend import BackendRegistry
 from Sloppy.Base.table import Table
-from Sloppy.Base.dataio import ImporterRegistry, ExporterRegistry, importer_from_filename
+
 from Sloppy.Base import pdict, uwrap
 from Sloppy.Base.plugin import PluginRegistry
-from Sloppy.Base.dataio import ImporterRegistry, ExporterRegistry, importer_from_filename, Importer, ImportError
+
+from Sloppy.Base.dataio import ImporterRegistry, ImporterTemplateRegistry, ExporterRegistry, importer_from_filename
+from Sloppy.Base import dataio
+from Sloppy.Base.dataio import importer_from_filename, Importer, ImportError
 
 from Sloppy.Gnuplot.terminal import PostscriptTerminal
 from options_dialog import OptionsDialog, NoOptionsError
@@ -601,17 +604,24 @@ class GtkApplication(Application):
         
         # create file filters
         for (key, importer) in ImporterRegistry.iteritems():
-            extensions = ';'.join(map(lambda ext: '*.'+ext, importer.extensions))
-            blurb = "%s (%s)" % (importer.blurb, extensions)
+            
+            # Each item in ImporterRegistry is a class derived from
+            # dataio.Importer.  By using IOTemplate objects we can
+            # customize the default values for these templates.
+            for (subkey, template) in ImporterTemplateRegistry[key].iteritems():
+                extensions = ';'.join(map(lambda ext: '*.'+ext, template.extensions))
+                blurb = "%s (%s)" % (template.blurb, extensions)
 
-            filter = gtk.FileFilter()
-            filter.set_name(blurb)
-            for ext in importer.extensions:
-                filter.add_pattern("*."+ext.lower())
-                filter.add_pattern("*."+ext.upper())
-            chooser.add_filter(filter)
+                filter = gtk.FileFilter()
+                filter.set_name(blurb)
+                for ext in template.extensions:
+                    filter.add_pattern("*."+ext.lower())
+                    filter.add_pattern("*."+ext.upper())
+                chooser.add_filter(filter)
 
-            filter_keys[blurb] = key
+                filter_keys[blurb] = "%s:%s" % (key,subkey)
+
+            
 
         # add shortcut folder to example path, if such exists
         shortcut_folder = self.path.get('data_dir')
@@ -625,17 +635,18 @@ class GtkApplication(Application):
         # The custom widget `combobox` lets the user choose,
         # which Importer is to be used.
         
-        # model: key, blurb
-        model = gtk.ListStore(str, str)
+        # model: key, subkey, blurb
+        model = gtk.ListStore(str, str, str)
         # add 'Same as Filter' as first choice, then add all importers
-        model.append( (None, "Auto") )
+        model.append( (None, None, "Auto") )
         for key, importer in ImporterRegistry.iteritems():
-            model.append( (key, importer.blurb) )
+            for subkey, template in ImporterTemplateRegistry[key].iteritems():
+                model.append( (key, subkey, template.blurb) )
 
         combobox = gtk.ComboBox(model)
         cell = gtk.CellRendererText()
         combobox.pack_start(cell, True)
-        combobox.add_attribute(cell, 'text', 1)
+        combobox.add_attribute(cell, 'text', 2)
         combobox.set_active(0)
         combobox.show()
 
@@ -670,15 +681,19 @@ class GtkApplication(Application):
                     return
                 
                 importer_key = model[combobox.get_active()][0]
+                template_key = model[combobox.get_active()][1]
+
                 if importer_key is None: # auto
                     f = chooser.get_filter()
                     importer_key = filter_keys[f.get_name()]
+                    # we skip the hard task of determining the template key here
+                    template_key = 'default'
                     if importer_key is 'auto':
                         matches = importer_from_filename(filenames[0])
                         if len(matches) > 0:
                             importer_key = matches[0]
                         else:
-                            importer_key = 'ASCII'
+                            importer_key = 'ASCII'                            
             else:
                 return
 
@@ -687,7 +702,8 @@ class GtkApplication(Application):
             pbar.show()
             
             # request import options
-            importer = ImporterRegistry[importer_key]()
+            importer = dataio.new_importer(importer_key, template_key)
+            #importer = ImporterRegistry[importer_key]()
 
             try:
                 dialog = OptionsDialog(importer, parent=self.window)
