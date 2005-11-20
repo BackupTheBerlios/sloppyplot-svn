@@ -68,7 +68,5 @@ class Importer(dataio.Importer):
 
 #------------------------------------------------------------------------------
 dataio.ImporterRegistry['CSV'] = Importer
-dataio.ImporterTemplateRegistry['CSV'] = {}
-
 # no default template here
 

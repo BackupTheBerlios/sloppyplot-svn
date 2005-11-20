@@ -101,8 +101,7 @@ class AsciiWizardPage(WizardPage):
         # Set up import object which hold the options and
         # create the connection to the GUI.
         self.importer = ImporterRegistry['ASCII']()
-        cf = pwglade.ConnectorFactory()
-        self.connectors = cf.create_from_glade_tree(self.importer, tree)
+        self.connectors = pwglade.construct_connectors_from_glade_tree(self.importer, tree)
         pwglade.check_in(self.connectors)
 
 

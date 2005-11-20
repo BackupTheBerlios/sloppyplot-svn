@@ -648,20 +648,15 @@ class HasProps(object):
 
     
     def get_values(self, include=None, exclude=None):
-        if include is None:
-            include = self._values.keys()        
-        if exclude is not None:
-            include = [key for key in include if key not in exclude]
-
         rv = {}
-        for key in include:
+        for key in self.__limit_keys(include=include, exclude=exclude):
             rv[key] = self.__getattribute__(key)
 
         return rv
 
     mget = get_values
 
-    
+        
     def rget(self, key, default=None):
         """ raw get = use other default value. 
          Return the value of the given prop or `default` if it is None.
@@ -673,6 +668,10 @@ class HasProps(object):
             return value        
 
 
+    def clear(self, include=None, exclude=None):
+        " Clear all props. "
+        for key in self.__limit_keys(include=include, exclude=exclude):
+            self._values[key] = self._props[key].on_reset()
 
     #----------------------------------------------------------------------
     # Prop Handling
@@ -682,13 +681,8 @@ class HasProps(object):
         return self._props[key]
 
     def get_props(self, include=None, exclude=None):
-        if include is None:
-            include = self._props.keys()
-        if exclude is not None:
-            include = [key for key in include if key not in exclude]
-
         rv = {}
-        for key in include:
+        for key in self.__limit_keys(include=include, exclude=exclude):
             rv[key] = self._props[key]
 
         return rv
@@ -710,6 +704,17 @@ class HasProps(object):
         return changeset       
 
 
+    #----------------------------------------------------------------------
+    # internal
+    
+    def __limit_keys(self, include=None, exclude=None):
+        if include is None:
+            include = self._values.keys()        
+        if exclude is not None:
+            include = [key for key in include if key not in exclude]
+        return include
+    
+    
 
 
 

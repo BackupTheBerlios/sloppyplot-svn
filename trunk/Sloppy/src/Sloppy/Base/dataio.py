@@ -145,6 +145,10 @@ class IOTemplate(HasProps):
     defaults = pDict()
     extensions = pList(pUnicode().check)
     blurb = pUnicode()
+    importer = Prop(CheckType(type(Importer)))
+
+    def new_importer(self):
+        return self.importer(**self.defaults.data)
 
 
 
@@ -178,15 +182,3 @@ def importer_from_filename(filename):
 
     return matches
     
-
-def new_importer(key, subkey=None):
-    if subkey is None:
-        return ImporterRegistry[key]()
-    else:
-        template = ImporterTemplateRegistry[key][subkey]
-        # TODO: using defaults.data is a workaround, because the **
-        # TODO: operator expects a real dict, while it would
-        # TODO: get a TypedDictionary.
-        return ImporterRegistry[key](**template.defaults.data)
-
-

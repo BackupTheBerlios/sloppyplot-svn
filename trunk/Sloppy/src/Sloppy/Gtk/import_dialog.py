@@ -43,7 +43,7 @@ from Sloppy.Base import dataio
 
 class ImportDialog(gtk.Dialog):
 
-    def __init__(self, importer_key, template_key, filenames):
+    def __init__(self, importer_class, template_key, filenames):
         gtk.Dialog.__init__(self, "%s Import" % "ASCII",
                             None,
                             gtk.DIALOG_MODAL|gtk.DIALOG_DESTROY_WITH_PARENT,
@@ -51,12 +51,11 @@ class ImportDialog(gtk.Dialog):
                             gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
 
         self.filenames = filenames
-        self.importer_key = importer_key
+        self.importer_class = importer_class
         self.template_key = template_key
 
-        # The importer is fixed
-        #self.importer
-        
+        # actual Importer object
+        self.importer = importer_class()
 
         #
         # Combos for choosing the Template
@@ -69,8 +68,18 @@ class ImportDialog(gtk.Dialog):
 
         label_template = gtk.Label("Template: ")
 #        label_template.show()        
-        combo_template = gtk.ComboBox()
+
+        model = gtk.ListStore(str,str) # key, description
+        # limit available templates to given importer class
+        template_keys = [tpl for tpl in dataio.ImporterTemplateRegistry.itervalues() if tpl.importer == importer_class]
+        for key, template in dataio.ImporterTemplateRegistry.iteritems():
+            model.append( (key, template.blurb) )
+        combo_template = gtk.ComboBox(model)
+        cell = gtk.CellRendererText()
+        combo_template.pack_start(cell, True)
+        combo_template.add_attribute(cell, 'text', 1)
         combo_template.show()
+        
         box_template = gtk.VBox()
         box_template.pack_start(label_template,False,True)
         box_template.pack_start(combo_template,True,True)
@@ -92,10 +101,11 @@ class ImportDialog(gtk.Dialog):
         # Options
         #
         optionbox = gtk.VBox()
-        l = gtk.Label("Test")
-        l.show()
+        self.clist = pwglade.construct_connectors(self.importer)
+        options_table = pwglade.construct_table(self.clist)
+        options_table.show()
         optionbox.pack_start(self.preview,True,True)
-        optionbox.pack_start(l,False,True)
+        optionbox.pack_start(options_table,False,True)
         optionbox.show()
         self.optionbox = optionbox
         
@@ -103,6 +113,15 @@ class ImportDialog(gtk.Dialog):
         expander.add(optionbox)
         expander.show()
         self.expander = expander
+
+        def on_activate_expander(expander):
+            expanded = expander.get_expanded()
+            if expanded is True:
+                expander.child.hide_all()
+            else:
+                expander.child.show_all()
+            print expanded
+        expander.connect('activate', on_activate_expander)
 
         #
         # put everything together
@@ -113,6 +132,10 @@ class ImportDialog(gtk.Dialog):
 #        self.vbox.pack_start(separator,False,True)
         self.vbox.pack_start(self.expander,False,True)
 
+        # fill combobox
+        combo_template.connect('changed', self.on_changed_template_key)
+        combo_template.set_active(0)        
+        
 
     def construct_preview(self):
         view = gtk.TextView()
@@ -146,12 +169,37 @@ class ImportDialog(gtk.Dialog):
 
         return uihelper.add_scrollbars(view)
         
+
+    def on_changed_template_key(self, combobox):
+        self.template_key = combobox.get_model()[combobox.get_active()][0]
+        self.check_in()
+
+
+    def check_in(self):
+        # apply template
+        template = dataio.ImporterTemplateRegistry[self.template_key]
+        self.importer.clear(include=self.importer.public_props)
+        self.importer.set_values(**template.defaults.data)
+
+        # check in data
+        for connector in self.clist:
+            connector.check_in()
+
+
+    def check_out(self):
+        for connector in self.clist:
+            connector.check_out()
         
 
 
 if __name__ == "__main__":
-
-    dlg = ImportDialog('ASCII', 'pfc', ['test.dat'])
+    import Sloppy
+    Sloppy.init()
+    
+    dlg = ImportDialog(dataio.ImporterRegistry['ASCII'], 'ASCII::pfc', ['test.dat'])
     dlg.run()
     
-    
+    print dlg.importer.get_values(include=['header_size'])
+    dlg.check_out()
+    print
+    print dlg.importer.get_values(include=['header_size'])

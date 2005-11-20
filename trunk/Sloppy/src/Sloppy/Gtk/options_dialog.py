@@ -29,7 +29,7 @@ import gtk, gobject
 
 
 from Sloppy.Lib.Props import pBoolean
-import pwconnect
+import pwconnect, pwglade
 
 
 class NoOptionsError(Exception):
@@ -55,11 +55,11 @@ class OptionsDialog(gtk.Dialog):
 
 
         self.owner = owner
-        self.connectors = construct_connectors(owner)
+        self.connectors = pwglade.construct_connectors(owner)
         if len(self.connectors) == 0:
             raise NoOptionsError
         
-        self.tablewidget = construct_table(self.connectors)
+        self.tablewidget = pwglade.construct_table(self.connectors)
 
         frame = gtk.Frame('Edit')
         frame.add(self.tablewidget)
@@ -84,74 +84,6 @@ class OptionsDialog(gtk.Dialog):
 
 
 
-#------------------------------------------------------------------------------
-# Convenience Methods To Construct Connectors And Container Widgets For Them.
-#
-       
-def construct_table(clist):
-    tw = gtk.Table(rows=len(clist), columns=2)
-    tooltips = gtk.Tooltips()
-
-    n = 0
-    for c in clist:                
-        # widget
-        tw.attach(c.widget, 1,2,n,n+1,
-                  xoptions=gtk.EXPAND|gtk.FILL,
-                  yoptions=0, xpadding=5, ypadding=1)
-
-        # label (put into an event box to display the tooltip)
-        label = gtk.Label(c.prop.blurb or c.key)
-        label.set_alignment(0,0)
-        #label.set_justify(gtk.JUSTIFY_LEFT)
-        label.show()
-
-        ebox = gtk.EventBox()
-        ebox.add(label)
-        ebox.show()
-        if c.prop.doc is not None:
-            tooltips.set_tip(ebox, c.prop.doc)
-
-        tw.attach(ebox, 0,1,n,n+1,
-                  yoptions=0, xpadding=5, ypadding=1)
-
-        n += 1
-    return tw
-
-
-def construct_connectors(owner):
-    """    
-    If owner.public_props is set, then the creation of connectors is limited
-    to items of this list.
-    """
-    if hasattr(owner, 'public_props'):
-        proplist = []
-        for key in owner.public_props:
-            proplist.append(owner.get_prop(key))
-    else:
-        proplist = owner.get_props().itervalues()
-    
-    clist = []
-    for prop in proplist:
-        
-        #
-        # Determine type of connector from widget type
-        # and construct it.
-        #
-        if prop.get_value_dict() is not None:
-            ctype = "ComboBox"
-        elif prop.get_value_list() is not None:
-            ctype = "ComboBox"
-        elif isinstance(prop, pBoolean):
-            ctype = "CheckButton"
-        else:
-            ctype = "Entry"
-
-        connector = pwconnect.connectors[ctype](owner, prop.name)
-        connector.create_widget()
-        connector.widget.show()        
-        clist.append(connector)
-
-    return clist
 
 
 

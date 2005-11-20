@@ -54,7 +54,8 @@ class Importer(dataio.Importer):
     # Header
     header_size = \
      pInteger(
-        CheckBounds(min=0), 
+        CheckBounds(min=0),
+        blurb="Header size",
         doc="Number of header lines"
         )
 
@@ -67,12 +68,13 @@ class Importer(dataio.Importer):
     header_include_end = \
      pBoolean(
         default=False,
-        doc="Whether to include the last line of the header in the header."
+        doc="Whether to include the last line of the header in the header"
         )
 
     header_keys_ln = \
      pInteger(
-        doc="Number of line that contains the column keys."
+        blurb="Key line",
+        doc="Number of the line that contains the column keys"
         )
 
     header_keysplit_re = \
@@ -102,20 +104,21 @@ class Importer(dataio.Importer):
      pString(
         CheckValid([None,',', '\t',';', '\s*']),
         blurb ="Delimiter",
-        doc="Column delimiter that separates the columns."
+        doc="Column delimiter that separates the columns"
         )
     
     custom_delimiter = \
      pString(
-        blurb="Custom Delimiter",
-        doc="Custom delimiter used if delimiter is None."
+        blurb="Custom delimiter",
+        doc="Custom delimiter used if delimiter is None"
         )
     
     ncols = \
      pInteger(
         CheckBounds(min=0),
         default=None,
-        blurb="Number of columns"
+        blurb="Columns",
+        doc="Number of columns"
         )
 
 
@@ -444,27 +447,29 @@ class Importer(dataio.Importer):
 
 #------------------------------------------------------------------------------
 dataio.ImporterRegistry['ASCII'] = Importer
-dataio.ImporterTemplateRegistry['ASCII'] = {}
-dataio.ImporterTemplateRegistry['ASCII']['default'] = \
+
+dataio.ImporterTemplateRegistry['ASCII'] = \
   dataio.IOTemplate(extensions=['dat', 'txt'],
-                    blurb="ASCII")
+                    blurb="ASCII",
+                    importer=Importer)
 
 
 
 #----------------------------------------------------------------------
 # for testing: PFC template
-dataio.ImporterTemplateRegistry['ASCII']['pfc'] = \
+dataio.ImporterTemplateRegistry['ASCII::pfc'] = \
   dataio.IOTemplate(extensions=['pfc'],
                     blurb="SIMS Profiles",
-                    defaults={'header_size' : 1, 'header_keys_ln' : 1})
+                    defaults={'header_size' : 1, 'header_keys_ln' : 1},
+                    importer=Importer)
                                
 
 def debug_list_templates(key):
     print
     print "Listing templates for key '%s':" % key
-    for key, template in dataio.ImporterTemplateRegistry[key].iteritems():
+    for key, template in dataio.ImporterTemplateRegistry.iteritems():
         print " %8s: %s " % (key, template.get_values())
     print
 
 
-debug_list_templates('ASCII')
+#debug_list_templates('ASCII')

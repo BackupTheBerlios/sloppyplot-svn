@@ -68,8 +68,7 @@ class LayerWindow(gtk.Window):
             tree = gtk.glade.XML('./Glade/layer_editor.glade', key)
             tabwidget = tree.get_widget(key)
 
-            cf = pwglade.ConnectorFactory()
-            connectors = cf.create_from_glade_tree(object, tree)
+            connectors = pwglade.construct_connectors_from_glade_tree(object, tree)
             pwglade.check_in(connectors)
 
             nb_main.append_page(tabwidget)
