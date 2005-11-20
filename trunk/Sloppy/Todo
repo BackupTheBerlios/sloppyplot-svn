@@ -10,12 +10,15 @@ TOP PRIORTIES:
   => clear result_xxx before any read operation.
 
 - derive import_csv from import_ascii ? Or should csv be strict csv
-  w/o comments and so on?
+  w/o comments and so on? YES!
   
 - open Dataset window after import, if we have only one dataset.
 
 - Error Handling (-> msgwin.py)
 
+- ASCII Import Dialog: Offer to save/load templates.
+
+- ASCII Import Dialog: Make options expandable and hide them by default.
 
 
 

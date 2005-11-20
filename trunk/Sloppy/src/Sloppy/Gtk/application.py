@@ -66,6 +66,7 @@ from options_dialog import OptionsDialog, NoOptionsError
 
 from Sloppy.Lib.Undo import *
 
+import import_dialog
    
 #------------------------------------------------------------------------------
 # Helper Methods
@@ -706,7 +707,8 @@ class GtkApplication(Application):
             #importer = ImporterRegistry[importer_key]()
 
             try:
-                dialog = OptionsDialog(importer, parent=self.window)
+                #dialog = OptionsDialog(importer, parent=self.window)
+                dialog = import_dialog.ImportDialog(importer_key, template_key)
             except NoOptionsError:
                 pass
             else:
