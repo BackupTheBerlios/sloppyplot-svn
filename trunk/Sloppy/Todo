@@ -7,6 +7,54 @@ TOP PRIORTIES:
 
 - use iohelper.py in projectio.py and in config file writing
 
+- allow to save config file data in external files.
+
+
+=== READING AN EXTERNAL TEMPLATE ===
+
+Instead of 
+
+ eTemplates = eConfig.findall('IOTemplates/ImportTemplates')
+
+we might use
+
+
+ eTemplate = self.config_findall(eConfig, 'IOTemplates/ImportTemplates')
+
+
+which would then find normal entries and entries with a special attribute
+
+ <ImportTemplate _source='pfc.xml'></ImportTemplate>
+
+This would imply:
+
+ - check and see if we can find pfc.xml
+ - try to open the file
+   - if we can't find, issue an error message
+   - if we can find it, open it, parse it, and put the node data in
+     'app.eConfig_subnodes'. Also, set the key in IOTemplates/ImportTemplate
+     _read=index.  To quickly find the node, we assign the object index and
+     use this index as key in app.eConfig_subnodes
+- return the node
+
+From this point on, everything would be unchanged for the application.
+
+
+=== WRITING AN EXTERNAL TEMPLATE ===
+
+---
+
+
+=== EXPORTING/IMPORTING A TEMPLATE ===
+
+An even simpler solution would be not to allow external files, but to 
+allow the export and import of these.  This would mean one more extra
+step, but it would avoid file cluttering! 
+
+
+
+
+
 
 
 
