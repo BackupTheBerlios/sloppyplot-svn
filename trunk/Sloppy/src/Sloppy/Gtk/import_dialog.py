@@ -158,9 +158,9 @@ class ImportDialog(gtk.Dialog):
             n+=1
 
         # add two entries: add new entry and remove this entry
-        model.append( (None, None, True) ) # = separator
-        model.append( ("__ADD__", "Add new template", True) )
-        model.append( ("__REMOVE__", "Remove current template", False) )
+#        model.append( (None, None, True) ) # = separator
+#        model.append( ("__ADD__", "Add new template", True) )
+#        model.append( ("__REMOVE__", "Remove current template", False) )
 
         self.combo_template.set_active(index)
         
@@ -277,10 +277,70 @@ class ImportDialog(gtk.Dialog):
         
 
 
-if __name__ == "__main__":
-    import Sloppy
-    Sloppy.init()
 
+class SimpleImportDialog(gtk.Dialog):
+    def __init__(self, template_key=None):
+        gtk.Dialog.__init__(self, "Import", None,
+                            gtk.DIALOG_MODAL|gtk.DIALOG_DESTROY_WITH_PARENT,
+                            (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
+                            gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
+
+        # create GUI                
+        model = gtk.ListStore(str,str) # key, description
+        combo_template = gtk.ComboBox(model)
+        cell = gtk.CellRendererText()
+        combo_template.pack_start(cell, True)
+        combo_template.add_attribute(cell, 'text', 1)
+        combo_template.show()
+        self.combo_template = combo_template
+
+        checkbutton = gtk.CheckButton("Modify import options...")
+        checkbutton.set_active(True)
+        checkbutton.show()        
+        self.checkbutton = checkbutton
+        
+        self.vbox.pack_start(combo_template,True,True)
+        self.vbox.pack_start(checkbutton,True,True)
+        
+        # return values are stored here
+        self.modify_options = None
+        self.template_key = None
+        
+        # set value
+        self.update_combobox(template_key)
+
+
+    def update_combobox(self, new_key):
+        model = self.combo_template.get_model()
+        model.clear()
+
+        n = 0
+        index = -1
+        
+        # limit available templates to given importer class
+        template_keys = dataio.ImporterTemplateRegistry.iterkeys()
+        for key, template in dataio.ImporterTemplateRegistry.iteritems():
+            model.append( (key, "%s (%s)" % (key, template.blurb)) )
+            if key == new_key:
+                index = n
+            n+=1
+
+        self.combo_template.set_active(index)
+
+    def run(self):
+        response = gtk.Dialog.run(self)
+
+        self.modify_options = self.checkbutton.get_active()
+        model = self.combo_template.get_model()
+        iter = self.combo_template.get_active_iter()
+        if iter is not None:
+            self.template_key = model.get_value(iter,0)
+        
+        return response
+
+
+##############################################################################
+def test1():
     importer = dataio.ImporterRegistry['ASCII']()
     dlg = ImportDialog(importer, 'ASCII::pfc')
     dlg.run()
@@ -289,3 +349,20 @@ if __name__ == "__main__":
     dlg.check_out()
     print
     print dlg.importer.get_values(include=['header_size'])
+
+def test2():
+    dlg = SimpleImportDialog('ASCII')
+    try:
+        dlg.run()
+        print "options: ", dlg.modify_options
+        print "template key:", dlg.template_key
+    finally:
+        dlg.destroy()
+        
+        
+if __name__ == "__main__":
+    import Sloppy
+    Sloppy.init()
+
+    test2()
+
