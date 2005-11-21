@@ -581,6 +581,9 @@ class AppWindow( gtk.Window ):
         ('DatasetImport', None, 'Import Dataset', '<control>I', 'Import a dataset', '_cb_import_dataset'),
         ('NewDataset', gtk.STOCK_ADD, 'New Dataset', None, 'Create a new dataset', '_cb_new_dataset'),
         ('ExperimentalPlot', None, 'Create Multiplot (EXPERIMENTAL!)', None, None, '_cb_experimental_plot'),
+        #
+        ('ConfigMenu', None, '_Configuration'),
+        ('ConfigImportTemplates', None, 'Import Templates', None, 'Configure existing import templates...', 'on_action_ConfigImportTemplates'),
         ]
 
     actions_appwin = [        
@@ -641,6 +644,10 @@ class AppWindow( gtk.Window ):
           <menuitem action='RenameItem'/>          
           <separator/>
           <menuitem action='Delete'/>
+          <separator/>
+          <menu action='ConfigMenu'>
+            <menuitem action='ConfigImportTemplates'/>
+          </menu>
         </menu>
         <menu action='DatasetMenu'>
           <menuitem action='NewDataset'/>   

@@ -43,7 +43,7 @@ from Sloppy.Base import dataio
 
 class ImportDialog(gtk.Dialog):
 
-    def __init__(self, importer, template_key, filenames):
+    def __init__(self, importer, template_key, filenames=[]):
         gtk.Dialog.__init__(self, "%s Import" % "ASCII",
                             None,
                             gtk.DIALOG_MODAL|gtk.DIALOG_DESTROY_WITH_PARENT,
@@ -140,6 +140,9 @@ class ImportDialog(gtk.Dialog):
         
 
     def construct_preview(self):
+        if len(self.filenames) == 0:
+            return gtk.Label()
+        
         view = gtk.TextView()
         buffer = view.get_buffer()
         view.set_editable(False)

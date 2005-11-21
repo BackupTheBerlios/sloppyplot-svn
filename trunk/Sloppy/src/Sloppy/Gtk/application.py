@@ -802,6 +802,48 @@ class GtkApplication(Application):
         self.clear_recent_files()
 
 
+    def on_action_ConfigImportTemplates(self, action):
+        # create simple add/remove/edit dialog
+        dlg = gtk.Dialog("Edit Import Templates", None,
+                         gtk.DIALOG_MODAL|gtk.DIALOG_DESTROY_WITH_PARENT,
+                         (gtk.STOCK_CLOSE, gtk.RESPONSE_ACCEPT))
+
+        model = gtk.ListStore(str, str) # key, blurb
+        for key,template in ImporterTemplateRegistry.iteritems():
+            model.append((key,"%s: %s" % (key, template.blurb)))
+
+        tv = gtk.TreeView(model)
+        column = gtk.TreeViewColumn("x")
+        cell = gtk.CellRendererText()
+        column.set_attributes(cell, text=1)
+        column.pack_start(cell,expand=True)
+        tv.show()
+        dlg.vbox.add(tv)
+        
+        
+        try:
+            dlg.run()
+        finally:
+            dlg.destroy()
+                         
+
+        def edit_template(template_key):
+            template_key = 'ASCII'
+        
+            template = ImporterTemplateRegistry[template_key]
+            importer = template.new_importer()
+
+            dialog = import_dialog.ImportDialog(importer, template_key)    
+            try:
+                result = dialog.run()
+                if result == gtk.RESPONSE_ACCEPT:
+                    dialog.check_out()
+                else:
+                    return
+            finally:
+                dialog.destroy()
+
+
     #----------------------------------------------------------------------
     # Simple user I/O
     #
