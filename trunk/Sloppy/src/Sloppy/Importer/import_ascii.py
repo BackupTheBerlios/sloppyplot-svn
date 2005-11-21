@@ -451,25 +451,15 @@ dataio.ImporterRegistry['ASCII'] = Importer
 dataio.ImporterTemplateRegistry['ASCII'] = \
   dataio.IOTemplate(extensions=['dat', 'txt'],
                     blurb="ASCII",
-                    importer=Importer)
+                    importer_key='ASCII',
+                    write_to_config=False)
 
 
 
 #----------------------------------------------------------------------
 # for testing: PFC template
-dataio.ImporterTemplateRegistry['ASCII::pfc'] = \
-  dataio.IOTemplate(extensions=['pfc'],
-                    blurb="SIMS Profiles",
-                    defaults={'header_size' : 1, 'header_keys_ln' : 1},
-                    importer=Importer)
-                               
-
-def debug_list_templates(key):
-    print
-    print "Listing templates for key '%s':" % key
-    for key, template in dataio.ImporterTemplateRegistry.iteritems():
-        print " %8s: %s " % (key, template.get_values())
-    print
-
-
-#debug_list_templates('ASCII')
+#dataio.ImporterTemplateRegistry['ASCII::pfc'] = \
+#  dataio.IOTemplate(extensions=['pfc'],
+#                    blurb="SIMS Profiles",
+#                    defaults={'header_size' : 1, 'header_keys_ln' : 1},
+#                    importer_key='ASCII')                               

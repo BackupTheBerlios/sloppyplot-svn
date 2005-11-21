@@ -43,7 +43,7 @@ from Sloppy.Base import dataio
 
 class ImportDialog(gtk.Dialog):
 
-    def __init__(self, importer_class, template_key, filenames):
+    def __init__(self, importer, template_key, filenames):
         gtk.Dialog.__init__(self, "%s Import" % "ASCII",
                             None,
                             gtk.DIALOG_MODAL|gtk.DIALOG_DESTROY_WITH_PARENT,
@@ -51,11 +51,14 @@ class ImportDialog(gtk.Dialog):
                             gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
 
         self.filenames = filenames
-        self.importer_class = importer_class
         self.template_key = template_key
 
         # actual Importer object
-        self.importer = importer_class()
+        self.importer = importer
+        try:
+            self.importer_key = [key for key,value in dataio.ImporterRegistry.iteritems() if value == importer.__class__][0]
+        except IndexError:
+            raise IndexError("The given importer class %s could not be found in the ImporterRegistry." % importer.__class__)
 
         #
         # Combos for choosing the Template
@@ -71,7 +74,7 @@ class ImportDialog(gtk.Dialog):
 
         model = gtk.ListStore(str,str) # key, description
         # limit available templates to given importer class
-        template_keys = [tpl for tpl in dataio.ImporterTemplateRegistry.itervalues() if tpl.importer == importer_class]
+        template_keys = [tpl for tpl in dataio.ImporterTemplateRegistry.itervalues() if tpl.importer_key == self.importer_key]
         for key, template in dataio.ImporterTemplateRegistry.iteritems():
             model.append( (key, template.blurb) )
         combo_template = gtk.ComboBox(model)
@@ -120,7 +123,6 @@ class ImportDialog(gtk.Dialog):
                 expander.child.hide_all()
             else:
                 expander.child.show_all()
-            print expanded
         expander.connect('activate', on_activate_expander)
 
         #
@@ -195,8 +197,9 @@ class ImportDialog(gtk.Dialog):
 if __name__ == "__main__":
     import Sloppy
     Sloppy.init()
-    
-    dlg = ImportDialog(dataio.ImporterRegistry['ASCII'], 'ASCII::pfc', ['test.dat'])
+
+    importer = dataio.ImporterRegistry['ASCII']()
+    dlg = ImportDialog(importer, 'ASCII::pfc', ['test.dat'])
     dlg.run()
     
     print dlg.importer.get_values(include=['header_size'])

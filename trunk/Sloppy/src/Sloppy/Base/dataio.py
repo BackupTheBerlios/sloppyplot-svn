@@ -145,10 +145,11 @@ class IOTemplate(HasProps):
     defaults = pDict()
     extensions = pList(pUnicode().check)
     blurb = pUnicode()
-    importer = Prop(CheckType(type(Importer)))
+    importer_key = pString()
+    write_to_config = pBoolean(default=True)
 
     def new_importer(self):
-        return self.importer(**self.defaults.data)
+        return ImporterRegistry[self.importer_key](**self.defaults.data)
 
 
 
@@ -169,15 +170,19 @@ def read_array_from_file(filename, importer_key='ASCII', **kwargs):
     importer = ImporterRegistry[importer_key](**kwargs)
     return importer.read_array_from_file(filename)
 
-def importer_from_filename(filename):
-   
+
+def importer_template_from_filename(filename):
+    """    
+    Return a list of templates that matches the given filename based
+    on the extension.
+    """
     path, ext = os.path.splitext(filename)
     if len(ext) > 1: ext = ext[1:].lower()
     else: return matches
 
     matches = []
-    for key, importer in ImporterRegistry.iteritems():
-        if ext in importer.extensions:
+    for key, template in ImporterTemplateRegistry.iteritems():
+        if ext in template.extensions:
             matches.append(key)
 
     return matches

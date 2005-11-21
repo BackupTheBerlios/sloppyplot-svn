@@ -57,9 +57,10 @@ from Sloppy.Base.table import Table
 from Sloppy.Base import pdict, uwrap
 from Sloppy.Base.plugin import PluginRegistry
 
-from Sloppy.Base.dataio import ImporterRegistry, ImporterTemplateRegistry, ExporterRegistry, importer_from_filename
-from Sloppy.Base import dataio
-from Sloppy.Base.dataio import importer_from_filename, Importer, ImportError
+from Sloppy.Base.dataio import \
+     ImporterRegistry, ImporterTemplateRegistry, ExporterRegistry, \
+     importer_template_from_filename, Importer, ImportError
+
 
 from Sloppy.Gnuplot.terminal import PostscriptTerminal
 from options_dialog import OptionsDialog, NoOptionsError
@@ -688,7 +689,7 @@ class GtkApplication(Application):
                     template_key = filter_keys[f.get_name()]
                     # we skip the hard task of determining the template key here
                     if template_key is 'auto':
-                        matches = importer_from_filename(filenames[0])
+                        matches = importer_template_from_filename(filenames[0])
                         if len(matches) > 0:
                             template_key = matches[0]
                         else:
@@ -704,8 +705,8 @@ class GtkApplication(Application):
             template = ImporterTemplateRegistry[template_key]
             importer = template.new_importer()
 
+            dialog = import_dialog.ImportDialog(importer, template_key, filenames)
             try:
-                dialog = import_dialog.ImportDialog(template.importer, template_key, filenames)
                 result = dialog.run()
                 if result == gtk.RESPONSE_ACCEPT:
                     dialog.check_out()

@@ -1,30 +1,13 @@
 
 TOP PRIORTIES:
 
-- be able to save and load ASCII import filters. This would
-  be a great feature to have!
-
 - display metadata
-
-- make sure Importer and Exporter objects are used only once?
-  => clear result_xxx before any read operation.
-
-- derive import_csv from import_ascii ? Or should csv be strict csv
-  w/o comments and so on? YES!
-  
-- open Dataset window after import, if we have only one dataset.
 
 - Error Handling (-> msgwin.py)
 
-- ASCII Import Dialog: Offer to save/load templates.
-
-- ASCII Import Dialog: Make options expandable and hide them by default.
+- use iohelper.py in projectio.py and in config file writing
 
 
-
-ABOUT ASCII IMPORT:
-
-How should the import dialog look like?
 
 
 ###############################################################################
@@ -34,7 +17,8 @@ Plans for 0.5.1
 
 BUGFIXES:
  - props: CheckValid, ValueDict -> better naming convention.
-
+ - when writing an archive to a place where you cannot save it,
+   the user is currently not notified that the IO fails.
 
 == CUSTOM GNUPLOT EXPORT ==
 
@@ -52,15 +36,6 @@ BUGFIXES:
 == SOMETHING TO LOOK AT ==
 
 - status bar messages :-)
-
-
-== HEADER LINES SUPPORT FOR ASCII IMPORT ==
-
-- check PFC imports
-  Try to improve ASCII import and allow parsing of the header.
-  This way, PFC import would just be a special case of ASCII:
-  - 1 header line
-  - column names in header are separated by whitespace
 
 
 

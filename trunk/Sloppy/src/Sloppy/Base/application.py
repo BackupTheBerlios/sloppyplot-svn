@@ -34,9 +34,10 @@ from Sloppy.Base.project import Project
 from Sloppy.Base.projectio import load_project, save_project, ParseError
 from Sloppy.Base.backend import BackendRegistry
 from Sloppy.Base.table import Table
-from Sloppy.Base.dataio import ImporterRegistry, ExporterRegistry, importer_from_filename
-from Sloppy.Base import uwrap, utils
-from Sloppy.Base.dataio import ImporterRegistry, ExporterRegistry, importer_from_filename, Importer, ImportError
+from Sloppy.Base.dataio import \
+     ImporterRegistry, ExporterRegistry, importer_template_from_filename,\
+     Importer, ImportError, ImporterTemplateRegistry, IOTemplate
+from Sloppy.Base import uwrap, utils, iohelper
 from Sloppy.Base import config, error
 
 import Sloppy
@@ -105,6 +106,14 @@ class Application(object, HasSignals):
         self.sig_connect("write-config",
                          (lambda sender: self.write_recentfiles()))
 
+
+        # init i/o templates
+        app = self
+
+        # read in existing templates
+        self.read_templates()
+        self.sig_connect("write-config",
+                         (lambda sender: self.write_templates()))
 
         # init() is a good place for initialization of derived class
         self.init()
@@ -243,8 +252,6 @@ class Application(object, HasSignals):
         self.recent_files = ruf
 
     def write_recentfiles(self):    
-        if len(self.recent_files) == 0:
-            return
 
         eRecentFiles = self.eConfig.find("RecentFiles")
         if eRecentFiles is None:
@@ -257,7 +264,49 @@ class Application(object, HasSignals):
             eFile.text = unicode(file)
             eRecentFiles.append(eFile)
 
+
+    def read_templates(self):
+        
+        templates = {}
+        for eTemplate in self.eConfig.findall('IOTemplates/ImportTemplate'):
+            key = eTemplate.get('key')
+            logger.debug("Reading Importer Template '%s'" % key)
             
+            data = {}
+            data['blurb'] = eTemplate.get('blurb')
+            data['importer_key'] = eTemplate.get('importer_key')
+            data['extensions'] = iohelper.read_list(eTemplate, 'Extensions')
+            data['defaults'] = iohelper.read_dict(eTemplate, 'Defaults')
+
+            #logger.debug("Data is %s" % data)
+            templates[key] = IOTemplate(**data)
+
+        ImporterTemplateRegistry.update(templates)
+            
+
+    def write_templates(self):
+        logger.debug("Writing templates.")
+        
+        eTemplates = self.eConfig.find('IOTemplates')
+        if eTemplates is None:
+            eTemplates = SubElement(self.eConfig, 'IOTemplates')
+        else:
+            eTemplates.clear()            
+                
+        for key, tpl in ImporterTemplateRegistry.iteritems():
+            if tpl.write_to_config is True:
+                logger.debug("Writing template %s" % key)
+                eTemplate = SubElement(eTemplates, 'ImportTemplate')               
+
+                iohelper.write(eTemplate, 'key', key)
+                iohelper.write(eTemplate, 'blurb', tpl.blurb)
+                iohelper.write(eTemplate, 'importer_key', tpl.importer_key)
+                iohelper.write_list(eTemplate, 'Extensions', tpl.extensions)
+                iohelper.write_dict(eTemplate, 'Defaults', tpl.defaults)
+                
+                
+
+
     #----------------------------------------------------------------------
     # Simple user I/O
     #
@@ -299,7 +348,7 @@ class Application(object, HasSignals):
             filename = utils.encode_as_key(root)
             ds = Dataset(key=filename, data=tbl, metadata=importer.result_metadata)
             ds.metadata['Import-Source'] = unicode(filename)
-            ds.metadata['Import-Filter'] = unicode(importer.blurb)
+            ##ds.metadata['Import-Filter'] = unicode(importer.blurb)
 
             new_datasets.append(ds)
 

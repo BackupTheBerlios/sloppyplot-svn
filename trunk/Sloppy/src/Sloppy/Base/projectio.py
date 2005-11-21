@@ -228,7 +228,7 @@ def toElement(project):
         " Set If Valid -- only set element attribute if value is not None. "
         if value is not None:
             #print " KEY: %s => %s" % (key, str(value))
-            element.set(key, str(value))
+            element.set(key, unicode(value))
 
 
     eProject = Element("Project")
