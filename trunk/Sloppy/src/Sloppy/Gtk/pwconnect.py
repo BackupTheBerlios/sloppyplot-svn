@@ -59,7 +59,9 @@ class Connector(object):
     
     Derived class must set the attribute 'widget_type' and must implement
     'use_widget'.  Of course, for the widget to be useful, it should
-    also implement 'check_in' and 'check_out'.    
+    also implement 'check_in' and 'check_out'.  The default 'check_out'
+    method relies on 'get_data', so it might make more sense to
+    implement this instead.
     """
 
     widget_type = None
@@ -94,9 +96,16 @@ class Connector(object):
         " Retrieve value from container "
         raise RuntimeError("check_in() needs to be implemented.")
 
+    def get_data(self):
+        """
+        Return checked value from widget, so it can be passed on to
+        the container.
+        """        
+        raise RuntimeError("get_data() needs to be implemented.")
+    
     def check_out(self):
         " Set value in container "
-        raise RuntimeError("check_out() needs to be implemented.")
+        self.set_value(self.get_data())
 
     #----------------------------------------------------------------------
     # UI Stuff
@@ -150,12 +159,13 @@ class Entry(Connector):
             value = ""        
         self.widget.set_text(value)
 
-    def check_out(self):
+    def get_data(self):
         value = self.widget.get_text()
-        if len(value) == 0: value = None
-        else: value = self.prop.check(value)
+        if len(value) == 0:
+            return None
+        else:
+            return self.prop.check(value)
 
-        self.set_value(value)
 
 connectors['Entry'] = Entry
 
@@ -212,15 +222,14 @@ class ComboBox(Connector):
         self.last_value = value
         
     
-    def check_out(self):
+    def get_data(self):
         index = self.widget.get_active()
         if index < 0:
-            value = None
+            return None
         else:
             model = self.widget.get_model()
-            value = model[index][1]
+            return model[index][1]
 
-        self.set_value(value)        
 
 connectors['ComboBox'] = ComboBox
 
@@ -248,13 +257,12 @@ class CheckButton(Connector):
             self.widget.set_inconsistent(False)
             self.widget.set_active(value is True)
 
-    def check_out(self, undolist=[]):
+    def get_data(self):
         # determine value (None,False,True)
         if self.widget.get_inconsistent() is True:
-            value = None
+            return None
         else:
-            value = self.widget.get_active()
+            return self.widget.get_active()
 
-        self.set_value(value)
 
 connectors['CheckButton'] = CheckButton

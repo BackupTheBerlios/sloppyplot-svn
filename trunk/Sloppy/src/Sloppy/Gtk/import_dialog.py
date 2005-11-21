@@ -44,8 +44,7 @@ from Sloppy.Base import dataio
 class ImportDialog(gtk.Dialog):
 
     def __init__(self, importer, template_key, filenames=[]):
-        gtk.Dialog.__init__(self, "%s Import" % "ASCII",
-                            None,
+        gtk.Dialog.__init__(self, "%s Import" % "ASCII", None,
                             gtk.DIALOG_MODAL|gtk.DIALOG_DESTROY_WITH_PARENT,
                             (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
                             gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
@@ -66,22 +65,27 @@ class ImportDialog(gtk.Dialog):
         label_importer = gtk.Label()
         label_importer.set_markup("<b>ASCII Import</b>")
         label_importer.set_use_markup(True)
-#        label_importer.set_alignment(0,0.5)
-#        label_importer.show()
+        #label_importer.set_alignment(0,0.5)
+        #label_importer.show()
 
         label_template = gtk.Label("Template: ")
-#        label_template.show()        
+        label_template.set_alignment(0,0.5)
+        label_template.show()        
 
-        model = gtk.ListStore(str,str) # key, description
-        # limit available templates to given importer class
-        template_keys = [tpl for tpl in dataio.ImporterTemplateRegistry.itervalues() if tpl.importer_key == self.importer_key]
-        for key, template in dataio.ImporterTemplateRegistry.iteritems():
-            model.append( (key, template.blurb) )
+        model = gtk.ListStore(str,str,bool) # key, description, is_sensitive
+                
         combo_template = gtk.ComboBox(model)
         cell = gtk.CellRendererText()
         combo_template.pack_start(cell, True)
         combo_template.add_attribute(cell, 'text', 1)
+        combo_template.add_attribute(cell, 'sensitive', 2)
+
+        # separator
+        def iter_is_separator(model, iter):
+            return model[iter][0] == None
+        combo_template.set_row_separator_func(iter_is_separator)
         combo_template.show()
+        self.combo_template = combo_template
         
         box_template = gtk.VBox()
         box_template.pack_start(label_template,False,True)
@@ -136,7 +140,29 @@ class ImportDialog(gtk.Dialog):
 
         # fill combobox
         combo_template.connect('changed', self.on_changed_template_key)
-        combo_template.set_active(0)        
+        self.update_combobox(template_key)
+        
+    def update_combobox(self, new_key):
+        model = self.combo_template.get_model()
+        model.clear()
+
+        n = 0
+        index = -1
+        
+        # limit available templates to given importer class
+        template_keys = [tpl for tpl in dataio.ImporterTemplateRegistry.itervalues() if tpl.importer_key == self.importer_key]
+        for key, template in dataio.ImporterTemplateRegistry.iteritems():
+            model.append( (key, "%s (%s)" % (key, template.blurb), True) )
+            if key == new_key:
+                index = n
+            n+=1
+
+        # add two entries: add new entry and remove this entry
+        model.append( (None, None, True) ) # = separator
+        model.append( ("__ADD__", "Add new template", True) )
+        model.append( ("__REMOVE__", "Remove current template", False) )
+
+        self.combo_template.set_active(index)
         
 
     def construct_preview(self):
@@ -176,8 +202,62 @@ class ImportDialog(gtk.Dialog):
         
 
     def on_changed_template_key(self, combobox):
-        self.template_key = combobox.get_model()[combobox.get_active()][0]
-        self.check_in()
+        key = combobox.get_model()[combobox.get_active()][0]
+
+        if key == '__ADD__':
+
+            # use the current options for the new template
+            data = {}
+            for connector in self.clist:
+                data[connector.key] = connector.get_data()
+
+            print "CREATING NEW TEMPLATE WITH"
+            print data
+            #template = dataio.IOTemplate(defaults=data)
+
+            # ask for name of new template
+            dialog = gtk.Dialog("Enter name of new template", self,
+              gtk.DIALOG_MODAL|gtk.DIALOG_DESTROY_WITH_PARENT,
+              (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
+               gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
+
+            entry = gtk.Entry()
+            entry.show()
+            
+            dialog.vbox.add(entry)
+            
+            try:
+                response = dialog.run()                
+                if response == gtk.RESPONSE_ACCEPT:
+                    template_key = entry.get_text()                    
+
+                    # check for valid key
+                    if template_key == "":
+                        print "Empty key. not added."
+                        return
+                    
+                    if dataio.ImporterTemplateRegistry.has_key(template_key):
+                        print "KEY %s ALREADY EXISTS. NOT ADDED." % template_key
+                        return
+                    
+                else:
+                    print "NOT ADDED!"
+                    return
+            finally:
+                dialog.destroy()
+                                                 
+            # create new template
+            template = dataio.IOTemplate(importer_key=self.importer_key,
+                                         blurb="User Profile",
+                                         defaults=data)
+            dataio.ImporterTemplateRegistry[template_key] = template
+
+            self.update_combobox(template_key)
+            
+        else:
+            # use template that was picked
+            self.template_key = key
+            self.check_in()
 
 
     def check_in(self):
@@ -202,7 +282,7 @@ if __name__ == "__main__":
     Sloppy.init()
 
     importer = dataio.ImporterRegistry['ASCII']()
-    dlg = ImportDialog(importer, 'ASCII::pfc', ['test.dat'])
+    dlg = ImportDialog(importer, 'ASCII::pfc')
     dlg.run()
     
     print dlg.importer.get_values(include=['header_size'])
