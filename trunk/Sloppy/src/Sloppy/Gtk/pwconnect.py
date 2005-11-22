@@ -89,6 +89,9 @@ class Connector(object):
         return self.container.get_prop(self.key)
     prop = property(get_prop)
 
+    def set_container(self, container):
+        self.container = container
+
     #----------------------------------------------------------------------
     # Check In/Out
     
@@ -120,6 +123,7 @@ class Connector(object):
     def use_widget(self, widget):
         self.check_widget_type(widget)
         self.widget = widget
+
 
 connectors = {}
 

@@ -38,6 +38,8 @@ import uihelper
 import pwconnect, pwglade
 
 from Sloppy.Base import dataio
+from Sloppy.Lib.Props import pKeyword
+
 
 #------------------------------------------------------------------------------
 
@@ -340,6 +342,93 @@ class SimpleImportDialog(gtk.Dialog):
 
 
 
+###############################################################################
+# EVERYTHING ABOVE IS PROBABLY DEPRECATED    
+
+class EditTemplate(gtk.Dialog):
+
+    def __init__(self, key, template):
+        gtk.Dialog.__init__(self, "Edit template '%s'" % key, None,
+                            gtk.DIALOG_MODAL|gtk.DIALOG_DESTROY_WITH_PARENT,
+                            (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
+                            gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
+
+        self.key = key
+        self.template = template
+        self.importer = dataio.ImporterRegistry[template.importer_key]()
+        self.importer.set_values(**self.template.defaults.data)
+
+        #
+        # key, blurb and more
+        #
+        self.entry_key = gtk.Entry() ; self.entry_key.show()
+        lbl_key = gtk.Label("Template key:") ; lbl_key.show()
+        hbox = gtk.HBox()
+        hbox.pack_start(lbl_key) ; hbox.pack_start(self.entry_key) 
+        hbox.show()
+
+        self.vbox.add(hbox)
+
+        self.entry_blurb = gtk.Entry() ; self.entry_blurb.show()
+        lbl_blurb = gtk.Label("Blurb:") ; lbl_blurb.show()
+        hbox = gtk.HBox()
+        hbox.pack_start(lbl_blurb) ; hbox.pack_start(self.entry_blurb)
+        hbox.show()
+
+        self.vbox.add(hbox)
+
+        sep = gtk.HSeparator() ; sep.show()
+        self.vbox.pack_start(sep)
+        
+        
+        #
+        # set up connectors
+        #
+        self.connectors = pwglade.construct_connectors(self.importer)
+        table_options = pwglade.construct_table(self.connectors)
+        table_options.show()
+        self.vbox.add(table_options)
+
+        for c in self.connectors:
+            c.check_in()
+
+    def run(self):
+
+        response = None
+        
+        while 1==1:
+            response = gtk.Dialog.run(self)
+
+            if response == gtk.RESPONSE_ACCEPT:
+                #
+                # check key for validity
+                #
+                key = self.entry_key.get_text()
+                if len(key) == 0:
+                    continue
+
+                try:
+                    key = pKeyword().check(key)
+                except:
+                    # logger.error ?
+                    print "Key contains invalid characters."
+                    continue
+
+                if dataio.ImporterTemplateRegistry.has_key(key) is True:
+                    print "Key already exists. Choose another."
+                    continue
+
+                break
+
+                       
+        for c in self.connectors:
+            c.check_out()
+
+        return response
+        
+        
+        
+
 class ImportOptions(gtk.Dialog):
     
     def __init__(self, template_key, gladefile=None):
@@ -349,8 +438,8 @@ class ImportOptions(gtk.Dialog):
                             gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
 
         # create a new importer based on the template
-        template = dataio.ImporterTemplateRegistry[template_key]
-        self.importer = template.new_importer()
+        self.template = dataio.ImporterTemplateRegistry[template_key]
+        self.importer = self.template.new_importer()
         
         #
         # set up connectors
@@ -366,6 +455,12 @@ class ImportOptions(gtk.Dialog):
             table_options.show()
             self.vbox.add(table_options)
 
+        # add button to save options as template
+        btn_save = gtk.Button("Save as template...")
+        btn_save.connect("clicked", self.on_btn_save_clicked)
+        btn_save.show()
+        self.vbox.add(btn_save)
+        
         for c in self.connectors:
             c.check_in()
         
@@ -378,7 +473,31 @@ class ImportOptions(gtk.Dialog):
                 c.check_out()            
 
         return response
-                
+
+    def on_btn_save_clicked(self, btn):
+
+        data = {}
+        for c in self.connectors:
+            data[c.key] = c.get_data()
+
+        key = "new_template"
+        template = dataio.IOTemplate(\
+            importer_key=self.template.importer_key,
+            defaults=data)
+        dialog = EditTemplate(key, template)
+
+        try:
+            response = dialog.run()
+            if response == gtk.RESPONSE_ACCEPT:
+                # if user changed any options, use them
+                for c in self.connectors:
+                    c.set_container(dialog.importer)
+                    c.check_in()
+            else:
+                # don't do anything if user aborted
+                pass                
+        finally:
+            dialog.destroy()
             
 
             
