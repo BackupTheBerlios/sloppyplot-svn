@@ -418,11 +418,25 @@ class EditTemplate(gtk.Dialog):
                     print "Key already exists. Choose another."
                     continue
 
-                break
+                # blurb
+                blurb = self.entry_blurb.get_text()
+                self.template.blurb = blurb
+
+                # TODO: extension_list
+                extension_list = ["SPC"]
+                self.template.extension_list = extension_list                
+                
+                # if we came till here, then we can save the template
+                for c in self.connectors:
+                    c.check_out()
+
+                dataio.ImporterTemplateRegistry[key] = self.template
+                print ">>> TEMPLATE SAVED <<<"
+
+            break
+            
 
                        
-        for c in self.connectors:
-            c.check_out()
 
         return response
         
