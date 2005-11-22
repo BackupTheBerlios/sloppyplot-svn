@@ -38,6 +38,11 @@ DETAILS FOR 0.5.1:
 
 - use sloppy version for both project.xml and config.xml
 
+- allow to specify which options can be edited for a template.
+  If you specify None, then the options dialog is simply skipped.
+
+- Display IOError when saving a projet fails! This is very important!
+
 
 DETAILS FOR 0.5.2:
 

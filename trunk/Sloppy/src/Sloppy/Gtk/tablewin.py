@@ -31,7 +31,7 @@ from Sloppy.Base import uwrap, utable
 
 from Sloppy.Lib.Undo import UndoList, UndoInfo
 
-from Numeric import array, ArrayType, ones, zeros, arange
+from Numeric import array, ArrayType, ones, zeros, arange, sin
 
 from tableview import TableView
 import uihelper

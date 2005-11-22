@@ -339,6 +339,51 @@ class SimpleImportDialog(gtk.Dialog):
         return response
 
 
+
+class ImportOptions(gtk.Dialog):
+    
+    def __init__(self, template_key, gladefile=None):
+        gtk.Dialog.__init__(self, "Importing %s" % template_key, None,
+                            gtk.DIALOG_MODAL|gtk.DIALOG_DESTROY_WITH_PARENT,
+                            (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
+                            gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
+
+        # create a new importer based on the template
+        template = dataio.ImporterTemplateRegistry[template_key]
+        self.importer = template.new_importer()
+        
+        #
+        # set up connectors
+        #
+        if gladefile is not None:
+            tree = gtk.glade.XML(gladefile, 'options')
+            widget = tree.get_widget('options')
+            self.vbox.add(widget)
+            self.connectors = pwglade.construct_connectors_from_glade_tree(self.importer, tree)
+        else:
+            self.connectors = pwglade.construct_connectors(self.importer)
+            table_options = pwglade.construct_table(self.connectors)
+            table_options.show()
+            self.vbox.add(table_options)
+
+        for c in self.connectors:
+            c.check_in()
+        
+
+    def run(self):
+        response = gtk.Dialog.run(self)
+
+        if response == gtk.RESPONSE_ACCEPT:
+            for c in self.connectors:
+                c.check_out()            
+
+        return response
+                
+            
+
+            
+        
+        
 ##############################################################################
 def test1():
     importer = dataio.ImporterRegistry['ASCII']()
@@ -350,6 +395,8 @@ def test1():
     print
     print dlg.importer.get_values(include=['header_size'])
 
+
+
 def test2():
     dlg = SimpleImportDialog('ASCII')
     try:
@@ -358,11 +405,16 @@ def test2():
         print "template key:", dlg.template_key
     finally:
         dlg.destroy()
-        
+
+def test3():
+    dlg = ImportOptions("ASCII", gladefile='./Glade/ascii.glade')
+    dlg.run()
+    print "=> ", dlg.importer.get_values()
+    dlg.destroy()    
         
 if __name__ == "__main__":
     import Sloppy
     Sloppy.init()
 
-    test2()
+    test3()
 

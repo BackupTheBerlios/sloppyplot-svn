@@ -48,7 +48,7 @@ import pwconnect
 
 #------------------------------------------------------------------------------
 
-def construct_connectors_from_glade_tree(self, container, tree, prefix='pw_'):
+def construct_connectors_from_glade_tree(container, tree, prefix='pw_'):
     """
     Find the widgets in the glade file that match the props
     of the given Container.  If e.g. the prop key is 'filename',
@@ -67,7 +67,7 @@ def construct_connectors_from_glade_tree(self, container, tree, prefix='pw_'):
     Returns the created connectors.
     """
 
-    connectors = {}
+    connectors = []
     keys = container.get_props().keys()
     for key in keys:
         widget_key = prefix + key
@@ -80,7 +80,7 @@ def construct_connectors_from_glade_tree(self, container, tree, prefix='pw_'):
         except KeyError:
             raise RuntimeError("No matching Connector available for widget '%s' of %s" % (widget_key, widget.__class__.__name__))
         connector.use_widget(widget)
-        connectors[key] = connector
+        connectors.append(connector)
 
     return connectors
 
@@ -187,10 +187,12 @@ def test():
     widget = tree.get_widget(widgetname)
     win.add(widget)
     connectors = construct_connectors_from_glade_tree(options, tree)
-    check_in(connectors)
+    for c in connectors:
+        c.check_in()
        
     def finish_up(sender):
-        check_out(connectors)
+        for c in connectors:
+            c.check_out()
         changeset = create_changeset(myoptions, options)
         myoptions.set_values(**changeset)
         print "CHANGES: ", changeset        

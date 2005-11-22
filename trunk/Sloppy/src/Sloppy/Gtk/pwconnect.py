@@ -200,10 +200,11 @@ class ComboBox(Connector):
         else:
             # if no ValueDict was found, try ValueList
             value_list = self.prop.get_value_list()
-            for value in value_list.values:
-                model.append((value or "<None>", value))
-                self.value_dict[value] = value
-                self.value_list.append(value)                
+            if value_list is not None:
+                for value in value_list.values:
+                    model.append((value or "<None>", value))
+                    self.value_dict[value] = value
+                    self.value_list.append(value)                
 
             
     #----------------------------------------------------------------------
@@ -214,7 +215,7 @@ class ComboBox(Connector):
             value = self.get_value()
             index = self.value_list.index(value)
         except:
-            raise ValueError("Failed to retrieve prop value '%s' in list of available values '%s'" % (self.get_value(), self.value_list))
+            raise ValueError("Connector for %s.%s failed to retrieve prop value '%s' in list of available values '%s'" % (self.container, self.key, self.get_value(), self.value_list))
 
         model = self.widget.get_model()
         iter = model.get_iter((index,))

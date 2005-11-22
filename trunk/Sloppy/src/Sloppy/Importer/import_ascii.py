@@ -129,9 +129,9 @@ class Importer(dataio.Importer):
     labels = pList()
     
     designations = \
-     Prop(
-        CheckType(list),
-        default=None
+     pString(
+        CheckValid([None,'X', 'Y', 'X|Y', 'XY']),
+        default='X|Y'
         )
 
     typecodes = \
@@ -154,7 +154,7 @@ class Importer(dataio.Importer):
     
     #----
     public_props = ['delimiter', 'custom_delimiter', 'ncols', 'header_size',
-                    'header_keys_ln']
+                    'header_keys_ln', 'designations']
 
     
 
@@ -368,11 +368,16 @@ class Importer(dataio.Importer):
                 column.label = labels[n]
                 n += 1
 
-        # use given designation or if none given, alternate column
-        # designations X/Y.
+        # designations
         designations = self.designations
-        if designations is None:
-            designations = [('X','Y')[i%2] for i in range(tbl.ncols)]
+        if designations.find('|') != -1:
+            designations, repeat_pattern = designations.split('|')
+        else:
+            repeat_pattern = designations
+            
+        while len(designations) < tbl.ncols:
+            designations += repeat_pattern
+        logger.debug("Column designations: %s" % designations)
         
         n = 0
         for column in tbl.get_columns():

@@ -702,14 +702,11 @@ class GtkApplication(Application):
             pbar.show()
             
             # request import options
-            template = ImporterTemplateRegistry[template_key]
-            importer = template.new_importer()
-
-            dialog = import_dialog.ImportDialog(importer, template_key, filenames)
+            dialog = import_dialog.ImportOptions(template_key) # filenames?
             try:
                 result = dialog.run()
                 if result == gtk.RESPONSE_ACCEPT:
-                    dialog.check_out()
+                    importer = dialog.importer
                 else:
                     return
             finally:
