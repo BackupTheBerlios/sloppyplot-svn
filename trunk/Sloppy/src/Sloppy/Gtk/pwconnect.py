@@ -47,6 +47,7 @@ except ImportError:
 import gtk
 
 from Sloppy.Lib.Props import CheckBounds
+import sys
 
 
 
@@ -294,12 +295,12 @@ class SpinButton(Connector):
             if c.min is not None:
                 lower = float(c.min)
             else:
-                lower = -1000000000.0
+                lower = -float(sys.maxint)
         
             if c.max is not None:
                 upper = float(c.max)
             else:
-                upper = +1000000000.0
+                upper = +float(sys.maxint)
 
             self.widget.set_range(lower,upper)
 

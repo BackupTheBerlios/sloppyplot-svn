@@ -37,3 +37,9 @@ class Backend(Exception):
     pass
 
 
+
+
+#------------------------------------------------------------------------------
+
+class SloppyError(Exception):
+    pass

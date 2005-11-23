@@ -35,6 +35,7 @@ import tarfile
 import tempfile
 import os
 import shutil
+from Sloppy.Base import error
 
 from Numeric import ArrayType
 
@@ -406,7 +407,7 @@ def save_project(spj, filename=None, path=None):
                 archive = tarfile.open(filename, mode="w:gz")
                 archive.add( tempdir, '' )
             except IOError,(nr, msg):
-                logger.error('Error while creating archive "%s": %s' % (filename, msg))
+                raise error.SloppyError('Error while creating archive "%s": %s' % (filename, msg))
                 return False
 
         finally:
