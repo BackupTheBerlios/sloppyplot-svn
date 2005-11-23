@@ -46,6 +46,9 @@ except ImportError:
 
 import gtk
 
+from Sloppy.Lib.Props import CheckBounds
+
+
 
 __all__ = ['Connector', 'connectors',
            #
@@ -282,9 +285,29 @@ class SpinButton(Connector):
     def use_widget(self, widget):
         Connector.use_widget(self, widget)
 
-        adjustment = gtk.Adjustment(value=0, lower=0, upper=10, step_incr=1, page_incr=0, page_size=0)
-        self.widget.configure(adjustment=adjustment, climb_rate=0.0, digits=0)
+        self.widget.set_numeric(True)
+        
+        cbounds = [c for c in self.prop.check.items if isinstance(c, CheckBounds)]
+        if len(cbounds) > 0:
+            c = cbounds[0]
+            kwargs = {}
+            if c.min is not None:
+                lower = float(c.min)
+            else:
+                lower = -1000000000.0
+        
+            if c.max is not None:
+                upper = float(c.max)
+            else:
+                upper = +1000000000.0
 
+
+            self.widget.set_range(lower,upper)
+            #self.widget.set_value(xx)
+
+        self.widget.set_increments(1,1)
+        self.widget.set_digits(1)
+        
     def check_in(self):
         value = self.get_value()
         self.last_value = value
