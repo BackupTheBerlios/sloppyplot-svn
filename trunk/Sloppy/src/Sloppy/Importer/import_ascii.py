@@ -454,10 +454,8 @@ class Importer(dataio.Importer):
 dataio.ImporterRegistry['ASCII'] = Importer
 
 dataio.ImporterTemplateRegistry['ASCII'] = \
-  dataio.IOTemplate(extensions=['dat', 'txt'],
-                    blurb="ASCII",
-                    importer_key='ASCII',
-                    write_to_config=False)
+  dataio.IOTemplate(blurb="ASCII", extensions='dat,txt',
+                    importer_key='ASCII', write_to_config=False)
 
 
 

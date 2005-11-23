@@ -274,13 +274,13 @@ class Application(object, HasSignals):
             data = {}
             data['blurb'] = eTemplate.get('blurb')
             data['importer_key'] = eTemplate.get('importer_key')
-            data['extensions'] = iohelper.read_list(eTemplate, 'Extensions')
+            data['extensions'] = eTemplate.get('extensions')
             data['defaults'] = iohelper.read_dict(eTemplate, 'Defaults')
 
-            #logger.debug("Data is %s" % data)
+            logger.debug("Data is %s" % data)
             templates[key] = dataio.IOTemplate(**data)
 
-        dataio.ImporterTemplateRegistry.update(templates)
+        dataio.templates.update(templates)
             
 
     def write_templates(self):
@@ -292,7 +292,7 @@ class Application(object, HasSignals):
         else:
             eTemplates.clear()            
                 
-        for key, tpl in dataio.ImporterTemplateRegistry.iteritems():
+        for key, tpl in dataio.templates.iteritems():
             if tpl.write_to_config is True:
                 logger.debug("Writing template %s" % key)
                 eTemplate = SubElement(eTemplates, 'ImportTemplate')               
@@ -300,8 +300,9 @@ class Application(object, HasSignals):
                 iohelper.write(eTemplate, 'key', key)
                 iohelper.write(eTemplate, 'blurb', tpl.blurb)
                 iohelper.write(eTemplate, 'importer_key', tpl.importer_key)
-                iohelper.write_list(eTemplate, 'Extensions', tpl.extensions)
+                iohelper.write(eTemplate, 'extensions', tpl.extensions)
                 iohelper.write_dict(eTemplate, 'Defaults', tpl.defaults)
+                print tpl.defaults
                 
                 
 

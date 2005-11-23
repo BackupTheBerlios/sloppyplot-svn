@@ -25,7 +25,7 @@ from Sloppy.Base.project import Project
 from Sloppy.Base import utils
 from Sloppy.Base.objects import Legend, Axis, Plot, Layer, Line, TextLabel
 from Sloppy.Base.error import NoData
-from Sloppy.Base import pdict
+from Sloppy.Base import pdict, iohelper
 from Sloppy.Base.dataio import ExporterRegistry, read_table_from_stream
 from Sloppy.Base.table import Table, Column
 
@@ -358,13 +358,14 @@ def toElement(project):
                     eLabel.text = label.rget('text')
 
     # beautify the XML output by inserting some newlines
-    def insert_newlines(element):
-        element.tail = '\n'
-        if element.text is None:
-            element.text = "\n"
-        for sub_element in element.getchildren():
-            insert_newlines(sub_element)
-    insert_newlines(eProject)
+#     def insert_newlines(element):
+#         element.tail = '\n'
+#         if element.text is None:
+#             element.text = "\n"
+#         for sub_element in element.getchildren():
+#             insert_newlines(sub_element)
+#     insert_newlines(eProject)
+    iohelper.beautify_element(eProject)
         
     return eProject
 

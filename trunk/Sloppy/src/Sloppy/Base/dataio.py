@@ -135,20 +135,26 @@ class Exporter(HasProps):
         
 
 #------------------------------------------------------------------------------
+##handler = {}
 ImporterRegistry = {}
-ImporterTemplateRegistry = {}
+
+templates = {}
+ImporterTemplateRegistry = templates # deprecated
 
 ExporterRegistry = {}
 
 
 class IOTemplate(HasProps):
     defaults = pDict()
-    extensions = pList(pUnicode().check)
+    extensions = pString(default="")
     blurb = pUnicode()
     importer_key = pString()
     write_to_config = pBoolean(default=True)
 
     def new_importer(self):
+        return ImporterRegistry[self.importer_key](**self.defaults.data)
+
+    def new_instance(self):
         return ImporterRegistry[self.importer_key](**self.defaults.data)
 
 
@@ -182,7 +188,7 @@ def importer_template_from_filename(filename):
 
     matches = []
     for key, template in ImporterTemplateRegistry.iteritems():
-        if ext in template.extensions:
+        if ext in template.extensions.split(','):
             matches.append(key)
 
     return matches

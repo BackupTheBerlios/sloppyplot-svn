@@ -608,21 +608,21 @@ class GtkApplication(Application):
         # Each item in ImporterRegistry is a class derived from
         # dataio.Importer.  By using IOTemplate objects we can
         # customize the default values for these templates.
-        for (key, template) in dataio.ImporterTemplateRegistry.iteritems():
-            if len(template.extensions) == 0:
+        for (key, template) in dataio.templates.iteritems():
+            ext_list = template.extensions.split(',')
+            if len(ext_list) == 0:
                 continue
-            extensions = ';'.join(map(lambda ext: '*.'+ext, template.extensions))
+            extensions = ';'.join(map(lambda ext: '*.'+ext, ext_list))
             blurb = "%s (%s)" % (template.blurb, extensions)
 
             filter = gtk.FileFilter()
             filter.set_name(blurb)
-            for ext in template.extensions:
+            for ext in ext_list:
                 filter.add_pattern("*."+ext.lower())
                 filter.add_pattern("*."+ext.upper())
             chooser.add_filter(filter)
 
             filter_keys[blurb] = key
-
             
 
         # add shortcut folder to example path, if such exists
@@ -630,6 +630,7 @@ class GtkApplication(Application):
         if os.path.exists(shortcut_folder):
             chooser.add_shortcut_folder(shortcut_folder)
 
+        
         #
         # prepare extra widget
         #
@@ -641,9 +642,9 @@ class GtkApplication(Application):
         model = gtk.ListStore(str, str)
         # add 'Same as Filter' as first choice, then add all importers
         model.append( (None, "Auto") )
-        for key, template in dataio.ImporterTemplateRegistry.iteritems():
+        for key, template in dataio.templates.iteritems():
                 model.append( (key, template.blurb) )
-
+        
         combobox = gtk.ComboBox(model)
         cell = gtk.CellRendererText()
         combobox.pack_start(cell, True)
@@ -669,11 +670,9 @@ class GtkApplication(Application):
         
         chooser.set_extra_widget(vbox)
 
-
         #
         # run dialog
-        #
-        
+        #        
         try:
             response = chooser.run()
             if response == gtk.RESPONSE_OK:
@@ -712,7 +711,7 @@ class GtkApplication(Application):
                     template.blurb = "Recently used Template"
                     template.importer_key = dialog.template.importer_key
                     template.write_config = True
-                    dataio.ImporterTemplateRegistry['recent'] = template                    
+                    dataio.templates['recent'] = template                    
                 else:
                     return
             finally:
@@ -812,7 +811,7 @@ class GtkApplication(Application):
                          (gtk.STOCK_CLOSE, gtk.RESPONSE_ACCEPT))
 
         model = gtk.ListStore(str, str) # key, blurb
-        for key,template in dataio.ImporterTemplateRegistry.iteritems():
+        for key,template in dataio.templates.iteritems():
             model.append((key,"%s: %s" % (key, template.blurb)))
 
         tv = gtk.TreeView(model)
@@ -833,8 +832,7 @@ class GtkApplication(Application):
         def edit_template(template_key):
             template_key = 'ASCII'
         
-            template = dataio.ImporterTemplateRegistry[template_key]
-            importer = template.new_importer()
+            importer = dataio.templates[template_key].new_instance()
 
             dialog = import_dialog.ImportDialog(importer, template_key)    
             try:

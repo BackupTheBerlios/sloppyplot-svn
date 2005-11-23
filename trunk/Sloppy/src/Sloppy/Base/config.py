@@ -27,6 +27,7 @@ I/O for config file.
 from Sloppy.Lib.ElementTree.ElementTree import ElementTree, Element, SubElement, parse
 
 import sys, os
+import iohelper
 
 import logging
 logger = logging.getLogger('Base.config')
@@ -77,15 +78,9 @@ def write_configfile(eConfig, filename):
     filename = os.path.expanduser(filename)
     fd = open(filename, 'w')
 
-    # beautify the XML output by inserting some newlines
-    def insert_newlines(element):
-        element.tail = '\n'
-        if element.text is None:
-            element.text = "\n"
-        for sub_element in element.getchildren():
-            insert_newlines(sub_element)
-    insert_newlines(eConfig)
-    
+
+    iohelper.beautify_element(eConfig)
+
     try:
         ElementTree(eConfig).write(fd, encoding="utf-8")
     finally:

@@ -42,19 +42,39 @@ def write_dict(element, dictname, adict):
         eItem = SubElement(eNode, 'Item')
         if item is not None:
             eItem.text = unicode(item)
+        else:
+            eItem.text = None
         eItem.attrib['key'] = unicode(key)
 
 def read_list(element, listname):
     alist = []
-    for eItem in element.findall('Item'):
+    for eItem in element.findall('%s/Item' % listname):
         item = eItem.text
         alist.append(item)
     return alist
 
 def read_dict(element, dictname):
     adict = {}
-    for eItem in element.findall('Item'):
+    for eItem in element.findall('%s/Item' % dictname):
         key = eItem.attrib['key']
         value = eItem.text
-        alist[key] = value
+        adict[key] = value
     return adict
+
+
+def beautify_element(element):
+    """ Beautify the XML output by inserting some newlines.
+
+    This assumes that the element's tail is never used.
+    It also assumes that if the element has children,
+    and there is no text, then it is o.k. to append
+    a newline to the text.
+    """
+
+    children = element.getchildren()
+    
+    element.tail = '\n'
+    if element.text is None and len(children) > 0:
+        element.text = '\n'
+    for sub_element in children:
+        beautify_element(sub_element)
