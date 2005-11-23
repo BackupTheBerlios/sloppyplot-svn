@@ -806,21 +806,58 @@ class GtkApplication(Application):
 
     def on_action_ConfigImportTemplates(self, action):
         # create simple add/remove/edit dialog
-        dlg = gtk.Dialog("Edit Import Templates", None,
+        dlg = gtk.Dialog("Edit ASCII Import Templates", None,
                          gtk.DIALOG_MODAL|gtk.DIALOG_DESTROY_WITH_PARENT,
                          (gtk.STOCK_CLOSE, gtk.RESPONSE_ACCEPT))
 
         model = gtk.ListStore(str, str) # key, blurb
         for key,template in dataio.import_templates.iteritems():
+            print "ADDING TEMPLATE", key
             model.append((key,"%s: %s" % (key, template.blurb)))
 
         tv = gtk.TreeView(model)
-        column = gtk.TreeViewColumn("x")
+        column = gtk.TreeViewColumn("Available Templates")
         cell = gtk.CellRendererText()
-        column.set_attributes(cell, text=1)
         column.pack_start(cell,expand=True)
-        tv.show()
-        dlg.vbox.add(tv)
+        column.set_attributes(cell, text=1)
+        tv.append_column(column)
+        tv.show()        
+        dlg.vbox.pack_start(tv,True,True)
+
+
+        def edit_item(btn):
+            model,iter = tv.get_selection().get_selected()
+            if iter is None:
+                return
+            key = model.get_value(iter,0)
+            # call 'edit'
+
+        def remove_item(btn):
+            model,iter = tv.get_selection().get_selected()
+            if iter is None:
+                return
+            key = model.get_value(iter,0)
+            # call 'remove'
+
+        def add_item(btn):
+            model,iter = tv.get_selection().get_selected()
+            if iter is None:
+                # insert at beginning
+                pass
+            else:
+                key = model.get_value(iter,0)
+            # call 'add'
+            
+        buttons=[(gtk.STOCK_EDIT, edit_item),
+                 (gtk.STOCK_ADD, (lambda sender: 0)),
+                 (gtk.STOCK_REMOVE, (lambda sender: 0))]        
+        btnbox = uihelper.construct_buttonbox(buttons, labels=False)
+        btnbox.show()
+        dlg.vbox.pack_start(btnbox,False,False)
+
+        # TODO: button responses.  Maybe put this into a generic
+        # TODO: options package and re-write the modify table dialog
+        # TODO: accordingly.
         
         
         try:
@@ -829,20 +866,7 @@ class GtkApplication(Application):
             dlg.destroy()
                          
 
-        def edit_template(template_key):
-            template_key = 'ASCII'
-        
-            importer = dataio.import_templates[template_key].new_instance()
 
-            dialog = import_dialog.ImportDialog(importer, template_key)    
-            try:
-                result = dialog.run()
-                if result == gtk.RESPONSE_ACCEPT:
-                    dialog.check_out()
-                else:
-                    return
-            finally:
-                dialog.destroy()
 
 
     #----------------------------------------------------------------------

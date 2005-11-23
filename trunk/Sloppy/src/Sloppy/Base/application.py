@@ -87,10 +87,7 @@ class Application(object, HasSignals):
             cfg_path = os.path.join(home_path, '.config', 'SloppyPlot')
 
         self.path.set('config_dir', cfg_path)
-        self.path.bset('config', 'config_dir', 'config.xml')
-        
-        print "CONFIG DIR ", self.path.get('config_dir')
-
+        self.path.bset('config', 'config_dir', 'config.xml')  
 
         # init config file
         self.eConfig = config.read_configfile(self, self.path.get('config'))
@@ -299,10 +296,8 @@ class Application(object, HasSignals):
 
                 attrs = tpl.get_values(['blurb','importer_key','extensions'], default=None)
                 attrs['key'] = key
-                iohelper.set_element(eTemplate, attrs)
-                iohelper.write_dict(eTemplate, 'Defaults', tpl.defaults)
-                
-                print tpl.defaults
+                iohelper.set_attributes(eTemplate, attrs)
+                iohelper.write_dict(eTemplate, 'Defaults', tpl.defaults)                
                 
                 
 

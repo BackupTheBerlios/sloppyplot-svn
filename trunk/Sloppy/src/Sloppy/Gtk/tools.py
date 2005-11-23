@@ -328,7 +328,10 @@ class Tool(Dockable):
 
     def update_layer(self):
         pass
-    
+
+    def check_layer(self):
+        if not isinstance(self.layer, objects.Layer):
+            raise TypeError("Invalid Layer %s" % self.layer)
     
 
 class LayerTool(Tool):
@@ -450,11 +453,11 @@ class LabelsTool(Tool):
         # buttons
         #
 
-        buttons = [(None, gtk.STOCK_EDIT, self.on_edit),
-                   (None, gtk.STOCK_REMOVE, self.on_remove),
-                   (None, gtk.STOCK_NEW, self.on_new)]
+        buttons = [(gtk.STOCK_EDIT, self.on_edit),
+                   (gtk.STOCK_REMOVE, self.on_remove),
+                   (gtk.STOCK_NEW, self.on_new)]
 
-        btnbox = uihelper.construct_buttonbox(buttons, show_stock_labels=False)
+        btnbox = uihelper.construct_buttonbox(buttons, labels=False)
         btnbox.show()        
 
         # put everything together
@@ -514,6 +517,8 @@ class LabelsTool(Tool):
     #
     
     def on_edit(self, sender):
+        self.check_layer()
+        
         (model, pathlist) = self.treeview.get_selection().get_selected_rows()
         if model is None:
             return
@@ -536,6 +541,8 @@ class LabelsTool(Tool):
                 
 
     def on_new(self, sender):
+        self.check_layer()
+        
         label = objects.TextLabel(text='newlabel')
         self.edit(label)
         project = self.get_data('project')
@@ -549,6 +556,8 @@ class LabelsTool(Tool):
 
 
     def on_remove(self, sender):
+        self.check_layer()
+        
         (model, pathlist) = self.treeview.get_selection().get_selected_rows()
         if model is None:
             return

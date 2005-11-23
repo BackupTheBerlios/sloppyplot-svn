@@ -151,9 +151,6 @@ class IOTemplate(HasProps):
     importer_key = pString()
     write_to_config = pBoolean(default=True)
 
-    def new_importer(self):
-        return ImporterRegistry[self.importer_key](**self.defaults.data)
-
     def new_instance(self):
         return ImporterRegistry[self.importer_key](**self.defaults.data)
 
