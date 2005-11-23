@@ -138,8 +138,8 @@ class Exporter(HasProps):
 ##handler = {}
 ImporterRegistry = {}
 
-templates = {}
-ImporterTemplateRegistry = templates # deprecated
+import_templates = {}
+ImporterTemplateRegistry = import_templates # deprecated
 
 ExporterRegistry = {}
 

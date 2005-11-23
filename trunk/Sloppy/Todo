@@ -17,7 +17,16 @@ FOR 0.5.2:
 DETAILS FOR 0.5.1:
 
 
-- extension_list => String, maybe call it extensions
+- dataio.templates -> dataio.import_templates
+
+- iohelper.set_attributes
+
+  I have the following problem:
+  
+    if the attribute value is None, then it is not saved.
+    However, what if the reset value for a prop is different from None?
+    Then a value of None would imply a value that is different than what
+    we started from.
 
 - allow editing templates
 

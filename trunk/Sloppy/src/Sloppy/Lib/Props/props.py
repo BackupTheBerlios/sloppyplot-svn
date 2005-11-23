@@ -647,10 +647,14 @@ class HasProps(object):
     get = get_value
 
     
-    def get_values(self, include=None, exclude=None):
+    def get_values(self, include=None, exclude=None, **kwargs):
+
         rv = {}
-        for key in self.__limit_keys(include=include, exclude=exclude):
-            rv[key] = self.__getattribute__(key)
+        keys = self.__limit_keys(include=include, exclude=exclude)
+        nd = kwargs.has_key('default')
+
+        for key in keys:
+            rv[key] = self.__getattribute__(key, nd=True)
 
         return rv
 
@@ -665,8 +669,7 @@ class HasProps(object):
         if value is None:
             return default
         else:
-            return value        
-
+            return value            
 
     def clear(self, include=None, exclude=None):
         " Clear all props. "

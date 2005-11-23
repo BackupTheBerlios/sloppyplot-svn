@@ -608,7 +608,7 @@ class GtkApplication(Application):
         # Each item in ImporterRegistry is a class derived from
         # dataio.Importer.  By using IOTemplate objects we can
         # customize the default values for these templates.
-        for (key, template) in dataio.templates.iteritems():
+        for (key, template) in dataio.import_templates.iteritems():
             ext_list = template.extensions.split(',')
             if len(ext_list) == 0:
                 continue
@@ -642,7 +642,7 @@ class GtkApplication(Application):
         model = gtk.ListStore(str, str)
         # add 'Same as Filter' as first choice, then add all importers
         model.append( (None, "Auto") )
-        for key, template in dataio.templates.iteritems():
+        for key, template in dataio.import_templates.iteritems():
                 model.append( (key, template.blurb) )
         
         combobox = gtk.ComboBox(model)
@@ -711,7 +711,7 @@ class GtkApplication(Application):
                     template.blurb = "Recently used Template"
                     template.importer_key = dialog.template.importer_key
                     template.write_config = True
-                    dataio.templates['recent'] = template                    
+                    dataio.import_templates['recent'] = template                    
                 else:
                     return
             finally:
@@ -811,7 +811,7 @@ class GtkApplication(Application):
                          (gtk.STOCK_CLOSE, gtk.RESPONSE_ACCEPT))
 
         model = gtk.ListStore(str, str) # key, blurb
-        for key,template in dataio.templates.iteritems():
+        for key,template in dataio.import_templates.iteritems():
             model.append((key,"%s: %s" % (key, template.blurb)))
 
         tv = gtk.TreeView(model)
@@ -832,7 +832,7 @@ class GtkApplication(Application):
         def edit_template(template_key):
             template_key = 'ASCII'
         
-            importer = dataio.templates[template_key].new_instance()
+            importer = dataio.import_templates[template_key].new_instance()
 
             dialog = import_dialog.ImportDialog(importer, template_key)    
             try:

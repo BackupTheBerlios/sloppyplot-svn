@@ -247,8 +247,8 @@ def toElement(project):
             SIV(eData, 'typecodes', tbl.typecodes_as_string)
 
             # We write all Column properties except for the
-            # key and the data to the element tree, because
-            # netCDF does not like unicode!
+            # key and the data to the element tree, so we don't
+            # need to put that information into the data file.
             n = 0
             for column in tbl.get_columns():
                 kw = column.get_values(exclude=['key','data'])
@@ -270,7 +270,9 @@ def toElement(project):
         
         SIV(eData, 'key', ds.rget('key'))
         SIV(eData, 'fileformat', 'CSV' )
-        
+
+        # TODO: iohelper.write_dict, but then I need a transformation
+        # TODO: of the file format: Metaitem -> Item
         if len(ds.metadata) > 0:
             eMetadata = SubElement(eData, "Metadata")
             for k,v in ds.metadata.iteritems():
@@ -293,37 +295,23 @@ def toElement(project):
         for layer in plot.layers:
             
             eLayer = SubElement(eLayers, "Layer")
-            SIV(eLayer, 'type', layer.rget('type'))
-            SIV(eLayer, 'grid', layer.rget('grid'))
-            SIV(eLayer, 'title', layer.rget('title'))
-            SIV(eLayer, 'visible', layer.rget('visible'))
+            attrs = layer.get_values(['type', 'grid', 'title', 'visible'], default=None)            
+            iohelper.set_attributes(eLayer, attrs)
                             
             for (key, axis) in layer.axes.iteritems():
                 eAxis = SubElement(eLayer, "Axis")
-                eAxis.set('key', key)
-                SIV(eAxis, 'label', axis.rget('label'))
-                SIV(eAxis, 'scale', axis.rget('scale'))
-                SIV(eAxis, 'start', axis.rget('start'))
-                SIV(eAxis, 'end', axis.rget('end'))
-                SIV(eAxis, 'format', axis.rget('format'))
+                attrs = axis.get_values(['label', 'scale', 'start', 'end', 'format'],default=None)
+                attrs['key'] = key
+                iohelper.set_attributes(eAxis, attrs)
 
             legend = layer.legend
             if legend is not None:
                 eLegend = SubElement(eLayer, "Legend")
-                SIV(eLegend, 'label', legend.rget('label'))
-                SIV(eLegend, 'position', legend.rget('position'))
-                SIV(eLegend, 'visible', legend.rget('visible'))
-                SIV(eLegend, 'border', legend.rget('border'))
-                SIV(eLegend, 'x', legend.rget('x'))
-                SIV(eLegend, 'y', legend.rget('y'))
+                attrs = legend.get_values(['label','position','visible','border','x','y'],default=None)
+                iohelper.set_attributes(eLegend, attrs)
                                      
             for line in layer.lines:
                 eLine = SubElement(eLayer, "Line")
-
-                SIV(eLine, 'label', line.rget('label'))
-                SIV(eLine, 'style', line.rget('style'))
-                SIV(eLine, 'marker', line.rget('marker'))
-                SIV(eLine, 'visible', line.rget('visible'))
 
                 # For the line source we must check first
                 # if this is not a temporary source.
@@ -338,33 +326,18 @@ def toElement(project):
                 
                 SIV(eLine, 'width', line.rget('width'))
 
-                SIV(eLine, 'cx', line.rget('cx'))
-                SIV(eLine, 'cy', line.rget('cy'))
-                SIV(eLine, 'row_first', line.rget('row_first'))
-                SIV(eLine, 'row_last', line.rget('row_last'))
-                SIV(eLine, 'cxerr', line.rget('cxerr'))
-                SIV(eLine, 'cyerr', line.rget('cyerr'))
+                attrs = line.get_values(['width','label','style','marker','visible', 'cx','cy','row_first','row_last','cxerr','cyerr'],default=None)
+                iohelper.set_attributes(eLine, attrs)
 
             # layer.labels
             if len(layer.labels) > 0:
                 eLabels = SubElement(eLayer, "Labels")
                 for label in layer.labels:
                     eLabel = SubElement(eLabels, "Label")
-                    SIV(eLabel, 'x', label.rget('x'))
-                    SIV(eLabel, 'y', label.rget('y'))
-                    SIV(eLabel, 'system', label.rget('system'))
-                    SIV(eLabel, 'valign', label.rget('valign'))
-                    SIV(eLabel, 'halign', label.rget('halign'))
+                    attrs = label.get_values(['x','y','system','valign','halign'],default=None)
+                    iohelper.set_attributes(eLabel, attrs)
                     eLabel.text = label.rget('text')
 
-    # beautify the XML output by inserting some newlines
-#     def insert_newlines(element):
-#         element.tail = '\n'
-#         if element.text is None:
-#             element.text = "\n"
-#         for sub_element in element.getchildren():
-#             insert_newlines(sub_element)
-#     insert_newlines(eProject)
     iohelper.beautify_element(eProject)
         
     return eProject

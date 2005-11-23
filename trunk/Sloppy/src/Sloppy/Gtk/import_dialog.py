@@ -152,8 +152,8 @@ class ImportDialog(gtk.Dialog):
         index = -1
         
         # limit available templates to given importer class
-        template_keys = [tpl for tpl in dataio.templates.itervalues() if tpl.importer_key == self.importer_key]
-        for key, template in dataio.templates.iteritems():
+        template_keys = [tpl for tpl in dataio.import_templates.itervalues() if tpl.importer_key == self.importer_key]
+        for key, template in dataio.import_templates.iteritems():
             model.append( (key, "%s (%s)" % (key, template.blurb), True) )
             if key == new_key:
                 index = n
@@ -238,7 +238,7 @@ class ImportDialog(gtk.Dialog):
                         print "Empty key. not added."
                         return
                     
-                    if dataio.templates.has_key(template_key):
+                    if dataio.import_templates.has_key(template_key):
                         print "KEY %s ALREADY EXISTS. NOT ADDED." % template_key
                         return
                     
@@ -252,7 +252,7 @@ class ImportDialog(gtk.Dialog):
             template = dataio.IOTemplate(importer_key=self.importer_key,
                                          blurb="User Profile",
                                          defaults=data)
-            dataio.templates[template_key] = template
+            dataio.import_templates[template_key] = template
 
             self.update_combobox(template_key)
             
@@ -264,7 +264,7 @@ class ImportDialog(gtk.Dialog):
 
     def check_in(self):
         # apply template
-        template = dataio.templates[self.template_key]
+        template = dataio.import_templates[self.template_key]
         self.importer.clear(include=self.importer.public_props)
         self.importer.set_values(**template.defaults.data)
 
@@ -320,8 +320,8 @@ class SimpleImportDialog(gtk.Dialog):
         index = -1
         
         # limit available templates to given importer class
-        template_keys = dataio.templates.iterkeys()
-        for key, template in dataio.templates.iteritems():
+        template_keys = dataio.import_templates.iterkeys()
+        for key, template in dataio.import_templates.iteritems():
             model.append( (key, "%s (%s)" % (key, template.blurb)) )
             if key == new_key:
                 index = n
@@ -414,7 +414,7 @@ class EditTemplate(gtk.Dialog):
                     print "Key contains invalid characters."
                     continue
 
-                if dataio.templates.has_key(key) is True:
+                if dataio.import_templates.has_key(key) is True:
                     print "Key already exists. Choose another."
                     continue
 
@@ -430,7 +430,7 @@ class EditTemplate(gtk.Dialog):
                 for c in self.connectors:
                     c.check_out()
 
-                dataio.templates[key] = self.template
+                dataio.import_templates[key] = self.template
                 print ">>> TEMPLATE SAVED <<<"
 
             break
@@ -452,7 +452,7 @@ class ImportOptions(gtk.Dialog):
                             gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
 
         # create a new importer based on the template
-        self.template = dataio.templates[template_key]
+        self.template = dataio.import_templates[template_key]
         self.importer = self.template.new_instance()
         
         #

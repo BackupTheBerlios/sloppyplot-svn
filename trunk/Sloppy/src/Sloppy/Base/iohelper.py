@@ -29,6 +29,12 @@ def write(element, key, value):
     if value is not None:
         element.set(key, unicode(value))
 
+def set_attributes(element, attributes={}):
+    for k,v in attributes.iteritems():
+        if v is not None:
+            element.set(k, unicode(v))
+
+
 def write_list(element, listname, alist):
     eNode = SubElement(element, listname)
     for item in alist:                
