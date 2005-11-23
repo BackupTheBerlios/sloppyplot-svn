@@ -57,10 +57,7 @@ from Sloppy.Base.table import Table
 from Sloppy.Base import pdict, uwrap
 from Sloppy.Base.plugin import PluginRegistry
 
-from Sloppy.Base.dataio import \
-     ImporterRegistry, ImporterTemplateRegistry, ExporterRegistry, \
-     importer_template_from_filename, Importer, ImportError
-
+from Sloppy.Base import dataio
 
 from Sloppy.Gnuplot.terminal import PostscriptTerminal
 from options_dialog import OptionsDialog, NoOptionsError
@@ -611,7 +608,9 @@ class GtkApplication(Application):
         # Each item in ImporterRegistry is a class derived from
         # dataio.Importer.  By using IOTemplate objects we can
         # customize the default values for these templates.
-        for (key, template) in ImporterTemplateRegistry.iteritems():
+        for (key, template) in dataio.ImporterTemplateRegistry.iteritems():
+            if len(template.extensions) == 0:
+                continue
             extensions = ';'.join(map(lambda ext: '*.'+ext, template.extensions))
             blurb = "%s (%s)" % (template.blurb, extensions)
 
@@ -642,7 +641,7 @@ class GtkApplication(Application):
         model = gtk.ListStore(str, str)
         # add 'Same as Filter' as first choice, then add all importers
         model.append( (None, "Auto") )
-        for key, template in ImporterTemplateRegistry.iteritems():
+        for key, template in dataio.ImporterTemplateRegistry.iteritems():
                 model.append( (key, template.blurb) )
 
         combobox = gtk.ComboBox(model)
@@ -652,7 +651,7 @@ class GtkApplication(Application):
         combobox.set_active(0)
         combobox.show()
 
-        label = gtk.Label("Importer")
+        label = gtk.Label("Use Template: ")
         label.show()
             
         hbox = gtk.HBox()       
@@ -689,7 +688,7 @@ class GtkApplication(Application):
                     template_key = filter_keys[f.get_name()]
                     # we skip the hard task of determining the template key here
                     if template_key is 'auto':
-                        matches = importer_template_from_filename(filenames[0])
+                        matches = dataio.importer_template_from_filename(filenames[0])
                         if len(matches) > 0:
                             template_key = matches[0]
                         else:
@@ -707,6 +706,13 @@ class GtkApplication(Application):
                 result = dialog.run()
                 if result == gtk.RESPONSE_ACCEPT:
                     importer = dialog.importer
+                    # save template as 'recent'
+                    template = dataio.IOTemplate()
+                    template.defaults = dialog.importer.get_values(include=dialog.importer.public_props)
+                    template.blurb = "Recently used Template"
+                    template.importer_key = dialog.template.importer_key
+                    template.write_config = True
+                    dataio.ImporterTemplateRegistry['recent'] = template                    
                 else:
                     return
             finally:
@@ -806,7 +812,7 @@ class GtkApplication(Application):
                          (gtk.STOCK_CLOSE, gtk.RESPONSE_ACCEPT))
 
         model = gtk.ListStore(str, str) # key, blurb
-        for key,template in ImporterTemplateRegistry.iteritems():
+        for key,template in dataio.ImporterTemplateRegistry.iteritems():
             model.append((key,"%s: %s" % (key, template.blurb)))
 
         tv = gtk.TreeView(model)
@@ -827,7 +833,7 @@ class GtkApplication(Application):
         def edit_template(template_key):
             template_key = 'ASCII'
         
-            template = ImporterTemplateRegistry[template_key]
+            template = dataio.ImporterTemplateRegistry[template_key]
             importer = template.new_importer()
 
             dialog = import_dialog.ImportDialog(importer, template_key)    

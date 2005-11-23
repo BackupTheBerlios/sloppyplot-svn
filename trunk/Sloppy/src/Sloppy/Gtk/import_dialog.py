@@ -469,12 +469,6 @@ class ImportOptions(gtk.Dialog):
             table_options.show()
             self.vbox.add(table_options)
 
-        # add button to save options as template
-        btn_save = gtk.Button("Save as template...")
-        btn_save.connect("clicked", self.on_btn_save_clicked)
-        btn_save.show()
-        self.vbox.add(btn_save)
-        
         for c in self.connectors:
             c.check_in()
         
@@ -486,33 +480,7 @@ class ImportOptions(gtk.Dialog):
             for c in self.connectors:
                 c.check_out()            
 
-        return response
-
-    def on_btn_save_clicked(self, btn):
-
-        data = {}
-        for c in self.connectors:
-            data[c.key] = c.get_data()
-
-        key = "new_template"
-        template = dataio.IOTemplate(\
-            importer_key=self.template.importer_key,
-            defaults=data)
-        dialog = EditTemplate(key, template)
-
-        try:
-            response = dialog.run()
-            if response == gtk.RESPONSE_ACCEPT:
-                # if user changed any options, use them
-                for c in self.connectors:
-                    c.set_container(dialog.importer)
-                    c.check_in()
-            else:
-                # don't do anything if user aborted
-                pass                
-        finally:
-            dialog.destroy()
-            
+        return response            
 
             
         

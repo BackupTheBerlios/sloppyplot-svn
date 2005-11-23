@@ -34,9 +34,8 @@ from Sloppy.Base.project import Project
 from Sloppy.Base.projectio import load_project, save_project, ParseError
 from Sloppy.Base.backend import BackendRegistry
 from Sloppy.Base.table import Table
-from Sloppy.Base.dataio import \
-     ImporterRegistry, ExporterRegistry, importer_template_from_filename,\
-     Importer, ImportError, ImporterTemplateRegistry, IOTemplate
+from Sloppy.Base import dataio
+
 from Sloppy.Base import uwrap, utils, iohelper
 from Sloppy.Base import config, error
 
@@ -279,9 +278,9 @@ class Application(object, HasSignals):
             data['defaults'] = iohelper.read_dict(eTemplate, 'Defaults')
 
             #logger.debug("Data is %s" % data)
-            templates[key] = IOTemplate(**data)
+            templates[key] = dataio.IOTemplate(**data)
 
-        ImporterTemplateRegistry.update(templates)
+        dataio.ImporterTemplateRegistry.update(templates)
             
 
     def write_templates(self):
@@ -293,7 +292,7 @@ class Application(object, HasSignals):
         else:
             eTemplates.clear()            
                 
-        for key, tpl in ImporterTemplateRegistry.iteritems():
+        for key, tpl in dataio.ImporterTemplateRegistry.iteritems():
             if tpl.write_to_config is True:
                 logger.debug("Writing template %s" % key)
                 eTemplate = SubElement(eTemplates, 'ImportTemplate')               
@@ -322,8 +321,8 @@ class Application(object, HasSignals):
             undolist = project.journal
 
         if isinstance(importer, basestring):
-            importer = ImporterRegistry.new_instance(importer)
-        elif not isinstance(importer, Importer):
+            importer = dataio.ImporterRegistry.new_instance(importer)
+        elif not isinstance(importer, dataio.Importer):
             raise TypeError("'importer' needs to be a key or a valid Importer instance.")
 
         # To ensure a proper undo, the Datasets are imported one by one
@@ -337,7 +336,7 @@ class Application(object, HasSignals):
 
             try:
                 tbl = importer.read_table_from_file(filename)
-            except ImportError, msg:
+            except dataio.ImportError, msg:
                 self.error_message(msg)
                 continue
             except error.UserCancel:

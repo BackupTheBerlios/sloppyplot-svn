@@ -16,14 +16,46 @@ FOR 0.5.2:
 
 DETAILS FOR 0.5.1:
 
-- allow editing templates
 
-  - button 'save template' in import options.
+- extension_list => String, maybe call it extensions
+
+- allow editing templates
 
   - how to remove templates?  I would prefer a solution in some kind of
     configuration dialog, but I don't have such a thing...
+    Then create it!  Try to use the same kind of dialog as we used in
+    the modify table dialog.
 
-- import option: destinations
+- allow to specify which options can be edited for a template.
+  If you specify None, then the options dialog is simply skipped.
+
+- Templates and Importers are a big mess right now:
+
+  - It is not trivial to get the importer key from an importer.
+    If you create a new template, then you will need it.
+    What were the reasons not to link against an importer class itself?
+   
+  - The names are simply too long:
+     dataio.ImporterTemplateRegistry
+     dataio.ImporterRegistry
+
+    Better names?
+  
+     dataio.Templates
+     dataio.???
+
+    Templates could contain both, templates for import and export.
+    We can simply get a subset 
+    
+    templates = [t for t in dataio.Templates if t.handler.__class__ == 'Exporter']
+
+    Well, this is not really elegant...
+
+
+
+   
+
+
 
 - rework regular expression for column headers: e.g. backslash is not
   recognized.  Is it not recognized from the pKeyword or from the ASCII 
@@ -32,14 +64,14 @@ DETAILS FOR 0.5.1:
 
 - use iohelper.py in projectio.py and in config file writing
 
+
+
 - serialize group properties
 
 - Allow setting group properties in layerwin
 
 - use sloppy version for both project.xml and config.xml
 
-- allow to specify which options can be edited for a template.
-  If you specify None, then the options dialog is simply skipped.
 
 - Display IOError when saving a projet fails! This is very important!
 
