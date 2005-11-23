@@ -65,6 +65,7 @@ from options_dialog import OptionsDialog, NoOptionsError
 from Sloppy.Lib.Undo import *
 
 import import_dialog
+import pwglade
    
 #------------------------------------------------------------------------------
 # Helper Methods
@@ -808,7 +809,8 @@ class GtkApplication(Application):
         # create simple add/remove/edit dialog
         dlg = gtk.Dialog("Edit ASCII Import Templates", None,
                          gtk.DIALOG_MODAL|gtk.DIALOG_DESTROY_WITH_PARENT,
-                         (gtk.STOCK_CLOSE, gtk.RESPONSE_ACCEPT))
+                         (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
+                          gtk.STOCK_CLOSE, gtk.RESPONSE_ACCEPT))
 
         model = gtk.ListStore(object, str) # key, blurb
         for key,template in dataio.import_templates.iteritems():
@@ -829,17 +831,49 @@ class GtkApplication(Application):
             model,iter = tv.get_selection().get_selected()
             if iter is None:
                 return
+
             template = model.get_value(iter,0)
+            importer = template.new_instance()
 
             # call 'edit'
 
             # - OptionsDialog for some keys of template and one
             #   a separate one for template.defaults, which is
             #   actually an importer...
-            importer = template.new_instance()
-            dlg = OptionsDialog(importer)
-            dlg.run()
-            dlg.check_out()
+
+            
+            #dlg = OptionsDialog(importer)
+            dlg = gtk.Dialog("Edit Template Options",None,
+                             gtk.DIALOG_MODAL,
+                             (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
+                              gtk.STOCK_CLOSE, gtk.RESPONSE_ACCEPT))
+            
+            clist1 = pwglade.smart_construct_connectors(template, include=['blurb','extensions'])
+            table = pwglade.construct_table(clist1)
+            dlg.vbox.pack_start(table,True,True)
+
+            dlg.vbox.pack_start(gtk.HSeparator(),False,True)
+            
+            clist2 = pwglade.smart_construct_connectors(importer, include=importer.public_props)
+            table = pwglade.construct_table(clist2)
+            dlg.vbox.pack_start(table,True,True)
+            
+            dlg.show_all()
+            #dlg.vbox.pack_start(template_table,True,True)
+
+            clist = clist1 + clist2
+            for c in clist:
+                c.check_in()
+                
+            try:
+                response = dlg.run()
+
+                if response == gtk.RESPONSE_ACCEPT:
+                    for c in clist:
+                        c.check_out()
+            finally:
+                dlg.destroy()
+                
 
             # - what about editing the key?
 

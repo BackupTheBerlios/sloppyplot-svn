@@ -301,9 +301,11 @@ class SpinButton(Connector):
             else:
                 upper = +1000000000.0
 
-
             self.widget.set_range(lower,upper)
-            #self.widget.set_value(xx)
+
+            value = self.get_value()
+            if value is not None:
+                self.widget.set_value(float(value))
 
         self.widget.set_increments(1,1)
         self.widget.set_digits(1)
@@ -318,4 +320,7 @@ class SpinButton(Connector):
             pass
             #self.widget.set_value(None)
 
+    def get_data(self):
+        return self.widget.get_value()
+        
 connectors['SpinButton'] = SpinButton

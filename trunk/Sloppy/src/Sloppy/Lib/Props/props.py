@@ -650,7 +650,7 @@ class HasProps(object):
     def get_values(self, include=None, exclude=None, **kwargs):
 
         rv = {}
-        keys = self.__limit_keys(include=include, exclude=exclude)
+        keys = self._limit_keys(include=include, exclude=exclude)
         nd = kwargs.has_key('default')
 
         for key in keys:
@@ -673,7 +673,7 @@ class HasProps(object):
 
     def clear(self, include=None, exclude=None):
         " Clear all props. "
-        for key in self.__limit_keys(include=include, exclude=exclude):
+        for key in self._limit_keys(include=include, exclude=exclude):
             self._values[key] = self._props[key].on_reset()
 
     #----------------------------------------------------------------------
@@ -685,7 +685,7 @@ class HasProps(object):
 
     def get_props(self, include=None, exclude=None):
         rv = {}
-        for key in self.__limit_keys(include=include, exclude=exclude):
+        for key in self._limit_keys(include=include, exclude=exclude):
             rv[key] = self._props[key]
 
         return rv
@@ -710,7 +710,7 @@ class HasProps(object):
     #----------------------------------------------------------------------
     # internal
     
-    def __limit_keys(self, include=None, exclude=None):
+    def _limit_keys(self, include=None, exclude=None):
         if include is None:
             include = self._values.keys()        
         if exclude is not None:

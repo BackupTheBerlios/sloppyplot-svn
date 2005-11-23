@@ -123,7 +123,8 @@ def construct_table(clist):
 def construct_connectors(owner):
     """    
     If owner.public_props is set, then the creation of connectors is limited
-    to items of this list.
+    to items of this list.  If 'limit' is set, then the construction will also
+    be limited to these keys.
     """
     if hasattr(owner, 'public_props'):
         proplist = []
@@ -139,24 +140,42 @@ def construct_connectors(owner):
         # Determine type of connector from widget type
         # and construct it.
         #
-        if prop.get_value_dict() is not None:
-            ctype = "ComboBox"
-        elif prop.get_value_list() is not None:
-            ctype = "ComboBox"
-        elif isinstance(prop, pBoolean):
-            ctype = "CheckButton"
-        elif isinstance(prop, pInteger):
-            ctype = "SpinButton"
-        else:
-            ctype = "Entry"
-
+        ctype = guess_connector(prop)
+        
         connector = pwconnect.connectors[ctype](owner, prop.name)
         connector.create_widget()
         connector.widget.show()        
         clist.append(connector)
 
     return clist
-        
+
+
+def guess_connector(prop):
+    if prop.get_value_dict() is not None:
+        return "ComboBox"
+    elif prop.get_value_list() is not None:
+        return "ComboBox"
+    elif isinstance(prop, pBoolean):
+        return "CheckButton"
+    elif isinstance(prop, pInteger):
+        return "SpinButton"
+    else:
+        return "Entry"
+
+
+
+def smart_construct_connectors(container, include=None, exclude=None):
+    keys = container._limit_keys(include=include,exclude=exclude)
+
+    clist = []
+    for key in keys:
+        prop = container.get_prop(key)
+        ctype = guess_connector(prop)
+        connector = pwconnect.connectors[ctype](container, prop.name)
+        connector.create_widget()
+        connector.widget.show()        
+        clist.append(connector)
+    return clist
 
 #------------------------------------------------------------------------------        
 # Testing Area
