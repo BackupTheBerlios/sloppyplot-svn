@@ -810,10 +810,10 @@ class GtkApplication(Application):
                          gtk.DIALOG_MODAL|gtk.DIALOG_DESTROY_WITH_PARENT,
                          (gtk.STOCK_CLOSE, gtk.RESPONSE_ACCEPT))
 
-        model = gtk.ListStore(str, str) # key, blurb
+        model = gtk.ListStore(object, str) # key, blurb
         for key,template in dataio.import_templates.iteritems():
             print "ADDING TEMPLATE", key
-            model.append((key,"%s: %s" % (key, template.blurb)))
+            model.append((template,"%s: %s" % (key, template.blurb)))
 
         tv = gtk.TreeView(model)
         column = gtk.TreeViewColumn("Available Templates")
@@ -829,8 +829,19 @@ class GtkApplication(Application):
             model,iter = tv.get_selection().get_selected()
             if iter is None:
                 return
-            key = model.get_value(iter,0)
+            template = model.get_value(iter,0)
+
             # call 'edit'
+
+            # - OptionsDialog for some keys of template and one
+            #   a separate one for template.defaults, which is
+            #   actually an importer...
+            importer = template.new_instance()
+            dlg = OptionsDialog(importer)
+            dlg.run()
+            dlg.check_out()
+
+            # - what about editing the key?
 
         def remove_item(btn):
             model,iter = tv.get_selection().get_selected()

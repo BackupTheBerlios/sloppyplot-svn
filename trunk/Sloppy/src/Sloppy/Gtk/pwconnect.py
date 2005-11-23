@@ -49,7 +49,7 @@ import gtk
 
 __all__ = ['Connector', 'connectors',
            #
-           'Entry', 'ComboBox', 'CheckButton',
+           'Entry', 'ComboBox', 'CheckButton', 'SpinButton'
            ]
 
 
@@ -271,3 +271,28 @@ class CheckButton(Connector):
 
 
 connectors['CheckButton'] = CheckButton
+
+
+
+
+class SpinButton(Connector):
+
+    widget_type = gtk.SpinButton
+
+    def use_widget(self, widget):
+        Connector.use_widget(self, widget)
+
+        adjustment = gtk.Adjustment(value=0, lower=0, upper=10, step_incr=1, page_incr=0, page_size=0)
+        self.widget.configure(adjustment=adjustment, climb_rate=0.0, digits=0)
+
+    def check_in(self):
+        value = self.get_value()
+        self.last_value = value
+
+        if value is not None:
+            self.widget.set_value(float(value))
+        else:
+            pass
+            #self.widget.set_value(None)
+
+connectors['SpinButton'] = SpinButton

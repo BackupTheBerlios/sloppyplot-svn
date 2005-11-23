@@ -17,7 +17,9 @@ FOR 0.5.2:
 DETAILS FOR 0.5.1:
 
 
-- dataio.templates -> dataio.import_templates
+- ImporterRegistry -> importer_registry
+
+- new Connector for pInteger
 
 - iohelper.set_attributes
 

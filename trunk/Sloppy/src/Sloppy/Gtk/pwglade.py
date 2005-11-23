@@ -45,6 +45,7 @@ import gtk
 import pwconnect
 
 
+from Sloppy.Lib.Props import HasProps,Prop, pBoolean, pInteger, pUnicode, CheckValid
 
 #------------------------------------------------------------------------------
 
@@ -144,6 +145,8 @@ def construct_connectors(owner):
             ctype = "ComboBox"
         elif isinstance(prop, pBoolean):
             ctype = "CheckButton"
+        elif isinstance(prop, pInteger):
+            ctype = "SpinButton"
         else:
             ctype = "Entry"
 
@@ -159,7 +162,6 @@ def construct_connectors(owner):
 # Testing Area
 #
 
-from Sloppy.Lib.Props import HasProps,Prop, pBoolean, pUnicode, CheckValid
 
 # set up container
     
