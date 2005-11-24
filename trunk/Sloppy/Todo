@@ -3,12 +3,13 @@ FOR 0.5.1:
 ==========
 
 - FINISH TEMPLATES
-- ADD GROUP PROPERTIES -> POSTPONED 
+
 
 
 FOR 0.5.2:
 ==========
 
+- ADD GROUP PROPERTIES
 - ADD ERROR HANDLING (msgwin.py)
 - ADD OVERALL MORE VERBOSITY (statusbar, progress bar)
 
@@ -49,6 +50,18 @@ DETAILS FOR 0.5.1:
 
 
 - use sloppy version for both project.xml and config.xml
+
+
+**************
+Configuration Dialog:
+
+- Just a notebook with each page being a configuration item.  
+  Changes are instantaneous, but only to temporary objects.
+
+- Each tab must have a method 'check_in' and a method 'check_out'.
+
+- Later on the notebook tabs might be replaced by a list.
+***************
 
 
 
