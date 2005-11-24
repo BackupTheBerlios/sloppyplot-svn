@@ -812,27 +812,34 @@ class GtkApplication(Application):
                          (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
                           gtk.STOCK_CLOSE, gtk.RESPONSE_ACCEPT))
 
-        model = gtk.ListStore(object, str) # key, blurb
-        for key,template in dataio.import_templates.iteritems():
-            print "ADDING TEMPLATE", key
-            model.append((template,"%s: %s" % (key, template.blurb)))
+        # We create copies of all templates and put these into the
+        # treeview.  This allows the user to reject the modifcations
+        # (RESPONSE_REJECT).  If however he wishes to use the
+        # modifications (RESPONSE_ACCEPT), then we simply need to
+        # replace the current templates with these temporary ones.
 
+        # check in
+        model = gtk.ListStore(str, object, str) # key, object, blurb
+        for key,template in dataio.import_templates.iteritems():            
+            model.append((key, template.copy(),"%s: %s" % (key, template.blurb)))
+
+        # create gui
         tv = gtk.TreeView(model)
         column = gtk.TreeViewColumn("Available Templates")
         cell = gtk.CellRendererText()
         column.pack_start(cell,expand=True)
-        column.set_attributes(cell, text=1)
+        column.set_attributes(cell, text=2)
         tv.append_column(column)
         tv.show()        
         dlg.vbox.pack_start(tv,True,True)
 
-
+        # callbacks
         def edit_item(btn):
             model,iter = tv.get_selection().get_selected()
             if iter is None:
                 return
 
-            template = model.get_value(iter,0)
+            template = model.get_value(iter,1)
             importer = template.new_instance()
 
             dlg = gtk.Dialog("Edit Template Options",None,
@@ -878,7 +885,7 @@ class GtkApplication(Application):
             model,iter = tv.get_selection().get_selected()
             if iter is None:
                 return
-            key = model.get_value(iter,0)
+            key = model.get_value(iter,1)
             # call 'remove'
 
         def add_item(btn):
@@ -887,7 +894,7 @@ class GtkApplication(Application):
                 # insert at beginning
                 pass
             else:
-                key = model.get_value(iter,0)
+                key = model.get_value(iter,1)
             # call 'add'
             
         buttons=[(gtk.STOCK_EDIT, edit_item),
@@ -896,14 +903,23 @@ class GtkApplication(Application):
         btnbox = uihelper.construct_buttonbox(buttons, labels=False)
         btnbox.show()
         dlg.vbox.pack_start(btnbox,False,False)
-
-        # TODO: button responses.  Maybe put this into a generic
-        # TODO: options package and re-write the modify table dialog
-        # TODO: accordingly.
         
         
         try:
-            dlg.run()
+            response = dlg.run()
+            if response == gtk.RESPONSE_ACCEPT:
+                # replace templates by the temporary ones
+                templates = {}
+                iter = model.get_iter_first()
+                while iter is not None:
+                    key = model.get_value(iter, 0)
+                    template = model.get_value(iter, 1)
+                    templates[key] = template
+                    iter = model.iter_next(iter)
+
+                # Note, that since this is an application specific operation,
+                # there is no undo available for this.
+                dataio.import_templates = templates
         finally:
             dlg.destroy()
                          
