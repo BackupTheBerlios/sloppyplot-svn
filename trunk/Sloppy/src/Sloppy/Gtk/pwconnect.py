@@ -291,22 +291,21 @@ class SpinButton(Connector):
         cbounds = [c for c in self.prop.check.items if isinstance(c, CheckBounds)]
         if len(cbounds) > 0:
             c = cbounds[0]
-            kwargs = {}
-            if c.min is not None:
-                lower = float(c.min)
-            else:
-                lower = -float(sys.maxint)
+            lower,upper = c.min, c.max
+        else:
+            lower,upper = None,None
+
+        if lower is None:
+            lower = -sys.maxint
+
+        if upper is None:
+            upper = +sys.maxint
+
+        self.widget.set_range(float(lower), float(upper))
         
-            if c.max is not None:
-                upper = float(c.max)
-            else:
-                upper = +float(sys.maxint)
-
-            self.widget.set_range(lower,upper)
-
-            value = self.get_value()
-            if value is not None:
-                self.widget.set_value(float(value))
+        value = self.get_value()
+        if value is not None:
+            self.widget.set_value(float(value))            
 
         self.widget.set_increments(1,1)
         self.widget.set_digits(1)

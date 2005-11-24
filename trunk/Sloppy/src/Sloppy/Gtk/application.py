@@ -835,33 +835,19 @@ class GtkApplication(Application):
             template = model.get_value(iter,0)
             importer = template.new_instance()
 
-            # call 'edit'
-
-            # - OptionsDialog for some keys of template and one
-            #   a separate one for template.defaults, which is
-            #   actually an importer...
-
-            
-            #dlg = OptionsDialog(importer)
             dlg = gtk.Dialog("Edit Template Options",None,
                              gtk.DIALOG_MODAL,
                              (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
                               gtk.STOCK_CLOSE, gtk.RESPONSE_ACCEPT))
             
-            clist1 = pwglade.smart_construct_connectors(template, include=['blurb','extensions'])
-            table = pwglade.construct_table(clist1)
-            dlg.vbox.pack_start(table,True,True)
-
-            dlg.vbox.pack_start(gtk.HSeparator(),False,True)
-            
+            clist1 = pwglade.smart_construct_connectors(template, include=['blurb','extensions'])            
             clist2 = pwglade.smart_construct_connectors(importer, include=importer.public_props)
-            table = pwglade.construct_table(clist2)
-            dlg.vbox.pack_start(table,True,True)
-            
-            dlg.show_all()
-            #dlg.vbox.pack_start(template_table,True,True)
-
             clist = clist1 + clist2
+            table = pwglade.construct_table(clist)
+
+            dlg.vbox.pack_start(table,True,True)            
+            dlg.show_all()
+
             for c in clist:
                 c.check_in()
                 
@@ -869,8 +855,19 @@ class GtkApplication(Application):
                 response = dlg.run()
 
                 if response == gtk.RESPONSE_ACCEPT:
+                    # TODO:
+                    # - check key
+                    # - create copies of all templates before editing them
+                    #   -> enable abort action and undo!
+
                     for c in clist:
                         c.check_out()
+
+                    # move importer data to template
+                    values = importer.get_values(importer.public_props, default=None)
+                    print "VALUES ", values
+                    template.set_values(defaults=values)                    
+                    
             finally:
                 dlg.destroy()
                 

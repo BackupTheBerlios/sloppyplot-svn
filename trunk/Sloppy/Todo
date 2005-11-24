@@ -45,27 +45,6 @@ DETAILS FOR 0.5.1:
   - It is not trivial to get the importer key from an importer.
     If you create a new template, then you will need it.
     What were the reasons not to link against an importer class itself?
-   
-  - The names are simply too long:
-     dataio.ImporterTemplateRegistry
-     dataio.ImporterRegistry
-
-    Better names?
-  
-     dataio.Templates
-     dataio.???
-
-    Templates could contain both, templates for import and export.
-    We can simply get a subset 
-    
-    templates = [t for t in dataio.Templates if t.handler.__class__ == 'Exporter']
-
-    Well, this is not really elegant...
-
-
-
-   
-
 
 
 - rework regular expression for column headers: e.g. backslash is not
@@ -76,18 +55,15 @@ DETAILS FOR 0.5.1:
 - use iohelper.py in projectio.py and in config file writing
 
 
+- use sloppy version for both project.xml and config.xml
+
+
+
+DETAILS FOR 0.5.2:
 
 - serialize group properties
 
 - Allow setting group properties in layerwin
-
-- use sloppy version for both project.xml and config.xml
-
-
-- Display IOError when saving a projet fails! This is very important!
-
-
-DETAILS FOR 0.5.2:
 
 - display metadata
 

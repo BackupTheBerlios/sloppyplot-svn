@@ -45,7 +45,7 @@ import gtk
 import pwconnect
 
 
-from Sloppy.Lib.Props import HasProps,Prop, pBoolean, pInteger, pUnicode, CheckValid
+from Sloppy.Lib.Props import HasProps,Prop, pBoolean, pInteger, pUnicode, CheckValid, CheckBounds
 
 #------------------------------------------------------------------------------
 

@@ -73,6 +73,7 @@ class Importer(dataio.Importer):
 
     header_keys_ln = \
      pInteger(
+        CheckBounds(min=0),
         blurb="Key line",
         doc="Number of the line that contains the column keys"
         )
@@ -130,7 +131,7 @@ class Importer(dataio.Importer):
     
     designations = \
      pString(
-        CheckValid([None,'X', 'Y', 'X|Y', 'XY']),
+        CheckValid(['X', 'Y', 'X|Y', 'XY']),
         default='X|Y'
         )
 
