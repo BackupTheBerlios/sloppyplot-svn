@@ -813,7 +813,7 @@ class GtkApplication(Application):
                           gtk.STOCK_CLOSE, gtk.RESPONSE_ACCEPT))
 
         # We create copies of all templates and put these into the
-        # treeview.  This allows the user to reject the modifcations
+        # treeview.  This allows the user to reject the modifications
         # (RESPONSE_REJECT).  If however he wishes to use the
         # modifications (RESPONSE_ACCEPT), then we simply need to
         # replace the current templates with these temporary ones.
@@ -835,13 +835,8 @@ class GtkApplication(Application):
 
         sw = uihelper.add_scrollbars(tv)
 
-        # callbacks
-        def edit_item(btn):
-            model,iter = tv.get_selection().get_selected()
-            if iter is None:
-                return
-
-            template = model.get_value(iter,1)
+        def do_edit(template):
+            # - what about editing the key?        
             importer = template.new_instance()
 
             dlg = gtk.Dialog("Edit Template Options",None,
@@ -864,48 +859,53 @@ class GtkApplication(Application):
                 response = dlg.run()
 
                 if response == gtk.RESPONSE_ACCEPT:
-                    # TODO:
-                    # - check key
-                    # - create copies of all templates before editing them
-                    #   -> enable abort action and undo!
-
+                    # TODO: check key
                     for c in clist:
                         c.check_out()
 
                     # move importer data to template
                     values = importer.get_values(importer.public_props, default=None)
-                    print "VALUES ", values
                     template.set_values(defaults=values)                    
                     
             finally:
                 dlg.destroy()
-                
 
-            # - what about editing the key?
+            return response
+
+        # callbacks
+        def edit_item(btn):
+            model,iter = tv.get_selection().get_selected()
+            if iter is None:
+                return
+            do_edit(model.get_value(iter,1))                
 
         def remove_item(btn):
             model,iter = tv.get_selection().get_selected()
             if iter is None:
-                return
-            key = model.get_value(iter,1)
-            print "I WOULD REMOVE THE ITEM"            
-            # call 'remove'
+                return            
+
+            model.remove(iter)
 
         def add_item(btn):
             model,iter = tv.get_selection().get_selected()
             if iter is None:
                 print "INSERT AT BEGINNING"
-                # insert at beginning
+                # TODO: insert at beginning
                 pass
             else:
                 key = model.get_value(iter,1)
-                print "INSERT AT A POSITION"
-            # call 'add'
+                print "INSERT AT A POSITION, using the old one as template"
+                template = dataio.IOTemplate(importer_key='ASCII')
+                response = do_edit(template)
+                if response == gtk.RESPONSE_ACCEPT:
+                    model.insert_after(iter, ('key?', template, template.blurb))
             
         buttons=[(gtk.STOCK_EDIT, edit_item),
                  (gtk.STOCK_ADD, add_item),
                  (gtk.STOCK_REMOVE, remove_item)]
-        btnbox = uihelper.construct_buttonbox(buttons,horizontal=False,layout=gtk.BUTTONBOX_START)
+        btnbox = uihelper.construct_buttonbox(buttons,
+                                              horizontal=False,
+                                              layout=gtk.BUTTONBOX_START)
 
         hbox = gtk.HBox()
         hbox.pack_start(sw,True,True)
@@ -926,8 +926,8 @@ class GtkApplication(Application):
                     templates[key] = template
                     iter = model.iter_next(iter)
 
-                # Note, that since this is an application specific operation,
-                # there is no undo available for this.
+                # Note that this is an application specific operation,
+                # and there is no undo available for this.
                 dataio.import_templates = templates
         finally:
             dlg.destroy()
