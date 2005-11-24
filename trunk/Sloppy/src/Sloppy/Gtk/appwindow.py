@@ -582,8 +582,8 @@ class AppWindow( gtk.Window ):
         ('NewDataset', gtk.STOCK_ADD, 'New Dataset', None, 'Create a new dataset', '_cb_new_dataset'),
         ('ExperimentalPlot', None, 'Create Multiplot (EXPERIMENTAL!)', None, None, '_cb_experimental_plot'),
         #
-        ('ConfigMenu', None, '_Configuration'),
-        ('ConfigImportTemplates', None, 'Import Templates', None, 'Configure existing import templates...', 'on_action_ConfigImportTemplates'),
+        ('ConfigMenu', None, '_Configure...'),
+        ('ConfigImportTemplates', None, 'Import Templates', None, 'ASCII import templates...', 'on_action_ConfigImportTemplates'),
         ]
 
     actions_appwin = [        

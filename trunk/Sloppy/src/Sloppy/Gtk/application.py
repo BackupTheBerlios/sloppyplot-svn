@@ -820,8 +820,9 @@ class GtkApplication(Application):
 
         # check in
         model = gtk.ListStore(str, object, str) # key, object, blurb
-        for key,template in dataio.import_templates.iteritems():            
-            model.append((key, template.copy(),"%s: %s" % (key, template.blurb)))
+        for key,template in dataio.import_templates.iteritems():
+            if template.importer_key == 'ASCII':
+                model.append((key, template.copy(),"%s: %s" % (key, template.blurb)))
 
         # create gui
         tv = gtk.TreeView(model)
@@ -829,9 +830,10 @@ class GtkApplication(Application):
         cell = gtk.CellRendererText()
         column.pack_start(cell,expand=True)
         column.set_attributes(cell, text=2)
+        tv.set_headers_visible(False)
         tv.append_column(column)
-        tv.show()        
-        dlg.vbox.pack_start(tv,True,True)
+
+        sw = uihelper.add_scrollbars(tv)
 
         # callbacks
         def edit_item(btn):
@@ -886,25 +888,32 @@ class GtkApplication(Application):
             if iter is None:
                 return
             key = model.get_value(iter,1)
+            print "I WOULD REMOVE THE ITEM"            
             # call 'remove'
 
         def add_item(btn):
             model,iter = tv.get_selection().get_selected()
             if iter is None:
+                print "INSERT AT BEGINNING"
                 # insert at beginning
                 pass
             else:
                 key = model.get_value(iter,1)
+                print "INSERT AT A POSITION"
             # call 'add'
             
         buttons=[(gtk.STOCK_EDIT, edit_item),
-                 (gtk.STOCK_ADD, (lambda sender: 0)),
-                 (gtk.STOCK_REMOVE, (lambda sender: 0))]        
-        btnbox = uihelper.construct_buttonbox(buttons, labels=False)
-        btnbox.show()
-        dlg.vbox.pack_start(btnbox,False,False)
+                 (gtk.STOCK_ADD, add_item),
+                 (gtk.STOCK_REMOVE, remove_item)]
+        btnbox = uihelper.construct_buttonbox(buttons,horizontal=False,layout=gtk.BUTTONBOX_START)
+
+        hbox = gtk.HBox()
+        hbox.pack_start(sw,True,True)
+        hbox.pack_start(btnbox,False,True)
         
-        
+        dlg.vbox.pack_start(hbox,True,True)
+        dlg.show_all()
+        dlg.set_size_request(480,320)
         try:
             response = dlg.run()
             if response == gtk.RESPONSE_ACCEPT:
