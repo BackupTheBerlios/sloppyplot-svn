@@ -26,10 +26,10 @@ DETAILS FOR 0.5.1:
 
 - allow new templates => unfinished
 
+- template key is not checked yet
 
 - WHEN FINISHED, print out the whole thing and try to create a common widget
   that can be used as well by the labels tool and by the modify table dialog.
-
 
 - ImporterRegistry -> importer_registry
 
@@ -50,18 +50,6 @@ DETAILS FOR 0.5.1:
 
 
 - use sloppy version for both project.xml and config.xml
-
-
-**************
-Configuration Dialog:
-
-- Just a notebook with each page being a configuration item.  
-  Changes are instantaneous, but only to temporary objects.
-
-- Each tab must have a method 'check_in' and a method 'check_out'.
-
-- Later on the notebook tabs might be replaced by a list.
-***************
 
 
 
