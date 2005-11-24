@@ -149,7 +149,9 @@ class IOTemplate(HasProps):
     extensions = pString(default="")
     blurb = pUnicode()
     importer_key = pString()
-    write_to_config = pBoolean(default=True)
+
+    is_internal = pBoolean(default=False) # 
+    skip_options = pBoolean(default=False) # whether to ask the user for options
 
     def new_instance(self):
         return ImporterRegistry[self.importer_key](**self.defaults.data)

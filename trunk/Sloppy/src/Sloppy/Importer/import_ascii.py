@@ -456,14 +456,5 @@ dataio.ImporterRegistry['ASCII'] = Importer
 
 dataio.import_templates['ASCII'] = \
   dataio.IOTemplate(blurb="ASCII", extensions='dat,txt',
-                    importer_key='ASCII', write_to_config=False)
+                    importer_key='ASCII', is_internal=True)
 
-
-
-#----------------------------------------------------------------------
-# for testing: PFC template
-#dataio.ImporterTemplateRegistry['ASCII::pfc'] = \
-#  dataio.IOTemplate(extensions=['pfc'],
-#                    blurb="SIMS Profiles",
-#                    defaults={'header_size' : 1, 'header_keys_ln' : 1},
-#                    importer_key='ASCII')                               

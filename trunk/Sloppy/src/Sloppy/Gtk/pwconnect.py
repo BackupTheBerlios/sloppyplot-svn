@@ -302,13 +302,13 @@ class SpinButton(Connector):
             upper = +sys.maxint
 
         self.widget.set_range(float(lower), float(upper))
-        
+            
         value = self.get_value()
         if value is not None:
             self.widget.set_value(float(value))            
 
         self.widget.set_increments(1,1)
-        self.widget.set_digits(1)
+        self.widget.set_digits(0)
         
     def check_in(self):
         value = self.get_value()

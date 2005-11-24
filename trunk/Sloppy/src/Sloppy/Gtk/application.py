@@ -699,24 +699,31 @@ class GtkApplication(Application):
             # TODO
             #chooser.set_active(False)
             pbar.show()
-            
-            # request import options
-            dialog = import_dialog.ImportOptions(template_key) # filenames?
-            try:
-                result = dialog.run()
-                if result == gtk.RESPONSE_ACCEPT:
-                    importer = dialog.importer
-                    # save template as 'recent'
-                    template = dataio.IOTemplate()
-                    template.defaults = dialog.importer.get_values(include=dialog.importer.public_props)
-                    template.blurb = "Recently used Template"
-                    template.importer_key = dialog.template.importer_key
-                    template.write_config = True
-                    dataio.import_templates['recent'] = template                    
-                else:
-                    return
-            finally:
-                dialog.destroy()
+
+            #
+            # Request import options
+            #
+
+            # Note that if 'skip_option' is set in the template, then
+            # there will be no user options dialog.
+
+            if dataio.import_templates[template_key].skip_options is False:
+                dialog = import_dialog.ImportOptions(template_key) # filenames?
+                try:
+                    result = dialog.run()
+                    if result == gtk.RESPONSE_ACCEPT:
+                        importer = dialog.importer
+                        # save template as 'recent'
+                        template = dataio.IOTemplate()
+                        template.defaults = dialog.importer.get_values(include=dialog.importer.public_props)
+                        template.blurb = "Recently used Template"
+                        template.importer_key = dialog.template.importer_key
+                        template.write_config = True
+                        dataio.import_templates['recent'] = template                    
+                    else:
+                        return
+                finally:
+                    dialog.destroy()
 
 
             def set_text(queue):
@@ -835,7 +842,7 @@ class GtkApplication(Application):
 
         sw = uihelper.add_scrollbars(tv)
 
-        def do_edit(template):
+        def do_edit(template, allow_edit=True):
             # - what about editing the key?        
             importer = template.new_instance()
 
@@ -844,10 +851,19 @@ class GtkApplication(Application):
                              (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
                               gtk.STOCK_CLOSE, gtk.RESPONSE_ACCEPT))
             
-            clist1 = pwglade.smart_construct_connectors(template, include=['blurb','extensions'])            
+            clist1 = pwglade.smart_construct_connectors(template, include=['blurb','extensions', 'skip_options'])            
             clist2 = pwglade.smart_construct_connectors(importer, include=importer.public_props)
             clist = clist1 + clist2
             table = pwglade.construct_table(clist)
+
+            if allow_edit is False:
+                notice = gtk.Label("This is an internal template\nwhich cannot be edited.")
+                dlg.vbox.pack_start(notice,False,True)
+                hseparator = gtk.HSeparator()
+                dlg.vbox.pack_start(hseparator,False,True)
+                #table.set_sensitive(False)
+                for c in clist:
+                    c.widget.set_sensitive(False)
 
             dlg.vbox.pack_start(table,True,True)            
             dlg.show_all()
@@ -873,21 +889,33 @@ class GtkApplication(Application):
             return response
 
         # callbacks
-        def edit_item(btn):
-            model,iter = tv.get_selection().get_selected()
+        def edit_item(treeview):
+            model,iter = treeview.get_selection().get_selected()
             if iter is None:
                 return
-            do_edit(model.get_value(iter,1))                
 
-        def remove_item(btn):
+            template = model.get_value(iter,1)
+            if template.is_internal is True:
+                do_edit(template, allow_edit=False)
+            else:
+                do_edit(template)   
+
+        tv.connect("row-activated", (lambda treeview,b,c: edit_item(treeview)))
+        
+        def delete_item(btn):
             model,iter = tv.get_selection().get_selected()
             if iter is None:
                 return            
 
-            model.remove(iter)
+            template = model.get_value(iter, 1)
+            if template.is_internal is True:
+                self.error_message("This is an internal template that cannot be edited or deleted.")
+            else:
+                model.remove(iter)
+                
 
-        def add_item(btn):
-            model,iter = tv.get_selection().get_selected()
+        def add_item(treeview):
+            model,iter = treeview.get_selection().get_selected()
             if iter is None:
                 print "INSERT AT BEGINNING"
                 # TODO: insert at beginning
@@ -900,9 +928,9 @@ class GtkApplication(Application):
                 if response == gtk.RESPONSE_ACCEPT:
                     model.insert_after(iter, ('key?', template, template.blurb))
             
-        buttons=[(gtk.STOCK_EDIT, edit_item),
-                 (gtk.STOCK_ADD, add_item),
-                 (gtk.STOCK_REMOVE, remove_item)]
+        buttons=[(gtk.STOCK_EDIT, (lambda btn: edit_item(tv))),
+                 (gtk.STOCK_ADD, (lambda btn: add_item(tv))),
+                 (gtk.STOCK_DELETE, (lambda btn: delete_item(tv)))]
         btnbox = uihelper.construct_buttonbox(buttons,
                                               horizontal=False,
                                               layout=gtk.BUTTONBOX_START)

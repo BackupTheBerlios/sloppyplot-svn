@@ -17,23 +17,20 @@ FOR 0.5.2:
 DETAILS FOR 0.5.1:
 
 
-- allow to specify _if_ options can be edited for a template.
-  If you specify None, then the options dialog is simply skipped.
+- Right now it is not possible to specify a None value in a SpinButton
+  connector widget.  But this is definitely needed for the importer
+  templates!  If I can't find a better solution, then maybe it would be
+  wise to have a button somewhere to enable/disable the spinbutton?
 
 
-- disable editing of default templates.
+- allow new templates => unfinished
 
-- allow new templates/removing templates
-
-- when creating new templates, use values of an old one?
 
 - WHEN FINISHED, print out the whole thing and try to create a common widget
   that can be used as well by the labels tool and by the modify table dialog.
 
 
 - ImporterRegistry -> importer_registry
-
-
 
 
 - iohelper.set_attributes

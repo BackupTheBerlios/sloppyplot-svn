@@ -290,7 +290,7 @@ class Application(object, HasSignals):
             eTemplates.clear()            
                 
         for key, tpl in dataio.import_templates.iteritems():
-            if tpl.write_to_config is True:
+            if tpl.is_internal is False:
                 logger.debug("Writing template %s" % key)
                 eTemplate = SubElement(eTemplates, 'ImportTemplate')               
 
