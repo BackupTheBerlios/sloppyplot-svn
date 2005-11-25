@@ -95,6 +95,37 @@ class InformationPage(ConfigurationPage):
     def __init__(self):
         ConfigurationPage.__init__(self)
 
+        frame_title = "About SloppyPlot"
+
+        label = gtk.Label("<b>%s</b>" % frame_title)
+        label.set_use_markup(True)
+                          
+        frame = gtk.Frame()
+        frame.set_label_widget(label)
+        frame.set_label_align(0.0, 0.5)
+        frame.set_shadow_type(gtk.SHADOW_NONE)
+        frame.set_border_width(10)        
+
+        alignment = gtk.Alignment()
+        alignment.set(0.0,0.0,1.0,1.0)
+        alignment.set_padding(0,0,12,0)
+        frame.add(alignment)
+
+        vbox = gtk.VBox()
+        vbox.set_spacing(10)
+        vbox.set_border_width(10)
+        alignment.add(vbox)
+        
+        label = gtk.Label("Version: xxx")
+        label.set_alignment(0.0,0.0)
+        vbox.pack_start(label,False,True)
+
+        label = gtk.Label("Whatever: yyy")
+        label.set_alignment(0.0,0.0)
+        vbox.pack_start(label,False,True)        
+
+        
+        self.add(frame)
         
 
 class ImportTemplatesPage(ConfigurationPage):
