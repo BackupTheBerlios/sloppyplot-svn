@@ -42,7 +42,7 @@ class ConfigurationDialog(gtk.Dialog):
         nb = self.notebook = gtk.Notebook()
         nb.set_property('tab-pos', gtk.POS_LEFT)
 
-        for page in [ImportTemplates()]:
+        for page in [InformationPage(), ImportTemplatesPage()]:
             nb.append_page(page)
             nb.set_tab_label_text(page, page.title)
             page.check_in()
@@ -67,7 +67,9 @@ class ConfigurationPage(gtk.VBox):
 
         gtk.VBox.__init__(self)
 
-        label = gtk.Label(self.title)
+        label = gtk.Label()
+        label.set_markup("\n<big><b>%s</b></big>\n" % self.title)
+        label.set_use_markup(True)
 
         frame = gtk.Frame()
         frame.add(label)
@@ -80,13 +82,26 @@ class ConfigurationPage(gtk.VBox):
 
 
 
+#------------------------------------------------------------------------------
+#
+# Page implementations
+#
+#------------------------------------------------------------------------------
 
-class ImportTemplates(ConfigurationPage):
+class InformationPage(ConfigurationPage):
+
+    title = "Information"
+
+    def __init__(self):
+        ConfigurationPage.__init__(self)
+
+        
+
+class ImportTemplatesPage(ConfigurationPage):
 
     title = "ASCII Import"
 
     def __init__(self):
-
         ConfigurationPage.__init__(self)
     
         # We create copies of all templates and put these into the
