@@ -139,99 +139,15 @@ class ImportTemplatesPage(ConfigurationPage):
         tv.set_headers_visible(False)
         tv.append_column(column)
 
+        self.treeview = tv
+
         sw = uihelper.add_scrollbars(tv)
 
-        def do_edit(template, allow_edit=True):
-            # - what about editing the key?        
-            importer = template.new_instance()
-
-            dlg = gtk.Dialog("Edit Template Options",None,
-                             gtk.DIALOG_MODAL,
-                             (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
-                              gtk.STOCK_CLOSE, gtk.RESPONSE_ACCEPT))
-            
-            clist1 = pwglade.smart_construct_connectors(template, include=['blurb','extensions', 'skip_options'])            
-            clist2 = pwglade.smart_construct_connectors(importer, include=importer.public_props)
-            clist = clist1 + clist2
-            table = pwglade.construct_table(clist)
-
-            if allow_edit is False:
-                notice = gtk.Label("This is an internal template\nwhich cannot be edited.")
-                dlg.vbox.pack_start(notice,False,True)
-                hseparator = gtk.HSeparator()
-                dlg.vbox.pack_start(hseparator,False,True)
-                #table.set_sensitive(False)
-                for c in clist:
-                    c.widget.set_sensitive(False)
-
-            dlg.vbox.pack_start(table,True,True)            
-            dlg.show_all()
-
-            for c in clist:
-                c.check_in()
-                
-            try:
-                response = dlg.run()
-
-                if response == gtk.RESPONSE_ACCEPT:
-                    # TODO: check key
-                    for c in clist:
-                        c.check_out()
-
-                    # move importer data to template
-                    values = importer.get_values(importer.public_props, default=None)
-                    template.set_values(defaults=values)                    
+        tv.connect("row-activated", (lambda a,b,c: self.on_edit_item(a)))
                     
-            finally:
-                dlg.destroy()
-
-            return response
-
-        # callbacks
-        def edit_item(treeview):
-            model,iter = treeview.get_selection().get_selected()
-            if iter is None:
-                return
-
-            template = model.get_value(iter,1)
-            if template.is_internal is True:
-                do_edit(template, allow_edit=False)
-            else:
-                do_edit(template)   
-
-        tv.connect("row-activated", (lambda treeview,b,c: edit_item(treeview)))
-        
-        def delete_item(btn):
-            model,iter = tv.get_selection().get_selected()
-            if iter is None:
-                return            
-
-            template = model.get_value(iter, 1)
-            if template.is_internal is True:
-                # TODO: error message
-                pass
-                #self.error_message("This is an internal template that cannot be edited or deleted.")
-            else:
-                model.remove(iter)
-                
-
-        def add_item(treeview):
-            model,iter = treeview.get_selection().get_selected()
-            if iter is None:
-                print "INSERT AT BEGINNING"
-                # TODO: insert at beginning
-                pass
-            else:
-                key = model.get_value(iter,1)
-                print "INSERT AT A POSITION, using the old one as template"
-                template = dataio.IOTemplate(importer_key='ASCII')
-                response = do_edit(template)
-                if response == gtk.RESPONSE_ACCEPT:
-                    model.insert_after(iter, ('key?', template, template.blurb))
-            
-        buttons=[(gtk.STOCK_EDIT, (lambda btn: edit_item(tv))),
-                 (gtk.STOCK_ADD, (lambda btn: add_item(tv))),
-                 (gtk.STOCK_DELETE, (lambda btn: delete_item(tv)))]
+        buttons=[(gtk.STOCK_EDIT, self.on_edit_item),
+                 (gtk.STOCK_ADD, self.on_add_item),
+                 (gtk.STOCK_DELETE, self.on_delete_item)]
 
         btnbox = uihelper.construct_buttonbox(buttons,
                                               horizontal=False,
@@ -269,3 +185,103 @@ class ImportTemplatesPage(ConfigurationPage):
             # Note that this is an application specific operation,
             # and there is no undo available for this.
             dataio.import_templates = templates
+
+
+
+    def do_edit(self, template, allow_edit=True):
+        importer = template.new_instance()
+
+        dlg = gtk.Dialog("Edit Template Options",None,
+                         gtk.DIALOG_MODAL,
+                         (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
+                          gtk.STOCK_CLOSE, gtk.RESPONSE_ACCEPT))
+
+
+        # WHERE IS THE KEY?
+        # template doesn't know about its key, so we need to pass the key...
+        # _OR_ we would manipulate the key in the list box...
+        
+        clist1 = pwglade.smart_construct_connectors(template, include=['blurb','extensions','skip_options'])
+#        c_key = clist[0] # for reference below
+        clist2 = pwglade.smart_construct_connectors(importer, include=importer.public_props)
+        clist = clist1 + clist2
+        table = pwglade.construct_table(clist)
+
+        if allow_edit is False:
+            notice = gtk.Label("This is an internal template\nwhich cannot be edited.")
+            dlg.vbox.pack_start(notice,False,True)
+            hseparator = gtk.HSeparator()
+            dlg.vbox.pack_start(hseparator,False,True)
+            for c in clist:
+                c.widget.set_sensitive(False)
+
+        dlg.vbox.pack_start(table,True,True)            
+        dlg.show_all()
+
+        for c in clist:
+            c.check_in()
+
+        try:
+            response = dlg.run()
+
+            if response == gtk.RESPONSE_ACCEPT:                
+                # check key before checking out 
+ #               new_key = c_key.get_data()
+ #               print "NEW KEY = ", new_key
+                
+                # check out                
+                for c in clist:
+                    c.check_out()
+
+                # move importer data to template
+                values = importer.get_values(importer.public_props, default=None)
+                template.set_values(defaults=values)                    
+
+        finally:
+            dlg.destroy()
+
+        return response
+
+
+    #
+    # Callbacks
+    #
+    def on_edit_item(self, sender):
+        model,iter = self.treeview.get_selection().get_selected()
+        if iter is None:
+            return
+
+        template = model.get_value(iter,1)
+        if template.is_internal is True:
+            self.do_edit(template, allow_edit=False)
+        else:
+            self.do_edit(template)
+
+    def on_delete_item(self, sender):
+        model,iter = self.treeview.get_selection().get_selected()
+        if iter is None:
+            return            
+
+        template = model.get_value(iter, 1)
+        if template.is_internal is True:
+            # TODO: error message
+            pass
+            #self.error_message("This is an internal template that cannot be edited or deleted.")
+        else:
+            model.remove(iter)
+
+
+    def on_add_item(self, sender):
+        model,iter = self.treeview.get_selection().get_selected()
+        if iter is None:
+            print "INSERT AT BEGINNING"
+            # TODO: insert at beginning
+            pass
+        else:
+            key = model.get_value(iter,1)
+            print "INSERT AT A POSITION, using the old one as template"
+            template = dataio.IOTemplate(importer_key='ASCII')
+            response = self.do_edit(template)
+            if response == gtk.RESPONSE_ACCEPT:
+                model.insert_after(iter, ('key?', template, template.blurb))
+

@@ -125,6 +125,8 @@ def construct_buttonbox(buttons,
     Construct either a horizontal or a vertical button box.
     The buttons contained are defined in the list 'buttons',
     which is a list with 3-tuples of the form (stock_id, callback).
+    If a tuple contains additional items, then these are passed on
+    as arguments to the button's connection.
     """
     
     if horizontal is True:
@@ -133,7 +135,13 @@ def construct_buttonbox(buttons,
         btnbox = gtk.VButtonBox()
     btnbox.set_layout(layout)
 
-    for stock, callback in buttons:
+    for item in buttons:
+        stock, callback = item[0:2]
+        if len(item) > 2:
+            args = item[2:]
+        else:
+            args = []
+            
         button = gtk.Button(stock=stock)
         if labels is False:
             alignment = button.get_children()[0]
@@ -143,7 +151,7 @@ def construct_buttonbox(buttons,
 
         button.show()
 
-        button.connect('clicked', callback)
+        button.connect('clicked', callback, *args)
         btnbox.pack_end(button,False,False)
 
     return btnbox
