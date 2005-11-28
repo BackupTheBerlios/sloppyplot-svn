@@ -28,6 +28,7 @@ import gtk
 from Sloppy.Base import dataio
 
 import uihelper, pwglade
+from Sloppy.Lib.Props import pKeyword
 
 
 class ConfigurationDialog(gtk.Dialog):
@@ -117,6 +118,10 @@ class ImportTemplatesPage(ConfigurationPage):
 
     title = "ASCII Import"
 
+
+    (MODEL_KEY, MODEL_OBJECT, MODEL_BLURB) = range(3)
+    (COLUMN_KEY, COLUMN_BLURB) = range(2)
+    
     def __init__(self):
         ConfigurationPage.__init__(self)
     
@@ -130,22 +135,34 @@ class ImportTemplatesPage(ConfigurationPage):
         self.model = gtk.ListStore(str, object, str) # key, object, blurb
         model = self.model # TBR
 
+        #
         # create gui
+        #
+        # columns should be created in the order given by COLUMN_xxx
+        # definitions above.
         tv = gtk.TreeView(model)
-        column = gtk.TreeViewColumn("Available Templates")
+        tv.set_headers_visible(True)
+        
+        column = gtk.TreeViewColumn("key")
+        cell = gtk.CellRendererText()
+        column.pack_start(cell, expand=True)
+        column.set_attributes(cell, text=self.MODEL_KEY)
+        tv.append_column(column)
+        
+        column = gtk.TreeViewColumn("description")
         cell = gtk.CellRendererText()
         column.pack_start(cell,expand=True)
-        column.set_attributes(cell, text=2)
-        tv.set_headers_visible(False)
+        column.set_attributes(cell, text=self.MODEL_BLURB)
         tv.append_column(column)
 
         self.treeview = tv
 
         sw = uihelper.add_scrollbars(tv)
 
-        tv.connect("row-activated", (lambda a,b,c: self.on_edit_item(a)))
+        tv.connect("row-activated", (lambda a,b,c: self.on_edit_item(a,c)))
                     
         buttons=[(gtk.STOCK_EDIT, self.on_edit_item),
+                 ('sloppy-rename', self.on_rename_item),
                  (gtk.STOCK_ADD, self.on_add_item),
                  (gtk.STOCK_DELETE, self.on_delete_item)]
 
@@ -177,8 +194,8 @@ class ImportTemplatesPage(ConfigurationPage):
         templates = {}
         iter = self.model.get_iter_first()
         while iter is not None:
-            key = self.model.get_value(iter, 0)
-            template = self.model.get_value(iter, 1)
+            key = self.model.get_value(iter, self.MODEL_KEY)
+            template = self.model.get_value(iter, self.MODEL_OBJECT)
             templates[key] = template
             iter = self.model.iter_next(iter)
 
@@ -196,13 +213,7 @@ class ImportTemplatesPage(ConfigurationPage):
                          (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
                           gtk.STOCK_CLOSE, gtk.RESPONSE_ACCEPT))
 
-
-        # WHERE IS THE KEY?
-        # template doesn't know about its key, so we need to pass the key...
-        # _OR_ we would manipulate the key in the list box...
-        
         clist1 = pwglade.smart_construct_connectors(template, include=['blurb','extensions','skip_options'])
-#        c_key = clist[0] # for reference below
         clist2 = pwglade.smart_construct_connectors(importer, include=importer.public_props)
         clist = clist1 + clist2
         table = pwglade.construct_table(clist)
@@ -225,10 +236,7 @@ class ImportTemplatesPage(ConfigurationPage):
             response = dlg.run()
 
             if response == gtk.RESPONSE_ACCEPT:                
-                # check key before checking out 
- #               new_key = c_key.get_data()
- #               print "NEW KEY = ", new_key
-                
+
                 # check out                
                 for c in clist:
                     c.check_out()
@@ -243,26 +251,85 @@ class ImportTemplatesPage(ConfigurationPage):
         return response
 
 
+    def input_key(self, key):
+        " Let the user enter a valid key.  The given key is always valid. "
+        dlg = gtk.Dialog("Rename Template",None,
+                         gtk.DIALOG_MODAL,
+                         (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
+                          gtk.STOCK_CLOSE, gtk.RESPONSE_ACCEPT))
+
+        entry = gtk.Entry()
+        entry.set_text(unicode(key))
+        dlg.vbox.add(entry)
+        dlg.show_all()
+
+
+        try:
+            response = dlg.run()
+            if response == gtk.RESPONSE_ACCEPT:
+                # check if key itself is valid                
+                key = entry.get_text()
+                try:
+                    key = pKeyword().check(key)
+                except ValueError:
+                    print "INVALID KEY! TRY AGAIN"
+                    return None
+
+                # check if key does not yet exist
+                model = self.treeview.get_model()
+                iter = model.get_iter_first()
+                while iter is not None:                    
+                    if key == model.get_value(iter, self.MODEL_KEY):
+                        print "KEY ALREADY EXISTS!"
+                        return None
+                    iter = model.iter_next(iter)
+
+            return key
+
+        finally:
+            dlg.destroy()
+
+        return None
+
+
     #
     # Callbacks
     #
-    def on_edit_item(self, sender):
+    def on_edit_item(self, sender, column):       
         model,iter = self.treeview.get_selection().get_selected()
         if iter is None:
             return
 
-        template = model.get_value(iter,1)
-        if template.is_internal is True:
-            self.do_edit(template, allow_edit=False)
-        else:
-            self.do_edit(template)
+        # perform action based on the column clicked on
+        index = self.treeview.get_columns().index(column)
+        if index == self.COLUMN_KEY:
+            key = model.get_value(iter, self.MODEL_KEY)
+            new_key = self.input_key(key)
+            if new_key is not None:
+                print "Set new key"
+        elif index == self.COLUMN_BLURB:             
+            template = model.get_value(iter, self.MODEL_OBJECT)
+            self.do_edit(template, allow_edit=not template.is_internal)
+        
 
+    def on_rename_item(self, sender):
+        model,iter = self.treeview.get_selection().get_selected()
+        if iter is None:
+            return
+
+        key = model.get_value(iter,self.MODEL_KEY)
+        new_key = self.input_key(key)
+
+        if new_key is not None:
+            print "Set new key"
+        
+    
     def on_delete_item(self, sender):
         model,iter = self.treeview.get_selection().get_selected()
         if iter is None:
             return            
 
-        template = model.get_value(iter, 1)
+        template = model.get_value(iter, self.MODEL_OBJECT)
         if template.is_internal is True:
             # TODO: error message
             pass
@@ -278,7 +345,7 @@ class ImportTemplatesPage(ConfigurationPage):
             # TODO: insert at beginning
             pass
         else:
-            key = model.get_value(iter,1)
+            key = model.get_value(iter,self.MODEL_KEY)
             print "INSERT AT A POSITION, using the old one as template"
             template = dataio.IOTemplate(importer_key='ASCII')
             response = self.do_edit(template)
