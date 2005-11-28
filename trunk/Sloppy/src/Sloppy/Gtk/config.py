@@ -75,7 +75,6 @@ class ConfigurationPage(gtk.VBox):
         frame.add(label)
         
         self.pack_start(frame,False,True)
-        self.show_all()
     
     def check_in(self): pass
     def check_out(self): pass

@@ -70,6 +70,10 @@ def _info(type, value, tb):
         finally:
             dialog.destroy()
 
+    elif isinstance(value, error.UserCancel):
+        # TODO: This should put a message into the statusbar:
+        # TODO: "action aborted by user."
+        pass
     elif isinstance(value, KeyboardInterrupt):
         # for testing versions, allow keyboard interrupt
         pass
