@@ -135,10 +135,10 @@ class Exporter(HasProps):
         
 
 #------------------------------------------------------------------------------
-##handler = {}
-ImporterRegistry = {}
-
+importer_registry = {}
 import_templates = {}
+
+oImporterRegistry = importer_registry # deprecated
 ImporterTemplateRegistry = import_templates # deprecated
 
 ExporterRegistry = {}

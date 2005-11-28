@@ -119,7 +119,7 @@ class ImportTemplatesPage(ConfigurationPage):
     title = "ASCII Import"
 
 
-    (MODEL_KEY, MODEL_OBJECT, MODEL_BLURB) = range(3)
+    (MODEL_KEY, MODEL_OBJECT) = range(2)
     (COLUMN_KEY, COLUMN_BLURB) = range(2)
     
     def __init__(self):
@@ -132,7 +132,7 @@ class ImportTemplatesPage(ConfigurationPage):
         # replace the current templates with these temporary ones.
 
         # check in
-        self.model = gtk.ListStore(str, object, str) # key, object, blurb
+        self.model = gtk.ListStore(str, object) # key, object
         model = self.model # TBR
 
         #
@@ -142,17 +142,20 @@ class ImportTemplatesPage(ConfigurationPage):
         # definitions above.
         tv = gtk.TreeView(model)
         tv.set_headers_visible(True)
-        
-        column = gtk.TreeViewColumn("key")
-        cell = gtk.CellRendererText()
-        column.pack_start(cell, expand=True)
+
+        cell = gtk.CellRendererText()        
+        column = gtk.TreeViewColumn("key", cell)
         column.set_attributes(cell, text=self.MODEL_KEY)
+        column.set_resizable(True)        
         tv.append_column(column)
-        
-        column = gtk.TreeViewColumn("description")
+
+        def render_blurb(column, cell, model, iter):
+            object = model.get_value(iter, self.MODEL_OBJECT)
+            cell.set_property('text', object.blurb or "")
         cell = gtk.CellRendererText()
-        column.pack_start(cell,expand=True)
-        column.set_attributes(cell, text=self.MODEL_BLURB)
+        column = gtk.TreeViewColumn("description", cell)        
+        column.set_cell_data_func(cell, render_blurb)
+        column.set_resizable(True)
         tv.append_column(column)
 
         self.treeview = tv
@@ -186,7 +189,7 @@ class ImportTemplatesPage(ConfigurationPage):
     def check_in(self):
         for key,template in dataio.import_templates.iteritems():
             if template.importer_key == 'ASCII':
-                self.model.append((key, template.copy(),"%s: %s" % (key, template.blurb)))
+                self.model.append((key, template.copy()))
 
     def check_out(self):
 
@@ -256,30 +259,40 @@ class ImportTemplatesPage(ConfigurationPage):
         dlg = gtk.Dialog("Rename Template",None,
                          gtk.DIALOG_MODAL,
                          (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
-                          gtk.STOCK_CLOSE, gtk.RESPONSE_ACCEPT))
+                          gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
+                         
+                         #(gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
+                         # gtk.STOCK_CLOSE, gtk.RESPONSE_ACCEPT))
 
         entry = gtk.Entry()
         entry.set_text(unicode(key))
+        entry.set_activates_default(True)
+
         dlg.vbox.add(entry)
         dlg.show_all()
+        dlg.set_default_response(gtk.RESPONSE_ACCEPT)
 
 
         try:
             response = dlg.run()
             if response == gtk.RESPONSE_ACCEPT:
                 # check if key itself is valid                
-                key = entry.get_text()
+                new_key = entry.get_text()
                 try:
-                    key = pKeyword().check(key)
+                    new_key = pKeyword().check(new_key)
                 except ValueError:
                     print "INVALID KEY! TRY AGAIN"
                     return None
 
-                # check if key does not yet exist
+                # if key is equal to the suggested key, use it
+                if key == new_key:
+                    return key
+                
+                # otherwise check if key does not yet exist
                 model = self.treeview.get_model()
                 iter = model.get_iter_first()
-                while iter is not None:                    
-                    if key == model.get_value(iter, self.MODEL_KEY):
+                while iter is not None:
+                    if new_key == model.get_value(iter, self.MODEL_KEY):
                         print "KEY ALREADY EXISTS!"
                         return None
                     iter = model.iter_next(iter)
@@ -295,18 +308,22 @@ class ImportTemplatesPage(ConfigurationPage):
     #
     # Callbacks
     #
-    def on_edit_item(self, sender, column):       
+    def on_edit_item(self, sender, column=None):
         model,iter = self.treeview.get_selection().get_selected()
         if iter is None:
             return
 
         # perform action based on the column clicked on
-        index = self.treeview.get_columns().index(column)
+        if column is not None:
+            index = self.treeview.get_columns().index(column)
+        else:
+            index = self.COLUMN_BLURB
+            
         if index == self.COLUMN_KEY:
             key = model.get_value(iter, self.MODEL_KEY)
             new_key = self.input_key(key)
             if new_key is not None:
-                print "Set new key"
+                model.set_value(iter, self.MODEL_KEY, new_key)
         elif index == self.COLUMN_BLURB:             
             template = model.get_value(iter, self.MODEL_OBJECT)
             self.do_edit(template, allow_edit=not template.is_internal)
@@ -321,7 +338,7 @@ class ImportTemplatesPage(ConfigurationPage):
         new_key = self.input_key(key)
 
         if new_key is not None:
-            print "Set new key"
+            model.set_value(iter, self.MODEL_KEY, new_key)
         
     
     def on_delete_item(self, sender):
@@ -337,18 +354,25 @@ class ImportTemplatesPage(ConfigurationPage):
         else:
             model.remove(iter)
 
+        
 
     def on_add_item(self, sender):
         model,iter = self.treeview.get_selection().get_selected()
-        if iter is None:
-            print "INSERT AT BEGINNING"
-            # TODO: insert at beginning
-            pass
-        else:
-            key = model.get_value(iter,self.MODEL_KEY)
-            print "INSERT AT A POSITION, using the old one as template"
-            template = dataio.IOTemplate(importer_key='ASCII')
-            response = self.do_edit(template)
-            if response == gtk.RESPONSE_ACCEPT:
-                model.insert_after(iter, ('key?', template, template.blurb))
 
+        # set up new template        
+        template = dataio.IOTemplate(importer_key='ASCII')
+
+        # let user input key
+        key = self.input_key("New Template")
+        if key is None:
+            return        
+
+        # edit template
+        response = self.do_edit(template)        
+        
+        if response == gtk.RESPONSE_ACCEPT:
+            new_item = (key, template)
+            if iter is None:
+                model.append(new_item)
+            else:
+                model.insert_after(iter, new_item)

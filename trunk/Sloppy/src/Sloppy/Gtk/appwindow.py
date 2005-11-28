@@ -641,7 +641,6 @@ class AppWindow( gtk.Window ):
           <separator/>
           <menuitem action='Edit'/>
           <menuitem action='RenameItem'/>          
-          <separator/>
           <menuitem action='Delete'/>
           <separator/>
           <menuitem action='Preferences'/>

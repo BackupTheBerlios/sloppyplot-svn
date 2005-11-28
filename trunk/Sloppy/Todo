@@ -23,16 +23,9 @@ DETAILS FOR 0.5.1:
   templates!  If I can't find a better solution, then maybe it would be
   wise to have a button somewhere to enable/disable the spinbutton?
 
-
-- allow new templates => unfinished
-
-- template key is not checked yet
-
-- WHEN FINISHED, print out the whole thing and try to create a common widget
-  that can be used as well by the labels tool and by the modify table dialog.
+- better response if template key is invalid
 
 - ImporterRegistry -> importer_registry
-
 
 - iohelper.set_attributes
 
