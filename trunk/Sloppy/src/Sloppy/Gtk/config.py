@@ -88,6 +88,8 @@ class ConfigurationPage(gtk.VBox):
 #
 #------------------------------------------------------------------------------
 
+
+
 class InformationPage(ConfigurationPage):
 
     title = "Information"
@@ -95,26 +97,9 @@ class InformationPage(ConfigurationPage):
     def __init__(self):
         ConfigurationPage.__init__(self)
 
-        frame_title = "About SloppyPlot"
-
-        label = gtk.Label("<b>%s</b>" % frame_title)
-        label.set_use_markup(True)
-                          
-        frame = gtk.Frame()
-        frame.set_label_widget(label)
-        frame.set_label_align(0.0, 0.5)
-        frame.set_shadow_type(gtk.SHADOW_NONE)
-        frame.set_border_width(10)        
-
-        alignment = gtk.Alignment()
-        alignment.set(0.0,0.0,1.0,1.0)
-        alignment.set_padding(0,0,12,0)
-        frame.add(alignment)
-
         vbox = gtk.VBox()
-        vbox.set_spacing(10)
-        vbox.set_border_width(10)
-        alignment.add(vbox)
+        vbox.set_spacing(uihelper.SECTION_SPACING)
+        vbox.set_border_width(uihelper.SECTION_SPACING)
         
         label = gtk.Label("Version: xxx")
         label.set_alignment(0.0,0.0)
@@ -124,8 +109,9 @@ class InformationPage(ConfigurationPage):
         label.set_alignment(0.0,0.0)
         vbox.pack_start(label,False,True)        
 
-        
+        frame = uihelper.new_section("About SloppyPlot", vbox)
         self.add(frame)
+
         
 
 class ImportTemplatesPage(ConfigurationPage):
@@ -247,9 +233,15 @@ class ImportTemplatesPage(ConfigurationPage):
         buttons=[(gtk.STOCK_EDIT, (lambda btn: edit_item(tv))),
                  (gtk.STOCK_ADD, (lambda btn: add_item(tv))),
                  (gtk.STOCK_DELETE, (lambda btn: delete_item(tv)))]
+
         btnbox = uihelper.construct_buttonbox(buttons,
                                               horizontal=False,
                                               layout=gtk.BUTTONBOX_START)
+        btnbox.set_spacing(uihelper.SECTION_SPACING)
+        btnbox.set_border_width(uihelper.SECTION_SPACING)
+
+        sw.set_border_width(uihelper.SECTION_SPACING)
+
 
         hbox = gtk.HBox()
         hbox.pack_start(sw,True,True)

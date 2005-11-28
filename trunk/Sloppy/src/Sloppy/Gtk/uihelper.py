@@ -20,7 +20,7 @@
 
 
 """
-Commonly used helper functions for pygtk.
+Commonly used helper functions and classes for pygtk.
 """
 
 import gtk
@@ -28,6 +28,8 @@ import gtk
 import logging
 logger = logging.getLogger('gtk.uihelper')
 
+
+SECTION_SPACING=8
 
 
 def add_actions(uimanager, key, actions, map=None):
@@ -147,34 +149,26 @@ def construct_buttonbox(buttons,
     return btnbox
 
 
+def new_section(frame_title, child):
+    """ Surround the given `child` widget by a frame with a given
+    title.  The frame itself contains an alignment which causes an
+    indentation on the left.  The alignment then contains the child.
+    Returns the constructed frame.  """
+    
+    label = gtk.Label("<b>%s</b>" % frame_title)
+    label.set_use_markup(True)
 
-        
-# DEPRECATED?
-# def set_actions(uimanager, action_names_list, state=True):
-#     for action_name in action_names_list:
-#         action = uimanager.get_action(action_name)
-#         if action is not None:
-#             action.set_property('sensitive', state)
-#         else:
-#             logger.error("Could not find action %s." % action_name)
+    frame = gtk.Frame()
+    frame.set_label_widget(label)
+    frame.set_label_align(0.0, 0.5)
+    frame.set_shadow_type(gtk.SHADOW_NONE)
+    frame.set_border_width(SECTION_SPACING)
 
-# def add_ui(uimanager, actions_dict, uistring, map=None):
-#     """
-#     Returns a tuple (uimanager, actiongroups, merge_id) that can
-#     be passed on to remove_ui like this:
+    alignment = gtk.Alignment()
+    alignment.set(0.0,0.0,1.0,1.0)
+    alignment.set_padding(0,0,1.5*SECTION_SPACING,0)
+    alignment.add(child)
 
-#     >>> ui_info = add_ui(...)
-#     >>> remove_ui(*ui_info)    
-#     """
-#     actiongroups = list()
-#     for key, actions in actions_dict.iteritems():
-#         actiongroups.append( add_actions(uimanager, key, actions, map) )            
+    frame.add(alignment)
 
-#     merge_id = uimanager.add_ui_from_string(uistring)
-#     return (uimanager, actiongroups, merge_id)        
-
-
-# def remove_ui(uimanager, actiongroups, merge_id):
-#     uimanager.remove_ui(merge_id)
-#     for ag in actiongroups:
-#         uimanager.remove_action_group(ag)
+    return frame
