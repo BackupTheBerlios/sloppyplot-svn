@@ -866,7 +866,8 @@ class GtkApplication(Application):
                 if text == -1:
                     self.window.progressbar.hide()
                 elif text is not None:
-                    self.window.progressbar.set_text(text)                                        
+                    pass
+                    #self.window.progressbar.set_text(text)                                        
                 if fraction is not None:
                     self.window.progressbar.set_fraction(fraction)
             except QueueEmpty:

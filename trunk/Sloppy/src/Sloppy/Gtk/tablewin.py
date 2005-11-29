@@ -675,14 +675,6 @@ class ModifyTableDialog(gtk.Dialog):
         btn_edit.connect("clicked", self.on_row_activated)
         btn_edit.show()
         
-        btn_move_up = gtk.Button(stock=gtk.STOCK_GO_UP)
-        btn_move_up.connect("clicked", self.on_btn_move_clicked, -1)        
-        btn_move_up.show()
-
-        btn_move_down = gtk.Button(stock=gtk.STOCK_GO_DOWN)
-        btn_move_down.connect("clicked", self.on_btn_move_clicked, 1)
-        btn_move_down.show()
-
         btn_add = gtk.Button(stock=gtk.STOCK_NEW)
         btn_add.connect("clicked", self.on_btn_add_clicked)
         btn_add.show()
@@ -691,11 +683,20 @@ class ModifyTableDialog(gtk.Dialog):
         btn_remove.connect("clicked", self.on_btn_remove_clicked)
         btn_remove.show()
 
+        btn_move_up = gtk.Button(stock=gtk.STOCK_GO_UP)
+        btn_move_up.connect("clicked", self.on_btn_move_clicked, -1)        
+        btn_move_up.show()
+
+        btn_move_down = gtk.Button(stock=gtk.STOCK_GO_DOWN)
+        btn_move_down.connect("clicked", self.on_btn_move_clicked, 1)
+        btn_move_down.show()
+        
+
         btnbox.add(btn_edit)        
-        btnbox.add(btn_move_up)        
-        btnbox.add(btn_move_down)
         btnbox.add(btn_add)
         btnbox.add(btn_remove)
+        btnbox.add(btn_move_up)        
+        btnbox.add(btn_move_down)        
         btnbox.set_layout(gtk.BUTTONBOX_START)
         btnbox.show()
                 

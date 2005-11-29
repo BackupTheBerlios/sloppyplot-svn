@@ -103,9 +103,9 @@ class AppWindow( gtk.Window ):
         hpaned.show()
 
 
-        bottombox = gtk.HBox()
-        bottombox.pack_start(self.progressbar,True,True)
-        bottombox.show()
+        #bottombox = gtk.HBox()
+        #bottombox.pack_start(self.progressbar,False,True)
+        #bottombox.show()
         
         ##vpaned = gtk.VPaned()
         ##vpaned.pack1(self.treeview_window,True,True)
@@ -118,8 +118,8 @@ class AppWindow( gtk.Window ):
         vbox.pack_start(self.toolbar, expand=False)        
         ###vbox.pack_start(self.treeview_window, expand=True, fill=True)
         vbox.pack_start(hpaned, True, True)        
-        vbox.pack_start(bottombox, expand=False)
-        vbox.pack_end(self.statusbar,expand=False)
+        vbox.pack_start(self.progressbar, False, False)
+        vbox.pack_end(self.statusbar,False, True)
         vbox.show()
 
         # ...and add vbox to the window.
