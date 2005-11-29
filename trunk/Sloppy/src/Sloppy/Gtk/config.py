@@ -256,8 +256,7 @@ class ImportTemplatesPage(ConfigurationPage):
 
     def input_key(self, key):
         " Let the user enter a valid key.  The given key is always valid. "
-        dlg = gtk.Dialog("Rename Template",None,
-                         gtk.DIALOG_MODAL,
+        dlg = gtk.Dialog("Rename Template",None, gtk.DIALOG_MODAL,
                          (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
                           gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
                          
@@ -265,41 +264,50 @@ class ImportTemplatesPage(ConfigurationPage):
         entry.set_text(unicode(key))
         entry.set_activates_default(True)
 
+        hint = gtk.Label()
+        
         dlg.vbox.add(entry)
+        dlg.vbox.add(hint)
+        dlg.set_default_response(gtk.RESPONSE_ACCEPT)        
         dlg.show_all()
-        dlg.set_default_response(gtk.RESPONSE_ACCEPT)
-
+        
+        hint.hide()
 
         try:
-            response = dlg.run()
-            if response == gtk.RESPONSE_ACCEPT:
-                # check if key itself is valid                
-                new_key = entry.get_text()
-                try:
-                    new_key = pKeyword().check(new_key)
-                except ValueError:
-                    print "INVALID KEY! TRY AGAIN"
-                    return None
+            while True:
+                response = dlg.run()
+                if response == gtk.RESPONSE_ACCEPT:
+                    # check if key itself is valid                
+                    new_key = entry.get_text()
+                    try:
+                        new_key = pKeyword().check(new_key)
+                    except ValueError:
+                        hint.set_text("Key is invalid. Try again.")
+                        hint.show()
+                        continue
 
-                # if key is equal to the suggested key, use it
-                if key == new_key:
-                    return key
-                
-                # otherwise check if key does not yet exist
-                model = self.treeview.get_model()
-                iter = model.get_iter_first()
-                while iter is not None:
-                    if new_key == model.get_value(iter, self.MODEL_KEY):
-                        print "KEY ALREADY EXISTS!"
-                        return None
-                    iter = model.iter_next(iter)
+                    # if key is equal to the suggested key, use it
+                    if key == new_key:
+                        return key
 
-            return key
+                    # otherwise check if key does not yet exist
+                    model = self.treeview.get_model()
+                    iter = model.get_iter_first()
+                    while iter is not None:
+                        if new_key == model.get_value(iter, self.MODEL_KEY):
+                            hint.set_text("Key already exists. Try again.")
+                            hint.show()
+                            continue
+                        iter = model.iter_next(iter)
 
+                    return new_key
+                else:
+                    break
         finally:
             dlg.destroy()
 
         return None
+
 
 
     #
@@ -334,7 +342,9 @@ class ImportTemplatesPage(ConfigurationPage):
         key = model.get_value(iter,self.MODEL_KEY)
         new_key = self.input_key(key)
 
+        print "NEW KEY IS ", new_key
         if new_key is not None:
+            print "Setting new key"
             model.set_value(iter, self.MODEL_KEY, new_key)
         
     

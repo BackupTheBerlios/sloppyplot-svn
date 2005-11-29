@@ -2,19 +2,11 @@
 DETAILS FOR 0.5.1:
 ==================
 
-- use sloppy version for both project.xml and config.xml
-
-- skip ASCII options if we have 'skip_options' set to True.
-
-- drag'n drop of data files?
-
 - construct_connectors_from_glade_tree
   use_widget should no longer be available in the connectors.
   If we want to use a glade widget, then we should insert some kind
   of placeholder, e.g. a box, which is replaced by the connector 
   widget.
-
-- better response if template key is invalid
 
 - iohelper.set_attributes
 
@@ -30,6 +22,8 @@ DETAILS FOR 0.5.1:
   import regexp?  In the first case, we might want to write a coercion
   method.  
 
+
+- drag'n drop of data files?
 
 
 

@@ -28,12 +28,11 @@ from Sloppy.Lib.ElementTree.ElementTree import ElementTree, Element, SubElement,
 
 import sys, os
 import iohelper
+from version import VERSION
 
 import logging
 logger = logging.getLogger('Base.config')
 
-
-CONFIG_FILE_VERSION = "0.4.3"
 
 
 def check_path(path):
@@ -61,6 +60,17 @@ def read_configfile(app, filename):
     try:
         try:
             eRoot = parse(fd).getroot()
+
+            version = eRoot.attrib.get('version', VERSION)
+
+            # NOTE:
+            # Currently, the VERSION of the config file is _not_ checked.
+            # This makes only sense if we provide transformations for
+            # the config file.  We don't (yet).
+            
+            #while version != VERSION:
+            #    logger.error("Config file format is not recent. Skipping config file.")
+                
             #parse_all(app, eRoot)
             return eRoot
         except:
@@ -78,9 +88,10 @@ def write_configfile(eConfig, filename):
     filename = os.path.expanduser(filename)
     fd = open(filename, 'w')
 
-
     iohelper.beautify_element(eConfig)
 
+    eConfig.attrib['version'] = VERSION
+    
     try:
         ElementTree(eConfig).write(fd, encoding="utf-8")
     finally:
