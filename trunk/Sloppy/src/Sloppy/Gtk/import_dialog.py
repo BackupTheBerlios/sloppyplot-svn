@@ -445,11 +445,12 @@ class EditTemplate(gtk.Dialog):
 
 class ImportOptions(gtk.Dialog):
     
-    def __init__(self, template_key, gladefile=None):
+    def __init__(self, template_key, previewfile=None, gladefile=None):
         gtk.Dialog.__init__(self, "Importing %s" % template_key, None,
                             gtk.DIALOG_MODAL|gtk.DIALOG_DESTROY_WITH_PARENT,
                             (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
                             gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
+        self.set_size_request(520,480)
 
         # create a new importer based on the template
         self.template = dataio.import_templates[template_key]
@@ -461,16 +462,24 @@ class ImportOptions(gtk.Dialog):
         if gladefile is not None:
             tree = gtk.glade.XML(gladefile, 'options')
             widget = tree.get_widget('options')
-            self.vbox.add(widget)
+            self.vbox.pack_start(widget,False,True)
             self.connectors = pwglade.construct_connectors_from_glade_tree(self.importer, tree)
         else:
             self.connectors = pwglade.construct_connectors(self.importer)
             table_options = pwglade.construct_table(self.connectors)
-            table_options.show()
-            self.vbox.add(table_options)
+            widget = uihelper.new_section("Import Options", table_options)
+            self.vbox.pack_start(widget,False,True)
 
         for c in self.connectors:
             c.check_in()
+
+        #
+        # add preview widget
+        #
+        preview = self.construct_preview(previewfile)
+        self.vbox.pack_start(preview,True,True)
+
+        self.vbox.show_all()
         
 
     def run(self):
@@ -481,6 +490,41 @@ class ImportOptions(gtk.Dialog):
                 c.check_out()            
 
         return response            
+
+
+    def construct_preview(self, filename):
+        if filename is None:
+            return gtk.Label()           
+        
+        view = gtk.TextView()
+        buffer = view.get_buffer()
+        view.set_editable(False)
+        view.show()
+        
+        tag_main = buffer.create_tag(family="Courier")
+        tag_linenr = buffer.create_tag(family="Courier", weight=pango.WEIGHT_HEAVY)
+
+        # fill preview buffer with at most 100 lines
+        try:
+            fd = open(filename, 'r')
+        except IOError:
+            raise RuntimeError("Could not open file %s for preview!" % filename)
+
+        iter = buffer.get_start_iter()        
+        try:
+            for j in range(1,100):
+                line = fd.readline()
+                if len(line) == 0:
+                    break
+                buffer.insert_with_tags(iter, u"%3d\t" % j, tag_linenr)
+                try:
+                    buffer.insert_with_tags(iter, unicode(line), tag_main)
+                except UnicodeDecodeError:
+                    buffer.insert_with_tags(iter, u"<unreadable line>\n", tag_main)
+        finally:
+            fd.close()
+
+        return uihelper.new_section("Preview", uihelper.add_scrollbars(view))
 
             
         

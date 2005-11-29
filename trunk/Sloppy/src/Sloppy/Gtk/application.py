@@ -710,7 +710,7 @@ class GtkApplication(Application):
             # there will be no user options dialog.
 
             if dataio.import_templates[template_key].skip_options is False:
-                dialog = import_dialog.ImportOptions(template_key) # filenames?
+                dialog = import_dialog.ImportOptions(template_key, previewfile=filenames[0])
                 try:
                     result = dialog.run()
                     if result == gtk.RESPONSE_ACCEPT:

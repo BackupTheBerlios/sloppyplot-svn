@@ -1,31 +1,20 @@
 
-FOR 0.5.1:
-==========
-
-- FINISH TEMPLATES
-
-
-
-FOR 0.5.2:
-==========
-
-- ADD GROUP PROPERTIES
-- ADD ERROR HANDLING (msgwin.py)
-- ADD OVERALL MORE VERBOSITY (statusbar, progress bar)
-
-------------------------------------------------------------------------------
-
 DETAILS FOR 0.5.1:
+==================
 
+- use sloppy version for both project.xml and config.xml
 
-- Right now it is not possible to specify a None value in a SpinButton
-  connector widget.  But this is definitely needed for the importer
-  templates!  If I can't find a better solution, then maybe it would be
-  wise to have a button somewhere to enable/disable the spinbutton?
+- skip ASCII options if we have 'skip_options' set to True.
+
+- drag'n drop of data files?
+
+- construct_connectors_from_glade_tree
+  use_widget should no longer be available in the connectors.
+  If we want to use a glade widget, then we should insert some kind
+  of placeholder, e.g. a box, which is replaced by the connector 
+  widget.
 
 - better response if template key is invalid
-
-- ImporterRegistry -> importer_registry
 
 - iohelper.set_attributes
 
@@ -42,8 +31,15 @@ DETAILS FOR 0.5.1:
   method.  
 
 
-- use sloppy version for both project.xml and config.xml
 
+
+
+FOR 0.5.2:
+==========
+
+- ADD GROUP PROPERTIES
+- ADD ERROR HANDLING (msgwin.py)
+- ADD OVERALL MORE VERBOSITY (statusbar, progress bar)
 
 
 DETAILS FOR 0.5.2:
@@ -58,6 +54,22 @@ DETAILS FOR 0.5.2:
 
 - status bar messages :-)
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+------------------------------------------------------------------------------
 DETAILS FOR 0.5.3:
 
 == CUSTOM GNUPLOT EXPORT ==
