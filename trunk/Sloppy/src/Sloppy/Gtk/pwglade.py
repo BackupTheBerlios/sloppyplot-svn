@@ -156,7 +156,8 @@ def guess_connector(prop):
     elif prop.get_value_list() is not None:
         return "ComboBox"
     elif isinstance(prop, pBoolean):
-        return "CheckButton"
+        return "TrueFalseComboBox"
+        #return "CheckButton"
     elif isinstance(prop, pInteger):
         return "SpinButton"
     else:

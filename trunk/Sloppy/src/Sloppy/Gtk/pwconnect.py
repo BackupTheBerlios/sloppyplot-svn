@@ -244,6 +244,31 @@ connectors['ComboBox'] = ComboBox
 
 
 
+class TrueFalseComboBox(ComboBox):
+
+    widget_type = gtk.ComboBox
+
+    def use_widget(self, widget):
+        Connector.use_widget(self, widget)
+
+        # predefined value_list
+        model = gtk.ListStore(str, object)
+        widget.set_model(model)
+        cell = gtk.CellRendererText()
+        widget.pack_start(cell, True)
+        widget.add_attribute(cell, 'text', 0)
+
+        # fill combo
+        model.clear()
+        value_dict = {'Default' : None, 'True': True, 'False': False}
+        for key, value in value_dict.iteritems():
+            model.append((key, value))
+            self.value_dict[value] = value
+            self.value_list.append(value)
+
+connectors['TrueFalseComboBox'] = TrueFalseComboBox
+            
+
 class CheckButton(Connector):
 
     widget_type = gtk.CheckButton

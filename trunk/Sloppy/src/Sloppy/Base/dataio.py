@@ -138,7 +138,7 @@ class Exporter(HasProps):
 importer_registry = {}
 import_templates = {}
 
-oImporterRegistry = importer_registry # deprecated
+ImporterRegistry = importer_registry # deprecated
 ImporterTemplateRegistry = import_templates # deprecated
 
 ExporterRegistry = {}
