@@ -294,7 +294,7 @@ class ProjectTreeView( gtk.TreeView ):
         self.connect("drag_data_received", self.on_drag_data_received)
 
 
-    def on_drag_data_received(self, sender, drag_context,
+    def on_drag_data_received(self, sender, context,
                               x, y, selection, info, timestamp):
 
         if info == self.DND_TEXT_URI_LIST:
@@ -306,5 +306,11 @@ class ProjectTreeView( gtk.TreeView ):
                 path = uihelper.get_file_path_from_dnd_dropped_uri(uri)
                 filenames.append(path)
 
+            logger.debug("Filenames from drag 'n drop:\n%s\n" % filenames)
+
             # import now!
             self.app.do_import(self.project, filenames)
+
+            context.finish(True,False,timestamp)
+        else:
+            context.drag_abort(timestamp)

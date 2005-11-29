@@ -689,7 +689,7 @@ class GtkApplication(Application):
         finally:
             chooser.destroy()
 
-        self.do_import(pj, filenames, importer)
+        self.do_import(pj, filenames, template_key)
 
 
 
@@ -715,7 +715,6 @@ class GtkApplication(Application):
             try:
                 result = dialog.run()
                 if result == gtk.RESPONSE_ACCEPT:
-                    importer = dialog.importer
                     # save template as 'recently used'
                     template = dataio.IOTemplate()
                     template.defaults = dialog.importer.get_values(include=dialog.importer.public_props)
@@ -730,28 +729,16 @@ class GtkApplication(Application):
 
 
         # The progress bar displays which file is currently being imported.
-        pbar = gtk.ProgressBar()        
-        pbar.show()
-        def set_text(queue):
-            while True:
-                try:
-                    text, fraction = queue.get()
-                    if text == -1:
-                        pbar.hide()
-                    elif text is not None:
-                        pbar.set_text(text)                                        
-                    if fraction is not None:
-                        pbar.set_fraction(fraction)
-                except QueueEmpty:
-                    pass
-                yield None
-
-        queue = Queue()
-        thread_progress = GIdleThread(set_text(queue))
-        thread_progress.start()
+        self.init_progress()
         
-        thread_import = GIdleThread(Application.import_datasets(self, project, filenames, importer),
-                                    queue)
+        #Application.import_datasets(self, project, filenames, template_key)
+        
+        queue = Queue()
+        thread_progress = GIdleThread(self.set_progress_from_queue(queue))
+        thread_progress.start()        
+        thread_import = GIdleThread(
+            Application.import_datasets(self, project, filenames, template_key),
+            queue)
         thread_import.start()
         thread_import.wait()
         
@@ -829,7 +816,7 @@ class GtkApplication(Application):
             
 
     #----------------------------------------------------------------------
-    # Simple user I/O
+    # Simple user I/O, inherited from Base.Application
     #
 
     def ask_yes_no(self, msg):
@@ -852,6 +839,39 @@ class GtkApplication(Application):
         dialog.run()
         dialog.destroy()
 
+
+    def status_message(self, message_short, message_long=None):
+        sb = self.window.statusbar
+        id = sb.get_context_id("main")
+        sb.pop(id)
+        sb.push(id, message_short)
+
+
+
+    #------------------------------------------------------------------------------
+    # Progress Bar
+    #
+    # This code is not yet finished.  I am thinking about how to
+    # improve this progress bar thingy.  Somehow I don't like the
+    # necessity to start these Queues (see do_import).
+    # After all, the import is a blocking action!
+    
+    def init_progress(self):
+        self.window.progressbar.show()
+
+    def set_progress_from_queue(self, queue):
+        while True:
+            try:
+                text, fraction = queue.get()
+                if text == -1:
+                    self.window.progressbar.hide()
+                elif text is not None:
+                    self.window.progressbar.set_text(text)                                        
+                if fraction is not None:
+                    self.window.progressbar.set_fraction(fraction)
+            except QueueEmpty:
+                pass
+            yield None
 
 
 

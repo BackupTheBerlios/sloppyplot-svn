@@ -33,6 +33,15 @@ DETAILS FOR 0.5.1:
   import regexp?  In the first case, we might want to write a coercion
   method.  => maybe use similar mechanism as in template key dialog?
 
+  See also Base/application.py  => call to utils.encode_as_key
+
+- Bugfix: There must be a callback for project::notify signal somewhere
+  that does not accept the optional changeset parameter.
+  BTW, I could enhance signals.py, line 147, so that it displays
+  the name of this function when a TypeError occurs.
+
+
+
 
 
 

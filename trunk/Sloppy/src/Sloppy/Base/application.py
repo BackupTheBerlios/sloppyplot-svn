@@ -308,18 +308,18 @@ class Application(object, HasSignals):
 
     def ask_yes_no(self, msg):
         return True
-    
+
+    def status_message(self, message_short, message_long=None):
+        print message_short
 
     #------------------------------------------------------------------------------
-    def import_datasets(self, project, filenames, importer, undolist=None):
+    def import_datasets(self, project, filenames, template, undolist=None):
 
         if undolist is None:
             undolist = project.journal
 
-        if isinstance(importer, basestring):
-            importer = dataio.importer_registry.new_instance(importer)
-        elif not isinstance(importer, dataio.Importer):
-            raise TypeError("'importer' needs to be a key or a valid Importer instance.")
+        if isinstance(template, basestring): # template key
+            template = dataio.import_templates[template]
 
         # To ensure a proper undo, the Datasets are imported one by one
         # to a temporary dict.  When finished, they are added as a whole.
@@ -330,6 +330,8 @@ class Application(object, HasSignals):
         for filename in filenames:
             yield ("Importing %s" % filename, n/N)
 
+            importer = template.new_instance()
+            
             try:
                 tbl = importer.read_table_from_file(filename)
             except dataio.ImportError, msg:
@@ -343,7 +345,6 @@ class Application(object, HasSignals):
             filename = utils.encode_as_key(root)
             ds = Dataset(key=filename, data=tbl, metadata=importer.result_metadata)
             ds.metadata['Import-Source'] = unicode(filename)
-            ##ds.metadata['Import-Filter'] = unicode(importer.blurb)
 
             new_datasets.append(ds)
 
@@ -356,8 +357,15 @@ class Application(object, HasSignals):
             ul = UndoList().describe("Import Dataset(s)")
             project.add_datasets(new_datasets, undolist=ul)
             undolist.append(ul)
+            #msg = "Import of %d datasets finished." % len(new_datasets)
         else:
-            undolist.append(NullUndo())    
+            undolist.append(NullUndo())
+            #msg = "Nothing imported."
+
+        #self.status_message(msg)
+
+
+
 
 #------------------------------------------------------------------------------
 

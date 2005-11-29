@@ -92,6 +92,7 @@ class AppWindow( gtk.Window ):
         self._construct_toolbar()
         self._construct_treeview()
         self._construct_statusbar()
+        self._construct_progressbar()
 
         self.plotbook  = gtk.Notebook()
         self.plotbook.show()
@@ -102,6 +103,9 @@ class AppWindow( gtk.Window ):
         hpaned.show()
 
 
+        bottombox = gtk.HBox()
+        bottombox.pack_start(self.progressbar,True,True)
+        bottombox.show()
         
         ##vpaned = gtk.VPaned()
         ##vpaned.pack1(self.treeview_window,True,True)
@@ -113,8 +117,9 @@ class AppWindow( gtk.Window ):
         vbox.pack_start(self.menubar, expand=False)
         vbox.pack_start(self.toolbar, expand=False)        
         ###vbox.pack_start(self.treeview_window, expand=True, fill=True)
-        vbox.pack_start(hpaned, True, True)
-        vbox.pack_end(self.statusbar, expand=False)
+        vbox.pack_start(hpaned, True, True)        
+        vbox.pack_start(bottombox, expand=False)
+        vbox.pack_end(self.statusbar,expand=False)
         vbox.show()
 
         # ...and add vbox to the window.
@@ -182,6 +187,12 @@ class AppWindow( gtk.Window ):
         self.statusbar = statusbar
         return statusbar
 
+    def _construct_progressbar(self):
+        progressbar = gtk.ProgressBar()        
+        progressbar.hide()
+        self.progressbar = progressbar
+        return progressbar
+        
 
     def _construct_toolbox(self):
 
@@ -299,6 +310,19 @@ class AppWindow( gtk.Window ):
                 action.set_property('sensitive', state)
             else:
                 logger.error("Could not find action %s in ActionGroup 'Application'" % action_name)
+
+        # refresh status bar and display last action
+        sb = self.statusbar
+        id = sb.get_context_id("main")
+        sb.pop(id)
+
+        # if a redo is available, then we should display it, otherwise
+        # we will check the undo.
+        if redo_state is True:
+            sb.push(id, "Finished: Reverted %s" % project.journal.redo_text())
+        elif undo_state is True:
+            sb.push(id, "Finished: %s" % project.journal.undo_text())
+
             
         
 

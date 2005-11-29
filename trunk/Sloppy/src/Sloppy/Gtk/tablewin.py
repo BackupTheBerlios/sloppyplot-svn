@@ -229,7 +229,7 @@ class DatasetWindow( gtk.Window ):
             table.sig_connect('update-columns',
                             (lambda sender: self.tableview.setup_columns())),
             dataset.sig_connect('notify',
-                            (lambda sender: self.tableview.queue_draw())),
+                            (lambda sender,*changeset: self.tableview.queue_draw())),
             dataset.sig_connect('closed',
                                 (lambda sender: self.destroy()))
             
