@@ -317,7 +317,7 @@ class Application(object, HasSignals):
             undolist = project.journal
 
         if isinstance(importer, basestring):
-            importer = dataio.ImporterRegistry.new_instance(importer)
+            importer = dataio.importer_registry.new_instance(importer)
         elif not isinstance(importer, dataio.Importer):
             raise TypeError("'importer' needs to be a key or a valid Importer instance.")
 

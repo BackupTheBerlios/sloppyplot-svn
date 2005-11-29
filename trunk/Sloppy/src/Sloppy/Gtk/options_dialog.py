@@ -90,7 +90,7 @@ class OptionsDialog(gtk.Dialog):
 from Sloppy.Base import dataio
 
 if __name__ == "__main__":
-    importer = dataio.ImporterRegistry.new_instance('ASCII')
+    importer = dataio.importer_registry.new_instance('ASCII')
     dlg = OptionsDialog(importer)
     dlg.run()
     dlg.destroy()

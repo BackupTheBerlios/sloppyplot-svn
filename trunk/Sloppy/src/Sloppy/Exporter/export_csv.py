@@ -50,4 +50,4 @@ class Exporter(dataio.Exporter):
 
 
 #------------------------------------------------------------------------------
-dataio.ExporterRegistry["CSV"] = Exporter
+dataio.exporter_registry["CSV"] = Exporter

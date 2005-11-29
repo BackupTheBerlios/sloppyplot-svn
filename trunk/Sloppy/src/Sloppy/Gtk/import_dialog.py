@@ -57,9 +57,9 @@ class ImportDialog(gtk.Dialog):
         # actual Importer object
         self.importer = importer
         try:
-            self.importer_key = [key for key,value in dataio.ImporterRegistry.iteritems() if value == importer.__class__][0]
+            self.importer_key = [key for key,value in dataio.importer_registry.iteritems() if value == importer.__class__][0]
         except IndexError:
-            raise IndexError("The given importer class %s could not be found in the ImporterRegistry." % importer.__class__)
+            raise IndexError("The given importer class %s could not be found in the importer_registry." % importer.__class__)
 
         #
         # Combos for choosing the Template
@@ -355,7 +355,7 @@ class EditTemplate(gtk.Dialog):
 
         self.key = key
         self.template = template
-        self.importer = dataio.ImporterRegistry[template.importer_key]()
+        self.importer = dataio.importer_registry[template.importer_key]()
         self.importer.set_values(**self.template.defaults.data)
 
         #
@@ -487,7 +487,7 @@ class ImportOptions(gtk.Dialog):
         
 ##############################################################################
 def test1():
-    importer = dataio.ImporterRegistry['ASCII']()
+    importer = dataio.importer_registry['ASCII']()
     dlg = ImportDialog(importer, 'ASCII::pfc')
     dlg.run()
     

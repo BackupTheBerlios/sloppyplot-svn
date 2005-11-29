@@ -32,7 +32,7 @@ from Sloppy.Base import uwrap, pdict
 from Sloppy.Base.table import Table
 
 
-from Sloppy.Base.dataio import ImporterRegistry
+from Sloppy.Base.dataio import importer_registry
 from Sloppy.Base.dataset import Dataset
 from Sloppy.Base.objects import *
 from os.path import basename
@@ -82,7 +82,7 @@ class Plugin:
         if undolist is None:
             undolist = project.journal
 
-        importer = ImporterRegistry.new_instance('XPS')
+        importer = importer_registry.new_instance('XPS')
         table = importer.read_table_from_file(filename, ranges=ranges)
 
         ds = Dataset(key=basename(filename), data=table)

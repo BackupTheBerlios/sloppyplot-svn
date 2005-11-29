@@ -56,7 +56,7 @@ class Importer(HasProps):
 
     Finally you must register your Importer class like this:
     
-    >>> ImporterRegistry.register('QTP', MyImporter)
+    >>> importer_registry.register('QTP', MyImporter)
 
     """
     
@@ -138,10 +138,8 @@ class Exporter(HasProps):
 importer_registry = {}
 import_templates = {}
 
-ImporterRegistry = importer_registry # deprecated
-ImporterTemplateRegistry = import_templates # deprecated
-
-ExporterRegistry = {}
+exporter_registry = {}
+export_templates = {}
 
 
 class IOTemplate(HasProps):
@@ -154,7 +152,7 @@ class IOTemplate(HasProps):
     skip_options = pBoolean(default=False) # whether to ask the user for options
 
     def new_instance(self):
-        return ImporterRegistry[self.importer_key](**self.defaults.data)
+        return importer_registry[self.importer_key](**self.defaults.data)
 
 
 
@@ -163,16 +161,19 @@ class IOTemplate(HasProps):
 # convenience methods
 
 def read_table_from_file(filename, importer_key='ASCII', **kwargs):
-    importer = ImporterRegistry[importer_key](**kwargs)
+    global importer_registry
+    importer = importer_registry[importer_key](**kwargs)
     return importer.read_table_from_file(filename)
 
 def read_table_from_stream(fd, importer_key='ASCII', **kwargs):
-    importer = ImporterRegistry[importer_key](**kwargs)
+    global importer_registry
+    importer = importer_registry[importer_key](**kwargs)
     return importer.read_table_from_stream(fd)
     
 
 def read_array_from_file(filename, importer_key='ASCII', **kwargs):
-    importer = ImporterRegistry[importer_key](**kwargs)
+    global importer_registry
+    importer = importer_registry[importer_key](**kwargs)
     return importer.read_array_from_file(filename)
 
 
@@ -181,12 +182,14 @@ def importer_template_from_filename(filename):
     Return a list of templates that matches the given filename based
     on the extension.
     """
+    global import_templates
+    
     path, ext = os.path.splitext(filename)
     if len(ext) > 1: ext = ext[1:].lower()
     else: return matches
 
     matches = []
-    for key, template in ImporterTemplateRegistry.iteritems():
+    for key, template in import_templates.iteritems():
         if ext in template.extensions.split(','):
             matches.append(key)
 

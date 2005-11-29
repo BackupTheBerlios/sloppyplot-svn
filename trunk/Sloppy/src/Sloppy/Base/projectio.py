@@ -26,7 +26,7 @@ from Sloppy.Base import utils
 from Sloppy.Base.objects import Legend, Axis, Plot, Layer, Line, TextLabel
 from Sloppy.Base.error import NoData
 from Sloppy.Base import pdict, iohelper
-from Sloppy.Base.dataio import ExporterRegistry, read_table_from_stream
+from Sloppy.Base.dataio import exporter_registry, read_table_from_stream
 from Sloppy.Base.table import Table, Column
 
 from Sloppy.Lib.ElementTree.ElementTree import ElementTree, Element, SubElement, parse
@@ -379,7 +379,7 @@ def save_project(spj, filename=None, path=None):
         #
 
         # add Dataset files to tempdir
-        exporter_ascii = ExporterRegistry['CSV']()
+        exporter_ascii = exporter_registry['CSV']()
         
         dsdir = os.path.join(tempdir, 'datasets')
         os.mkdir(dsdir)

@@ -33,7 +33,7 @@ logger = logging.getLogger('Gnuplot.gnuplot')
 
 from Sloppy.Base import objects
 from Sloppy.Base.dataset import Dataset
-from Sloppy.Base.dataio import ExporterRegistry
+from Sloppy.Base.dataio import exporter_registry
 from Sloppy.Base import utils, backend
 
 from terminal import XTerminal, DumbTerminal, PostscriptTerminal
@@ -230,7 +230,7 @@ class Backend(backend.Backend):
     def export_datasets(self):
         # Export Datasets to temporary directory, so that
         # gnuplot can access them.
-        exporter = ExporterRegistry['ASCII']()
+        exporter = exporter_registry['ASCII']()
         
         destdir = self.tmpdir
         for (source, value) in self.exports.iteritems():

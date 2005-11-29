@@ -33,7 +33,7 @@ import gtk, gtk.glade
 import uihelper
 import pwconnect, pwglade
 
-from Sloppy.Base.dataio import ImporterRegistry
+from Sloppy.Base.dataio import importer_registry
 
 
 #------------------------------------------------------------------------------
@@ -100,7 +100,7 @@ class AsciiWizardPage(WizardPage):
        
         # Set up import object which hold the options and
         # create the connection to the GUI.
-        self.importer = ImporterRegistry['ASCII']()
+        self.importer = importer_registry['ASCII']()
         self.connectors = pwglade.construct_connectors_from_glade_tree(self.importer, tree)
         pwglade.check_in(self.connectors)
 

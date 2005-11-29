@@ -608,7 +608,7 @@ class GtkApplication(Application):
         # create file filters
         #
         
-        # Each item in ImporterRegistry is a class derived from
+        # Each item in importer_registry is a class derived from
         # dataio.Importer.  By using IOTemplate objects we can
         # customize the default values for these templates.
         for (key, template) in dataio.import_templates.iteritems():
