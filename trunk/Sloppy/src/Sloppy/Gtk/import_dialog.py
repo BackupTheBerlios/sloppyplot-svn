@@ -465,7 +465,7 @@ class ImportOptions(gtk.Dialog):
             self.vbox.pack_start(widget,False,True)
             self.connectors = pwglade.construct_connectors_from_glade_tree(self.importer, tree)
         else:
-            self.connectors = pwglade.construct_connectors(self.importer)
+            self.connectors = pwglade.construct_connectors(self.importer)            
             table_options = pwglade.construct_table(self.connectors)
             widget = uihelper.new_section("Import Options", table_options)
             self.vbox.pack_start(widget,False,True)
@@ -479,6 +479,11 @@ class ImportOptions(gtk.Dialog):
         preview = self.construct_preview(previewfile)
         self.vbox.pack_start(preview,True,True)
 
+        hint = gtk.Label()
+        hint.set_markup("<i>Hint: These importer settings can later on be retrieved\nas 'recently used' template in the Edit|Preferences dialog.</i>")
+        hint.set_use_markup(True)
+        self.vbox.pack_start(hint,False,True)
+        
         self.vbox.show_all()
         
 

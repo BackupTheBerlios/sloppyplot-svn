@@ -662,13 +662,10 @@ class GtkApplication(Application):
         hbox.pack_end(combobox,False)
         hbox.pack_end(label,False)
         hbox.show()        
-
-        # The progress bar display which file is currently being imported.
-        pbar = gtk.ProgressBar()
         
         vbox = gtk.VBox()
         vbox.pack_start(hbox,False)
-        vbox.pack_start(pbar,False)
+        #vbox.pack_start(pbar,False)
         vbox.show()
         
         chooser.set_extra_widget(vbox)
@@ -684,74 +681,80 @@ class GtkApplication(Application):
                     return
                 
                 template_key = model[combobox.get_active()][0]
-
                 if template_key is None: # auto
                     f = chooser.get_filter()
                     template_key = filter_keys[f.get_name()]
-                    # we skip the hard task of determining the template key here
-                    if template_key is 'auto':
-                        matches = dataio.importer_template_from_filename(filenames[0])
-                        if len(matches) > 0:
-                            template_key = matches[0]
-                        else:
-                            template_key = 'ASCII'                            
             else:
                 return
-
-            # TODO
-            #chooser.set_active(False)
-            pbar.show()
-
-            #
-            # Request import options
-            #
-
-            # Note that if 'skip_option' is set in the template, then
-            # there will be no user options dialog.
-
-            if dataio.import_templates[template_key].skip_options is False:
-                dialog = import_dialog.ImportOptions(template_key, previewfile=filenames[0])
-                try:
-                    result = dialog.run()
-                    if result == gtk.RESPONSE_ACCEPT:
-                        importer = dialog.importer
-                        # save template as 'recent'
-                        template = dataio.IOTemplate()
-                        template.defaults = dialog.importer.get_values(include=dialog.importer.public_props)
-                        template.blurb = "Recently used Template"
-                        template.importer_key = dialog.template.importer_key
-                        template.write_config = True
-                        dataio.import_templates['recent'] = template                    
-                    else:
-                        return
-                finally:
-                    dialog.destroy()
-
-
-            def set_text(queue):
-                while True:
-                    try:
-                        text, fraction = queue.get()
-                        if text == -1:
-                            pbar.hide()
-                        elif text is not None:
-                            pbar.set_text(text)                                        
-                        if fraction is not None:
-                            pbar.set_fraction(fraction)
-                    except QueueEmpty:
-                        pass
-                    yield None
-
-            queue = Queue()
-            thread_progress = GIdleThread(set_text(queue))
-            thread_progress.start()
-
-            thread_import = GIdleThread(self.import_datasets(pj, filenames, importer), queue)
-            thread_import.start()
-            thread_import.wait()
-
         finally:
             chooser.destroy()
+
+        self.do_import(pj, filenames, importer)
+
+
+
+    def do_import(self, project, filenames, template_key=None):
+
+        # try to determine template key if it is not given
+        if template_key is None or template_key=='auto':
+            matches = dataio.importer_template_from_filename(filenames[0])
+            if len(matches) > 0:
+                template_key = matches[0]
+            else:
+                template_key = 'ASCII'                            
+                  
+        #
+        # Request import options
+        #
+
+        # Note that if 'skip_option' is set in the template, then
+        # there will be no user options dialog.
+
+        if dataio.import_templates[template_key].skip_options is False:
+            dialog = import_dialog.ImportOptions(template_key, previewfile=filenames[0])
+            try:
+                result = dialog.run()
+                if result == gtk.RESPONSE_ACCEPT:
+                    importer = dialog.importer
+                    # save template as 'recently used'
+                    template = dataio.IOTemplate()
+                    template.defaults = dialog.importer.get_values(include=dialog.importer.public_props)
+                    template.blurb = "Recently used Template"
+                    template.importer_key = dialog.template.importer_key
+                    template.write_config = True
+                    dataio.import_templates['recently used'] = template                    
+                else:
+                    return
+            finally:
+                dialog.destroy()
+
+
+        # The progress bar displays which file is currently being imported.
+        pbar = gtk.ProgressBar()        
+        pbar.show()
+        def set_text(queue):
+            while True:
+                try:
+                    text, fraction = queue.get()
+                    if text == -1:
+                        pbar.hide()
+                    elif text is not None:
+                        pbar.set_text(text)                                        
+                    if fraction is not None:
+                        pbar.set_fraction(fraction)
+                except QueueEmpty:
+                    pass
+                yield None
+
+        queue = Queue()
+        thread_progress = GIdleThread(set_text(queue))
+        thread_progress.start()
+        
+        thread_import = GIdleThread(Application.import_datasets(self, project, filenames, importer),
+                                    queue)
+        thread_import.start()
+        thread_import.wait()
+        
 
 
 

@@ -28,8 +28,24 @@ import gtk
 import logging
 logger = logging.getLogger('gtk.uihelper')
 
+import urllib
 
 SECTION_SPACING=8
+
+
+def get_file_path_from_dnd_dropped_uri(uri):
+    # thanks to the pygtk FAQ entry 23.31
+    path = urllib.url2pathname(uri).strip('\r\n\x00')
+
+    # get the path to file
+    if path.startswith('file:\\\\\\'): # windows
+            path = path[8:] # 8 is len('file:///')
+    elif path.startswith('file://'): # nautilus, rox
+            path = path[7:] # 7 is len('file://')
+    elif path.startswith('file:'): # xffm
+            path = path[5:] # 5 is len('file:')
+
+    return path
 
 
 def add_actions(uimanager, key, actions, map=None):
@@ -180,3 +196,4 @@ def new_section(frame_title, child):
     frame.add(alignment)
 
     return frame
+

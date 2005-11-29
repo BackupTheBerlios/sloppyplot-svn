@@ -28,7 +28,7 @@ import sys, glob, os.path
 from Sloppy.Base.objects import *
 from Sloppy.Base.dataset import *
 from Sloppy.Base import pdict, uwrap
-
+import uihelper
 
 #------------------------------------------------------------------------------
 import logging
@@ -38,13 +38,13 @@ logger = logging.getLogger('Gtk.treeview')
 
 class ProjectTreeView( gtk.TreeView ):
 
-    COL_KEY = 0
-    COL_OBJECT = 1
-    COL_CLASSNAME = 2
+    (MODEL_KEY, MODEL_OBJECT, MODEL_CLASSNAME) = range(3)
+    (COLUMN_ALL,) = range(1) 
+    (DND_TEXT_URI_LIST,) = range(1)
     
     dnd_targets = [
-        ('MY_TREE_MODEL_ROW', gtk.TARGET_SAME_WIDGET, 0),
-        ('file/uri', 0, 3)
+        #(target name, flags, unique identifier)
+        ('text/uri-list',0, DND_TEXT_URI_LIST)
         ]
 
     # ----------------------------------------------------------------------
@@ -88,34 +88,25 @@ class ProjectTreeView( gtk.TreeView ):
         Create the visible columns and connect them to the render
         functions render_xxx which dynamically create contents from
         the object.           
-        """ 
+        """
+        # COLUMN_ALL (includes image for classname and key)
         column = gtk.TreeViewColumn('plots and datasets')
-        pixbuf_renderer = gtk.CellRendererPixbuf()        
-        column.pack_start(pixbuf_renderer,expand=False)
-        column.set_attributes(pixbuf_renderer, stock_id=self.COL_CLASSNAME)
-        text_renderer = gtk.CellRendererText()
-        column.pack_start(text_renderer,expand=True)
-        column.set_attributes(text_renderer, text=self.COL_KEY)
         column.set_property('resizable', True)
-        text_renderer.set_property('editable', False)
-        text_renderer.connect('edited', self.cb_edited_key)
+        
+        cell = gtk.CellRendererPixbuf()                        
+        column.pack_start(cell,expand=False)
+        column.set_attributes(cell, stock_id=self.MODEL_CLASSNAME)
+
+        cell = gtk.CellRendererText()
+        column.pack_start(cell,expand=True)
+        column.set_attributes(cell, text=self.MODEL_KEY)
+        cell.set_property('editable', False)
+        cell.connect('edited', self.on_key_edited)        
+        self.text_renderer = cell # for reference
         
         self.append_column(column)
-
-        self.text_renderer = text_renderer # for reference
+                
         
-    def init_dragndrop(self):
-        """
-        Set up drag 'n drop mechanism.
-        NOT YET IMPLEMENTED. WILL BE USEFUL FOR IMPORTING DATA
-        FROM A FILE MANAGER OR EXPORTING IT TO AN EDITOR.
-        """
-        return # currently disabled
-
-        self.enable_model_drag_dest( self.dnd_targets, gtk.gdk.ACTION_DEFAULT )
-        self.connect( "drag_data_received", self.cb_received_drag_data )
-
-
     # ----------------------------------------------------------------------
     
     def populate_treeview(self, sender=None):
@@ -181,7 +172,7 @@ class ProjectTreeView( gtk.TreeView ):
         #
         # NOT USED RIGHT NOW. Maybe later again...
         #
-        object = model.get_value(iter, self.COL_OBJECT)
+        object = model.get_value(iter, self.MODEL_OBJECT)
 
         label = object.get_option('label')
         if label is None:
@@ -194,7 +185,7 @@ class ProjectTreeView( gtk.TreeView ):
         cell.set_property('text', label)
 
     def render_type(self,column,cell,model,iter):
-        object = model.get_value(iter, self.COL_OBJECT)
+        object = model.get_value(iter, self.MODEL_OBJECT)
         classname = object.__class__.__name__
         if classname is None:
             classname = ""
@@ -208,8 +199,8 @@ class ProjectTreeView( gtk.TreeView ):
         """
         Don't allow project item
         """
-        #print model.get_value(iter,self.COL_CLASSNAME) != 'Project'
-        #return model.get_value(iter,self.COL_CLASSNAME) != 'Project'
+        #print model.get_value(iter,self.MODEL_CLASSNAME) != 'Project'
+        #return model.get_value(iter,self.MODEL_CLASSNAME) != 'Project'
         return True
 
 
@@ -220,7 +211,7 @@ class ProjectTreeView( gtk.TreeView ):
     def get_selected_objects(self):
         " Return the list of currently selected objects. "
         (model, pathlist) = self.get_selection().get_selected_rows()
-        return [model.get(model.get_iter(path),self.COL_OBJECT)[0] for path in pathlist]
+        return [model.get(model.get_iter(path),self.MODEL_OBJECT)[0] for path in pathlist]
 
     def get_selected_plds(self):        
         " Returns 2-tuple ([plots], [datasets]). "
@@ -247,12 +238,15 @@ class ProjectTreeView( gtk.TreeView ):
     def get_object_by_path(self, path):
         " Return object that corresponds to the given path. "
         model = self.get_model()
-        return model.get(model.get_iter(path),self.COL_OBJECT)[0]
+        return model.get(model.get_iter(path),self.MODEL_OBJECT)[0]
     
         
 
     #----------------------------------------------------------------------
-
+    #
+    # Key Editing
+    #
+    
     def start_editing_key(self):        
         selection = self.get_selection()
         if selection is None:
@@ -264,18 +258,18 @@ class ProjectTreeView( gtk.TreeView ):
 
             self.text_renderer.set_property('editable', True)
             try:
-                self.set_cursor(path, self.get_column(self.COL_KEY), start_editing=True)
+                self.set_cursor(path, self.get_column(self.COLUMN_ALL), start_editing=True)
             finally:
                 self.text_renderer.set_property('editable', False)
 
         
-    def cb_edited_key(self, cell, path, new_text):
+    def on_key_edited(self, cell, path, new_text):
         """
         When an object key is edited, we need to check whether
         the key is valid. If so, the key is changed.
         """
         model = self.get_model()
-        object = model[path][self.COL_OBJECT]
+        object = model[path][self.MODEL_OBJECT]
 
         ul = UndoList()
         if isinstance(object , Dataset):
@@ -288,3 +282,29 @@ class ProjectTreeView( gtk.TreeView ):
 
 
 
+
+    #------------------------------------------------------------------------------
+    #
+    # Drag 'N Drop
+    #
+    
+    def init_dragndrop(self):
+        " Set up drag 'n drop mechanism. "
+        self.enable_model_drag_dest(self.dnd_targets, gtk.gdk.ACTION_DEFAULT)
+        self.connect("drag_data_received", self.on_drag_data_received)
+
+
+    def on_drag_data_received(self, sender, drag_context,
+                              x, y, selection, info, timestamp):
+
+        if info == self.DND_TEXT_URI_LIST:
+            uri = selection.data.strip()
+            uri_splitted = uri.split()
+
+            filenames = []
+            for uri in uri_splitted:
+                path = uihelper.get_file_path_from_dnd_dropped_uri(uri)
+                filenames.append(path)
+
+            # import now!
+            self.app.do_import(self.project, filenames)

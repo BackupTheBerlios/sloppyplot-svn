@@ -2,6 +2,17 @@
 DETAILS FOR 0.5.1:
 ==================
 
+
+- copy template
+
+- display if a template is internal or not, i.e. display a lock if it is the case
+  and also display a little icon at the bottom saying 'internal
+  template, cannot be edited or removed'.
+  _OR_ display the letter 'I'
+
+- find better way to register stock icons.  Maybe I should really
+  register them by hand, not automatically ?
+
 - construct_connectors_from_glade_tree
   use_widget should no longer be available in the connectors.
   If we want to use a glade widget, then we should insert some kind
@@ -20,10 +31,7 @@ DETAILS FOR 0.5.1:
 - rework regular expression for column headers: e.g. backslash is not
   recognized.  Is it not recognized from the pKeyword or from the ASCII 
   import regexp?  In the first case, we might want to write a coercion
-  method.  
-
-
-- drag'n drop of data files?
+  method.  => maybe use similar mechanism as in template key dialog?
 
 
 
