@@ -174,7 +174,7 @@ def smart_construct_connectors(container, include=None, exclude=None):
         ctype = guess_connector(prop)
         connector = pwconnect.connectors[ctype](container, prop.name)
         connector.create_widget()
-        connector.widget.show()        
+        connector.widget.show()     
         clist.append(connector)
     return clist
 

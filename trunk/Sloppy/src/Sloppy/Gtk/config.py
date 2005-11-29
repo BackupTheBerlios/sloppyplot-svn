@@ -38,7 +38,7 @@ class ConfigurationDialog(gtk.Dialog):
         gtk.Dialog.__init__(self, "Configuration", None,
                             gtk.DIALOG_MODAL|gtk.DIALOG_DESTROY_WITH_PARENT,
                             (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
-                             gtk.STOCK_CLOSE, gtk.RESPONSE_ACCEPT))
+                             gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
 
         nb = self.notebook = gtk.Notebook()
         nb.set_property('tab-pos', gtk.POS_LEFT)
@@ -214,7 +214,7 @@ class ImportTemplatesPage(ConfigurationPage):
         dlg = gtk.Dialog("Edit Template Options",None,
                          gtk.DIALOG_MODAL,
                          (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
-                          gtk.STOCK_CLOSE, gtk.RESPONSE_ACCEPT))
+                          gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
 
         clist1 = pwglade.smart_construct_connectors(template, include=['blurb','extensions','skip_options'])
         clist2 = pwglade.smart_construct_connectors(importer, include=importer.public_props)
@@ -261,9 +261,6 @@ class ImportTemplatesPage(ConfigurationPage):
                          (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
                           gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
                          
-                         #(gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
-                         # gtk.STOCK_CLOSE, gtk.RESPONSE_ACCEPT))
-
         entry = gtk.Entry()
         entry.set_text(unicode(key))
         entry.set_activates_default(True)

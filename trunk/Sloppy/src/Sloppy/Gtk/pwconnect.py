@@ -308,10 +308,33 @@ class SpinButton(Connector):
 
     widget_type = gtk.SpinButton
 
-    def use_widget(self, widget):
-        Connector.use_widget(self, widget)
+    def create_widget(self):
+        spinbutton = gtk.SpinButton()
+        checkbutton = gtk.CheckButton()
 
-        self.widget.set_numeric(True)
+        checkbutton.connect("toggled",\
+          (lambda sender: self.spinbutton.set_sensitive(sender.get_active())))
+        
+        widget = gtk.HBox()
+        widget.pack_start(spinbutton,True,True)
+        widget.pack_start(checkbutton,False,True)
+        widget.show_all()
+        
+        self.widget = widget
+        self.spinbutton = spinbutton
+        self.checkbutton = checkbutton
+
+        # BIG FAT TODO
+        # we need to replace use_widget in all of the connectors
+        # and move this out of pwglade.
+        self.post_init() # need to change all of that
+        
+        ##self.use_widget(spinbutton)
+        
+        
+    def post_init(self):
+        sb = self.spinbutton
+        sb.set_numeric(True)
         
         cbounds = [c for c in self.prop.check.items if isinstance(c, CheckBounds)]
         if len(cbounds) > 0:
@@ -326,26 +349,32 @@ class SpinButton(Connector):
         if upper is None:
             upper = +sys.maxint
 
-        self.widget.set_range(float(lower), float(upper))
+        sb.set_range(float(lower), float(upper))
             
         value = self.get_value()
         if value is not None:
-            self.widget.set_value(float(value))            
+            sb.set_value(float(value))
+        sb.set_sensitive(value is not None)
 
-        self.widget.set_increments(1,1)
-        self.widget.set_digits(0)
+        sb.set_increments(1,1)
+        sb.set_digits(0)
+
         
     def check_in(self):
         value = self.get_value()
         self.last_value = value
 
         if value is not None:
-            self.widget.set_value(float(value))
+            self.spinbutton.set_value(float(value))
+            self.checkbutton.set_active(True)
         else:
-            pass
-            #self.widget.set_value(None)
+            self.checkbutton.set_active(False)
 
     def get_data(self):
-        return self.widget.get_value()
+        if self.checkbutton.get_active() is True:
+            return self.spinbutton.get_value()
+        else:
+            return None
+
         
 connectors['SpinButton'] = SpinButton
