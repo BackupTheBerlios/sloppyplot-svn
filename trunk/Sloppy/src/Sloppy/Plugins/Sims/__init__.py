@@ -142,8 +142,8 @@ class Plugin:
                   layers = [Layer(type='line2d',
                                   lines=[Line( label=dataset.key,
                                                source=dataset,
-                                               cx=1,
-                                               cy=2 )
+                                               cx=0,
+                                               cy=1 )
                                          ],
                                   yaxis = Axis(scale="log",
                                                label='SIMS intensity (cts/sec)',
