@@ -24,18 +24,16 @@ from Sloppy.Base.dataset import Dataset
 from Sloppy.Base.project import Project
 from Sloppy.Base import utils
 from Sloppy.Base.objects import Legend, Axis, Plot, Layer, Line, TextLabel
-from Sloppy.Base.error import NoData
 from Sloppy.Base import pdict, iohelper
 from Sloppy.Base.dataio import exporter_registry, read_table_from_stream
 from Sloppy.Base.table import Table, Column
+from Sloppy.Base import error
 
 from Sloppy.Lib.ElementTree.ElementTree import ElementTree, Element, SubElement, parse
 
-import tarfile
-import tempfile
-import os
-import shutil
-from Sloppy.Base import error
+import tarfile, tempfile, os, shutil
+
+
 
 from Numeric import ArrayType
 
@@ -63,16 +61,6 @@ File format history:
 
 class ParseError(Exception):
     pass
-
-
-
-def dataset_filename_ascii(key):
-    """  The filename is dynamically created from the given key,
-    appended by the extension '.dat'. """
-    #TODO: escape special characters, like '/'
-    if not isinstance(key, basestring):
-        raise TypeError("construct_filename: 'key' must be a valid string, but it is of %s" % type(key))
-    return "%s.dat" % key
 
 
 #------------------------------------------------------------------------------
@@ -113,7 +101,7 @@ def new_dataset(spj, element):
                 if key is not None:
                     p[key] = unicode(eInfo.text)
         
-        filename = os.path.join('datasets', dataset_filename_ascii(ds.key))
+        filename = os.path.join('datasets', utils.as_filename(ds.key))
         ds.set_table_import(spj, filename, typecodes, column_props, fileformat)
         
     
@@ -385,13 +373,13 @@ def save_project(spj, filename=None, path=None):
         os.mkdir(dsdir)
         for ds in spj.datasets:
             try:
-                dspath = os.path.join(dsdir, dataset_filename_ascii(ds.key))
+                dspath = os.path.join(dsdir, utils.as_filename(ds.key))
                 exporter_ascii.write_to_file(dspath, ds.data)
                 
             except AttributeError:
                 logger.error("Error while writing Dataset '%s'" % ds.key)
                 raise
-            except NoData:
+            except error.NoData:
                 logger.error("Warning, empty Dataset -- no data file written.")
 
 

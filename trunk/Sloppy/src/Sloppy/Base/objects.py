@@ -216,7 +216,7 @@ class View(HasProps):
     
 
 class Plot(HasProps, HasSignals):
-    key = pKeyword(blurb="Key")
+    key = pUnicode(blurb="Key")
 
     title = pUnicode(blurb="Title")
     comment = pUnicode(blurb="Comment")

@@ -219,7 +219,7 @@ class Backend(backend.Backend):
         #  value: (filename, dataset_change_counter, dataset object)
         if self.exports.has_key(source) is False:
             logger.debug("Marking %s for export" % source)
-            filename = source.key
+            filename = utils.as_filename(source.key)
             new_export = [filename, -1, source]
             self.exports[source] = new_export
             return new_export[0]
@@ -243,7 +243,7 @@ class Backend(backend.Backend):
                 continue
             logging.debug("Change counter %d, old %d" % (ds.change_counter, change_counter))
             if ds.has_changes(change_counter):                              
-                filename = os.path.join(destdir, filename)
+                filename = os.path.join(destdir, utils.as_filename(filename))
                 logger.debug('exporting "%s" to dir "%s"' % (ds, destdir))            
                 exporter.write_to_file(filename, ds.data)
                 self.exports[source][1] = ds.change_counter

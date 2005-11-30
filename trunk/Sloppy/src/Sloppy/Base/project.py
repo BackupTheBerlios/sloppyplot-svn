@@ -272,7 +272,12 @@ class Project(HasProps, HasSignals):
         ui = UndoInfo(self.rename_dataset, dataset, dataset.key)
         ui.describe("Rename Dataset")
 
-        dataset.key = new_key
+        try:
+            dataset.key = new_key
+        except ValueError:
+            self.app.error_msg("Invalid key")
+            return
+            
         undolist.append(ui)        
         self.sig_emit("notify::datasets")
         

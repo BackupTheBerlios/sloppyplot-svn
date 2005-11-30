@@ -67,20 +67,11 @@ def encode_as_key(key):
     return rv
 
 
-
-# def unique_key(dict, keyproposal):
-
-#     """    
-#     Return a valid key that is not yet in use in the dict based on the
-#     proposal.    
-#     """
-    
-#     counter = 0
-#     suggestion = keyproposal
-#     while dict.has_key(suggestion):
-#         counter += 1
-#         suggestion = "%s%02d" % (keyproposal, counter)
-#     return suggestion
-
-
-
+def as_filename(key):
+    """  The filename is dynamically created from the given key,
+    appended by the extension '.dat'. Path separators are escaped."""
+    key = key.replace(os.path.sep, u'_')
+    print "NEW KEY ", key
+    if not isinstance(key, basestring):
+        raise TypeError("construct_filename: 'key' must be a valid string, but it is of %s" % type(key))
+    return "%s.dat" % key

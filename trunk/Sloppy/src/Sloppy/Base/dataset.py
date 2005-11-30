@@ -64,7 +64,7 @@ class Dataset(HasProps, HasSignals):
     its key is unique.  The best way to do so is to use the Project's
     add methods.   
 
-    @prop key: KeyProp that identifies the Dataset
+    @prop key: identifies the Dataset
 
     @prop label: descriptive label
 
@@ -77,7 +77,6 @@ class Dataset(HasProps, HasSignals):
     """
     
     key = pKeyword()
-
     label = pUnicode()
     metadata = pDictionary(Coerce(unicode))
     data = Prop(CheckType(Table, ArrayType,None))
