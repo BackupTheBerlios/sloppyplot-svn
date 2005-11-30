@@ -39,8 +39,8 @@ def check_path(path):
     """ Make sure path to config file exists. """
     if os.path.exists(path) is False:
         try:
-            os.mkdir(path)
-        except IOError, msg:
+            os.makedirs(path)
+        except OSError, msg:
             logging.error("Big Fat Warning: Could not create config path! Configuration will not be saved! Please check permissions for creating '%s'. (%s)" % (PATH_CONFIG, msg))
                 
         
