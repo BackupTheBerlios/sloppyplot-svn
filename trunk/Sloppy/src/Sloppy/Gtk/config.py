@@ -43,7 +43,8 @@ class ConfigurationDialog(gtk.Dialog):
         nb = self.notebook = gtk.Notebook()
         nb.set_property('tab-pos', gtk.POS_LEFT)
 
-        for page in [InformationPage(), ImportTemplatesPage()]:
+        # currently not available: InformationPage
+        for page in [ImportTemplatesPage()]:
             nb.append_page(page)
             nb.set_tab_label_text(page, page.title)
             page.check_in()

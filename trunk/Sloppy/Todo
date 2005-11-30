@@ -10,24 +10,38 @@ DETAILS FOR 0.5.1:
 
 
 
+
 FOR 0.5.2:
 ==========
 
-- ADD GROUP PROPERTIES
+
+(A) Group Properties
+
+    - serialize group properties
+
+    - Allow setting group properties in layerwin
+      Maybe rework layerwin completely ?
+
+(B) Metadata
+
+    - display metadata, so that the import makes more sense.
+
+    - maybe allow to edit the regular expressions that lead to the import metadata?
 
 
+(C) little things
 
-DETAILS FOR 0.5.2:
+    - allow comments for plots and datasets.
+    
+    - props: CheckValid, ValueDict -> better naming convention.
 
-- serialize group properties
+    - rename toolbox/logwindow
 
-- Allow setting group properties in layerwin
-  Maybe rework layerwin completely ?
+(D) LayerWin and Toolbox
 
-- display metadata, so that the import makes more sense.
-
-- allow comments for plots and datasets.
-
+    - try to rewrite the layerwin using the new pwconnect mechanism.
+      We don't need to finish that completly.
+    
 
 
 ------------------------------------------------------------------------------
@@ -48,8 +62,6 @@ DETAILS FOR 0.5.3:
 ###############################################################################
 
 BUGFIXES:
-
-- props: CheckValid, ValueDict -> better naming convention.
 
 - lock Sloppy Archive upon access
 
@@ -78,8 +90,6 @@ PLANS FOR BEYOND:
   => move mpl.arrange method to plot.arrange_layers! ?
 
 - What happens if I toggle the visibility of a layer?  Will it disappear?
-
-- consistency: ValueDict and ValueList (i.e. remove CheckValue)
 
 - let layerwindow use pwconnect (or whatever it is called) and
 deprecate propwidgets.
@@ -177,7 +187,6 @@ Importer
     ...
 
 - what about masked values?
-- Show Import Dialog with progress bar.
 
 
 Plugins:
