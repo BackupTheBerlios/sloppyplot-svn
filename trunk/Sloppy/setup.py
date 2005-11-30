@@ -42,12 +42,13 @@ PATH_SLOPPYSHARE=join(sys.prefix,'share','sloppyplot')
 import os
 source_dir = os.path.join(os.path.curdir, 'src')
 os.sys.path.insert(0, source_dir)
-from Sloppy.Base.version import NAME, VERSION, LONG_DESCRIPTION, URL
+from Sloppy.Base.version import NAME, VERSION, DESCRIPTION, LONG_DESCRIPTION, URL
 
 
 setup(name=NAME,
       version=VERSION, 
-      description=LONG_DESCRIPTION,
+      description=DESCRIPTION,
+      long_description=LONG_DESCRIPTION,
       author='Niklas Volbers',
       author_email = 'mithrandir42@web.de',
       url=URL,

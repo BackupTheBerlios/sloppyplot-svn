@@ -2,6 +2,10 @@
 DETAILS FOR 0.5.1:
 ==================
 
+- when config directory .config does not exist, sloppyplot bails out.
+
+- when .spj files are dropped on the treeview, then load that project 
+  instead of importing.
 
 - copy template
 

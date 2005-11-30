@@ -1,0 +1,62 @@
+#!/bin/bash
+
+# Slackware build script for SloppyPlot
+
+NAME=`python setup.py --name`
+VERSION=`python setup.py --version`
+ARCH=`arch`
+RELEASE=1nv
+
+##DESCRIPTION=`python setup.py --long-description`
+
+
+CWD=`pwd`
+PKGDIR=$CWD/pkg
+
+#
+# build
+#
+python setup.py clean
+python setup.py bdist
+
+#
+# extract to $PKGDIR
+#
+mkdir -p $PKGDIR
+cd $PKGDIR
+rm -rf *
+tar xzfv ../dist/$NAME-$VERSION.linux-$ARCH.tar.gz
+
+#
+# add slackware specific install directory
+#
+mkdir -p install
+# TODO: add description somehow
+#echo $DESCRIPTION
+
+#
+# create documentation
+#
+DOCDIR=usr/doc/$NAME-$VERSION
+mkdir -p $DOCDIR
+cp -r AUTHORS README doc/licenses $DOCDIR
+
+#
+# fix permissions
+#
+chown -R root.root usr
+chown -R root.bin usr/bin
+
+#
+# make package
+#
+PKG=$NAME-$VERSION-$ARCH-$RELEASE.tgz
+makepkg -c n -l y $PKG
+mv $PKG $CWD
+
+echo
+echo "---"
+echo " Slackware Package Creation Finished"
+echo " $PKG"
+echo "---"
+echo
