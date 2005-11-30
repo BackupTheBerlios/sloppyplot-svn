@@ -29,6 +29,7 @@ import logging
 logger = logging.getLogger('gtk.uihelper')
 
 import urllib
+import glob, os
 
 SECTION_SPACING=8
 
@@ -197,3 +198,20 @@ def new_section(frame_title, child):
 
     return frame
 
+
+def register_stock_icons(imgdir, prefix=""):
+    logger.debug("Trying to register png icons from dir '%s'" % imgdir)
+    filelist = map(lambda fn: ("%s%s" % (prefix, fn.split(os.path.sep)[-1][:-4]), fn), \
+                   glob.glob(os.path.join(imgdir,'*.png')))
+
+    iconfactory = gtk.IconFactory()
+    stock_ids = gtk.stock_list_ids()
+    for stock_id, file in filelist:
+        # only load image files when our stock_id is not present
+        if stock_id not in stock_ids:
+            logger.debug( "loading image '%s' as stock icon '%s'" % (file, stock_id) )
+            pixbuf = gtk.gdk.pixbuf_new_from_file(file)
+            pixbuf = pixbuf.scale_simple(48,48,gtk.gdk.INTERP_BILINEAR)
+            iconset = gtk.IconSet(pixbuf)
+            iconfactory.add(stock_id, iconset)
+    iconfactory.add_default()

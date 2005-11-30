@@ -92,9 +92,12 @@ setup(name=NAME,
         (join(PATH_SLOPPYSHARE,'Examples','Data'),
          glob(join("Examples","Data","*.dat"))),
 	#
+
 	# pixmaps (=icons used within the application)
-        (join(PATH_SHARE, 'pixmaps', 'sloppyplot'),
-	glob(join("src", "Sloppy", "Gtk", "Icons", "*.png"))),
+        # => currently they are left in Sloppy/Gtk/Icons
+        ##(join(PATH_SHARE, 'pixmaps', 'sloppyplot'),
+	##glob(join("src", "Sloppy", "Gtk", "Icons", "*.png"))),
+        
 	# icons for the application sloppyplot
 	(join(PATH_SHARE, 'icons', 'hicolor', '24x24', 'apps'), 
 	[join("Icons", "hicolor", "24x24", "apps", "sloppyplot.png")]),

@@ -2,20 +2,13 @@
 DETAILS FOR 0.5.1:
 ==================
 
-- when config directory .config does not exist, sloppyplot bails out.
-
 - when .spj files are dropped on the treeview, then load that project 
   instead of importing.
 
-- copy template
+- have an option in the import dialog to always ask for options.
+  The equivalent in the dnd process would be to have the control 
+  key or something similar pressed down.
 
-- display if a template is internal or not, i.e. display a lock if it is the case
-  and also display a little icon at the bottom saying 'internal
-  template, cannot be edited or removed'.
-  _OR_ display the letter 'I'
-
-- find better way to register stock icons.  Maybe I should really
-  register them by hand, not automatically ?
 
 - construct_connectors_from_glade_tree
   use_widget should no longer be available in the connectors.
@@ -31,6 +24,11 @@ DETAILS FOR 0.5.1:
     However, what if the reset value for a prop is different from None?
     Then a value of None would imply a value that is different than what
     we started from.
+
+    => maybe check the reset value
+    reset = on_reset()
+    if reset is not None:
+        save prop value    
 
 - rework regular expression for column headers: e.g. backslash is not
   recognized.  Is it not recognized from the pKeyword or from the ASCII 

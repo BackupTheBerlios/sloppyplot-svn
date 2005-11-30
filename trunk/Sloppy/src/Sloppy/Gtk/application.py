@@ -69,34 +69,7 @@ import pwglade
 import config
 
 
-#------------------------------------------------------------------------------
-# Helper Methods
-#
-
-def register_all_png_icons(imgdir, prefix=""):
-    """
-    Register all svg icons in the Icons subdirectory as stock icons.
-    
-    @param prefix: Prefix for the created stock_id.
-    """
-    logger.debug("Trying to register png icons from dir '%s'" % imgdir)
-    import glob, os
-    filelist = map(lambda fn: ("%s%s" % (prefix, fn.split(os.path.sep)[-1][:-4]), fn), \
-                   glob.glob(os.path.join(imgdir,'*.png')))
-    
-    iconfactory = gtk.IconFactory()
-    stock_ids = gtk.stock_list_ids()
-    for stock_id, file in filelist:
-        # only load image files when our stock_id is not present
-        if stock_id not in stock_ids:
-            logger.debug( "loading image '%s' as stock icon '%s'" % (file, stock_id) )
-            pixbuf = gtk.gdk.pixbuf_new_from_file(file)
-            pixbuf = pixbuf.scale_simple(48,48,gtk.gdk.INTERP_BILINEAR)
-            iconset = gtk.IconSet(pixbuf)
-            iconfactory.add(stock_id, iconset)
-    iconfactory.add_default()
-
-        
+import glob, os
 
 
 
@@ -114,13 +87,32 @@ class GtkApplication(Application):
     """
     
     def init(self):
-        self.path.bset('icon_dir',  'system_prefix_dir', os.path.join('share', 'pixmaps', 'sloppyplot'))
-        register_all_png_icons(self.path.get('icon_dir'), 'sloppy-')
+        #self.path.bset('icon_dir',  'system_prefix_dir', os.path.join('share', 'pixmaps', 'sloppyplot'))
         
         self.window = AppWindow(self)
         self._clipboard = gtk.Clipboard()  # not implemented yet
         self._current_plot = None
-        
+
+        self.path.bset('icon_dir', 'base_dir', os.path.join('Gtk','Icons'))
+        self.register_stock()      
+
+
+    def register_stock(self):
+        uihelper.register_stock_icons(self.path.get('icon_dir'), prefix='sloppy-')
+
+        # register stock items
+        items = [('sloppy-rename', '_Rename', 0, 0, None)]
+        aliases = [('sloppy-rename', 'gtk-edit')]
+
+        gtk.stock_add(items)
+
+        factory = gtk.IconFactory()
+        factory.add_default()
+        style = self.window.get_style()
+        for new_stock, alias in aliases:
+            icon_set = style.lookup_icon_set(alias)
+            factory.add(new_stock, icon_set)
+            
 
     def init_plugins(self):
         Application.init_plugins(self)
