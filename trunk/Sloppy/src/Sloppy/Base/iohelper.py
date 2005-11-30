@@ -34,6 +34,16 @@ def set_attributes(element, attributes={}):
         if v is not None:
             element.set(k, unicode(v))
 
+        #else:
+        #    # If the attribute value is None, then it is not saved.  However,
+        #    # what if the reset value for a prop is different from None? Then a
+        #    # value of None would imply a value that is different than what
+        #    # we started from and we would have to save it as well
+        #    reset = on_reset()
+        #    if reset is not None:
+        #        element.set(k, SET TO WHAT?)
+            
+
 
 def write_list(element, listname, alist):
     eNode = SubElement(element, listname)

@@ -24,6 +24,7 @@ import re
 from Sloppy.Base.dataset import Dataset
 from Sloppy.Base import dataio
 from Sloppy.Base.table import Table
+from Sloppy.Base.utils import encode_as_key
 
 from Sloppy.Lib.Props import *
 
@@ -217,7 +218,7 @@ class Importer(dataio.Importer):
                     logger.info("Column keys could not be trimmed.")
                 else:
                     line = m.groupdict()['keys']
-                self.result_keys = cr_keysplit.split(line)
+                self.result_keys = [encode_as_key(key) for key in cr_keysplit.split(line)]
                 logger.info("Found column keys: %s", self.result_keys)
 
             else:
