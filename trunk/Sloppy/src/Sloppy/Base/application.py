@@ -208,7 +208,13 @@ class Application(object, HasSignals):
     def load_project(self, filename):
         # load new project and if it is sucessfully loaded,
         # detach the old project
-        new_project = load_project(filename)
+        try:
+            new_project = load_project(filename)
+        except IOError, msg:
+            self.error_msg("Error when trying to open project %s:\n\n%s" %
+                           (filename, msg))
+            return
+        
         if new_project:
             self.set_project(new_project)
 

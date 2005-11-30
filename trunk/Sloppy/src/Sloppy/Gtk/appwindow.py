@@ -204,7 +204,7 @@ class AppWindow( gtk.Window ):
         def cb_toggle_window(action, window):
             if action.get_active() is True: window.show()
             else: window.hide()        
-        t = gtk.ToggleAction('ToggleToolbox', 'Show tools window', None, None)
+        t = gtk.ToggleAction('ToggleToolbox', 'Show Toolbox', None, None)
         t.connect("toggled", cb_toggle_window, window)
         uihelper.get_action_group(self.uimanager, 'Application').add_action(t)
 
@@ -237,7 +237,7 @@ class AppWindow( gtk.Window ):
             if action.get_active() is True: logwindow.show()
             else: logwindow.hide()
 
-        t = gtk.ToggleAction('ToggleLogwindow', 'Show debug window', None, None)
+        t = gtk.ToggleAction('ToggleLogwindow', 'Show Logwindow', None, None)
         t.connect("toggled", cb_toggle_logwindow, logwindow)
         uihelper.get_action_group(self.uimanager, 'Application').add_action(t)
 

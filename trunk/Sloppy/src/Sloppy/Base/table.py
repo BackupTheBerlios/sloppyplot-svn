@@ -62,7 +62,7 @@ class pArray(Prop):
         
 class Column(HasProps):
 
-    key = pKeyword()
+    key = pUnicode()
     
     designation = pString(CheckValid(['X','Y','XY','XERR', 'YERR', 'LABEL']),
                           default='X')

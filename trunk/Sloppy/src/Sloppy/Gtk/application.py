@@ -242,6 +242,7 @@ class GtkApplication(Application):
 
         if filename is not None:
             Application.load_project(self, filename)
+                
 
 
 
@@ -857,12 +858,15 @@ def main(filename=None):
     app = GtkApplication()
 
     if filename is None:
-        filename = os.path.join(app.path.get('example_dir'), 'example_01.spj')
-    try:
-        logger.debug("Trying to load file %s" % filename)
-        app.load_project(filename)
-    except IOError:
-        app.set_project(Project())    
+        pass    
+        #filename = os.path.join(app.path.get('example_dir'), 'example_01.spj')
+
+    else:
+        try:
+            logger.debug("Trying to load file %s" % filename)
+            app.load_project(filename)
+        except IOError:
+            app.set_project(Project())    
     gtk.main()
 
     

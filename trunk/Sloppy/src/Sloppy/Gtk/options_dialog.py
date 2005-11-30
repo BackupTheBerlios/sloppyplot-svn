@@ -29,7 +29,7 @@ import gtk, gobject
 
 
 from Sloppy.Lib.Props import pBoolean
-import pwconnect, pwglade
+import pwconnect, pwglade, uihelper
 
 
 class NoOptionsError(Exception):
@@ -59,14 +59,10 @@ class OptionsDialog(gtk.Dialog):
         if len(self.connectors) == 0:
             raise NoOptionsError
         
-        self.tablewidget = pwglade.construct_table(self.connectors)
-
-        frame = gtk.Frame('Edit')
-        frame.add(self.tablewidget)
-        frame.show()
-
+        table = pwglade.construct_table(self.connectors)
+        frame = uihelper.new_section(title, table)
         self.vbox.pack_start(frame, False, True)
-        self.tablewidget.show()
+        self.show_all()
 
         
     def check_in(self):
@@ -81,21 +77,3 @@ class OptionsDialog(gtk.Dialog):
     def run(self):
         self.check_in()
         return gtk.Dialog.run(self)
-
-
-
-
-
-
-from Sloppy.Base import dataio
-
-if __name__ == "__main__":
-    importer = dataio.importer_registry.new_instance('ASCII')
-    dlg = OptionsDialog(importer)
-    dlg.run()
-    dlg.destroy()
-    
-
-        
-        
-                 

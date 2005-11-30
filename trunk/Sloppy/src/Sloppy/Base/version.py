@@ -29,7 +29,7 @@ AUTHORS = ["Niklas Volbers"]
 URL="http://sloppyplot.berlios.de"
 
 # Version information. Uncomment second line while developing.
-VERSION="0.5.1.rc1"
+VERSION="0.5.1"
 #VERSION= VERSION+".SVN $Rev$".replace("Rev: ","").replace(" $","")
 
 DESCRIPTION = "A scientific plotting tool"

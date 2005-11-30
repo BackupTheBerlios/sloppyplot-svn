@@ -406,16 +406,19 @@ class DatasetWindow( gtk.Window ):
 
         column = table.get_column(colnr)
         dialog = OptionsDialog(column.copy())
+
         try:
-            response = dialog.run()
-            if response == gtk.RESPONSE_ACCEPT:
-                new_column = dialog.check_out()
-                changeset = column.create_changeset(new_column)
-                
-                ul = UndoList().describe("Update Columns")
-                uwrap.set(column, **changeset)
-                uwrap.emit_last(table, 'update-columns', undolist=ul)
-                self.project.journal.append(ul)
+            while True:
+                response = dialog.run()
+                if response == gtk.RESPONSE_ACCEPT:
+                    # check out data 
+                    new_column = dialog.check_out()
+                    changeset = column.create_changeset(new_column)
+
+                    ul = UndoList().describe("Update Columns")
+                    uwrap.set(column, **changeset)
+                    uwrap.emit_last(table, 'update-columns', undolist=ul)
+                    self.project.journal.append(ul)
         finally:
             dialog.destroy()
 
@@ -668,42 +671,24 @@ class ModifyTableDialog(gtk.Dialog):
         #
         # button box
         #
-        btnbox = gtk.VButtonBox()
-        btnbox.set_spacing(5)
 
-        btn_edit = gtk.Button(stock=gtk.STOCK_EDIT)
-        btn_edit.connect("clicked", self.on_row_activated)
-        btn_edit.show()
-        
-        btn_add = gtk.Button(stock=gtk.STOCK_NEW)
-        btn_add.connect("clicked", self.on_btn_add_clicked)
-        btn_add.show()
+        buttons = [(gtk.STOCK_EDIT, self.on_row_activated),
+                   (gtk.STOCK_NEW, self.on_btn_add_clicked),
+                   (gtk.STOCK_REMOVE, self.on_btn_remove_clicked),
+                   (gtk.STOCK_GO_UP, self.on_btn_move_clicked, -1),
+                   (gtk.STOCK_GO_DOWN, self.on_btn_move_clicked, +1)
+                   ]
 
-        btn_remove = gtk.Button(stock=gtk.STOCK_REMOVE)
-        btn_remove.connect("clicked", self.on_btn_remove_clicked)
-        btn_remove.show()
-
-        btn_move_up = gtk.Button(stock=gtk.STOCK_GO_UP)
-        btn_move_up.connect("clicked", self.on_btn_move_clicked, -1)        
-        btn_move_up.show()
-
-        btn_move_down = gtk.Button(stock=gtk.STOCK_GO_DOWN)
-        btn_move_down.connect("clicked", self.on_btn_move_clicked, 1)
-        btn_move_down.show()
-        
-
-        btnbox.add(btn_edit)        
-        btnbox.add(btn_add)
-        btnbox.add(btn_remove)
-        btnbox.add(btn_move_up)        
-        btnbox.add(btn_move_down)        
-        btnbox.set_layout(gtk.BUTTONBOX_START)
-        btnbox.show()
+        btnbox = uihelper.construct_buttonbox(
+            buttons, horizontal=False, layout=gtk.BUTTONBOX_START)
+        btnbox.set_spacing(uihelper.SECTION_SPACING)
+        btnbox.set_border_width(uihelper.SECTION_SPACING)
+                
                 
         # cview = column view
         cview = TableColumnView(table)
         cview.connect( "row-activated", self.on_row_activated )
-        cview.show()
+        
         self.cview = cview
 
         # put cview and btnbox next to each other into a hbox
@@ -711,9 +696,9 @@ class ModifyTableDialog(gtk.Dialog):
         hbox.set_spacing(5)
         hbox.pack_start(cview, True, True)
         hbox.pack_start(btnbox, False, True)
-        hbox.show()
 
         self.vbox.add(hbox)
+        self.show_all()
 
 
 
@@ -729,7 +714,7 @@ class ModifyTableDialog(gtk.Dialog):
     # BUTTON CALLBACKS
         
     def on_row_activated(self, treeview, *udata):
-        (model, pathlist) = self.cview.get_selection().get_selected_rows()
+        model, pathlist = self.cview.get_selection().get_selected_rows()
         if model is None:
             return
         column = model.get_value( model.get_iter(pathlist[0]), 0)
