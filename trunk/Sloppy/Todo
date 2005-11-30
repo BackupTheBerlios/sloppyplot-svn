@@ -11,14 +11,14 @@ DETAILS FOR 0.5.1:
 
 - finish changelog -- maybe scan through the SVN logs for this.
 
+- check designations. I have the impression they are not handled correctly.
 
 
 FOR 0.5.2:
 ==========
 
 - ADD GROUP PROPERTIES
-- ADD ERROR HANDLING (msgwin.py)
-- ADD OVERALL MORE VERBOSITY (statusbar, progress bar)
+
 
 
 DETAILS FOR 0.5.2:
@@ -26,25 +26,11 @@ DETAILS FOR 0.5.2:
 - serialize group properties
 
 - Allow setting group properties in layerwin
+  Maybe rework layerwin completely ?
 
-- display metadata
+- display metadata, so that the import makes more sense.
 
-- Error Handling (-> msgwin.py)
-
-- status bar messages :-)
-
-
-
-
-
-
-
-
-
-
-
-
-
+- allow comments for plots and datasets.
 
 
 
@@ -56,6 +42,8 @@ DETAILS FOR 0.5.3:
 - allow to create a gnuplot export directory containing a gnuplot file
   and the data files
 - allow to include arbitrary data at specific positions into the gnuplot.
+
+- re-implement some kind of gnuplot window or integrate that into the toolbox.
 
 
 
