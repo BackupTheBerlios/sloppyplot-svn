@@ -605,7 +605,7 @@ class AppWindow( gtk.Window ):
         ]
 
     actions_appwin = [        
-        ('RenameItem', None, 'Rename', 'F2', 'Rename', '_cb_rename_item'),
+        ('RenameItem', 'sloppy-rename', 'Rename', 'F2', 'Rename', '_cb_rename_item'),
         ('About', gtk.STOCK_ABOUT, '_About', None, 'About application', '_cb_help_about')
         ]
     

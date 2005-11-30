@@ -217,10 +217,13 @@ class ProjectTreeView( gtk.TreeView ):
         " Returns 2-tuple ([plots], [datasets]). "
         (model, pathlist) = self.get_selection().get_selected_rows()
         objects = [self.get_object_by_path(path) for path in pathlist]
-        logger.debug("object[0] = %s" % objects[0])
-        plots = [obj for obj in objects if isinstance(obj,Plot)]
-        datasets = [obj for obj in objects if isinstance(obj,Dataset)]
-        return (plots, datasets)
+        if len(objects) > 0:
+            logger.debug("object[0] = %s" % objects[0])
+            plots = [obj for obj in objects if isinstance(obj,Plot)]
+            datasets = [obj for obj in objects if isinstance(obj,Dataset)]
+            return (plots, datasets)
+        else:
+            return ([],[])
 
     def get_selected_datasets(self):        
         (model, pathlist) = self.get_selection().get_selected_rows()
