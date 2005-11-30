@@ -1,16 +1,31 @@
 CHANGELOG
 =========
 
-2005- SloppyPlot 0.5.1
+2005-12- SloppyPlot 0.5.1
 ===========================
 
-  * Added complete desktop integration, i.e. SloppyPlot will appear in your
-desktop menu and .spj project files should have an icon and be clickable
-from any modern file manager.
+  * Added complete desktop integration, i.e. SloppyPlot will appear in 
+    your desktop menu. In addition .spj project files should have an 
+    icon and are clickable from any modern file manager.
 
-  * API changes: 
-    * Undo.UndoRedo -> Undo.Journal
-    * removed deprecated Gtk/gtkutils.py
+  * Added drag and drop support for the project explorer. You can now
+    drop files to import or drop a single sloppyplot project file and
+    they will be handled accordingly.
+   
+  * Reworked the whole ASCII importer.  It is now possible to extract
+    column keys.  Importer settings can be saved as templates.  A
+    'skip_options' option allows you to specify settings for a template
+    and have them applied automatically for certain file types.
+    
+  * A Preferences dialog has been added, which currently only allows to
+    edit the ASCII import templates.   
+  
+  * Verbosity has been increased by putting short status messages into
+    the status bar after each user action.
+    
+  * lots of internal API changes, see SVN logs for details
+  
+  * lots of bugfixes.
 
 
 
