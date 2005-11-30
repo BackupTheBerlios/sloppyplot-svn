@@ -33,7 +33,21 @@ import logging
 logger = logging.getLogger('import.ascii')
 
 
-            
+#------------------------------------------------------------------------------
+docstrings={
+'import_ascii:designations':
+"""Designations for the imported columns.
+If more than the given columns exists, then
+the expression is repeated, e.g.  if you have
+designations 'XY' and five columns, then
+their designations will be XYXYX.
+The split sign | indicates that only the last
+part of it will be repeated, e.g. X|Y would
+yield XYYYY for the same five columns."""
+}
+
+
+#------------------------------------------------------------------------------            
 class Importer(dataio.Importer):
 
     author = "Niklas Volbers"
@@ -63,7 +77,7 @@ class Importer(dataio.Importer):
     header_end_re = \
      pString(
         default='\s*[+-]?\d+.*',
-        doc=""
+        doc="Regular expression that indicates the end of the header (if header size is not set)"
         )
 
     header_include_end = \
@@ -81,18 +95,21 @@ class Importer(dataio.Importer):
 
     header_keysplit_re = \
      pString(
+        blurb="Key split expression",
         default="\s*,\s*",
         doc="Regular expression that splits up the column keys."
         )
 
     header_keytrim_re = \
      pString(
+        blurb="Key trim expression",
         default='\s*[#]?\s*(?P<keys>.*)\s*',
-        doc=""
+        doc="Regular expression that trims the key line before splitting it up"
         )
 
     header_metadata_re = \
      pString(
+        blurb="Header metadata expression",
         default = '\s*[\#]?\s*(?P<key>.*?)\s*:\s*(?P<value>.*)\s*',
         doc = "Regular expression to match metadata key-value pairs."
         )
@@ -133,7 +150,9 @@ class Importer(dataio.Importer):
     designations = \
      pString(
         CheckValid(['X', 'Y', 'X|Y', 'XY']),
-        default='X|Y'
+        default='X|Y',        
+        blurb="Designations",
+        doc=docstrings['import_ascii:designations'],
         )
 
     typecodes = \

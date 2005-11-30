@@ -858,7 +858,7 @@ def main(filename=None):
     app = GtkApplication()
 
     if filename is None:
-        pass    
+        app.set_project(Project())
         #filename = os.path.join(app.path.get('example_dir'), 'example_01.spj')
 
     else:

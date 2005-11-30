@@ -27,6 +27,27 @@ from Sloppy.Lib.Props import *
 from Numeric import ArrayType
 
 
+#------------------------------------------------------------------------------
+docstrings={\
+
+'IOTemplate:extensions':
+"""File extensions for which this template should be used,
+e.g. 'dat' for files ending in '.dat'.
+You can specify multiple extensions by separating them with
+commas, e.g. 'dat,csv' if the template should be valid for
+both files ending in '.dat' or files ending in '.csv'.""",
+
+'IOTemplate:skip_options':
+""" Whether to ask the user for options. Set this to false
+if you specify a template for a fixed file format and you
+don't want to confirm the import options every time.""",
+
+'IOTemplate:blurb':
+"""One-line description."""
+
+}
+
+#------------------------------------------------------------------------------
 
 
 class ImportError(Exception):
@@ -143,13 +164,28 @@ export_templates = {}
 
 
 class IOTemplate(HasProps):
-    defaults = pDict()
-    extensions = pString(default="")
-    blurb = pUnicode()
-    importer_key = pString()
 
-    is_internal = pBoolean(default=False) # 
-    skip_options = pBoolean(default=False) # whether to ask the user for options
+    extensions = pString(\
+        default="",
+        blurb="File extensions",
+        doc=docstrings['IOTemplate:extensions']
+        )
+    
+    blurb = pUnicode(\
+        blurb="Description",
+        doc=docstrings['IOTemplate:blurb']
+        )
+
+    skip_options = pBoolean(\
+        default=False,
+        blurb="Skip Options",
+        doc=docstrings['IOTemplate:skip_options']
+        ) 
+
+    defaults = pDict()    
+    importer_key = pString()
+    is_internal = pBoolean(default=False) #
+    
 
     def new_instance(self):
         return importer_registry[self.importer_key](**self.defaults.data)
