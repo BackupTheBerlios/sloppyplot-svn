@@ -5,7 +5,8 @@ recursive-include src *.png
 include Examples *.spj
 include Examples/Data *.dat
 recursive-include Icons *.png *.svg
-include sloppyplot.desktop sloppyplot.xml
+include sloppyplot.desktop sloppyplot.xml 
+include sloppyplot.build
 
 
 
