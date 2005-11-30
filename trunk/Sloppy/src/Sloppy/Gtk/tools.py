@@ -115,7 +115,7 @@ class Toolbox(gtk.Window):
         vbox.pack_start(self.combobox,False,True)
         vbox.pack_end(self.dock,True,True)
         self.add(vbox)
-        self.show_all()
+        self.vbox = vbox
 
         # We add a handler to skip delete-events, i.e. if the
         # user clicks on the close button of his window, the window
@@ -132,6 +132,7 @@ class Toolbox(gtk.Window):
         self.read_config()
         self.app.sig_connect("write-config", self.write_config)
 
+        self.vbox.show_all()
                       
 
     def set_project(self, project):
@@ -258,8 +259,6 @@ class Toolbox(gtk.Window):
                     # TODO: size information is not used                    
                 except:
                     logger.error("Could not init tool dock '%s', unknown class." % eDockable.text)
-
-        self.show_all()
 
         #-----------
         # move window to top right        
