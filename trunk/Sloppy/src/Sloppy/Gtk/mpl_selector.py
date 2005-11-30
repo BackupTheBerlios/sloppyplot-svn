@@ -721,7 +721,7 @@ class DataCursor( Cursor, BufferedRedraw ):
           determined from the mouse position on the first mouse click.
         """
         
-        Selector.__init__(self, figure, axes)
+        Cursor.__init__(self, figure, axes)
         BufferedRedraw.__init__(self)
         
         self.index = -1

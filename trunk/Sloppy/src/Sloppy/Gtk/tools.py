@@ -108,29 +108,14 @@ class Toolbox(gtk.Window):
         self.combobox = combobox
 
         # create dock
-        self.dock = dock = Dock()
-        dock.show()
-
-        lt = LayerTool()
-        lt.show()
-        book = Dockbook()
-        book.add(lt)
-        book.show()
-        dock.add(book)
-        
-        lt = LabelsTool()
-        lt.show()
-        book = Dockbook()
-        book.add(lt)
-        book.show()
-        dock.add(book)
+        self.dock = Dock()    
 
         # stuff combo and dock together
         vbox = gtk.VBox()
-        vbox.pack_start(combobox,False,True)
-        vbox.pack_end(dock,True,True)
-        vbox.show()
+        vbox.pack_start(self.combobox,False,True)
+        vbox.pack_end(self.dock,True,True)
         self.add(vbox)
+        self.show_all()
 
         # We add a handler to skip delete-events, i.e. if the
         # user clicks on the close button of his window, the window
@@ -142,23 +127,10 @@ class Toolbox(gtk.Window):
 
         self.set_project(project)
 
-        # for config file
-        self.app.sig_connect("write-config", self.write_toolwindow_config)
 
-        # TODO: read config data
-        eWindow = app.eConfig.find('Toolbox')
-        if eWindow is not None:
-            pass
-
-        # move window to top right
-        
-        # TODO: From my understanding, the following code should be
-        #  self.set_gravity(gtk.gdk.GRAVITY_NORTH_EAST)
-        #  self.move(gtk.gdk.screen_width(), 0)
-        # However, at least with metacity (gnome) this does not work.    
-        width, height = self.get_size()
-        self.set_gravity(gtk.gdk.GRAVITY_NORTH_EAST)
-        self.move(gtk.gdk.screen_width() - width, 0)
+        # config data
+        self.read_config()
+        self.app.sig_connect("write-config", self.write_config)
 
                       
 
@@ -259,8 +231,48 @@ class Toolbox(gtk.Window):
         else:
             self.combobox.set_sensitive(False)
 
-            
-    def write_toolwindow_config(self, app):
+
+    def read_config(self):
+        global tools
+       
+        eToolbox = self.app.eConfig.find('Toolbox')
+        if eToolbox is None:
+            # basic setup (for now)
+            book = Dockbook()
+            self.dock.add(book)            
+            lt = LabelsTool()
+            book.add(lt)        
+            lt = LayerTool()
+            book.add(lt)
+            return
+
+        for eDockbook in eToolbox.findall('Dock/Dockbook'):
+
+            book = Dockbook()
+            self.dock.add(book)
+
+            for eDockable in eDockbook.findall('Dockable'):
+                try:
+                    tool = tools[eDockable.text]()
+                    book.add(tool)
+                    # TODO: size information is not used                    
+                except:
+                    logger.error("Could not init tool dock '%s', unknown class." % eDockable.text)
+
+        self.show_all()
+
+        #-----------
+        # move window to top right        
+        # TODO: From my understanding, the following code should be
+        #  self.set_gravity(gtk.gdk.GRAVITY_NORTH_EAST)
+        #  self.move(gtk.gdk.screen_width(), 0)
+        # However, at least with metacity (gnome) this does not work.    
+        width, height = self.get_size()
+        self.set_gravity(gtk.gdk.GRAVITY_NORTH_EAST)
+        self.move(gtk.gdk.screen_width() - width, 0)
+
+        
+    def write_config(self, app):
         eToolbox = app.eConfig.find("Toolbox")
         if eToolbox is None:
             eToolbox = SubElement(app.eConfig, "Toolbox")
@@ -284,6 +296,10 @@ class Toolbox(gtk.Window):
 #------------------------------------------------------------------------------
 # Tool and derived classes
 #
+
+
+tools = {}
+
 
 class Tool(Dockable):
 
@@ -421,7 +437,11 @@ class LayerTool(Tool):
         if layer is not None:
             self.backend.layer = layer
         
-            
+
+tools['LayerTool'] = LayerTool
+
+
+
         
 class LabelsTool(Tool):
 
@@ -574,7 +594,9 @@ class LabelsTool(Tool):
         
     def on_notify_labels(self, layer, updateinfo=None):
         self.update_layer()
+
         
+tools['LabelsTool'] = LabelsTool
 
 
 
