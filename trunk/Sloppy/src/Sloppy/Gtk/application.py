@@ -721,6 +721,7 @@ class GtkApplication(Application):
                     template.blurb = "Recently used Template"
                     template.importer_key = dialog.template.importer_key
                     template.write_config = True
+                    template.is_internal = True
                     dataio.import_templates['recently used'] = template                    
                 else:
                     return

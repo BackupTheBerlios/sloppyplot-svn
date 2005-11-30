@@ -142,18 +142,21 @@ class ImportTemplatesPage(ConfigurationPage):
         # definitions above.
         tv = gtk.TreeView(model)
         tv.set_headers_visible(True)
-
+        
         cell = gtk.CellRendererText()        
-        column = gtk.TreeViewColumn("key", cell)
+        column = gtk.TreeViewColumn("Key", cell)
         column.set_attributes(cell, text=self.MODEL_KEY)
         column.set_resizable(True)        
         tv.append_column(column)
 
         def render_blurb(column, cell, model, iter):
             object = model.get_value(iter, self.MODEL_OBJECT)
-            cell.set_property('text', object.blurb or "")
+            blurb = object.blurb or ""
+            if object.is_internal:
+                blurb += " (immutable)"            
+            cell.set_property('text', blurb)
         cell = gtk.CellRendererText()
-        column = gtk.TreeViewColumn("description", cell)        
+        column = gtk.TreeViewColumn("Description", cell)        
         column.set_cell_data_func(cell, render_blurb)
         column.set_resizable(True)
         tv.append_column(column)
@@ -167,6 +170,7 @@ class ImportTemplatesPage(ConfigurationPage):
         buttons=[(gtk.STOCK_EDIT, self.on_edit_item),
                  ('sloppy-rename', self.on_rename_item),
                  (gtk.STOCK_ADD, self.on_add_item),
+                 (gtk.STOCK_COPY, self.on_copy_item),
                  (gtk.STOCK_DELETE, self.on_delete_item)]
 
         btnbox = uihelper.construct_buttonbox(buttons,
@@ -364,8 +368,6 @@ class ImportTemplatesPage(ConfigurationPage):
         
 
     def on_add_item(self, sender):
-        model,iter = self.treeview.get_selection().get_selected()
-
         # set up new template        
         template = dataio.IOTemplate(importer_key='ASCII')
 
@@ -379,7 +381,27 @@ class ImportTemplatesPage(ConfigurationPage):
         
         if response == gtk.RESPONSE_ACCEPT:
             new_item = (key, template)
-            if iter is None:
-                model.append(new_item)
-            else:
-                model.insert_after(iter, new_item)
+            model = self.treeview.get_model()            
+            model.append(new_item)
+
+    def on_copy_item(self, sender):
+        model,iter = self.treeview.get_selection().get_selected()
+        if iter is None:
+            return
+        source = model.get_value(iter, self.MODEL_OBJECT)
+
+        # set up new template        
+        template = dataio.IOTemplate(importer_key='ASCII')
+        template.defaults = source.defaults.copy()
+
+        # let user input key
+        key = self.input_key("New Template")
+        if key is None:
+            return        
+
+        # edit template
+        response = self.do_edit(template)        
+        
+        if response == gtk.RESPONSE_ACCEPT:
+            new_item = (key, template)
+            model.append(new_item)
