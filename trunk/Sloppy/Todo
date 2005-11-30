@@ -23,7 +23,6 @@ FOR 0.5.2:
     
     - props: CheckValid, ValueDict -> better naming convention.
 
-    - rename toolbox/logwindow
 
 (D) LayerWin and Toolbox
 

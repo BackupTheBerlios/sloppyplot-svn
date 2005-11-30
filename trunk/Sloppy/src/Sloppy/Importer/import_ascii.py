@@ -237,7 +237,7 @@ class Importer(dataio.Importer):
                     logger.info("Column keys could not be trimmed.")
                 else:
                     line = m.groupdict()['keys']
-                self.result_keys = [encode_as_key(key) for key in cr_keysplit.split(line)]
+                self.result_keys = [key for key in cr_keysplit.split(line)]
                 logger.info("Found column keys: %s", self.result_keys)
 
             else:
