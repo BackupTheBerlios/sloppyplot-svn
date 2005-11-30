@@ -722,19 +722,8 @@ class GtkApplication(Application):
 
 
         # The progress bar displays which file is currently being imported.
-        self.init_progress()
-        
-        #Application.import_datasets(self, project, filenames, template_key)
-        
-        queue = Queue()
-        thread_progress = GIdleThread(self.set_progress_from_queue(queue))
-        thread_progress.start()        
-        thread_import = GIdleThread(
-            Application.import_datasets(self, project, filenames, template_key),
-            queue)
-        thread_import.start()
-        thread_import.wait()
-        
+        Application.import_datasets(self, project, filenames, template_key)
+                
 
 
 
@@ -833,40 +822,27 @@ class GtkApplication(Application):
         dialog.destroy()
 
 
-    def status_message(self, message_short, message_long=None):
+    def status_msg(self, msg):
         sb = self.window.statusbar
         id = sb.get_context_id("main")
         sb.pop(id)
-        sb.push(id, message_short)
+        sb.push(id, msg)
+        # TODO: queue removal of message
 
+    def progress(self, fraction):
+        pb = self.window.progressbar
+        
+        if fraction == -1:
+            pb.hide()
+        else:
+            pb.show()
+            pb.set_fraction(fraction)
 
-
-    #------------------------------------------------------------------------------
-    # Progress Bar
-    #
-    # This code is not yet finished.  I am thinking about how to
-    # improve this progress bar thingy.  Somehow I don't like the
-    # necessity to start these Queues (see do_import).
-    # After all, the import is a blocking action!
-    
-    def init_progress(self):
-        self.window.progressbar.show()
-
-    def set_progress_from_queue(self, queue):
-        while True:
-            try:
-                text, fraction = queue.get()
-                if text == -1:
-                    self.window.progressbar.hide()
-                elif text is not None:
-                    pass
-                    #self.window.progressbar.set_text(text)                                        
-                if fraction is not None:
-                    self.window.progressbar.set_fraction(fraction)
-            except QueueEmpty:
-                pass
-            yield None
-
+        # Calling main_iteration is definitely not the only way to
+        # update the progressbar; see FAQ 23.20 for details.  But
+        # I refrain from using generators for the import function.
+        while gtk.events_pending():
+            gtk.main_iteration()
 
 
 # ======================================================================    

@@ -310,8 +310,18 @@ class Application(object, HasSignals):
     def ask_yes_no(self, msg):
         return True
 
-    def status_message(self, message_short, message_long=None):
-        print message_short
+    def status_msg(self, msg):
+        print msg
+
+    def progress(self, fraction):
+        " -1 = hide progress. fraction should be a float between 0 and 1"
+        if progress == -1:
+            return
+        length=10
+        full=int(float(fraction)*length)
+        left=length-full
+        print "%s%s" % ("#"*full, "-"*left)
+
 
     #------------------------------------------------------------------------------
     def import_datasets(self, project, filenames, template, undolist=None):
@@ -328,9 +338,10 @@ class Application(object, HasSignals):
 
         n = 0.0
         N = len(filenames)
+        self.progress(0)        
         for filename in filenames:
-            yield ("Importing %s" % filename, n/N)
-
+            self.status_msg("Importing %s" % filename)
+            
             importer = template.new_instance()
             
             try:
@@ -350,9 +361,10 @@ class Application(object, HasSignals):
             new_datasets.append(ds)
 
             n+=1
-            yield (None,n/N)
 
-        yield (-1,None)
+            self.progress(n/N)
+
+        self.progress(100)
 
         if len(new_datasets) > 0:
             ul = UndoList()
@@ -368,6 +380,7 @@ class Application(object, HasSignals):
             undolist.append(NullUndo())
             #msg = "Nothing imported."
 
+        self.progress(-1)
         #self.status_message(msg)
 
 
