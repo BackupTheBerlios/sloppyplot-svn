@@ -19,6 +19,10 @@
 # $Id$
 
 
+"""
+DEPRECATED.
+"""
+
 import logging
 logger = logging.getLogger('gtk.ascii_wizard')
 

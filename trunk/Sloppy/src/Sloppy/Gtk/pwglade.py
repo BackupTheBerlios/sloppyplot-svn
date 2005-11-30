@@ -49,41 +49,41 @@ from Sloppy.Lib.Props import HasProps,Prop, pBoolean, pInteger, pUnicode, CheckV
 
 #------------------------------------------------------------------------------
 
-def construct_connectors_from_glade_tree(container, tree, prefix='pw_'):
-    """
-    Find the widgets in the glade file that match the props
-    of the given Container.  If e.g. the prop key is 'filename',
-    and the prefix is 'pw_', then we are looking for a widget
-    called 'pw_filename'.        
+# def construct_connectors_from_glade_tree(container, tree, prefix='pw_'):
+#     """
+#     Find the widgets in the glade file that match the props
+#     of the given Container.  If e.g. the prop key is 'filename',
+#     and the prefix is 'pw_', then we are looking for a widget
+#     called 'pw_filename'.        
 
-    If the widget is found, then a Connector that matches the
-    widget's type is created.  This is based on the class name
-    of the widget.
+#     If the widget is found, then a Connector that matches the
+#     widget's type is created.  This is based on the class name
+#     of the widget.
 
-    Currently there is no way to specify a certain Connector for a
-    certain widget.  I guess it would be better to put this into a
-    separate method that creates Connectors based on a dictionary
-    of widget names.
+#     Currently there is no way to specify a certain Connector for a
+#     certain widget.  I guess it would be better to put this into a
+#     separate method that creates Connectors based on a dictionary
+#     of widget names.
 
-    Returns the created connectors.
-    """
+#     Returns the created connectors.
+#     """
 
-    connectors = []
-    keys = container.get_props().keys()
-    for key in keys:
-        widget_key = prefix + key
-        widget = tree.get_widget(widget_key)
-        if widget is None:
-            logger.error("No widget found for prop '%s'" % key)
-            continue
-        try:
-            connector = pwconnect.connectors[widget.__class__.__name__](container, key)
-        except KeyError:
-            raise RuntimeError("No matching Connector available for widget '%s' of %s" % (widget_key, widget.__class__.__name__))
-        connector.use_widget(widget)
-        connectors.append(connector)
+#     connectors = []
+#     keys = container.get_props().keys()
+#     for key in keys:
+#         widget_key = prefix + key
+#         widget = tree.get_widget(widget_key)
+#         if widget is None:
+#             logger.error("No widget found for prop '%s'" % key)
+#             continue
+#         try:
+#             connector = pwconnect.connectors[widget.__class__.__name__](container, key)
+#         except KeyError:
+#             raise RuntimeError("No matching Connector available for widget '%s' of %s" % (widget_key, widget.__class__.__name__))
+#         connector.use_widget(widget)
+#         connectors.append(connector)
 
-    return connectors
+#     return connectors
 
        
 def construct_table(clist):
@@ -177,63 +177,5 @@ def smart_construct_connectors(container, include=None, exclude=None):
         connector.widget.show()     
         clist.append(connector)
     return clist
-
-#------------------------------------------------------------------------------        
-# Testing Area
-#
-
-
-# set up container
-    
-class Options(HasProps):
-    filename = pUnicode()
-    mode = pUnicode(CheckValid([None, u'read-only', u'write-only', u'read-write']))
-    include_header = pBoolean(default=None)
-
-
-
-def test():
-    import gtk.glade
-
-    filename = "./Glade/example.glade"
-    widgetname = 'main_box'
-    myoptions = Options(filename="test.dat", mode=u'read-only')
-    options = myoptions.copy()
-
-    # create window and add widget created by libglade
-    win = gtk.Window()
-    win.connect("destroy", gtk.main_quit)
-
-    # This is the actual wrapping 
-    tree = gtk.glade.XML(filename, widgetname)    
-    widget = tree.get_widget(widgetname)
-    win.add(widget)
-    connectors = construct_connectors_from_glade_tree(options, tree)
-    for c in connectors:
-        c.check_in()
-       
-    def finish_up(sender):
-        for c in connectors:
-            c.check_out()
-        changeset = create_changeset(myoptions, options)
-        myoptions.set_values(**changeset)
-        print "CHANGES: ", changeset        
-        print "MYOPTIONS: ", myoptions.get_values()
-        gtk.main_quit()
-    signals = {"on_button_ok_clicked": finish_up}
-    tree.signal_autoconnect(signals)
-
-
-        
-
-    win.show()
-    gtk.main()
-
-
-
-
-
-if __name__ == "__main__":
-    test()
 
         

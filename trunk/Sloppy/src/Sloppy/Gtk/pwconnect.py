@@ -23,12 +23,9 @@
 >>> # Get a Connector instance
 >>> c = connectors['ComboBox'](container, 'propname')
 
->>> # either create a widget
+>>> # create a widget
 >>> c.create_widget()
 >>> w = c.widget
-
->>> # or reuse your own widget
->>> c.use_widget(my_widget)
 
 >>> # check in / check out data into the container
 >>> c.check_in()
@@ -61,14 +58,12 @@ class Connector(object):
 
     """ Abstract base class for all wrappers.  
     
-    Derived class must set the attribute 'widget_type' and must implement
-    'use_widget'.  Of course, for the widget to be useful, it should
-    also implement 'check_in' and 'check_out'.  The default 'check_out'
-    method relies on 'get_data', so it might make more sense to
-    implement this instead.
-    """
+    Derived class must implement 'create_widget'.  Of course, for the
+    widget to be useful, it should also implement 'check_in' and
+    'check_out'.  The default 'check_out' method relies on 'get_data',
+    so it might make more sense to implement this instead.
 
-    widget_type = None
+    """
     
     def __init__(self, container, key):
         self.container = container
@@ -118,15 +113,7 @@ class Connector(object):
     # UI Stuff
 
     def create_widget(self):
-        self.use_widget(self.widget_type())
-
-    def check_widget_type(self, widget):
-        if not isinstance(widget, self.widget_type):
-            raise TypeError("Widget for wrapper class %s must be of %s and not of %s" % (self.__class__.__name__, self.widget_type, type(widget)))
-
-    def use_widget(self, widget):
-        self.check_widget_type(widget)
-        self.widget = widget
+        raise RuntimeError("crete_widget() needs to be implemented.")
 
 
 connectors = {}
@@ -136,14 +123,12 @@ connectors = {}
     
 class Entry(Connector):
 
-    widget_type = gtk.Entry
-    
-    def use_widget(self, widget):
-        Connector.use_widget(self, widget)
-        
+    def create_widget(self):
+        widget = gtk.Entry()    
         widget.connect("focus-in-event", self.on_focus_in_event)
         widget.connect("focus-out-event", self.on_focus_out_event)
-
+        self.widget = widget
+        
     def on_focus_in_event(self, widget, event):
         self.last_value = widget.get_text()
         
@@ -181,14 +166,12 @@ connectors['Entry'] = Entry
 
 class ComboBox(Connector):
     
-    widget_type = gtk.ComboBox
-
     def init(self):
         self.value_dict = {}
         self.value_list = []
         
-    def use_widget(self, widget):
-        Connector.use_widget(self, widget)
+    def create_widget(self):
+        widget = gtk.ComboBox()
 
         # if value_list is available
         model = gtk.ListStore(str, object)
@@ -214,6 +197,7 @@ class ComboBox(Connector):
                     self.value_dict[value] = value
                     self.value_list.append(value)                
 
+        self.widget = widget
             
     #----------------------------------------------------------------------
 
@@ -246,10 +230,8 @@ connectors['ComboBox'] = ComboBox
 
 class TrueFalseComboBox(ComboBox):
 
-    widget_type = gtk.ComboBox
-
-    def use_widget(self, widget):
-        Connector.use_widget(self, widget)
+    def create_widget(self):
+        widget = gtk.ComboBox()
 
         # predefined value_list
         model = gtk.ListStore(str, object)
@@ -266,16 +248,17 @@ class TrueFalseComboBox(ComboBox):
             self.value_dict[value] = value
             self.value_list.append(value)
 
+        self.widget = widget
+        
 connectors['TrueFalseComboBox'] = TrueFalseComboBox
             
 
 class CheckButton(Connector):
 
-    widget_type = gtk.CheckButton
-
-    def use_widget(self, widget):
-        Connector.use_widget(self, widget)
-        self.widget.connect('toggled', self.on_toggled)
+    def create_widget(self):
+        widget = gtk.CheckButton()
+        widget.connect('toggled', self.on_toggled)
+        self.widget = widget
         
     def on_toggled(self, widget):
         if self.widget.get_inconsistent() is True:
@@ -306,33 +289,22 @@ connectors['CheckButton'] = CheckButton
 
 class SpinButton(Connector):
 
-    widget_type = gtk.SpinButton
-
     def create_widget(self):
-        spinbutton = gtk.SpinButton()
+        sb = gtk.SpinButton()
         checkbutton = gtk.CheckButton()
 
         checkbutton.connect("toggled",\
           (lambda sender: self.spinbutton.set_sensitive(sender.get_active())))
         
         widget = gtk.HBox()
-        widget.pack_start(spinbutton,True,True)
+        widget.pack_start(sb,True,True)
         widget.pack_start(checkbutton,False,True)
         widget.show_all()
         
         self.widget = widget
-        self.spinbutton = spinbutton
+        self.spinbutton = sb
         self.checkbutton = checkbutton
 
-        # BIG FAT TODO
-        # we need to replace use_widget in all of the connectors
-        # and move this out of pwglade.
-        self.post_init() # need to change all of that
-        
-        ##self.use_widget(spinbutton)
-        
-        
-    def post_init(self):
         sb = self.spinbutton
         sb.set_numeric(True)
         
