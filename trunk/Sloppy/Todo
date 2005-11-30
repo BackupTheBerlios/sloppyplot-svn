@@ -4,15 +4,6 @@
 DETAILS FOR 0.5.1:
 ==================
 
-- Bugfix: There must be a callback for project::notify signal somewhere
-  that does not accept the optional changeset parameter.
-  BTW, I could enhance signals.py, line 147, so that it displays
-  the name of this function when a TypeError occurs.
-
-
-- when .spj files are dropped on the treeview, then load that project 
-  instead of importing.
-
 - have an option in the import dialog to always ask for options.
   The equivalent in the dnd process would be to have the control 
   key or something similar pressed down.
