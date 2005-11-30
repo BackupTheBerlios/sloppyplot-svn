@@ -714,15 +714,16 @@ class GtkApplication(Application):
                     template.importer_key = dialog.template.importer_key
                     template.write_config = True
                     template.is_internal = True
-                    dataio.import_templates['recently used'] = template                    
+                    dataio.import_templates['recently used'] = template
                 else:
                     return
             finally:
                 dialog.destroy()
-
+        else:
+            template = template_key
 
         # The progress bar displays which file is currently being imported.
-        Application.import_datasets(self, project, filenames, template_key)
+        Application.import_datasets(self, project, filenames, template)
                 
 
 
