@@ -22,7 +22,9 @@ CHANGELOG
   
   * Verbosity has been increased by putting short status messages into
     the status bar after each user action.
-    
+
+  * Added build script to create packages for Slackware Linux
+	
   * lots of internal API changes, see SVN logs for details
   
   * lots of bugfixes.

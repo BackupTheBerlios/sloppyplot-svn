@@ -2,13 +2,7 @@
 DETAILS FOR 0.5.1:
 ==================
 
-- have an option in the import dialog to always ask for options.
-  The equivalent in the dnd process would be to have the control 
-  key or something similar pressed down.
-
 - finish changelog -- maybe scan through the SVN logs for this.
-
-
 
 
 FOR 0.5.2:
@@ -58,6 +52,18 @@ DETAILS FOR 0.5.3:
 
 
 
+------------------------------------------------------------------------------
+------------------------------------------------------------------------------
+- have an option in the import dialog to always ask for options.
+  The equivalent in the dnd process would be to have the control 
+  key or something similar pressed down.
+
+- What if we have two templates for the same extension?
+
+  -> either ask the user what to do
+  -> or prefer the template that is on the top.  This would
+     require a 'move up' and 'move down' button in the preferences
+     dialog
 
 ###############################################################################
 
