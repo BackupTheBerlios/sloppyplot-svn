@@ -1,3 +1,4 @@
+
 DETAILS FOR 0.5.1:
 ==================
 
@@ -5,13 +6,8 @@ DETAILS FOR 0.5.1:
   The equivalent in the dnd process would be to have the control 
   key or something similar pressed down.
 
-- Welcome message in status bar ('Sloppy $VERSION welcomes you!')
-  => put status_msg as method in Application and let the base
-     application do the welcome greeting.
-
 - finish changelog -- maybe scan through the SVN logs for this.
 
-- check designations. I have the impression they are not handled correctly.
 
 
 FOR 0.5.2:

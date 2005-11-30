@@ -34,7 +34,7 @@ from Sloppy.Base.project import Project
 from Sloppy.Base.projectio import load_project, save_project, ParseError
 from Sloppy.Base.backend import BackendRegistry
 from Sloppy.Base.table import Table
-from Sloppy.Base import dataio
+from Sloppy.Base import dataio, version
 
 from Sloppy.Base import uwrap, utils, iohelper
 from Sloppy.Base import config, error
@@ -126,6 +126,9 @@ class Application(object, HasSignals):
             self.set_project(project)
 
         self.init_plugins()
+
+        # welcome message
+        self.status_msg("%s %s" % (version.NAME, version.VERSION))
 
     def quit(self):
         self.set_project(None, confirm=True)
@@ -347,10 +350,10 @@ class Application(object, HasSignals):
             try:
                 tbl = importer.read_table_from_file(filename)
             except dataio.ImportError, msg:
-                self.error_message(msg)
+                self.error_msg(msg)
                 continue
             except error.UserCancel:
-                self.error_message("Import aborted by user")
+                self.error_msg("Import aborted by user")
                 continue
 
             root, ext = os.path.splitext(os.path.basename(filename))

@@ -311,17 +311,12 @@ class AppWindow( gtk.Window ):
             else:
                 logger.error("Could not find action %s in ActionGroup 'Application'" % action_name)
 
-        # refresh status bar and display last action
-        sb = self.statusbar
-        id = sb.get_context_id("main")
-        sb.pop(id)
-
         # if a redo is available, then we should display it, otherwise
         # we will check the undo.
         if redo_state is True:
-            sb.push(id, "Finished: Reverted %s" % project.journal.redo_text())
+            self.app.status_msg("Finished: Reverted %s" % project.journal.redo_text())
         elif undo_state is True:
-            sb.push(id, "Finished: %s" % project.journal.undo_text())
+            self.app.status_msg("Finished: %s" % project.journal.undo_text())
 
             
         

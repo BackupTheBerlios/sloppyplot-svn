@@ -815,7 +815,7 @@ class GtkApplication(Application):
         return result == gtk.RESPONSE_YES
 
 
-    def error_message(self, msg):
+    def error_msg(self, msg):
         dialog = gtk.MessageDialog(type=gtk.MESSAGE_ERROR,
                                    buttons=gtk.BUTTONS_OK,
                                    message_format=unicode(msg))
@@ -825,10 +825,14 @@ class GtkApplication(Application):
 
     def status_msg(self, msg):
         sb = self.window.statusbar
-        id = sb.get_context_id("main")
-        sb.pop(id)
-        sb.push(id, msg)
-        # TODO: queue removal of message
+        context = sb.get_context_id("main")
+        id = sb.push(context, msg)
+
+        def remove_msg(statusbar, a_context, a_id):
+            statusbar.remove(a_context, a_id)
+            return False            
+        gobject.timeout_add(3000, remove_msg, sb, context, id)
+
 
     def progress(self, fraction):
         pb = self.window.progressbar

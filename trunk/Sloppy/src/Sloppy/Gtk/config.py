@@ -359,9 +359,9 @@ class ImportTemplatesPage(ConfigurationPage):
 
         template = model.get_value(iter, self.MODEL_OBJECT)
         if template.is_internal is True:
-            # TODO: error message
             pass
-            #self.error_message("This is an internal template that cannot be edited or deleted.")
+            # TODO: print error message, but we need the app for this!
+            #self.error_msg("This is an internal template that cannot be edited or deleted.")
         else:
             model.remove(iter)
 
