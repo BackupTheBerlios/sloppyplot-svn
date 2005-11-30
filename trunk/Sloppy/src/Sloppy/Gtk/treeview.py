@@ -308,9 +308,14 @@ class ProjectTreeView( gtk.TreeView ):
 
             logger.debug("Filenames from drag 'n drop:\n%s\n" % filenames)
 
-            # import now!
-            self.app.do_import(self.project, filenames)
-
-            context.finish(True,False,timestamp)
+            try:
+                # Check if we have a single file and if this is a sloppy project
+                # then load it. Otherwise import the files!
+                if len(filenames) == 1 and filenames[0].endswith('.spj'):
+                    self.app.load_project(filenames[0])
+                else:
+                    self.app.do_import(self.project, filenames)
+            finally:
+                context.finish(True,False,timestamp)
         else:
             context.drag_abort(timestamp)
