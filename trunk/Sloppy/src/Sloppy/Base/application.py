@@ -273,6 +273,7 @@ class Application(object, HasSignals):
             data['importer_key'] = eTemplate.get('importer_key')
             data['extensions'] = eTemplate.get('extensions')
             data['defaults'] = iohelper.read_dict(eTemplate, 'Defaults')
+            data['skip_options'] = eTemplate.get('skip_options')
 
             logger.debug("Data is %s" % data)
             templates[key] = dataio.IOTemplate(**data)
@@ -294,7 +295,7 @@ class Application(object, HasSignals):
                 logger.debug("Writing template %s" % key)
                 eTemplate = SubElement(eTemplates, 'ImportTemplate')               
 
-                attrs = tpl.get_values(['blurb','importer_key','extensions'], default=None)
+                attrs = tpl.get_values(['blurb','importer_key','extensions','skip_options'], default=None)
                 attrs['key'] = key
                 iohelper.set_attributes(eTemplate, attrs)
                 iohelper.write_dict(eTemplate, 'Defaults', tpl.defaults)                
@@ -354,7 +355,12 @@ class Application(object, HasSignals):
         yield (-1,None)
 
         if len(new_datasets) > 0:
-            ul = UndoList().describe("Import Dataset(s)")
+            ul = UndoList()
+            if len(new_datasets) == 1:
+                ul.describe("Import Dataset")
+            else:
+                ul.describe("Import %d Datasets" % len(new_datasets) )
+                
             project.add_datasets(new_datasets, undolist=ul)
             undolist.append(ul)
             #msg = "Import of %d datasets finished." % len(new_datasets)

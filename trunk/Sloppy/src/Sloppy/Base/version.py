@@ -34,10 +34,12 @@ VERSION= VERSION+".SVN $Rev$".replace("Rev: ","").replace(" $","")
 
 DESCRIPTION = "A scientific plotting tool"
 LONG_DESCRIPTION="""\
-A scientific plotting tool that currently only supports 2d plots.  The
-plots and their data are stored in a single file, keeping the
-scientific workspace a little more uncluttered.  A postscript export
-using gnuplot is available.
+A scientific plotting tool that currently only
+supports 2d plots.  The plots and their data are
+stored in a single file, keeping the scientific
+workspace a little more uncluttered.
+
+A postscript export using gnuplot is available.
 """
 
 
