@@ -347,9 +347,7 @@ class ImportTemplatesPage(ConfigurationPage):
         key = model.get_value(iter,self.MODEL_KEY)
         new_key = self.input_key(key)
 
-        print "NEW KEY IS ", new_key
         if new_key is not None:
-            print "Setting new key"
             model.set_value(iter, self.MODEL_KEY, new_key)
         
     

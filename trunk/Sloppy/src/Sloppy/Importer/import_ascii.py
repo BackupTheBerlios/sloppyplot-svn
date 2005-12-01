@@ -268,18 +268,14 @@ class Importer(dataio.Importer):
         self.result_metadata = {}
         line = "--"
         n = 1 # current line
-        print "SELF.HEADER_SIZE = ", self.header_size
         header_size = self.header_size
         if header_size is not None:
             # skip header_size
-            print "HEADER SIZE IS ", header_size
             while header_size > 0 and len(line) > 0:
-                print "SKIPPED A LINE"
                 line = fd.readline()
                 parse_line(line,n)
                 header_size -= 1
                 n += 1
-            print "STOPPED SKIPPING AT '%s'" % line
         else:
             # skip until regular expression is matched
             while len(line) > 0:

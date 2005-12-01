@@ -71,7 +71,6 @@ def as_filename(key):
     """  The filename is dynamically created from the given key,
     appended by the extension '.dat'. Path separators are escaped."""
     key = key.replace(os.path.sep, u'_')
-    print "NEW KEY ", key
     if not isinstance(key, basestring):
         raise TypeError("construct_filename: 'key' must be a valid string, but it is of %s" % type(key))
     return "%s.dat" % key
