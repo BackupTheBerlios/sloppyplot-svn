@@ -1,26 +1,34 @@
+Release Notes for SloppyPlot 0.5.1 (released 2005-12-01)
+========================================================
+
+This release features a lot of user visible improvements,
+ e.g. the Preferences dialog, error messages, status bar messages, a
+new revised ASCII importer, and the possibility to define import
+templates for your own ASCII data formats. As a special treat, drag
+and drop of files and projects has been implemented. Finally,
+SloppyPlot integrates nicely into your desktop (tested with GNOME,
+should work in KDE as well), so double-clicking on a .spj file will
+open up SloppyPlot.
 
 Release Notes for SloppyPlot 0.5.0 (released 2005-11-16)
 ========================================================
 
-After quite a while, here's another release of your
-favorite scientific plotting tool :-)
+After quite a while, here's another release of your favorite
+scientific plotting tool :-)
 
-IMPORTANT NOTE: There has been a drastic change in the 
-file format, which causes an incompatibility to existing
-.spj files.  If there is actually another person in this
-universe that uses .spj files, please don't hesitate to
-e-mail me and I will tell you how to convert from the 
-old to the new format.
+IMPORTANT NOTE: There has been a drastic change in the file format,
+which causes an incompatibility to existing .spj files.  If there is
+actually another person in this universe that uses .spj files, please
+don't hesitate to e-mail me and I will tell you how to convert from
+the old to the new format.
 
-The good news is that SloppyPlot now has two dependencies
-less and should be relatively easy to install on a 
-modern Linux desktop.  Despite my initial idea to replace 
-Numeric with scipy, I decided to stick with Numeric
-for a while.
+The good news is that SloppyPlot now has two dependencies less and
+should be relatively easy to install on a modern Linux desktop.
+Despite my initial idea to replace Numeric with scipy, I decided to
+stick with Numeric for a while.
 
-There have not been any user-visible changes, except for
-the possibility to export via gnuplot from the interactive
-backend.
+There have not been any user-visible changes, except for the
+possibility to export via gnuplot from the interactive backend.
 
 
 Release Notes for SloppyPlot 0.4.5 (released 2005-10-18)
