@@ -1,7 +1,15 @@
 CHANGELOG
 =========
 
-2005-12- SloppyPlot 0.5.1
+2005-xx-yy SloppyPlot 0.5.2
+===========================
+
+  * Renamed configuration path to lowercase 'sloppyplot'.  
+    Only in release notes, web pages and so on is the mixed
+    spelling "SloppyPlot" used.
+	
+
+2005-12-01 SloppyPlot 0.5.1
 ===========================
 
   * Added complete desktop integration, i.e. SloppyPlot will appear in 

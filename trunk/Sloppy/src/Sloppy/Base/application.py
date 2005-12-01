@@ -81,10 +81,10 @@ class Application(object, HasSignals):
         # determine config path
         if os.environ.has_key('XDG_CONFIG_HOME'):
             xdg_path = os.path.expandvars('${XDG_CONFIG_HOME}')
-            cfg_path = os.path.join(xdg_path, 'SloppyPlot')
+            cfg_path = os.path.join(xdg_path, 'sloppyplot')
         else:
             home_path = os.path.expanduser('~')
-            cfg_path = os.path.join(home_path, '.config', 'SloppyPlot')
+            cfg_path = os.path.join(home_path, '.config', 'sloppyplot')
 
         self.path.set('config_dir', cfg_path)
         self.path.bset('config', 'config_dir', 'config.xml')  
