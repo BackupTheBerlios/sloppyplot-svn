@@ -75,10 +75,11 @@ setup(name=NAME,
                 'Sloppy.Lib.Props',
                 ],
 		
-      # the package_data determines what to put into the
-      # source tarball.  So if you include anything below
-      # in the data_files section, make sure to have it 
-      # in here as well.      
+      # the package_data determines what additional files
+      # from the package_dir to put into the source tarball,
+      # i.e. what other files that do not end in *.py.
+      # So if you include anything below in the data_files
+      # section, make sure to have it in here as well.      
       package_data = {'Sloppy.Gtk' :
                        [join('Data', 'explorer.xml'),
                         join('Icons', '*.png')]},
