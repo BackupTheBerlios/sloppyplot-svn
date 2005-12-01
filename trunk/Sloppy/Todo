@@ -1,4 +1,10 @@
 
+
+Next in queue:
+
+- start layerwin -- I know it is much work, but it needs to be done!
+
+
 FOR 0.5.2:
 ==========
 
@@ -27,9 +33,9 @@ FOR 0.5.2:
 (D) LayerWin and Toolbox
 
     - try to rewrite the layerwin using the new pwconnect mechanism.
-      We don't need to finish that completly.
     
-    - add a combobox similar to the existing one with all the layers
+    - Toolbox: 
+      Add a combobox similar to the existing one with all the layers
       The existing layer tool should be put into a tab and could offer
       things to edit the layer.
 
