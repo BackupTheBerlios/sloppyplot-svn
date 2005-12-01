@@ -46,24 +46,23 @@ logger = logging.getLogger('Base.project')
 
 
 
+DC = {
+'invalid_key':
+"Invalid Plot key '%s'. Please use only alphanumeric characters, blanks and underscores (_).",
 
-README="""
-The file you are just looking at is part of a SloppyPlot archive.
+'README':
+"""The file you are just looking at is part of a SloppyPlot archive.
 SloppyPlot is a scientific plotting application that can be obtained
 from 
 
   http://sloppyplot.berlios.de.
 
 This archive contains of a project description 'project.xml' and the
-corresponding datasets.  Each dataset is a single file in the
+corresponding datasets.  Each dataset is a simple ASCII file in the
 subdirectory 'datasets'.  If you need to get this data without
-SloppyPlot, you can extract the file from this archive and read it
-using any netCDF utility (e.g. 'ncdump'). For further information
-about netCDF, see 
-
-  http://my.unidata.ucar.edu/content/software/netcdf/index.html  
+SloppyPlot, you can extract the file from this archive by hand.  
 """
-
+}
 
 
 class Project(HasProps, HasSignals):
@@ -274,8 +273,8 @@ class Project(HasProps, HasSignals):
 
         try:
             dataset.key = new_key
-        except ValueError:
-            self.app.error_msg("Invalid key")
+        except ValueError, msg:
+            self.app.error_msg(DC['invalid_key'] % new_key)            
             return
             
         undolist.append(ui)        
@@ -296,8 +295,13 @@ class Project(HasProps, HasSignals):
 
         ui = UndoInfo(self.rename_plot, plot, plot.key)
         ui.describe("Rename Plot")
-        
-        plot.key = new_key
+
+        try:
+            plot.key = new_key
+        except ValueError:
+            self.app.error_msg(DC['invalid_key'] % new_key)
+            return
+
         undolist.append(ui)
         self.sig_emit("notify::plots")
 

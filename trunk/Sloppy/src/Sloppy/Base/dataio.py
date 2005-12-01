@@ -28,7 +28,7 @@ from Numeric import ArrayType
 
 
 #------------------------------------------------------------------------------
-docstrings={\
+DC={\
 
 'IOTemplate:extensions':
 """File extensions for which this template should be used,
@@ -168,18 +168,18 @@ class IOTemplate(HasProps):
     extensions = pString(\
         default="",
         blurb="File extensions",
-        doc=docstrings['IOTemplate:extensions']
+        doc=DC['IOTemplate:extensions']
         )
     
     blurb = pUnicode(\
         blurb="Description",
-        doc=docstrings['IOTemplate:blurb']
+        doc=DC['IOTemplate:blurb']
         )
 
     skip_options = pBoolean(\
         default=False,
         blurb="Skip Options",
-        doc=docstrings['IOTemplate:skip_options']
+        doc=DC['IOTemplate:skip_options']
         ) 
 
     defaults = pDict()    
