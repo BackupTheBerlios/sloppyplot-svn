@@ -1,0 +1,6 @@
+# This is a comment -- it should be ignored
+1 2 3
+1 2 3 # A comment at the end of a line should be ignored as well
+  # A comment in between -- so what?
+   1 2 3 # whitespace at the beginning of a line is not bad at all
+
