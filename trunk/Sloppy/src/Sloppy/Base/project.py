@@ -46,7 +46,7 @@ logger = logging.getLogger('Base.project')
 
 
 
-DC = {
+DS = {
 'invalid_key':
 "Invalid Plot key '%s'. Please use only alphanumeric characters, blanks and underscores (_).",
 
@@ -274,7 +274,7 @@ class Project(HasProps, HasSignals):
         try:
             dataset.key = new_key
         except ValueError, msg:
-            self.app.error_msg(DC['invalid_key'] % new_key)            
+            self.app.error_msg(DS['invalid_key'] % new_key)            
             return
             
         undolist.append(ui)        
@@ -299,7 +299,7 @@ class Project(HasProps, HasSignals):
         try:
             plot.key = new_key
         except ValueError:
-            self.app.error_msg(DC['invalid_key'] % new_key)
+            self.app.error_msg(DS['invalid_key'] % new_key)
             return
 
         undolist.append(ui)

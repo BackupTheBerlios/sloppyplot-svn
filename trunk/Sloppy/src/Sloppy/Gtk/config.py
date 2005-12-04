@@ -31,6 +31,12 @@ import uihelper, pwglade
 from Sloppy.Lib.Props import pKeyword
 
 
+DS={
+'template_immutable':
+"<i>This is an internal template\nwhich cannot be edited.</i>"
+}
+
+
 class ConfigurationDialog(gtk.Dialog):
 
     def __init__(self):
@@ -227,7 +233,8 @@ class ImportTemplatesPage(ConfigurationPage):
         table = pwglade.construct_table(clist)
 
         if allow_edit is False:
-            notice = gtk.Label("This is an internal template\nwhich cannot be edited.")
+            notice = gtk.Label()
+            notice.set_markup(DS['template_immutable'])
             dlg.vbox.pack_start(notice,False,True)
             hseparator = gtk.HSeparator()
             dlg.vbox.pack_start(hseparator,False,True)

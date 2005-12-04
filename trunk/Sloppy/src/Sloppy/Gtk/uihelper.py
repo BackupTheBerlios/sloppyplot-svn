@@ -190,8 +190,9 @@ def new_section(frame_title, child):
     frame.set_border_width(SECTION_SPACING)
 
     alignment = gtk.Alignment()
-    alignment.set(0.0,0.0,1.0,1.0)
-    alignment.set_padding(0,0,int(1.5*SECTION_SPACING),0)
+    alignment.set(0.15,0.0,1.0,1.0)
+    alignment.set_border_width(SECTION_SPACING)
+#    alignment.set_padding(0,0,int(1.5*SECTION_SPACING),0)
     alignment.add(child)
 
     frame.add(alignment)

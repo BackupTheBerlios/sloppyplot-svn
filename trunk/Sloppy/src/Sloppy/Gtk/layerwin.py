@@ -33,41 +33,6 @@ import config, pwglade
 
 
 
-def construct_imageview():
-    """
-    Returns (scrolled window, treeview).
-    Scrolled window is not shown by default while treeview is.
-    """
-    # stock-id, label
-    model = gtk.ListStore(str, str)
-
-    column = gtk.TreeViewColumn('Axis')
-
-    renderer = gtk.CellRendererPixbuf()        
-    column.pack_start(renderer, expand=False)
-    column.set_attributes(renderer, stock_id=0)
-
-    renderer = gtk.CellRendererText()
-    column.pack_start(renderer, expand=True)
-    column.set_attributes(renderer, text=1)
-
-    tv = gtk.TreeView()
-    tv.set_model(model)
-    tv.append_column(column)
-    tv.get_selection().set_mode(gtk.SELECTION_SINGLE)
-    tv.set_headers_visible(False)
-    tv.show()
-
-    # put treeview in a scrolled window
-    sw = gtk.ScrolledWindow()
-    sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-    sw.add(tv)
-
-    return (sw, tv)
-
-
-
-
 class LayerWindow(gtk.Window):
 
     """
@@ -99,55 +64,63 @@ class LayerWindow(gtk.Window):
         nb_main = gtk.Notebook() ; nb_main.show()        
         nb_main.set_property('tab-pos', gtk.POS_LEFT)
 
-        # tabs: general
-        tab = LayerTab(app, layer) ; tab.show()
-        nb_main.append_page(tab)
-        nb_main.set_tab_label_text(tab, "Layer")
 
-        self.tabs.append(tab)
-        self.tablabels.append("Layer")
-
-        # tab: axes
-        tab = AxesTab(app, layer)
-        tab.show()
-        nb_main.append_page(tab)
-        nb_main.set_tab_label_text(tab, "Axes")
-
-        self.tabs.append(tab)
-        self.tablabels.append("Axes")
-
+        #
+        # Populate Notebook with Tabs
+        #
         
-        # tab: legend
-        tab = LegendTab(app, layer)
-        tab.show()
-        nb_main.append_page(tab)
-        nb_main.set_tab_label_text(tab, "Legend")
+        if True:
 
-        self.tabs.append(tab)
-        self.tablabels.append("Lines")
-
-        # tab: lines
-        tab = LinesTab(app, layer)
-        tab.show()
-        nb_main.append_page(tab)
-        nb_main.set_tab_label_text(tab, "Lines")
-
-        self.tabs.append(tab)
-        self.tablabels.append("Lines")
-
-        #
-        # New Tab Mechanism
-        #
-
-        #
-        # This is going to replace all other tabs.
-        #
-        if False: # CURRENTLY DISABLED!
-            for tab in [NewLinesTab(app, layer), NewLegendTab(app, layer)]:
+            # --- NEW TAB MECHANISM ---
+            
+            for tab in [NewLegendTab(app, layer), NewLinesTab(app, layer)]:
                 nb_main.append_page(tab)
                 nb_main.set_tab_label_text(tab, tab.title)
                 tab.check_in()
 
+                self.tabs.append(tab)
+                self.tablabels.append(tab.title)
+                
+        else:
+            
+            # --- OLD TAB MECHANISM ---
+            
+            # tabs: general
+            tab = LayerTab(app, layer) ; tab.show()
+            nb_main.append_page(tab)
+            nb_main.set_tab_label_text(tab, "Layer")
+
+            self.tabs.append(tab)
+            self.tablabels.append("Layer")
+
+            # tab: axes
+            tab = AxesTab(app, layer)
+            tab.show()
+            nb_main.append_page(tab)
+            nb_main.set_tab_label_text(tab, "Axes")
+
+            self.tabs.append(tab)
+            self.tablabels.append("Axes")
+
+
+            # tab: legend
+            tab = LegendTab(app, layer)
+            tab.show()
+            nb_main.append_page(tab)
+            nb_main.set_tab_label_text(tab, "Legend")
+
+            self.tabs.append(tab)
+            self.tablabels.append("Lines")
+
+            # tab: lines
+            tab = LinesTab(app, layer)
+            tab.show()
+            nb_main.append_page(tab)
+            nb_main.set_tab_label_text(tab, "Lines")
+
+            self.tabs.append(tab)
+            self.tablabels.append("Lines")
+            
 
         # if requested, set the page with the name `tab` as current page
         if current_page is not None:
@@ -869,7 +842,6 @@ class NewLegendTab(config.ConfigurationPage):
         keys = ['label', 'position', 'visible', 'border', 'x', 'y']
         clist = pwglade.smart_construct_connectors(layer.legend, include=keys)
         table = pwglade.construct_table(clist)
-
         frame = uihelper.new_section("Legend", table)
         self.add(frame)
 

@@ -34,7 +34,7 @@ logger = logging.getLogger('import.ascii')
 
 
 #------------------------------------------------------------------------------
-DC={
+DS={
 'import_ascii:designations':
 """Designations for the imported columns.
 If more than the given columns exists, then
@@ -152,7 +152,7 @@ class Importer(dataio.Importer):
         CheckValid(['X', 'Y', 'X|Y', 'XY']),
         default='X|Y',        
         blurb="Designations",
-        doc=DC['import_ascii:designations'],
+        doc=DS['import_ascii:designations'],
         )
 
     typecodes = \
