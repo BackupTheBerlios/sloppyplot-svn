@@ -73,7 +73,9 @@ class LayerWindow(gtk.Window):
 
             # --- NEW TAB MECHANISM ---
             
-            for tab in [NewLegendTab(app, layer), NewLinesTab(app, layer)]:
+            for tab in [NewLegendTab(app, layer),
+                        NewAxesTab(app, layer),
+                        NewLinesTab(app, layer)]:
                 nb_main.append_page(tab)
                 nb_main.set_tab_label_text(tab, tab.title)
                 tab.check_in()
@@ -832,7 +834,7 @@ class GroupBox(gtk.HBox, PWContainer):
 
 class NewLegendTab(config.ConfigurationPage):
 
-    title = "Legend (New)"
+    title = "Legend"
 
     def __init__(self, app, layer):
         config.ConfigurationPage.__init__(self)
@@ -860,11 +862,48 @@ class NewLegendTab(config.ConfigurationPage):
         # PROBLEM: No Undo here!
 
 
+class NewAxesTab(config.ConfigurationPage):
+
+    title = "Axes"
+    
+    def __init__(self, app, layer):
+        config.ConfigurationPage.__init__(self)
+        self.app = app
+        self.layer = layer
+
+        keys = ['label', 'start', 'end', 'scale', 'format']
+        
+        clist1 = pwglade.smart_construct_connectors(layer.xaxis, include=keys)
+        clist2 = pwglade.smart_construct_connectors(layer.yaxis, include=keys)
+        
+        table1 = pwglade.construct_table(clist1)
+        table2 = pwglade.construct_table(clist2)
+        
+        frame1 = uihelper.new_section("X-Axis", table1)
+        frame2 = uihelper.new_section("Y-Axis", table2)
+        
+        self.pack_start(frame1,False,True)
+        self.pack_start(frame2,False,True)
+
+        self.clist = clist1 + clist2
+        self.show_all()
+        
+        
+    def check_in(self):
+        for c in self.clist:
+            c.check_in()
+
+    def check_out(self):
+        for c in self.clist:
+            c.check_out()
+
+        # PROBLEM: No Undo here!
+
 
 
 class NewLinesTab(config.ConfigurationPage):
 
-    title = "Lines (New)"
+    title = "Lines"
     
     (COL_LINE,
      COL_VISIBLE,
