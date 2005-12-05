@@ -79,7 +79,7 @@ class Connector(object):
     # Helper Functions
     
     def get_value(self):
-        return self.container.get_value(self.key)
+        return self.container.get_value(self.key, default=None)
     def set_value(self, value):
         if value != self.last_value:
             self.container.set_value(self.key, value)
@@ -124,40 +124,65 @@ connectors = {}
 class Entry(Connector):
 
     def create_widget(self):
-        widget = gtk.Entry()    
-        widget.connect("focus-in-event", self.on_focus_in_event)
-        widget.connect("focus-out-event", self.on_focus_out_event)
+        entry = gtk.Entry()
+
+        checkbutton = gtk.CheckButton()
+        checkbutton.connect("toggled",\
+          (lambda sender: entry.set_sensitive(sender.get_active())))
+
+        widget = gtk.HBox()
+        widget.pack_start(entry,True,True)
+        widget.pack_start(checkbutton,False,True)
+        widget.show_all()
+        
+        entry.connect("focus-in-event", self.on_focus_in_event)
+        entry.connect("focus-out-event", self.on_focus_out_event)
+
+        self.entry = entry
         self.widget = widget
+        self.checkbutton = checkbutton
+
         
     def on_focus_in_event(self, widget, event):
         self.last_value = widget.get_text()
         
         
     def on_focus_out_event(self, widget, event):
-        value = self.widget.get_text()
+        value = widget.get_text()
         try:
             self.prop.check(value)
         except (TypeError, ValueError):
+            # TODO: user notice
             print "Entry Value is wrong, resetting."
-            self.widget.set_text(self.last_value)
+            widget.set_text(self.last_value)
 
     #----------------------------------------------------------------------
 
     def check_in(self):
-        self.last_value = self.get_value()
-        
-        if self.last_value is not None:
-            value = unicode(self.last_value)
+        value = self.get_value()
+
+        if value is not None:
+            self.entry.set_text(value)
+            self.checkbutton.set_active(True)
+            self.entry.set_sensitive(True)
         else:
-            value = ""        
-        self.widget.set_text(value)
+            self.checkbutton.set_active(False)
+            self.entry.set_sensitive(False)            
+
+        self.last_value = value
+
 
     def get_data(self):
-        value = self.widget.get_text()
-        if len(value) == 0:
-            return None
+        value = self.entry.get_text()
+        is_active = self.checkbutton.get_active()
+
+        if is_active:
+            try:
+                return self.prop.check(self.entry.get_text())
+            except:
+                return None # TODO: what if the entry does not allow None?
         else:
-            return self.prop.check(value)
+            return None
 
 
 connectors['Entry'] = Entry
@@ -171,14 +196,23 @@ class ComboBox(Connector):
         self.value_list = []
         
     def create_widget(self):
-        widget = gtk.ComboBox()
+        combobox = gtk.ComboBox()
+
+        checkbutton = gtk.CheckButton()
+        checkbutton.connect("toggled",\
+          (lambda sender: combobox.set_sensitive(sender.get_active())))
+
+        widget = gtk.HBox()
+        widget.pack_start(combobox,True,True)
+        widget.pack_start(checkbutton,False,True)
+        widget.show_all()
 
         # if value_list is available
         model = gtk.ListStore(str, object)
-        widget.set_model(model)
+        combobox.set_model(model)
         cell = gtk.CellRendererText()
-        widget.pack_start(cell, True)
-        widget.add_attribute(cell, 'text', 0)
+        combobox.pack_start(cell, True)
+        combobox.add_attribute(cell, 'text', 0)
 
         # fill combo
         model.clear()
@@ -197,31 +231,43 @@ class ComboBox(Connector):
                     self.value_dict[value] = value
                     self.value_list.append(value)                
 
+        self.combobox = combobox
+        self.checkbutton = checkbutton
         self.widget = widget
-            
+        
     #----------------------------------------------------------------------
 
     
     def check_in(self):
-        try:
-            value = self.get_value()
-            index = self.value_list.index(value)
-        except:
-            raise ValueError("Connector for %s.%s failed to retrieve prop value '%s' in list of available values '%s'" % (self.container, self.key, self.get_value(), self.value_list))
+        value = self.get_value()
+        active = value is not None
+        self.checkbutton.set_active(active)
+        self.combobox.set_sensitive(active)
 
-        model = self.widget.get_model()
-        iter = model.get_iter((index,))
-        self.widget.set_active_iter(iter)
+        if value is not None:
+            try:
+                index = self.value_list.index(value)
+            except:
+                raise ValueError("Connector for %s.%s failed to retrieve prop value '%s' in list of available values '%s'" % (self.container, self.key, self.get_value(), self.value_list))
+
+            model = self.widget.get_model()
+            iter = model.get_iter((index,))
+            self.combobox.set_active_iter(iter)
+
         self.last_value = value
         
     
     def get_data(self):
-        index = self.widget.get_active()
-        if index < 0:
-            return None
+        if self.checkbutton.get_active() is True:
+            index = self.combobox.get_active()
+            if index < 0:
+                return None
+            else:
+                model = self.combobox.get_model()
+                return model[index][1]
         else:
-            model = self.widget.get_model()
-            return model[index][1]
+            return None
+        
 
 
 connectors['ComboBox'] = ComboBox
@@ -231,14 +277,23 @@ connectors['ComboBox'] = ComboBox
 class TrueFalseComboBox(ComboBox):
 
     def create_widget(self):
-        widget = gtk.ComboBox()
+        combobox = gtk.ComboBox()
+
+        checkbutton = gtk.CheckButton()
+        checkbutton.connect("toggled",\
+          (lambda sender: combobox.set_sensitive(sender.get_active())))
+
+        widget = gtk.HBox()
+        widget.pack_start(combobox,True,True)
+        widget.pack_start(checkbutton,False,True)
+        widget.show_all()
 
         # predefined value_list
         model = gtk.ListStore(str, object)
-        widget.set_model(model)
+        combobox.set_model(model)
         cell = gtk.CellRendererText()
-        widget.pack_start(cell, True)
-        widget.add_attribute(cell, 'text', 0)
+        combobox.pack_start(cell, True)
+        combobox.add_attribute(cell, 'text', 0)
 
         # fill combo
         model.clear()
@@ -248,7 +303,13 @@ class TrueFalseComboBox(ComboBox):
             self.value_dict[value] = value
             self.value_list.append(value)
 
+        self.combobox = combobox
+
         self.widget = widget
+        self.combobox = combobox
+        self.checkbutton = checkbutton
+
+        
         
 connectors['TrueFalseComboBox'] = TrueFalseComboBox
             
@@ -291,8 +352,8 @@ class SpinButton(Connector):
 
     def create_widget(self):
         sb = gtk.SpinButton()
-        checkbutton = gtk.CheckButton()
 
+        checkbutton = gtk.CheckButton()
         checkbutton.connect("toggled",\
           (lambda sender: self.spinbutton.set_sensitive(sender.get_active())))
         

@@ -641,36 +641,45 @@ class HasProps(object):
 
                    
 
-    def get_value(self, key):
-        return self.__getattribute__(key)
-
-    get = get_value
+    def get_value(self, key, **kwargs):
+        if kwargs.has_key('default') is True:
+            default = kwargs.get('default', None)
+            value = self.__getattribute__(key, nd=True)
+            if value is None:
+                return default
+            else:
+                return value
+        else:
+            return self.__getattribute__(key)            
 
     
     def get_values(self, include=None, exclude=None, **kwargs):
 
         rv = {}
         keys = self._limit_keys(include=include, exclude=exclude)
-        nd = kwargs.has_key('default')
-
-        for key in keys:
-            rv[key] = self.__getattribute__(key, nd=True)
+        
+        if kwargs.has_key('default') is True:
+            default = kwargs.get('default', None)            
+            for key in keys:            
+                value = self.__getattribute__(key, nd=True)
+                if value is None:
+                    rv[key] = default
+                else:
+                    rv[key] = value
+        else:
+            for key in keys:
+                rv[key] = self.__getattribute__(key)
 
         return rv
 
-    mget = get_values
+    mget = get_values  # NEEDED ?
+    get = get_value
 
-        
+    # DEPRECATED   
     def rget(self, key, default=None):
-        """ raw get = use other default value. 
-         Return the value of the given prop or `default` if it is None.
-         """
-        value = self.__getattribute__(key, nd=True)
-        if value is None:
-            return default
-        else:
-            return value            
+        return self.get_value(key, default=default)
 
+    
     def clear(self, include=None, exclude=None):
         " Clear all props. "
         for key in self._limit_keys(include=include, exclude=exclude):
@@ -695,13 +704,13 @@ class HasProps(object):
     # Convenience Methods
 
     def copy(self, include=None,exclude=None):
-        kw = self.get_values(include=include,exclude=exclude)                
+        kw = self.get_values(include=include,exclude=exclude,default=None)
         return self.__class__(**kw)
 
     def create_changeset(self, container):
         changeset = {}
-        for key, value in container.get_values().iteritems():
-            old_value = self.get_value(key)
+        for key, value in container.get_values(default=None).iteritems():
+            old_value = self.rget(key)
             if value != old_value:
                 changeset[key] = value
         return changeset       

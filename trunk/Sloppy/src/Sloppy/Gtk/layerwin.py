@@ -58,9 +58,7 @@ class LayerWindow(gtk.Window):
         #
         
         # list of tabs with a check_in/check_out method
-        self.tabs = []
-        self.tablabels = []
-        
+        self.tabdict = {}       
         nb_main = gtk.Notebook() ; nb_main.show()        
         nb_main.set_property('tab-pos', gtk.POS_LEFT)
 
@@ -69,59 +67,17 @@ class LayerWindow(gtk.Window):
         # Populate Notebook with Tabs
         #
         
-        if True:
-
-            # --- NEW TAB MECHANISM ---
+        # --- NEW TAB MECHANISM ---
             
-            for tab in [NewLegendTab(app, layer),
-                        NewAxesTab(app, layer),
-                        NewLinesTab(app, layer)]:
-                nb_main.append_page(tab)
-                nb_main.set_tab_label_text(tab, tab.title)
-                tab.check_in()
-
-                self.tabs.append(tab)
-                self.tablabels.append(tab.title)
-                
-        else:
-            
-            # --- OLD TAB MECHANISM ---
-            
-            # tabs: general
-            tab = LayerTab(app, layer) ; tab.show()
+        for tab in [NewLayerTab(app, layer),
+                    NewLegendTab(app, layer.legend),
+                    NewAxesTab(app, layer.axes)]:
+                    #NewLinesTab(app, layer)]:
             nb_main.append_page(tab)
-            nb_main.set_tab_label_text(tab, "Layer")
+            nb_main.set_tab_label_text(tab, tab.title)
+            tab.check_in()
 
-            self.tabs.append(tab)
-            self.tablabels.append("Layer")
-
-            # tab: axes
-            tab = AxesTab(app, layer)
-            tab.show()
-            nb_main.append_page(tab)
-            nb_main.set_tab_label_text(tab, "Axes")
-
-            self.tabs.append(tab)
-            self.tablabels.append("Axes")
-
-
-            # tab: legend
-            tab = LegendTab(app, layer)
-            tab.show()
-            nb_main.append_page(tab)
-            nb_main.set_tab_label_text(tab, "Legend")
-
-            self.tabs.append(tab)
-            self.tablabels.append("Lines")
-
-            # tab: lines
-            tab = LinesTab(app, layer)
-            tab.show()
-            nb_main.append_page(tab)
-            nb_main.set_tab_label_text(tab, "Lines")
-
-            self.tabs.append(tab)
-            self.tablabels.append("Lines")
+            self.tabdict[tab.title] = tab
             
 
         # if requested, set the page with the name `tab` as current page
@@ -178,7 +134,7 @@ class LayerWindow(gtk.Window):
         self.destroy()
 
     def cb_revert(self, sender):
-        for tab in self.tabs:
+        for tab in self.tabdict.itervalues():
             tab.check_in()
 
     def cb_apply(self, sender):
@@ -191,15 +147,16 @@ class LayerWindow(gtk.Window):
         self.destroy()            
 
     def apply_changes(self):
+
         ul = UndoList().describe("Edit Plot Properties")
-        for tab in self.tabs:
-            ui = UndoList()
+
+        for tab in self.tabdict.itervalues():
+            ui = UndoList()            
             tab.check_out(undolist=ui)
             ul.append(ui.simplify())
 
-
         ul = ul.simplify(preserve_list=True)
-        
+
         if len(ul) > 0:
             uwrap.emit_last(self.plot, "changed", undolist=ul)            
         else:
@@ -207,556 +164,18 @@ class LayerWindow(gtk.Window):
             
         self.app.project.journal.add_undo(ul)
 
-
-
-class AbstractTab(gtk.HBox, PWContainer):
-
-    def __init__(self, app, layer):
-        self.app = app
-        self.layer = layer
-
-        gtk.HBox.__init__(self)
-        PWContainer.__init__(self)
-
         
-    def get_tab_label(self):
-        label = gtk.Label("Unnamed Tab") ; label.show()
-        return label
+        #tab = self.tabdict['Legend']
+        #legend = self.layer.legend
+        #cs = legend.create_changeset(tab.container)
+        #print"LEGEND CHANGES = ", cs
 
-
-
-class LayerTab(AbstractTab):
-
-    def construct_pwdict(self):        
-        frame = gtk.Frame("Layer") ; frame.show()
-        
-        pwlist = list()
-        for key in ['title','visible', 'grid']:
-            pw = construct_pw(self.layer, key)
-            self.pwdict[key] = pw
-            pwlist.append(pw)
-
-        tablewidget = construct_pw_table(pwlist)
-        tablewidget.show()
-        frame.add(tablewidget)
-        self.pack_end(frame)
-
-     
-        
-
-        
-class LegendTab(AbstractTab):
-
-    def construct_pwdict(self):
-        self.legend = self.layer.legend
-                                                
-        frame = gtk.Frame("Legend") ; frame.show()
-
-        pwlist = list()
-        for key in ['label', 'position', 'visible', 'border', 'x', 'y']:
-            pw = construct_pw(self.legend, key)
-            self.pwdict[key] = pw
-            pwlist.append(pw)
-        tablewidget = construct_pw_table(pwlist)
-        tablewidget.show()
-        frame.add(tablewidget)
-        self.pack_end(frame)       
-        
-        
-class AxisTab(AbstractTab):
-
-    def __init__(self, app, layer, axis_key):
-        self.layer = layer
-        self.axis = layer.axes[axis_key]
-        self.axis_key = axis_key
-
-        AbstractTab.__init__(self, app, layer)
-
-        
-    def construct_pwdict(self):
-        vbox = gtk.VBox()
-        tt = gtk.Tooltips()
-
-        pwlist = list()
-        for key in ['label', 'start', 'end', 'scale', 'format']:
-            pw = construct_pw(self.axis, key)
-            self.pwdict[key] = pw
-            pwlist.append(pw)
-
-        tablewidget = construct_pw_table(pwlist)
-
-        self.pack_end(tablewidget)        
-        tablewidget.show()
-        
-        
-    def get_tab_label(self):
-        vbox = gtk.VBox()
-        label = gtk.Label("Axis") ; label.show()
-        label2 = gtk.Label(self.axis_key); label2.show()
-        vbox.pack_start(label)
-        vbox.pack_start(label2)
-        vbox.show()
-        return vbox
-
-
-
-class AxesTab(AbstractTab):
-
-    def construct_pwdict(self):
-        layer = self.layer
-        
-        xaxis = AxisTab(self.app, layer, 'x')
-        xaxis.show()
-        xframe = gtk.Frame("X-Axis")
-        xframe.add(xaxis)
-        xframe.show()
-        
-        yaxis = AxisTab(self.app, layer, 'y')
-        yaxis.show()
-        yframe = gtk.Frame("Y-Axis")
-        yframe.add(yaxis)
-        yframe.show()
-
-        # We abuse the pwdict attribute here.  Actually we should
-        # add only PW objects, but since pwdict is only needed
-        # to call 'check_in' and 'check_out', we can use AxisTab objects
-        # as well.
-        self.pwdict['xaxis'] = xaxis
-        self.pwdict['yaxis'] = yaxis
-
-        self.pack_start(xframe, True, True)
-        self.pack_start(yframe, True, True)
-
-
-class LinesTab(AbstractTab):
-
-    (COL_LINE,
-     COL_VISIBLE,
-     COL_LABEL,
-     COL_STYLE,
-     COL_MARKER,
-     COL_WIDTH,
-     COL_SOURCE_KEY,
-     COL_CX, COL_CY,
-     COL_ROW_FIRST, COL_ROW_LAST,
-     COL_CXERR, COL_CYERR) = range(13)
-    
-    def construct_pwdict(self):
-        layer = self.layer
-        lines = layer.lines
-
-        # construct an hbox with the line treeview on the left
-        # and a buttonbox to add/remove lines on the right.
-        hbox = gtk.HBox()
-        hbox.show()
-        
-        sw = self.construct_treeview()
-        sw.show()        
-        hbox.pack_start(sw, True, True)
-
-        # TODO: set up button box
-        bb = self.construct_btnbox()
-        bb.show()
-        hbox.pack_start(bb, False, True, padding=5)
-        
-        # put hbox in a nice frame
-        frame = gtk.Frame("Lines")
-        frame.show()
-        frame.add(hbox)
-
-        self.add(frame)
-        
-        self.check_in()
-
-    #--- GUI CONSTRUCTION -------------------------------------------------        
-
-    def construct_treeview(self):
-        tv = gtk.TreeView()
-        tv.set_headers_visible(True)
-        tv.get_selection().set_mode(gtk.SELECTION_MULTIPLE)
-
-        model = gtk.TreeStore(object, 'gboolean',str,str,str,str,str,str,str,str,str,str,str)
-        tv.set_model(model)
-
-        # self.COL_VISIBLE
-        cell = gtk.CellRendererToggle()
-        cell.set_property('activatable', True)
-        cell.connect("toggled", self._cb_toggled_bool,
-                     model, self.COL_VISIBLE)
-        column = gtk.TreeViewColumn('visible', cell)
-        column.set_attributes(cell, active=self.COL_VISIBLE)
-        tv.append_column(column)
-
-        # self.COL_LABEL
-        cell = gtk.CellRendererText()
-        cell.set_property('editable', True)
-        cell.connect('edited', self._cb_edited_text, 
-                     model, self.COL_LABEL, 'label')
-        column = gtk.TreeViewColumn('label', cell)
-        column.set_attributes(cell, text=self.COL_LABEL)
-        tv.append_column(column)
-
-        # self.COL_WIDTH
-        cell = gtk.CellRendererText()
-        cell.set_property('editable', True)
-        cell.connect('edited', self._cb_edited_text,
-                     model, self.COL_WIDTH, 'width')
-        column = gtk.TreeViewColumn('width', cell)
-        column.set_attributes(cell, text=self.COL_WIDTH)
-        tv.append_column(column)
-
-        # self.COL_STYLE
-        
-        # set up model with all available line styles
-        linestyle_model = gtk.ListStore(str)
-        value_list = [None] + objects.Line.style.valid_values()
-        for style in value_list:
-            linestyle_model.append( (style or "",) )
-
-        cell = gtk.CellRendererCombo()
-        cell.set_property('editable', True)
-        cell.connect('edited', self._cb_edited_source,
-                     model, self.COL_STYLE)
-        cell.set_property('text-column', 0)
-        cell.set_property('model', linestyle_model)
-        column = gtk.TreeViewColumn('style', cell)
-        column.set_attributes(cell, text=self.COL_STYLE)
-        tv.append_column(column)
-
-        # self.COL_MARKER
-
-        # set up model with all available markers
-        marker_model = gtk.ListStore(str)
-        value_list = [None] + objects.Line.marker.valid_values()
-        for marker in value_list:
-            marker_model.append( (marker or "",) )
-
-        cell = gtk.CellRendererCombo()
-        cell.set_property('editable', True)
-        cell.connect('edited', self._cb_edited_source,
-                     model, self.COL_MARKER)
-        cell.set_property('text-column', 0)
-        cell.set_property('model', marker_model)
-        column = gtk.TreeViewColumn('marker', cell)
-        column.set_attributes(cell, text=self.COL_MARKER)
-        tv.append_column(column)
-        
-        
-        # self.COL_SOURCE_KEY
-
-        # set up model with all available datasets
-        dataset_model = gtk.ListStore(str)        
-        def refresh_dataset_model(sender, project, model):
-            model.clear()
-            for ds in self.app.project.datasets:
-                model.append( (ds.key,) )
-        refresh_dataset_model(self, self.app.project, dataset_model)
-
-        self.app.project.sig_connect("notify::datasets", refresh_dataset_model,
-                                         self.app.project, dataset_model)
-        
-        cell = gtk.CellRendererCombo()
-        cell.set_property('editable', True)
-        cell.connect('edited', self._cb_edited_source,
-                     model, self.COL_SOURCE_KEY)
-        cell.set_property('text-column', 0)
-        cell.set_property('model', dataset_model)
-        column = gtk.TreeViewColumn('source', cell)
-        column.set_attributes(cell, text=self.COL_SOURCE_KEY)
-        tv.append_column(column)
-
-        # self.COL_CX
-        cell = gtk.CellRendererText()
-        cell.set_property('editable', True)
-        cell.connect('edited', self._cb_edited_text, 
-                     model, self.COL_CX, 'cx')
-        column = gtk.TreeViewColumn('cx', cell)
-        column.set_attributes(cell, text=self.COL_CX)
-        tv.append_column(column)
-
-        # self.COL_CY
-        cell = gtk.CellRendererText()
-        cell.set_property('editable', True)
-        cell.connect('edited', self._cb_edited_text, 
-                     model, self.COL_CY, 'cy')
-        column = gtk.TreeViewColumn('cy', cell)
-        column.set_attributes(cell, text=self.COL_CY)
-        tv.append_column(column)
-
-        # self.COL_ROW_FIRST
-        cell = gtk.CellRendererText()
-        cell.set_property('editable', True)
-        cell.connect('edited', self._cb_edited_text, 
-                     model, self.COL_ROW_FIRST, 'row_first')
-        column = gtk.TreeViewColumn('row_first', cell)
-        column.set_attributes(cell, text=self.COL_ROW_FIRST)
-        tv.append_column(column)
-
-        # self.COL_ROW_LAST
-        cell = gtk.CellRendererText()
-        cell.set_property('editable', True)
-        cell.connect('edited', self._cb_edited_text, 
-                     model, self.COL_ROW_LAST, 'row_last')
-        column = gtk.TreeViewColumn('row_last', cell)
-        column.set_attributes(cell, text=self.COL_ROW_LAST)
-        tv.append_column(column)
-
-
-        # error bars are not yet implemented, so I disabled the next two
-#         # self.COL_CXERR
-#         cell = gtk.CellRendererText()
-#         cell.set_property('editable', True)
-#         cell.connect('edited', self._cb_edited_text, 
-#                      model, self.COL_CXERR, 'cxerr')
-#         column = gtk.TreeViewColumn('cxerr', cell)
-#         column.set_attributes(cell, text=self.COL_CXERR)
-#         tv.append_column(column)
-
-#         # self.COL_CYERR
-#         cell = gtk.CellRendererText()
-#         cell.set_property('editable', True)
-#         cell.connect('edited', self._cb_edited_text, 
-#                      model, self.COL_CYERR, 'cyerr')
-#         column = gtk.TreeViewColumn('cyerr', cell)
-#         column.set_attributes(cell, text=self.COL_CYERR)
-#         tv.append_column(column)
-
-        # put treeview 'tv' in a scrolled window 'sw'
-        sw = gtk.ScrolledWindow()
-        sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-        sw.add(tv)
-        tv.show()        
-        sw.show()    
-
-        #
-        # Below the scrolled window, we add some boxes for group
-        # properties.
-        #
-        self.gblist = [GroupBox(self.layer, 'group_linestyle'),
-                       GroupBox(self.layer, 'group_linemarker'),
-                       GroupBox(self.layer, 'group_linewidth'),
-                        GroupBox(self.layer, 'group_linecolor')]
-
-        # TODO: we re-think the whole layerwin implementation before
-        # actually displaying the table with the group boxes.
-        for gb in self.gblist:
-            gb.show()
-        
-        # Wrap group boxes into a table
-        table = gtk.Table(rows=len(self.gblist), columns=3)
-
-#         n = 0
-#         for widget in gblist:
-#             label = gtk.Label(widget.propname)
-#             label.show()
+        # TODO:
+        # what about configuration tabs that contain several objects,
+        # e.g. the AxesTab? :-(
             
-#             table.attach(label, 0, 1, n, n+1,
-#                          xoptions=gtk.FILL,
-#                          yoptions=0,
-#                          xpadding=5,
-#                          ypadding=1)            
-#             table.attach(widget, 1, 2, n, n+1,
-#                          xoptions=gtk.EXPAND|gtk.FILL,
-#                          yoptions=0,
-#                          xpadding=5,
-#                          ypadding=1)
-#             n += 1
-#         table.show()
+   
         
-         
-#         frame = gtk.Frame('Grouped Properties')
-#         frame.add(table)
-#         frame.show()        
-
-        #
-        # Put everything in a vertical box...
-        #
-        vbox = gtk.VBox()
-        vbox.pack_start(sw, expand=True, fill=True)
-#         vbox.pack_start(frame, expand=False, fill=True)
-        vbox.show()
-
-        # for further reference        
-        self.widget = vbox
-        self.label = gtk.Label("None")
-        self.treeview = tv        
-        return vbox
-
-
-    def construct_btnbox(self):
-
-        box = gtk.VBox()
-
-        btn = gtk.Button("") ; btn.show()
-        image = gtk.image_new_from_stock(gtk.STOCK_ADD, gtk.ICON_SIZE_BUTTON)
-        btn.set_image(image)
-        box.pack_start(btn, False, True, 3)
-        btn.connect("clicked", self._cb_btn_add_clicked)
-
-        btn = gtk.Button("") ; btn.show()
-        image = gtk.image_new_from_stock(gtk.STOCK_REMOVE, gtk.ICON_SIZE_BUTTON)
-        btn.set_image(image)
-        btn.connect("clicked", self._cb_btn_remove_clicked)
-        
-        box.pack_start(btn, False, True, 3)
-        
-        return box
-    
-
-    #--- CHECK IN/CHECK OUT -----------------------------------------------    
-
-    def check_out(self, undolist=[]):
-
-        # TOOD: make sure we are finished with editing the treeview
-        
-        ul = UndoList().describe("Set Line Property")
-
-        model = self.treeview.get_model()
-        model_lines = []
-
-        def get_column(column, default=None):
-            """
-            Returns the value of the specified column from the model, or if
-            it is an empty string, returns the default value given.
-            """
-            rv = model.get_value(treeiter, column)
-            if isinstance(rv, basestring) and len(rv) == 0:
-                return default
-            else:
-                return rv
-        
-        n=0        
-        treeiter = model.get_iter_first()
-        while treeiter:
-            # Is this row an existing line or a new one?
-            line = model.get_value(treeiter, self.COL_LINE)
-            if line in self.layer.lines:
-                # existing line
-                source_key = model.get_value(treeiter, self.COL_SOURCE_KEY)
-                if not source_key:
-                    source = None
-                else:
-                    source = self.app.project.get_dataset(source_key, default=None)
-                        
-                uwrap.smart_set(line,
-                          'visible', get_column(self.COL_VISIBLE),
-                         'label', get_column(self.COL_LABEL),
-                         'style', get_column(self.COL_STYLE),
-                         'marker', get_column(self.COL_MARKER),
-                         'width', get_column(self.COL_WIDTH),
-                         'source', source,
-                         'cx', get_column(self.COL_CX),
-                         'cy', get_column(self.COL_CY),
-                         'row_first', get_column(self.COL_ROW_FIRST),
-                         'row_last', get_column(self.COL_ROW_LAST),
-                         'cxerr', get_column(self.COL_CXERR),
-                         'cyerr', get_column(self.COL_CYERR),
-                         undolist=ul)
-            else:
-                ulist.append( self.layer.lines, line, undolist=ul )
-
-            model_lines.append(line)
-            treeiter = model.iter_next(treeiter)
-            n+=1
-
-        # now we need to check if we have removed any lines
-        for line in self.layer.lines:
-            if line not in model_lines:
-                ulist.remove( self.layer.lines, line, undolist=ul)
-
-        # group boxes
-        for gb in self.gblist:
-            print "CHECKING OUT"
-            #gb.check_out()
-        
-        undolist.append(ul)
-
-            
-    def check_in(self):
-        model = self.treeview.get_model()
-        model.clear()
-
-        lines = self.layer.lines
-        for line in lines:            
-            model.append(None, self.model_row_from_line(line))
-
-        # group boxes
-        for gb in self.gblist:
-            gb.check_in()
-
-    def model_row_from_line(self, line):
-        source = line.source
-        if source is not None: source_key = source.key
-        else: source_key = ""
-        return [line,
-                line.visible,
-                line.label or "",
-                line.rget('style', ""),
-                line.rget('marker', ""),
-                line.rget('width', ""),
-                source_key,
-                str(line.rget('cx',"")),
-                str(line.rget('cy',"")),
-                str(line.rget('row_first',"")),
-                str(line.rget('row_last',"")),                
-                str(line.rget('cxerr',"")),
-                str(line.rget('cyerr',""))]
-
-
-    #----------------------------------------------------------------------
-    # GUI Callbacks
-    #
-
-    def _cb_edited_text(self, cell, path, new_text, model, column, prop_key):
-        # check if the new_text is appropriate for the property
-        prop = objects.Line().get_prop(prop_key)
-        try:
-            if new_text == "": new_text = None
-            new_text = prop.check(new_text)
-        except (TypeError, ValueError):
-            print "Invalid value"
-        else:
-            if new_text is None: new_text=""
-            model[path][column] = str(new_text)
-
-    def _cb_toggled_bool(self, cell, path, model, column):
-        model[path][column] = not model[path][column]
-        
-    def _cb_edited_source(self, cell, path, new_text, model, column):
-        model[path][column] = new_text
-
-    def _cb_btn_add_clicked(self, sender):        
-        selection = self.treeview.get_selection()
-        model, pathlist = selection.get_selected_rows()
-
-        if model is None:
-            model = self.treeview.get_model()
-            
-        if len(pathlist) > 0:
-            source_key = model.get_value(model.get_iter(pathlist[0]), self.COL_SOURCE_KEY)
-            source = self.app.project.get_dataset(source_key, default=None)
-        else:
-            source = None
-
-        new_line = objects.Line(source=source)
-        
-        iter = model.append(None, self.model_row_from_line(new_line))
-
-        selection.unselect_all()
-        selection.select_iter(iter)
-
-    def _cb_btn_remove_clicked(self, sender):
-        selection = self.treeview.get_selection()
-        model, pathlist = selection.get_selected_rows()
-
-        n = 0
-        for path in pathlist:
-            iter = model.get_iter((path[0] - n,))
-            model.remove(iter)
-            n += 1
-
-        
-
 
 
 class GroupBox(gtk.HBox, PWContainer):
@@ -832,17 +251,57 @@ class GroupBox(gtk.HBox, PWContainer):
 #
 
 
-class NewLegendTab(config.ConfigurationPage):
+class AbstractTab(config.ConfigurationPage):
+
+    def __init__(self, app):
+        config.ConfigurationPage.__init__(self)
+        self.app = app
+        self.clist = []
+        
+    def check_in(self):
+        for c in self.clist:
+            c.check_in()
+
+    def check_out(self, undolist=[]):
+        ul = UndoList().describe("Multiple actions")
+        for c in self.clist:
+            uwrap.smart_set(c.container, c.key, c.get_data(), undolist=ul)
+            c.check_out() # why not put in the undolist here?
+        undolist.append(ul)
+
+
+class NewLayerTab(AbstractTab):
+
+    title = "Layer"
+
+    def __init__(self, app, layer):
+        AbstractTab.__init__(self, app)        
+
+        keys = ['title', 'visible', 'grid']
+
+        clist = pwglade.smart_construct_connectors(layer, include=keys)
+        table = pwglade.construct_table(clist)
+        frame = uihelper.new_section("Layer", table)
+        self.add(frame)
+
+        self.clist = clist
+        self.layer = layer
+        self.show_all()        
+
+
+
+
+
+class NewLegendTab(AbstractTab):
 
     title = "Legend"
 
-    def __init__(self, app, layer):
-        config.ConfigurationPage.__init__(self)
-        self.app = app
-        self.layer = layer
+    def __init__(self, app, legend):
+        AbstractTab.__init__(self, app)
 
         keys = ['label', 'position', 'visible', 'border', 'x', 'y']
-        clist = pwglade.smart_construct_connectors(layer.legend, include=keys)
+        
+        clist = pwglade.smart_construct_connectors(legend, include=keys)
         table = pwglade.construct_table(clist)
         frame = uihelper.new_section("Legend", table)
         self.add(frame)
@@ -850,58 +309,33 @@ class NewLegendTab(config.ConfigurationPage):
         self.clist = clist
 
         self.show_all()
-        
-    def check_in(self):
-        for c in self.clist:
-            c.check_in()
-
-    def check_out(self):
-        for c in self.clist:
-            c.check_out()
-
-        # PROBLEM: No Undo here!
 
 
-class NewAxesTab(config.ConfigurationPage):
+
+class NewAxesTab(AbstractTab):
 
     title = "Axes"
     
-    def __init__(self, app, layer):
+    def __init__(self, app, axesdict):
         config.ConfigurationPage.__init__(self)
         self.app = app
-        self.layer = layer
 
         keys = ['label', 'start', 'end', 'scale', 'format']
-        
-        clist1 = pwglade.smart_construct_connectors(layer.xaxis, include=keys)
-        clist2 = pwglade.smart_construct_connectors(layer.yaxis, include=keys)
-        
-        table1 = pwglade.construct_table(clist1)
-        table2 = pwglade.construct_table(clist2)
-        
-        frame1 = uihelper.new_section("X-Axis", table1)
-        frame2 = uihelper.new_section("Y-Axis", table2)
-        
-        self.pack_start(frame1,False,True)
-        self.pack_start(frame2,False,True)
 
-        self.clist = clist1 + clist2
+        self.clist = []
+        for key, axis in axesdict.iteritems():
+            connectors = pwglade.smart_construct_connectors(axis, include=keys)
+            table = pwglade.construct_table(connectors)
+            frame = uihelper.new_section(key, table)
+            self.pack_start(frame, False, True)
+            self.clist += connectors
+
+        self.axesdict = axesdict
         self.show_all()
-        
-        
-    def check_in(self):
-        for c in self.clist:
-            c.check_in()
-
-    def check_out(self):
-        for c in self.clist:
-            c.check_out()
-
-        # PROBLEM: No Undo here!
 
 
 
-class NewLinesTab(config.ConfigurationPage):
+class NewLinesTab(AbstractTab):
 
     title = "Lines"
     
@@ -917,11 +351,10 @@ class NewLinesTab(config.ConfigurationPage):
      COL_CXERR, COL_CYERR) = range(13)
     
     def __init__(self, app, layer):
-        config.ConfigurationPage.__init__(self)        
-        self.app = app
+        AbstractTab.__init__(self, app)
         self.layer = layer
                 
-        lines = layer.lines
+        lines = layer.lines.copy()
 
         # Set up treeview
         sw = self.construct_treeview()
@@ -1172,6 +605,8 @@ class NewLinesTab(config.ConfigurationPage):
             
     def check_out(self, undolist=[]):
 
+        return # TODO TODO TODO TODO
+    
         # TOOD: make sure we are finished with editing the treeview
         
         ul = UndoList().describe("Set Line Property")
