@@ -46,39 +46,46 @@ class LayerWindow(gtk.Window):
     def __init__(self, app, plot, layer, current_page=None):
         gtk.Window.__init__(self, gtk.WINDOW_TOPLEVEL)
         self.set_default_size(550, 500)
+        self.set_title("[Edit Plot Layer]")
         
         self.plot = plot
         self.app = app
-        self.layer = layer
-
-        self.set_title("[Edit Plot Layer]")
-        
-        #
-        # init UI
-        #
-        
-        # list of tabs with a check_in/check_out method
-        self.tabdict = {}       
-        nb_main = gtk.Notebook() ; nb_main.show()        
-        nb_main.set_property('tab-pos', gtk.POS_LEFT)
-
+        self.layer = layer       
 
         #
-        # Populate Notebook with Tabs
-        #
+        # frame above notebook that holds the current tab name
+        #        
+        self.tab_label= gtk.Label()
+
+        label = self.tab_label
+        label.set_use_markup(True)
+        topframe = gtk.Frame()
+        topframe.add(label)
+
+        def on_switch_page(notebook, page, page_num, tab_label):
+            tab = notebook.get_nth_page(page_num)
+            text = "\n<big><b>%s</b></big>\n" % tab.title
+            tab_label.set_markup(text)
         
-        # --- NEW TAB MECHANISM ---
-            
+        #
+        # populate notebook with tabs
+        #
+        self.tabdict = {} # list of tabs with a check_in/check_out method
+        self.notebook = gtk.Notebook()
+
+        nb = self.notebook        
+        nb.set_property('tab-pos', gtk.POS_LEFT)
+        nb.connect("switch-page", on_switch_page, self.tab_label)
+        
         for tab in [NewLayerTab(app, layer),
                     NewLegendTab(app, layer.legend),
                     NewAxesTab(app, layer.axes)]:
                     #NewLinesTab(app, layer)]:
-            nb_main.append_page(tab)
-            nb_main.set_tab_label_text(tab, tab.title)
+            nb.append_page(tab)
+            nb.set_tab_label_text(tab, tab.title)
             tab.check_in()
-
             self.tabdict[tab.title] = tab
-            
+
 
         # if requested, set the page with the name `tab` as current page
         if current_page is not None:
@@ -86,55 +93,45 @@ class LayerWindow(gtk.Window):
                 index = self.tablabels.index(current_page)                
             except ValueError:
                 raise KeyError("There is no Tab with the label %s" % current_page)
-            nb_main.set_current_page(index)
-            
+            nb.set_current_page(index)        
 
+        
+        #
+        # button box
+        #
+        buttons=[(gtk.STOCK_REVERT_TO_SAVED, self.on_btn_revert),
+                 (gtk.STOCK_CANCEL, self.on_btn_cancel),
+                 (gtk.STOCK_APPLY, self.on_btn_apply),
+                 (gtk.STOCK_OK, self.on_btn_ok)]
+        
+        btnbox = uihelper.construct_hbuttonbox(buttons)
+        btnbox.set_spacing(uihelper.SECTION_SPACING)
+        btnbox.set_border_width(uihelper.SECTION_SPACING)
 
-        btnbox = self._construct_btnbox()
+        #
+        # put everything together
+        #
         separator = gtk.HSeparator()
              
         vbox = gtk.VBox()
-        vbox.pack_start(nb_main, True, True)
+        vbox.pack_start(topframe, False, True)
+        vbox.pack_start(nb, True, True)
         vbox.pack_start(separator, False, False, padding=4)
         vbox.pack_end(btnbox, False, False)
         self.add(vbox)
         self.show_all()
 
-        self.notebook = nb_main
+        self.notebook = nb
         
-    def _construct_btnbox(self):
-
-        buttons=[(gtk.STOCK_REVERT_TO_SAVED, self.cb_revert),
-                 (gtk.STOCK_CANCEL, self.cb_cancel),
-                 (gtk.STOCK_APPLY, self.cb_apply),
-                 (gtk.STOCK_OK, self.cb_ok)]
-        
-        btnbox = uihelper.construct_buttonbox(buttons, horizontal=True,
-                                              layout=gtk.BUTTONBOX_END)
-        btnbox.set_spacing(uihelper.SECTION_SPACING)
-        btnbox.set_border_width(uihelper.SECTION_SPACING)
-        
-        return btnbox
-
-
-    def cb_cancel(self, sender):
-        self.destroy()
-
-    def cb_revert(self, sender):
-        for tab in self.tabdict.itervalues():
-            tab.check_in()
-
-    def cb_apply(self, sender):
-        sender.grab_focus()
-        self.apply_changes()
-            
-    def cb_ok(self, sender):
-        sender.grab_focus()
-        self.apply_changes()
-        self.destroy()            
 
     def apply_changes(self):
+        """ Apply all changes in all tabs.
 
+        The method calls 'check_in' of every tab in the dialog's
+        notebook. The created undolists are unified into a single
+        undolist, which is appended to the project's journal.
+        """
+        
         ul = UndoList().describe("Edit Plot Properties")
 
         for tab in self.tabdict.itervalues():
@@ -150,18 +147,28 @@ class LayerWindow(gtk.Window):
             ul = NullUndo()
             
         self.app.project.journal.add_undo(ul)
-
         
-        #tab = self.tabdict['Legend']
-        #legend = self.layer.legend
-        #cs = legend.create_changeset(tab.container)
-        #print"LEGEND CHANGES = ", cs
+        
+    #----------------------------------------------------------------------
+    # Callbacks
+    #
 
-        # TODO:
-        # what about configuration tabs that contain several objects,
-        # e.g. the AxesTab? :-(
+    def on_btn_cancel(self, sender):
+        self.destroy()
+
+    def on_btn_revert(self, sender):
+        for tab in self.tabdict.itervalues():
+            tab.check_in()
+
+    def on_btn_apply(self, sender):
+        sender.grab_focus()
+        self.apply_changes()
             
-   
+    def on_btn_ok(self, sender):
+        sender.grab_focus()
+        self.apply_changes()
+        self.destroy()            
+
         
 
 
@@ -238,10 +245,10 @@ class GroupBox(gtk.HBox, PWContainer):
 #
 
 
-class AbstractTab(config.ConfigurationPage):
+class AbstractTab(gtk.VBox):
 
     def __init__(self, app):
-        config.ConfigurationPage.__init__(self)
+        gtk.VBox.__init__(self)
         self.app = app
         self.clist = []
         
@@ -304,8 +311,7 @@ class NewAxesTab(AbstractTab):
     title = "Axes"
     
     def __init__(self, app, axesdict):
-        config.ConfigurationPage.__init__(self)
-        self.app = app
+        AbstractTab.__init__(self, app)
 
         keys = ['label', 'start', 'end', 'scale', 'format']
 
@@ -351,9 +357,7 @@ class NewLinesTab(AbstractTab):
                  (gtk.STOCK_ADD, (lambda btn: self.on_btn_add_clicked)),
                  (gtk.STOCK_DELETE, (lambda btn: self.on_btn_delete_clicked))]
 
-        btnbox = uihelper.construct_buttonbox(buttons,
-                                              horizontal=False,
-                                              layout=gtk.BUTTONBOX_START)
+        btnbox = uihelper.construct_vbuttonbox(buttons)
         btnbox.set_spacing(uihelper.SECTION_SPACING)
         btnbox.set_border_width(uihelper.SECTION_SPACING)
 

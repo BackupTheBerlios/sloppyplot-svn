@@ -134,9 +134,7 @@ def setup_test_window(widget):
     return win
 
 
-def construct_buttonbox(buttons,
-                        horizontal=True,
-                        labels=True,
+def construct_buttonbox(buttons, horizontal=True, labels=True,
                         layout=gtk.BUTTONBOX_END):
     """
     Construct either a horizontal or a vertical button box.
@@ -172,6 +170,15 @@ def construct_buttonbox(buttons,
         btnbox.pack_end(button,False,False)
 
     return btnbox
+
+
+def construct_hbuttonbox(buttons, labels=True, layout=gtk.BUTTONBOX_END):
+    return construct_buttonbox(buttons, horizontal=True,
+                               labels=labels, layout=layout)
+
+def construct_vbuttonbox(buttons, labels=True, layout=gtk.BUTTONBOX_START):
+    return construct_buttonbox(buttons, horizontal=False,
+                               labels=labels, layout=layout)
 
 
 def new_section(frame_title, child):

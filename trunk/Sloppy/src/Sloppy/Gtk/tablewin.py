@@ -679,8 +679,7 @@ class ModifyTableDialog(gtk.Dialog):
                    (gtk.STOCK_GO_DOWN, self.on_btn_move_clicked, +1)
                    ]
 
-        btnbox = uihelper.construct_buttonbox(
-            buttons, horizontal=False, layout=gtk.BUTTONBOX_START)
+        btnbox = uihelper.construct_vbuttonbox(buttons)
         btnbox.set_spacing(uihelper.SECTION_SPACING)
         btnbox.set_border_width(uihelper.SECTION_SPACING)
                 

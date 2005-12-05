@@ -45,19 +45,47 @@ class ConfigurationDialog(gtk.Dialog):
                             gtk.DIALOG_MODAL|gtk.DIALOG_DESTROY_WITH_PARENT,
                             (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
                              gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
+        self.set_size_request(640,480)
 
-        nb = self.notebook = gtk.Notebook()
+        #
+        # frame above notebook that holds the current tab name
+        #
+        
+        self.tab_label= gtk.Label()
+
+        label = self.tab_label
+        label.set_use_markup(True)
+        topframe = gtk.Frame()
+        topframe.add(label)
+
+        def on_switch_page(notebook, page, page_num, tab_label):
+            tab = notebook.get_nth_page(page_num)
+            text = "\n<big><b>%s</b></big>\n" % tab.title
+            tab_label.set_markup(text)
+
+        #
+        # construct notebook
+        #
+        
+        self.notebook = gtk.Notebook()
+
+        nb = self.notebook
         nb.set_property('tab-pos', gtk.POS_LEFT)
-
-        # currently not available: InformationPage
+        nb.connect("switch-page", on_switch_page, self.tab_label)
+        
         for page in [ImportTemplatesPage()]:
             nb.append_page(page)
             nb.set_tab_label_text(page, page.title)
-            page.check_in()
-        
-        self.vbox.add(nb)        
-        self.set_size_request(640,480)
+            page.check_in()        
+
+
+        #
+        # put everything together
+        #
+        self.vbox.pack_start(topframe,False,True)
+        self.vbox.pack_start(nb,True,True)               
         self.show_all()
+
 
     def run(self):
         response = gtk.Dialog.run(self)
@@ -65,28 +93,6 @@ class ConfigurationDialog(gtk.Dialog):
             for page in self.notebook.get_children():
                 page.check_out()
         return response
-    
-
-class ConfigurationPage(gtk.VBox):
-
-    title = "<blank page>"
-    
-    def __init__(self):
-
-        gtk.VBox.__init__(self)
-
-        label = gtk.Label()
-        label.set_markup("\n<big><b>%s</b></big>\n" % self.title)
-        label.set_use_markup(True)
-
-        frame = gtk.Frame()
-        frame.add(label)
-        
-        self.pack_start(frame,False,True)
-    
-    def check_in(self): pass
-    def check_out(self): pass
-
 
 
 #------------------------------------------------------------------------------
@@ -97,12 +103,12 @@ class ConfigurationPage(gtk.VBox):
 
 
 
-class InformationPage(ConfigurationPage):
+class InformationPage(gtk.VBox):
 
     title = "Information"
 
     def __init__(self):
-        ConfigurationPage.__init__(self)
+        gtk.VBox.__init__(self)
 
         vbox = gtk.VBox()
         vbox.set_spacing(uihelper.SECTION_SPACING)
@@ -121,7 +127,7 @@ class InformationPage(ConfigurationPage):
 
         
 
-class ImportTemplatesPage(ConfigurationPage):
+class ImportTemplatesPage(gtk.VBox):
 
     title = "ASCII Import"
 
@@ -130,7 +136,7 @@ class ImportTemplatesPage(ConfigurationPage):
     (COLUMN_KEY, COLUMN_BLURB) = range(2)
     
     def __init__(self):
-        ConfigurationPage.__init__(self)
+        gtk.VBox.__init__(self)
     
         # We create copies of all templates and put these into the
         # treeview.  This allows the user to reject the modifications
@@ -180,9 +186,7 @@ class ImportTemplatesPage(ConfigurationPage):
                  (gtk.STOCK_COPY, self.on_copy_item),
                  (gtk.STOCK_DELETE, self.on_delete_item)]
 
-        btnbox = uihelper.construct_buttonbox(buttons,
-                                              horizontal=False,
-                                              layout=gtk.BUTTONBOX_START)
+        btnbox = uihelper.construct_vbuttonbox(buttons)
         btnbox.set_spacing(uihelper.SECTION_SPACING)
         btnbox.set_border_width(uihelper.SECTION_SPACING)
 
