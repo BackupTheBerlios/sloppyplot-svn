@@ -70,7 +70,7 @@ def smart_set(container, *args, **kwargs):
         if old_value != container.rget(key):
             olditems[key] = old_value
             changed_props.append(key)
-            print "Prop '%s' has changed from '%s' to '%s'." % (key, container.rget(key), old_value)
+            print "Prop '%s' has changed from '%s' to '%s'." % (key, old_value, container.get(key,default=None))
 
     arglist = list(args)
     while len(arglist) > 1:

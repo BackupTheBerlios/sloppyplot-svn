@@ -123,25 +123,37 @@ connectors = {}
     
 class Entry(Connector):
 
-    def create_widget(self):
-        entry = gtk.Entry()
+    def create_widget(self, use_checkbutton=False):
+        #
+        # create entry
+        #
+        self.entry = gtk.Entry()
 
-        checkbutton = gtk.CheckButton()
-        checkbutton.connect("toggled",\
-          (lambda sender: entry.set_sensitive(sender.get_active())))
-
-        widget = gtk.HBox()
-        widget.pack_start(entry,True,True)
-        widget.pack_start(checkbutton,False,True)
-        widget.show_all()
-        
+        entry = self.entry        
         entry.connect("focus-in-event", self.on_focus_in_event)
         entry.connect("focus-out-event", self.on_focus_out_event)
 
-        self.entry = entry
-        self.widget = widget
-        self.checkbutton = checkbutton
+        #
+        # create checkbutton if requested
+        #
+        if use_checkbutton is True:            
+            self.checkbutton = gtk.CheckButton()
+            self.checkbutton.connect("toggled",
+              (lambda sender: entry.set_sensitive(sender.get_active())))
+        else:
+            self.checkbutton = None
 
+        #
+        # pack everything together
+        #
+        self.widget = gtk.HBox()
+
+        widget = self.widget
+        widget.pack_start(entry,True,True)
+        if self.checkbutton is not None:
+            widget.pack_start(self.checkbutton,False,True)                    
+        widget.show_all()
+        
         
     def on_focus_in_event(self, widget, event):
         self.last_value = widget.get_text()
@@ -149,40 +161,50 @@ class Entry(Connector):
         
     def on_focus_out_event(self, widget, event):
         value = widget.get_text()
+        if value == self.last_value:
+            return
+        
         try:
             self.prop.check(value)
         except (TypeError, ValueError):
-            # TODO: user notice
-            print "Entry Value is wrong, resetting."
+            print "Entry Value is wrong, resetting." # TODO: user notice
             widget.set_text(self.last_value)
+            
 
     #----------------------------------------------------------------------
 
     def check_in(self):
         value = self.get_value()
 
+        if self.checkbutton is not None:
+            state = value is not None
+            self.checkbutton.set_active(state)
+            self.entry.set_sensitive(state)            
+        else:
+            if value is None:
+                value = ""
+            
         if value is not None:
             self.entry.set_text(value)
-            self.checkbutton.set_active(True)
-            self.entry.set_sensitive(True)
-        else:
-            self.checkbutton.set_active(False)
-            self.entry.set_sensitive(False)            
-
         self.last_value = value
 
 
     def get_data(self):
         value = self.entry.get_text()
-        is_active = self.checkbutton.get_active()
 
-        if is_active:
-            try:
-                return self.prop.check(self.entry.get_text())
-            except:
-                return None # TODO: what if the entry does not allow None?
+        if self.checkbutton is not None:
+            state = self.checkbutton.get_active()
+            if state is False:
+                return None
         else:
-            return None
+            if len(value) == 0:
+                return None
+            
+        try:                    
+            return self.prop.check(value)
+        except:
+            print "Entry Value is wrong, resetting." # TODO: user notice                    
+            return None # TODO: what if the entry does not allow None?                            
 
 
 connectors['Entry'] = Entry
@@ -250,7 +272,7 @@ class ComboBox(Connector):
             except:
                 raise ValueError("Connector for %s.%s failed to retrieve prop value '%s' in list of available values '%s'" % (self.container, self.key, self.get_value(), self.value_list))
 
-            model = self.widget.get_model()
+            model = self.combobox.get_model()
             iter = model.get_iter((index,))
             self.combobox.set_active_iter(iter)
 
