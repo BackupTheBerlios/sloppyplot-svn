@@ -29,7 +29,7 @@ from Sloppy.Base import pdict, uwrap
 from propwidgets import *
 
 
-import config, pwglade
+import config, pwglade, uihelper
 
 
 
@@ -103,31 +103,18 @@ class LayerWindow(gtk.Window):
         self.notebook = nb_main
         
     def _construct_btnbox(self):
-        box = gtk.HBox()
 
-        btn_cancel = gtk.Button(stock=gtk.STOCK_CANCEL)
-        btn_cancel.connect("clicked", self.cb_cancel)
-        btn_cancel.show()
+        buttons=[(gtk.STOCK_REVERT_TO_SAVED, self.cb_revert),
+                 (gtk.STOCK_CANCEL, self.cb_cancel),
+                 (gtk.STOCK_APPLY, self.cb_apply),
+                 (gtk.STOCK_OK, self.cb_ok)]
         
-        btn_revert = gtk.Button(stock=gtk.STOCK_REVERT_TO_SAVED)
-        btn_revert.connect("clicked", self.cb_revert)
-        btn_revert.show()
-
-        btn_apply = gtk.Button(stock=gtk.STOCK_APPLY)
-        btn_apply.connect("clicked", self.cb_apply)
-        btn_apply.show()        
-
-        btn_ok = gtk.Button(stock=gtk.STOCK_OK)
-        btn_ok.connect("clicked", self.cb_ok)
-        btn_ok.show()
-
-        box.pack_start(btn_revert, False, True)
+        btnbox = uihelper.construct_buttonbox(buttons, horizontal=True,
+                                              layout=gtk.BUTTONBOX_END)
+        btnbox.set_spacing(uihelper.SECTION_SPACING)
+        btnbox.set_border_width(uihelper.SECTION_SPACING)
         
-        box.pack_end(btn_ok, False, True, padding=2)
-        box.pack_end(btn_apply, False, True, padding=2)
-        box.pack_end(btn_cancel, False, True, padding=2)
-        
-        return box
+        return btnbox
 
 
     def cb_cancel(self, sender):
