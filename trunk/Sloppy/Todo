@@ -3,6 +3,10 @@ Next in queue:
 
   - lines tab: simply by double-clicking on a single line.
 
+  - pwconnect: move position of checkboxes to the left of the widget.
+    This looks better and is more consistent with the workflow, i.e. 
+    you start to click on the left and proceed to the right.
+
 
 
 FOR 0.5.2:
