@@ -1,4 +1,5 @@
 #!/bin/sh
 
 export PYTHONPATH=`pwd`/src
-echo $PYTHONPATH
+echo "python path set to $PYTHONPATH"
+
