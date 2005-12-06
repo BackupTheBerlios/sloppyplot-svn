@@ -166,8 +166,13 @@ def construct_buttonbox(buttons, horizontal=True, labels=True,
 
         button.show()
 
-        button.connect('clicked', callback, *args)
+        if callback is not None:
+            button.connect('clicked', callback, *args)
         btnbox.pack_end(button,False,False)
+
+    global SECTION_SPACING
+    btnbox.set_spacing(SECTION_SPACING)
+    btnbox.set_border_width(SECTION_SPACING)
 
     return btnbox
 

@@ -79,7 +79,8 @@ class LayerWindow(gtk.Window):
         
         for tab in [NewLayerTab(app, layer),
                     NewLegendTab(app, layer.legend),
-                    NewAxesTab(app, layer.axes)]:
+                    NewAxesTab(app, layer.axes),
+                    LineTab(app, layer)]:
                     #NewLinesTab(app, layer)]:
             nb.append_page(tab)
             nb.set_tab_label_text(tab, tab.title)
@@ -105,8 +106,6 @@ class LayerWindow(gtk.Window):
                  (gtk.STOCK_OK, self.on_btn_ok)]
         
         btnbox = uihelper.construct_hbuttonbox(buttons)
-        btnbox.set_spacing(uihelper.SECTION_SPACING)
-        btnbox.set_border_width(uihelper.SECTION_SPACING)
 
         #
         # put everything together
@@ -327,10 +326,65 @@ class NewAxesTab(AbstractTab):
         self.show_all()
 
 
+# TODO:
+#
+# Create a new Treeview that holds generic objects,
+# for now Label, Line, ...
+# These objects might be grouped, but for now a flat list
+# should be sufficient.
+#
+# Double-clicking will open an edit window for that object.
+# The button box on the right should contain the standard
+# elements (edit,add,remove) as well as (move up, move down),
+# because order is important.
+#
 
-class NewLinesTab(AbstractTab):
+#
+# I could generalize the concept of a 'Drawing Element',
+# so that it would be possible to define new drawing elements
+# in a plugin.
+#
+#
+
+
+class LineTab(AbstractTab):
 
     title = "Lines"
+
+    def __init__(self, app, layer):
+        AbstractTab.__init__(self, app)
+
+        self.layer = layer
+
+        self.treeview = ObjectTreeView()
+
+        tv = self.treeview
+
+        buttons = [(gtk.STOCK_EDIT, None),
+                   (gtk.STOCK_ADD, None),
+                   (gtk.STOCK_REMOVE, None),
+                   (gtk.STOCK_GO_UP, None),
+                   (gtk.STOCK_GO_DOWN, None)]
+        btnbox = uihelper.construct_vbuttonbox(buttons)        
+
+        hbox = gtk.HBox()
+        hbox.pack_start(tv,True,True)
+        hbox.pack_start(btnbox,False,True)
+
+        self.add(hbox)
+        self.show_all()
+        
+
+class ObjectTreeView(gtk.TreeView):
+
+    def __init__(self):
+        gtk.TreeView.__init__(self)
+        
+        
+        
+class NewLinesTab(AbstractTab):
+
+    title = "Lines (old)"
     
     (COL_LINE,
      COL_VISIBLE,
@@ -358,8 +412,6 @@ class NewLinesTab(AbstractTab):
                  (gtk.STOCK_DELETE, (lambda btn: self.on_btn_delete_clicked))]
 
         btnbox = uihelper.construct_vbuttonbox(buttons)
-        btnbox.set_spacing(uihelper.SECTION_SPACING)
-        btnbox.set_border_width(uihelper.SECTION_SPACING)
 
         # Construct an hbox with the line treeview on the left
         # and a buttonbox to add/remove lines on the right.
