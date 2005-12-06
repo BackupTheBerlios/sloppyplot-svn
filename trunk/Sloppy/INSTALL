@@ -6,6 +6,8 @@ INSTALLATION HINTS
 2. Generic Installation Instructions
 3. Post Installation Instructions 
 4. Slackware Installation Instructions
+5. Testing Without Prior Installation
+
 
 ------------------------------------------------------------------------------
 
@@ -86,3 +88,35 @@ $ ./sloppyplot.build
 
 A slackware compatible package is built which you install using
 the standard 'installpkg' command.
+
+
+
+5. Testing Without Prior Installation
+=====================================
+
+SloppyPlot is still under construction.
+
+If you would like to test the application without installing it, then
+first make sure that you have the requirements installed as explained
+above in this document.
+
+Then in this directory type
+
+  $ source adjust_path.sh
+
+This will set your $PYTHONPATH variable to the source path, so that
+'import Sloppy' will import the module from this directory.  So there
+is no need to install SloppyPlot!
+
+Then execute the program by typing
+
+  $ cd src
+  $ python sloppyplot
+
+
+Have fun!
+
+Feedback is very welcome!
+
+
+
