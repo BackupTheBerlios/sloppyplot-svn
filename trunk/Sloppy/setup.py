@@ -88,10 +88,11 @@ setup(name=NAME,
       data_files = [
         # example files
         (join(PATH_SLOPPYSHARE,'Examples'),
-	glob(join("Examples","*.spj"))),
+	glob(join("data","examples","*.spj"))),
+
 	# example data
         (join(PATH_SLOPPYSHARE,'Examples','Data'),
-         glob(join("Examples","Data","*.dat"))),
+         glob(join("data","examples","Data","*.dat"))),
 	#
 
 	# pixmaps (=icons used within the application)
@@ -100,27 +101,34 @@ setup(name=NAME,
 	##glob(join("src", "Sloppy", "Gtk", "Icons", "*.png"))),
         
 	# icons for the application sloppyplot
-	(join(PATH_SHARE, 'icons', 'hicolor', '24x24', 'apps'), 
-	[join("Icons", "hicolor", "24x24", "apps", "sloppyplot.png")]),
+	(join(PATH_SHARE, 'icons' 'hicolor', '24x24', 'apps'), 
+	[join("data", "ions", "hicolor", "24x24", "apps", "sloppyplot.png")]),
+        
 	(join(PATH_SHARE, 'icons', 'hicolor', '48x48', 'apps'), 
-	[join("Icons", "hicolor", "48x48", "apps", "sloppyplot.png")]),
+	[join("data", "icons", "hicolor", "48x48", "apps", "sloppyplot.png")]),
+        
 	(join(PATH_SHARE, 'icons', 'hicolor', 'scalable', 'apps'), 
-	[join("Icons", "hicolor", "scalable", "apps", "sloppyplot.svg")]),
+	[join("data", "icons", "hicolor", "scalable", "apps", "sloppyplot.svg")]),
+
+        
 	# mime icons (=icons used for .spj files)
 	(join(PATH_SHARE, 'icons', 'hicolor', '24x24', 'mimetypes'), 
-	[join("Icons", "hicolor", "24x24", "mimetypes", "application-x-sloppyplot.png"),
-	 join("Icons", "hicolor", "24x24", "mimetypes", "gnome-mime-application-x-sloppyplot.png")]),
+	[join("data", "icons", "hicolor", "24x24", "mimetypes", "application-x-sloppyplot.png"),         
+	 join("data", "icons", "hicolor", "24x24", "mimetypes", "gnome-mime-application-x-sloppyplot.png")]),
+        
 	(join(PATH_SHARE, 'icons', 'hicolor', '48x48', 'mimetypes'), 
-	[join("Icons", "hicolor", "48x48", "mimetypes", "application-x-sloppyplot.png"),
-	 join("Icons", "hicolor", "48x48", "mimetypes", "gnome-mime-application-x-sloppyplot.png"),]),
+	[join("data", "icons", "hicolor", "48x48", "mimetypes", "application-x-sloppyplot.png"),
+	 join("data", "icons", "hicolor", "48x48", "mimetypes", "gnome-mime-application-x-sloppyplot.png"),]),
+        
 	(join(PATH_SHARE, 'icons', 'hicolor', 'scalable', 'mimetypes'),
-	[join("Icons", "hicolor", "scalable", "mimetypes", "application-x-sloppyplot.svg"),
-	 join("Icons", "hicolor", "scalable", "mimetypes", "gnome-mime-application-x-sloppyplot.svg")]),
+	[join("data", "icons", "hicolor", "scalable", "mimetypes", "application-x-sloppyplot.svg"),
+	 join("data", "icons", "hicolor", "scalable", "mimetypes", "gnome-mime-application-x-sloppyplot.svg")]),
+
 	# mime info and .desktop info
 	(join(PATH_SHARE, 'mime', 'packages'),
-	['sloppyplot.xml']),
+	[join('data', 'desktop-integration', 'sloppyplot.xml')]),
 	(join(PATH_SHARE, 'applications'),
-	['sloppyplot.desktop'])
+	[join('data', 'desktop-integration', 'sloppyplot.desktop')])
 	],
 	
       scripts = [ join('src', 'sloppyplot') ],
