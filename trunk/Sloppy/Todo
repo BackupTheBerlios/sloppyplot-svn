@@ -8,7 +8,28 @@ Next in queue:
     you start to click on the left and proceed to the right.
 
 
+-----
+ASCII Import:
 
+- If we always read the header, then the header could leave the file 
+  descriptor at the first non-comment line?  There would be no need for
+  a tell or seek.
+
+- throw away trailing and leading whitespaces: string.strip(line)
+  where string is a module
+
+- another way to split up strings: separator.separate(line)
+  where separator is the separator
+
+- allow None items?
+  if null.count(string.strip(item)) > 0:
+     collist[index].add_element(None)
+
+- determine type: is int? is float? if neither, then assume string
+
+- super(ThisClass, self).__init__(args)  (without self)
+
+- 
 FOR 0.5.2:
 ==========
 
