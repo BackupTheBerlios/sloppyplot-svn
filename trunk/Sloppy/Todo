@@ -7,6 +7,8 @@ Next in queue:
     This looks better and is more consistent with the workflow, i.e. 
     you start to click on the left and proceed to the right.
 
+  - file format: try to switch to zip -- maybe create a test file
+    before with a lot of data...
 
 -----
 ASCII Import:

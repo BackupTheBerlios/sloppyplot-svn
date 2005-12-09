@@ -326,6 +326,47 @@ class NewAxesTab(AbstractTab):
         self.show_all()
 
 
+
+class LineTab(AbstractTab):
+
+    title = "Lines"
+
+    def __init__(self, app, layer):
+        AbstractTab.__init__(self, app)
+
+        self.layer = layer
+        self.treeview = ObjectTreeView()
+
+        tv = self.treeview
+        model = self.treeview.get_model()
+        for line in layer.lines:
+            item = (gtk.STOCK_EDIT, line, 'a line')
+            model.append(None, item)        
+                    
+        #treeview.connect( "button-press-event", self._cb_button_pressed )
+        #treeview.connect( "popup-menu", self.popup_menu, 3, 0 )
+
+        tv.connect("row-activated", self.on_row_activated)
+        
+        buttons = [(gtk.STOCK_EDIT, None),
+                   (gtk.STOCK_ADD, None),
+                   (gtk.STOCK_REMOVE, None),
+                   (gtk.STOCK_GO_UP, None),
+                   (gtk.STOCK_GO_DOWN, None)]
+        btnbox = uihelper.construct_vbuttonbox(buttons)        
+
+        hbox = gtk.HBox()
+        hbox.pack_start(tv,True,True)
+        hbox.pack_start(btnbox,False,True)
+
+        self.add(hbox)
+        self.show_all()
+
+
+    def on_row_activated(self, widget, *udata):
+        print "ACTIVATED"
+        
+
 # TODO:
 #
 # Create a new Treeview that holds generic objects,
@@ -344,43 +385,25 @@ class NewAxesTab(AbstractTab):
 # so that it would be possible to define new drawing elements
 # in a plugin.
 #
-#
-
-
-class LineTab(AbstractTab):
-
-    title = "Lines"
-
-    def __init__(self, app, layer):
-        AbstractTab.__init__(self, app)
-
-        self.layer = layer
-
-        self.treeview = ObjectTreeView()
-
-        tv = self.treeview
-
-        buttons = [(gtk.STOCK_EDIT, None),
-                   (gtk.STOCK_ADD, None),
-                   (gtk.STOCK_REMOVE, None),
-                   (gtk.STOCK_GO_UP, None),
-                   (gtk.STOCK_GO_DOWN, None)]
-        btnbox = uihelper.construct_vbuttonbox(buttons)        
-
-        hbox = gtk.HBox()
-        hbox.pack_start(tv,True,True)
-        hbox.pack_start(btnbox,False,True)
-
-        self.add(hbox)
-        self.show_all()
-        
 
 class ObjectTreeView(gtk.TreeView):
 
     def __init__(self):
-        gtk.TreeView.__init__(self)
+
+        # model: (id of stock bitmap, object, description)
+        model = gtk.TreeStore(str, object, str)
+        gtk.TreeView.__init__(self, model)
+
+
+        cell = gtk.CellRendererText()
+        column = gtk.TreeViewColumn()
+        column.pack_start(cell)
+        column.set_attributes(cell, text=2)
+        self.append_column(column)
         
         
+
+
         
 class NewLinesTab(AbstractTab):
 
