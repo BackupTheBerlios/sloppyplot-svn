@@ -340,7 +340,7 @@ class LineTab(AbstractTab):
         tv = self.treeview
         model = self.treeview.get_model()
         for line in layer.lines:
-            item = (gtk.STOCK_EDIT, line, 'a line')
+            item = (line, True, line.label)
             model.append(None, item)        
                     
         #treeview.connect( "button-press-event", self._cb_button_pressed )
@@ -365,41 +365,68 @@ class LineTab(AbstractTab):
 
     def on_row_activated(self, widget, *udata):
         print "ACTIVATED"
-        
+       
 
-# TODO:
-#
-# Create a new Treeview that holds generic objects,
-# for now Label, Line, ...
-# These objects might be grouped, but for now a flat list
-# should be sufficient.
-#
-# Double-clicking will open an edit window for that object.
-# The button box on the right should contain the standard
-# elements (edit,add,remove) as well as (move up, move down),
-# because order is important.
-#
-
-#
-# I could generalize the concept of a 'Drawing Element',
-# so that it would be possible to define new drawing elements
-# in a plugin.
-#
 
 class ObjectTreeView(gtk.TreeView):
 
+    (MODEL_OBJECT,
+     MODEL_VISIBLE,     
+     MODEL_LABEL
+     ) = range(3)
+
+    (COLUMN_VISIBLE,
+     COLUMN_LABEL
+     ) = range(2)
+
+
+    """
+
+    object, visible, description?
+
+    double-clicking will open up an edit window.
+
+    _OR_
+
+    edit window to the right/bottom, contains elements
+    to modify the element and on each change of element
+    we have to check in these values.  PROBLEM: We would
+    need to check the values into the treeview, not into
+    the connector.
+    
+    """
+    
     def __init__(self):
 
-        # model: (id of stock bitmap, object, description)
-        model = gtk.TreeStore(str, object, str)
+        # model: see MODEL_XXX
+        model = gtk.TreeStore(object, bool, str)
         gtk.TreeView.__init__(self, model)
 
+        # COLUMN_VISIBLE
+        column = gtk.TreeViewColumn('visible')
+
+        cell = gtk.CellRendererToggle()
+        cell.set_property('activatable', True)
+        #cell.connect("toggled", self._cb_toggled_bool,
+        #             model, self.COL_VISIBLE)
+
+        column.pack_start(cell)        
+        column.set_attributes(cell, active=self.MODEL_VISIBLE)
+        self.append_column(column)
+        
+        
+        # COLUMN_LABEL
+        column = gtk.TreeViewColumn()
 
         cell = gtk.CellRendererText()
-        column = gtk.TreeViewColumn()
+        #cell.set_property('editable', False)
+        #cell.connect('edited', self.on_key_edited)                
         column.pack_start(cell)
-        column.set_attributes(cell, text=2)
+       
+        column.set_attributes(cell, text=self.MODEL_LABEL)        
         self.append_column(column)
+
+
         
         
 
@@ -457,23 +484,23 @@ class NewLinesTab(AbstractTab):
         model = gtk.TreeStore(object, 'gboolean',str,str,str,str,str,str,str,str,str,str,str)
         tv.set_model(model)
 
-        # self.COL_VISIBLE
-        cell = gtk.CellRendererToggle()
-        cell.set_property('activatable', True)
-        cell.connect("toggled", self._cb_toggled_bool,
-                     model, self.COL_VISIBLE)
-        column = gtk.TreeViewColumn('visible', cell)
-        column.set_attributes(cell, active=self.COL_VISIBLE)
-        tv.append_column(column)
+        ### self.COL_VISIBLE
+        ##cell = gtk.CellRendererToggle()
+        ##cell.set_property('activatable', True)
+        ##cell.connect("toggled", self._cb_toggled_bool,
+        ##             model, self.COL_VISIBLE)
+        ##column = gtk.TreeViewColumn('visible', cell)
+        ##column.set_attributes(cell, active=self.COL_VISIBLE)
+        ##tv.append_column(column)
 
-        # self.COL_LABEL
-        cell = gtk.CellRendererText()
-        cell.set_property('editable', True)
-        cell.connect('edited', self._cb_edited_text, 
-                     model, self.COL_LABEL, 'label')
-        column = gtk.TreeViewColumn('label', cell)
-        column.set_attributes(cell, text=self.COL_LABEL)
-        tv.append_column(column)
+        ### self.COL_LABEL
+        ##cell = gtk.CellRendererText()
+        ##cell.set_property('editable', True)
+        ##cell.connect('edited', self._cb_edited_text, 
+        ##             model, self.COL_LABEL, 'label')
+        ##column = gtk.TreeViewColumn('label', cell)
+        ##column.set_attributes(cell, text=self.COL_LABEL)
+        ##tv.append_column(column)
 
         # self.COL_WIDTH
         cell = gtk.CellRendererText()
