@@ -208,16 +208,19 @@ class Layer(HasProps, HasSignals):
 
     gLineMarker = create_group(Line.marker)
     group_linemarker = Prop(CheckType(gLineMarker),
-                            reset=gLineMarker(type=GROUP_TYPE_FIXED))
+                            reset=gLineMarker(type=GROUP_TYPE_FIXED),
+                            blurb="Line Marker")
 
     gLineWidth = create_group(Line.width)
     group_linewidth = Prop(CheckType(gLineWidth),
-                           reset=gLineWidth(type=GROUP_TYPE_FIXED))
+                           reset=gLineWidth(type=GROUP_TYPE_FIXED),
+                           blurb="Line Width")
 
     gLineColor = create_group(Line.color)
     group_linecolor = Prop(CheckType(gLineColor),
                            reset=gLineColor(type=GROUP_TYPE_CYCLE,
-                                            cycle_list=['g','b','r']))
+                                            cycle_list=['g','b','r']),
+                           blurb="Line Color")
     #
     
 

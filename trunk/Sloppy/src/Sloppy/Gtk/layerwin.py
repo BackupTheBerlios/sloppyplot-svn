@@ -26,10 +26,7 @@ from Sloppy.Lib.Undo import UndoList, UndoInfo, NullUndo, ulist
 from Sloppy.Base import objects
 from Sloppy.Base import pdict, uwrap
 
-from propwidgets import *
-
-
-import config, pwglade, uihelper
+import config, pwglade, pwconnect, uihelper
 
 
 
@@ -77,11 +74,10 @@ class LayerWindow(gtk.Window):
         nb.set_property('tab-pos', gtk.POS_LEFT)
         nb.connect("switch-page", on_switch_page, self.tab_label)
         
-        for tab in [NewLayerTab(app, layer),
-                    NewLegendTab(app, layer.legend),
-                    NewAxesTab(app, layer.axes),
+        for tab in [LayerTab(app, layer),
+                    AxesTab(app, layer.axes),
+                    LegendTab(app, layer.legend),                    
                     LineTab(app, layer)]:
-                    #NewLinesTab(app, layer)]:
             nb.append_page(tab)
             nb.set_tab_label_text(tab, tab.title)
             tab.check_in()
@@ -171,7 +167,7 @@ class LayerWindow(gtk.Window):
         
 
 
-class GroupBox(gtk.HBox, PWContainer):
+class GroupBox(gtk.HBox):
 
     """    
     A group of widgets for so called 'Group' properties.
@@ -185,55 +181,35 @@ class GroupBox(gtk.HBox, PWContainer):
         self.layer = layer
         self.propname = propname        
         self.prop = layer.get_prop(propname)
+        self.group = layer.get_value(propname)
         
-        #
         # create widgets and put them into a horizontal box
-        #
-
-        # combo box
-        liststore = gtk.ListStore(str, int)
-        cbox_type = gtk.ComboBox(liststore)
-        cell = gtk.CellRendererText()
-        cbox_type.pack_start(cell, True)
-        cbox_type.add_attribute(cell, 'text', 0)
-        cbox_type.show()
-
-        # populate combo box
-        map_group_type = {'cycle value': objects.GROUP_TYPE_CYCLE,
-                          'fixed value': objects.GROUP_TYPE_FIXED,
-                          'increment value': objects.GROUP_TYPE_INCREMENT}
-        for k,v in map_group_type.iteritems():
-            liststore.append( (k,v) )
-
-        # entries
-        entry_value = gtk.Entry()
-        #entry_value.show()
-
-        entry_increment = gtk.Entry()
-        entry_increment.show()
 
         # check button
-        cbutton_allow_override = gtk.CheckButton("allow override")
-        cbutton_allow_override.show()
+        self.clist = [\
+            pwconnect.ComboBox(self.group, 'type'),
+            pwconnect.Entry(self.group, 'value'),
+            pwconnect.Entry(self.group, 'increment'),
+            pwconnect.CheckButton(self.group,'allow_override')
+            # TODO: cycle_list
+            ]
 
 
-        self.add(cbox_type)
-        self.add(entry_value)
-        self.add(entry_increment)
-        self.add(cbutton_allow_override)
-        self.show()
-
-        PWContainer.__init__(self)
+        for connector in self.clist:
+            connector.create_widget()
+            self.pack_start(connector.widget,False,True)
+            
+        self.show_all()
+    
         
-    def check_in(self):
+    def check_in(self):        
+        for container in self.clist:
+            container.check_in()
+        
+    def check_out(self, undolist=[]):
         pass
-        #allow_override = self.prop.allow_override
-        #cbutton_allow_override.set_active(allow_override)
-
-    def check_out(self):
-        pass
-        #allow_override = cbutton_allow_override.get_active()
-        #self.prop.allow_override = allow_override
+        #for container in self.clist:
+        #    container.check_out(undolist=undolist)
         
     
 
@@ -263,7 +239,7 @@ class AbstractTab(gtk.VBox):
         undolist.append(ul)
 
 
-class NewLayerTab(AbstractTab):
+class LayerTab(AbstractTab):
 
     title = "Layer"
 
@@ -283,9 +259,7 @@ class NewLayerTab(AbstractTab):
 
 
 
-
-
-class NewLegendTab(AbstractTab):
+class LegendTab(AbstractTab):
 
     title = "Legend"
 
@@ -305,7 +279,7 @@ class NewLegendTab(AbstractTab):
 
 
 
-class NewAxesTab(AbstractTab):
+class AxesTab(AbstractTab):
 
     title = "Axes"
     
@@ -333,10 +307,14 @@ class LineTab(AbstractTab):
 
     def __init__(self, app, layer):
         AbstractTab.__init__(self, app)
-
         self.layer = layer
+
+        #
+        # Construct TreeView and ButtonBox
+        #
         self.treeview = LinesTreeView(app, layer)
-                
+        sw = uihelper.add_scrollbars(self.treeview)
+        
         buttons = [
             (gtk.STOCK_ADD, (lambda sender: self.treeview.insert_new())),
             (gtk.STOCK_REMOVE, (lambda sender: self.treeview.remove_selection())),
@@ -346,10 +324,47 @@ class LineTab(AbstractTab):
         self.buttonbox = uihelper.construct_vbuttonbox(buttons, labels=False)
 
         hbox = gtk.HBox()
-        hbox.pack_start(self.treeview, True, True)
+        hbox.pack_start(sw, True, True)
         hbox.pack_start(self.buttonbox, False, True)
 
-        self.add(hbox)
+        frame1 = uihelper.new_section('Lines', hbox)
+        
+        #
+        # Construct Group Boxes
+        #
+        self.gblist = [GroupBox(self.layer, 'group_linestyle'),
+                       GroupBox(self.layer, 'group_linemarker'),
+                       GroupBox(self.layer, 'group_linewidth'),
+                       GroupBox(self.layer, 'group_linecolor')]
+
+        # Wrap group boxes into a table       
+        table = gtk.Table(rows=len(self.gblist), columns=3)
+
+        n = 0
+        for widget in self.gblist:
+            # label (put into an event box to display the tooltip)
+            label = gtk.Label(widget.prop.blurb or widget.propname)
+            ebox = gtk.EventBox()
+            ebox.add(label)
+            if widget.prop.doc is not None:
+                tooltips.set_tip(ebox, widget.prop.doc)
+            
+            table.attach(ebox, 0, 1, n, n+1,
+                         xoptions=gtk.FILL, yoptions=0,
+                         xpadding=5, ypadding=1)            
+            table.attach(widget, 1, 2, n, n+1,
+                         xoptions=gtk.EXPAND|gtk.FILL, yoptions=0,
+                         xpadding=5, ypadding=1)
+            n += 1       
+
+        frame2 = uihelper.new_section('Group Properties', table)
+
+        #
+        # Put everythng together!
+        #
+        self.pack_start(frame1,True,True)
+        self.pack_start(frame2,False,True)
+
         self.show_all()
 
 
@@ -359,12 +374,18 @@ class LineTab(AbstractTab):
     def check_in(self):
         self.treeview.check_in()
 
+        for gb in self.gblist:
+            gb.check_in()
+
             
     def check_out(self, undolist=[]):
-
         # TOOD: make sure we are finished with editing the treeview
+        
         self.treeview.check_out(undolist=undolist)
 
+        for gb in self.gblist:
+            gb.check_out(undolist=undolist)
+        
 
 
         
@@ -592,9 +613,6 @@ class LinesTreeView(gtk.TreeView):
         for line in self.lines:
             model.append(None, self.model_row_from_line(line))
 
-        ## group boxes
-        #for gb in self.gblist:
-        #    gb.check_in()
 
     def check_out(self, undolist=[]):        
 
@@ -649,11 +667,6 @@ class LinesTreeView(gtk.TreeView):
 
         if self.layer.lines != new_list:
             uwrap.set(self.layer, lines=new_list, undolist=ul)
-        
-        ## group boxes
-        #for gb in self.gblist:
-        #    print "CHECKING OUT"
-        #    #gb.check_out()
         
         undolist.append(ul)
         
@@ -756,56 +769,7 @@ class LinesTreeView(gtk.TreeView):
             model.swap(iter, second_iter)
             self.grab_focus()
         
-            
         
-
-
-
-
-
-
-
-
-        
-#         #
-#         # Below the scrolled window, we add some boxes for group
-#         # properties.
-#         #
-#         self.gblist = [GroupBox(self.layer, 'group_linestyle'),
-#                        GroupBox(self.layer, 'group_linemarker'),
-#                        GroupBox(self.layer, 'group_linewidth'),
-#                         GroupBox(self.layer, 'group_linecolor')]
-
-#         # TODO: we re-think the whole layerwin implementation before
-#         # actually displaying the table with the group boxes.
-#         for gb in self.gblist:
-#             gb.show()
-        
-#         # Wrap group boxes into a table
-#         table = gtk.Table(rows=len(self.gblist), columns=3)
-
-#         n = 0
-#         for widget in gblist:
-#             label = gtk.Label(widget.propname)
-#             label.show()
-            
-#             table.attach(label, 0, 1, n, n+1,
-#                          xoptions=gtk.FILL,
-#                          yoptions=0,
-#                          xpadding=5,
-#                          ypadding=1)            
-#             table.attach(widget, 1, 2, n, n+1,
-#                          xoptions=gtk.EXPAND|gtk.FILL,
-#                          yoptions=0,
-#                          xpadding=5,
-#                          ypadding=1)
-#             n += 1
-#         table.show()
-        
-         
-#         frame = gtk.Frame('Grouped Properties')
-#         frame.add(table)
-#         frame.show()        
 
 
 
