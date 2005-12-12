@@ -102,7 +102,7 @@ setup(name=NAME,
         
 	# icons for the application sloppyplot
 	(join(PATH_SHARE, 'icons' 'hicolor', '24x24', 'apps'), 
-	[join("data", "ions", "hicolor", "24x24", "apps", "sloppyplot.png")]),
+	[join("data", "icons", "hicolor", "24x24", "apps", "sloppyplot.png")]),
         
 	(join(PATH_SHARE, 'icons', 'hicolor', '48x48', 'apps'), 
 	[join("data", "icons", "hicolor", "48x48", "apps", "sloppyplot.png")]),
