@@ -313,9 +313,7 @@ def toElement(project):
                     else:
                         logger.warn("Invalid line source. Skipped source.")
                 
-                SIV(eLine, 'width', line.rget('width'))
-
-                attrs = line.get_values(['width','label','style','marker','visible', 'cx','cy','row_first','row_last','cxerr','cyerr'],default=None)
+                attrs = line.get_values(['width','label','style','marker','visible', 'cx','cy','row_first','row_last','cxerr','cyerr','color','marker_color'],default=None)
                 iohelper.set_attributes(eLine, attrs)
 
             # layer.labels

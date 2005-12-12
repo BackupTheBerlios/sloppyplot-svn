@@ -343,13 +343,17 @@ class Backend( backend.Backend ):
         color = self.get_group_value(line, 'color',
                                       layer.group_linecolor, line_index)
 
+        #:line.marker_color
+        marker_color = line.marker_color
 
         #--- PLOT LINE ---
         l, = axes.plot( xdata, ydata,
                         linewidth=width,
                         linestyle=style,
                         marker=marker,
-                        color=color)
+                        color=color,
+                        markerfacecolor=marker_color,
+                        markeredgecolor=marker_color)
 
         line_cache.append(l)
         omap[line] = l        

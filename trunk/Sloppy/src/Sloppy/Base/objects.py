@@ -129,9 +129,12 @@ class Line(HasProps):
 
     visible = pBoolean(default=True)
     style = Prop(CheckValid(PV['line.style']), default=PV['line.style'][0])    
-    marker = Prop(CheckValid(PV['line.marker']), default=PV['line.marker'][0])
     width = pFloat(CheckBounds(min=0, max=10), default=1)   
+
     color = pString(default='g')
+
+    marker = Prop(CheckValid(PV['line.marker']), default=PV['line.marker'][0])
+    marker_color = pString(default='black')
 
     # source stuff (soon deprecated)
     cx = pInteger(CheckBounds(min=0), blurb="x-column", default=0)
@@ -157,7 +160,7 @@ class Line(HasProps):
         else:
             rows = 'rows %s:%s' % (row_first or '*', row_last or '*')
             
-        return ' '.join((item in [source,using,rows] if item is not None))
+        return ' '.join((item for item in [source,using,rows] if item is not None))
 
 
     def source_from_string(self, string):
