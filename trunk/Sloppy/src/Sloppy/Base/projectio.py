@@ -240,7 +240,7 @@ def toElement(project):
             # need to put that information into the data file.
             n = 0
             for column in tbl.get_columns():
-                kw = column.get_values(exclude=['key','data'])
+                kw = column.get_values(exclude=['data'],default=None)
                 if len(kw) > 0:
                     eColumn = SubElement(eData, 'Column')
                     SIV(eColumn, 'n', n)
@@ -249,6 +249,7 @@ def toElement(project):
                             eInfo = SubElement(eColumn, 'Info')
                             SIV(eInfo, 'key', k)
                             eInfo.text = v
+                            print "INFO k,v", k, v
                 n += 1
                 
             
