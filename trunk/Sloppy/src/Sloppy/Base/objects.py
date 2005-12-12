@@ -143,31 +143,7 @@ class Line(HasProps):
     cyerr = pInteger(CheckBounds(min=0))
     source = Prop(CheckType(Dataset))
 
-    # new style source
-    new_source = pString()
-    new_source_object = Prop(CheckType(LineSource))
-
-
-
-class LineSource(HasProps):
-    pass
-
-class LineSourceDataset(LineSource):
-    source = Prop(CheckType(Dataset))
-    
-    cx = pInteger(CheckBounds(min=0), blurb="x-column", default=0)
-    cy = pInteger(CheckBounds(min=0), blurb="y-column", default=1)
-    
-    row_first = pInteger(CheckBounds(min=0))
-    row_last = pInteger(CheckBounds(min=0))
-
-    # TODO: not used    
-    #value_range = Prop(transform=str)
-    cxerr = pInteger(CheckBounds(min=0))
-    cyerr = pInteger(CheckBounds(min=0))
-
-
-    def to_string(self):
+    def source_to_string(self):
 
         source = '"%s"' % source.key
 
@@ -184,7 +160,7 @@ class LineSourceDataset(LineSource):
         return ' '.join((item in [source,using,rows] if item is not None))
 
 
-    def from_string(self, string):
+    def source_from_string(self, string):
         # using regular expressions to parse the string
         # TODO: this does not work yet
         regexp = '(?P<source>\".*\"|[^ ]+)(\s+using\s+(?P<using>.+))?(\s+rows\s+(?P<rows>.+))?'
