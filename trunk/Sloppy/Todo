@@ -7,9 +7,6 @@ Next in queue:
   - file format: try to switch to zip -- maybe create a test file
     before with a lot of data... OR MAYBE NOT
 
-  - save project as: check if file already exists and warn (there is a
-    gtk function for that in filechooserdialog)
-
 
 
 -----

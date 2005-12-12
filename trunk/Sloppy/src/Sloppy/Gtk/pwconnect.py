@@ -180,7 +180,7 @@ class Entry(Connector):
                 value = ""
             
         if value is not None:
-            self.entry.set_text(value)
+            self.entry.set_text(unicode(value))
         self.last_value = value
 
 

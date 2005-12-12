@@ -264,6 +264,10 @@ class GtkApplication(Application):
             chooser.set_select_multiple(False)
             chooser.set_filename(pj.filename or "unnamed.spj")
 
+            major,minor,micro = gtk.pygtk_version
+            if major > 1 and minor >= 8:
+                chooser.set_do_overwrite_confirmation(True)
+            
             filter = gtk.FileFilter()
             filter.set_name("All files")
             filter.add_pattern("*")
@@ -292,7 +296,7 @@ class GtkApplication(Application):
         save_project(self._project)
         self._project.journal.clear()
 
-        self.recent_files.append(os.path.abspath(filename))
+        self.recent_files.insert(0, os.path.abspath(filename))
         self.sig_emit('update-recent-files')
 
 
