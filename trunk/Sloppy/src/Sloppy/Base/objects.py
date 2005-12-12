@@ -126,6 +126,14 @@ class Axis(HasProps):
 class Line(HasProps):
     " A single line or collection of points in a Plot. "
     label = pUnicode()
+
+    visible = pBoolean(default=True)
+    style = Prop(CheckValid(PV['line.style']), default=PV['line.style'][0])    
+    marker = Prop(CheckValid(PV['line.marker']), default=PV['line.marker'][0])
+    width = pFloat(CheckBounds(min=0, max=10), default=1)   
+    color = pString(default='g')
+
+    # source stuff (soon deprecated)
     cx = pInteger(CheckBounds(min=0), blurb="x-column", default=0)
     cy = pInteger(CheckBounds(min=0), blurb="y-column", default=1)
     row_first = pInteger(CheckBounds(min=0))
@@ -135,12 +143,54 @@ class Line(HasProps):
     cyerr = pInteger(CheckBounds(min=0))
     source = Prop(CheckType(Dataset))
 
-    visible = pBoolean(default=True)
+    # new style source
+    new_source = pString()
+    new_source_object = Prop(CheckType(LineSource))
+
+
+
+class LineSource(HasProps):
+    pass
+
+class LineSourceDataset(LineSource):
+    source = Prop(CheckType(Dataset))
     
-    style = Prop(CheckValid(PV['line.style']), default=PV['line.style'][0])    
-    marker = Prop(CheckValid(PV['line.marker']), default=PV['line.marker'][0])
-    width = pFloat(CheckBounds(min=0, max=10), default=1)   
-    color = pString(default='g')
+    cx = pInteger(CheckBounds(min=0), blurb="x-column", default=0)
+    cy = pInteger(CheckBounds(min=0), blurb="y-column", default=1)
+    
+    row_first = pInteger(CheckBounds(min=0))
+    row_last = pInteger(CheckBounds(min=0))
+
+    # TODO: not used    
+    #value_range = Prop(transform=str)
+    cxerr = pInteger(CheckBounds(min=0))
+    cyerr = pInteger(CheckBounds(min=0))
+
+
+    def to_string(self):
+
+        source = '"%s"' % source.key
+
+        if cx is None and cy is None:
+            using = None
+        else:
+            using = 'using %s:%s' % (cx or '*', cy or '*')
+
+        if row_first is None and row_last is None:
+            rows = None
+        else:
+            rows = 'rows %s:%s' % (row_first or '*', row_last or '*')
+            
+        return ' '.join((item in [source,using,rows] if item is not None))
+
+
+    def from_string(self, string):
+        # using regular expressions to parse the string
+        # TODO: this does not work yet
+        regexp = '(?P<source>\".*\"|[^ ]+)(\s+using\s+(?P<using>.+))?(\s+rows\s+(?P<rows>.+))?'
+        
+        
+
 
 
 class Legend(HasProps):

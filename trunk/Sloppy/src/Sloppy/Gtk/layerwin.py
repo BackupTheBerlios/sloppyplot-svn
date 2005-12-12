@@ -335,25 +335,20 @@ class LineTab(AbstractTab):
         AbstractTab.__init__(self, app)
 
         self.layer = layer
-        self.treeview = ObjectTreeView()
-
+        self.treeview = LinesTreeView(app, layer.lines)
         tv = self.treeview
-        model = self.treeview.get_model()
-        for line in layer.lines:
-            item = (line, True, line.label)
-            model.append(None, item)        
-                    
+        
         #treeview.connect( "button-press-event", self._cb_button_pressed )
         #treeview.connect( "popup-menu", self.popup_menu, 3, 0 )
 
         tv.connect("row-activated", self.on_row_activated)
         
-        buttons = [(gtk.STOCK_EDIT, None),
+        buttons = [##(gtk.STOCK_EDIT, None),
                    (gtk.STOCK_ADD, None),
                    (gtk.STOCK_REMOVE, None),
                    (gtk.STOCK_GO_UP, None),
                    (gtk.STOCK_GO_DOWN, None)]
-        btnbox = uihelper.construct_vbuttonbox(buttons)        
+        btnbox = uihelper.construct_vbuttonbox(buttons, labels=False)        
 
         hbox = gtk.HBox()
         hbox.pack_start(tv,True,True)
@@ -365,44 +360,40 @@ class LineTab(AbstractTab):
 
     def on_row_activated(self, widget, *udata):
         print "ACTIVATED"
-       
+
+    def check_in(self):
+        self.treeview.check_in()
 
 
-class ObjectTreeView(gtk.TreeView):
+class LinesTreeView(gtk.TreeView):
 
     (MODEL_OBJECT,
      MODEL_VISIBLE,     
-     MODEL_LABEL
-     ) = range(3)
+     MODEL_LABEL,
+     MODEL_STYLE,
+     MODEL_MARKER,
+     MODEL_WIDTH,
+     MODEL_SOURCE_KEY,
+     MODEL_CX,
+     MODEL_CY,
+     MODEL_ROW_FIRST,
+     MODEL_ROW_LAST,
+     MODEL_CXERR,
+     MODEL_CYERR
+     ) = range(13)
 
-    (COLUMN_VISIBLE,
-     COLUMN_LABEL
-     ) = range(2)
-
-
-    """
-
-    object, visible, description?
-
-    double-clicking will open up an edit window.
-
-    _OR_
-
-    edit window to the right/bottom, contains elements
-    to modify the element and on each change of element
-    we have to check in these values.  PROBLEM: We would
-    need to check the values into the treeview, not into
-    the connector.
     
-    """
-    
-    def __init__(self):
+    def __init__(self, app, lines):
+
+        self.app = app
+        self.lines = lines
 
         # model: see MODEL_XXX
-        model = gtk.TreeStore(object, bool, str)
+        model = gtk.TreeStore(object, bool, str, str, str, str, str, str, str,
+                              str, str, str, str)
         gtk.TreeView.__init__(self, model)
 
-        # COLUMN_VISIBLE
+        # MODEL_VISIBLE
         column = gtk.TreeViewColumn('visible')
 
         cell = gtk.CellRendererToggle()
@@ -415,21 +406,213 @@ class ObjectTreeView(gtk.TreeView):
         self.append_column(column)
         
         
-        # COLUMN_LABEL
-        column = gtk.TreeViewColumn()
+        # MODEL_LABEL
+        column = gtk.TreeViewColumn('label')
 
         cell = gtk.CellRendererText()
         #cell.set_property('editable', False)
-        #cell.connect('edited', self.on_key_edited)                
-        column.pack_start(cell)
-       
+        #cell.connect('edited', self.on_key_edited)
+        
+        column.pack_start(cell)       
         column.set_attributes(cell, text=self.MODEL_LABEL)        
         self.append_column(column)
 
 
+        # MODEL_WIDTH
+        column = gtk.TreeViewColumn('width')
         
+        cell = gtk.CellRendererText()
+        cell.set_property('editable', True)
+        cell.set_data('prop', objects.Line.width)
+        cell.set_data('column', self.MODEL_WIDTH)
+        cell.connect('edited', self.on_edited_text)
         
+        column.pack_start(cell)
+        column.set_attributes(cell, text=self.MODEL_WIDTH)
+        self.append_column(column)
 
+
+        # self.COL_STYLE
+        column = gtk.TreeViewColumn('style')
+        
+        # set up model with all available line styles
+        linestyle_model = gtk.ListStore(str)
+        value_list = [None] + objects.Line.style.valid_values()
+        for style in value_list:
+            linestyle_model.append( (style or None,) )
+
+        cell = gtk.CellRendererCombo()
+        cell.set_property('editable', True)
+        #cell.connect('edited', self._cb_edited_source,
+        #             model, self.COL_STYLE)
+        cell.set_property('text-column', 0)
+        cell.set_property('model', linestyle_model)
+
+        column.pack_start(cell)
+        column.set_attributes(cell, text=self.MODEL_STYLE)
+        self.append_column(column)
+
+
+        # MODEL_MARKER
+        column = gtk.TreeViewColumn('marker')
+
+        # set up model with all available markers
+        marker_model = gtk.ListStore(str)
+        value_list = [None] + objects.Line.marker.valid_values()
+        for marker in value_list:
+            marker_model.append( (marker or None,) )
+
+        cell = gtk.CellRendererCombo()
+        cell.set_property('editable', True)
+        #cell.connect('edited', self._cb_edited_source,
+        #             model, self.COL_MARKER)
+        cell.set_property('text-column', 0)
+        cell.set_property('model', marker_model)
+
+        column.pack_start(cell)
+        column.set_attributes(cell, text=self.MODEL_MARKER)
+        self.append_column(column)
+
+
+        # MODEL_SOURCE_KEY
+        column = gtk.TreeViewColumn('source')
+        
+        # set up model with all available datasets
+        dataset_model = gtk.ListStore(str)        
+        def refresh_dataset_model(sender, project, model):
+            model.clear()
+            for ds in self.app.project.datasets:
+                model.append( (ds.key,) )
+        refresh_dataset_model(self, self.app.project, dataset_model)
+
+        ## TODO: This snippet is only required if you had a dialog
+        ## TODO: like this in a toolbox. 
+        ##self.app.project.sig_connect("notify::datasets", refresh_dataset_model,
+        ##self.app.project, dataset_model)
+        
+        cell = gtk.CellRendererCombo()
+        cell.set_property('editable', True)
+        #cell.connect('edited', self._cb_edited_source,
+        #             model, self.COL_SOURCE_KEY)
+        cell.set_property('text-column', 0)
+        cell.set_property('model', dataset_model)
+
+        column.pack_start(cell)
+        column.set_attributes(cell, text=self.MODEL_SOURCE_KEY)
+        self.append_column(column)
+
+        # MODEL_CX
+        column = gtk.TreeViewColumn('cx')
+        
+        cell = gtk.CellRendererText()
+        cell.set_property('editable', True)
+        cell.set_data('prop', objects.Line.cx)
+        cell.set_data('column', self.MODEL_CX)
+        cell.connect('edited', self.on_edited_text)
+
+        column.pack_start(cell)
+        column.set_attributes(cell, text=self.MODEL_CX)
+        self.append_column(column)
+
+
+        # MODEL_CY
+        column = gtk.TreeViewColumn('cy')
+        
+        cell = gtk.CellRendererText()
+        cell.set_property('editable', True)
+        cell.set_data('prop', objects.Line.cy)
+        cell.set_data('column', self.MODEL_CY)
+        cell.connect('edited', self.on_edited_text)
+
+        column.pack_start(cell)
+        column.set_attributes(cell, text=self.MODEL_CY)
+        self.append_column(column)
+
+
+        # MODEL_ROW_FIRST
+        column = gtk.TreeViewColumn('row_first')
+        
+        cell = gtk.CellRendererText()
+        cell.set_property('editable', True)
+        cell.set_data('prop', objects.Line.row_first)
+        cell.set_data('column', self.MODEL_ROW_FIRST)
+        cell.connect('edited', self.on_edited_text)
+
+        column.pack_start(cell)
+        column.set_attributes(cell, text=self.MODEL_ROW_FIRST)
+        self.append_column(column)
+
+
+        # MODEL_ROW_LAST
+        column = gtk.TreeViewColumn('row_last')
+        
+        cell = gtk.CellRendererText()
+        cell.set_property('editable', True)
+        cell.set_data('prop', objects.Line.row_last)
+        cell.set_data('column', self.MODEL_ROW_LAST)
+        cell.connect('edited', self.on_edited_text)
+
+        column.pack_start(cell)
+        column.set_attributes(cell, text=self.MODEL_ROW_LAST)
+        self.append_column(column)
+
+
+
+    def check_in(self):
+        model = self.get_model()
+        model.clear()
+
+        for line in self.lines:
+            model.append(None, self.model_row_from_line(line))
+
+        ## group boxes
+        #for gb in self.gblist:
+        #    gb.check_in()
+
+
+    def model_row_from_line(self, line):
+        if line.source is not None:
+            source_key = line.source.key
+        else:
+            source_key = ""
+            
+        return [line,
+                line.visible,
+                line.label or "",
+                line.rget('style', None),
+                line.rget('marker', None),
+                line.rget('width', ""),
+                source_key,
+                str(line.rget('cx',"")),
+                str(line.rget('cy',"")),
+                str(line.rget('row_first',"")),
+                str(line.rget('row_last',"")),                
+                str(line.rget('cxerr',"")),
+                str(line.rget('cyerr',""))
+                ]
+        
+        
+    #----------------------------------------------------------------------
+    # GUI Callbacks
+    #
+
+    def on_edited_text(self, cell, path, new_text):
+        prop = cell.get_data('prop')
+        column = cell.get_data('column')
+        
+        # check if the new_text is appropriate for the property       
+        try:
+            if new_text == "":
+                new_text = None
+            new_text = prop.check(new_text)
+        except (TypeError, ValueError):
+            print "Invalid value"
+        else:
+            if new_text is None:
+                new_text=""
+            self.get_model()[path][column] = str(new_text)
+
+            
 
         
 class NewLinesTab(AbstractTab):
@@ -481,158 +664,7 @@ class NewLinesTab(AbstractTab):
         tv.set_headers_visible(True)
         tv.get_selection().set_mode(gtk.SELECTION_MULTIPLE)
 
-        model = gtk.TreeStore(object, 'gboolean',str,str,str,str,str,str,str,str,str,str,str)
-        tv.set_model(model)
 
-        ### self.COL_VISIBLE
-        ##cell = gtk.CellRendererToggle()
-        ##cell.set_property('activatable', True)
-        ##cell.connect("toggled", self._cb_toggled_bool,
-        ##             model, self.COL_VISIBLE)
-        ##column = gtk.TreeViewColumn('visible', cell)
-        ##column.set_attributes(cell, active=self.COL_VISIBLE)
-        ##tv.append_column(column)
-
-        ### self.COL_LABEL
-        ##cell = gtk.CellRendererText()
-        ##cell.set_property('editable', True)
-        ##cell.connect('edited', self._cb_edited_text, 
-        ##             model, self.COL_LABEL, 'label')
-        ##column = gtk.TreeViewColumn('label', cell)
-        ##column.set_attributes(cell, text=self.COL_LABEL)
-        ##tv.append_column(column)
-
-        # self.COL_WIDTH
-        cell = gtk.CellRendererText()
-        cell.set_property('editable', True)
-        cell.connect('edited', self._cb_edited_text,
-                     model, self.COL_WIDTH, 'width')
-        column = gtk.TreeViewColumn('width', cell)
-        column.set_attributes(cell, text=self.COL_WIDTH)
-        tv.append_column(column)
-
-        # self.COL_STYLE
-        
-        # set up model with all available line styles
-        linestyle_model = gtk.ListStore(str)
-        value_list = [None] + objects.Line.style.valid_values()
-        for style in value_list:
-            linestyle_model.append( (style or "",) )
-
-        cell = gtk.CellRendererCombo()
-        cell.set_property('editable', True)
-        cell.connect('edited', self._cb_edited_source,
-                     model, self.COL_STYLE)
-        cell.set_property('text-column', 0)
-        cell.set_property('model', linestyle_model)
-        column = gtk.TreeViewColumn('style', cell)
-        column.set_attributes(cell, text=self.COL_STYLE)
-        tv.append_column(column)
-
-        # self.COL_MARKER
-
-        # set up model with all available markers
-        marker_model = gtk.ListStore(str)
-        value_list = [None] + objects.Line.marker.valid_values()
-        for marker in value_list:
-            marker_model.append( (marker or "",) )
-
-        cell = gtk.CellRendererCombo()
-        cell.set_property('editable', True)
-        cell.connect('edited', self._cb_edited_source,
-                     model, self.COL_MARKER)
-        cell.set_property('text-column', 0)
-        cell.set_property('model', marker_model)
-        column = gtk.TreeViewColumn('marker', cell)
-        column.set_attributes(cell, text=self.COL_MARKER)
-        tv.append_column(column)
-        
-        
-        # self.COL_SOURCE_KEY
-
-        # set up model with all available datasets
-        dataset_model = gtk.ListStore(str)        
-        def refresh_dataset_model(sender, project, model):
-            model.clear()
-            for ds in self.app.project.datasets:
-                model.append( (ds.key,) )
-        refresh_dataset_model(self, self.app.project, dataset_model)
-
-        self.app.project.sig_connect("notify::datasets", refresh_dataset_model,
-                                         self.app.project, dataset_model)
-        
-        cell = gtk.CellRendererCombo()
-        cell.set_property('editable', True)
-        cell.connect('edited', self._cb_edited_source,
-                     model, self.COL_SOURCE_KEY)
-        cell.set_property('text-column', 0)
-        cell.set_property('model', dataset_model)
-        column = gtk.TreeViewColumn('source', cell)
-        column.set_attributes(cell, text=self.COL_SOURCE_KEY)
-        tv.append_column(column)
-
-        # self.COL_CX
-        cell = gtk.CellRendererText()
-        cell.set_property('editable', True)
-        cell.connect('edited', self._cb_edited_text, 
-                     model, self.COL_CX, 'cx')
-        column = gtk.TreeViewColumn('cx', cell)
-        column.set_attributes(cell, text=self.COL_CX)
-        tv.append_column(column)
-
-        # self.COL_CY
-        cell = gtk.CellRendererText()
-        cell.set_property('editable', True)
-        cell.connect('edited', self._cb_edited_text, 
-                     model, self.COL_CY, 'cy')
-        column = gtk.TreeViewColumn('cy', cell)
-        column.set_attributes(cell, text=self.COL_CY)
-        tv.append_column(column)
-
-        # self.COL_ROW_FIRST
-        cell = gtk.CellRendererText()
-        cell.set_property('editable', True)
-        cell.connect('edited', self._cb_edited_text, 
-                     model, self.COL_ROW_FIRST, 'row_first')
-        column = gtk.TreeViewColumn('row_first', cell)
-        column.set_attributes(cell, text=self.COL_ROW_FIRST)
-        tv.append_column(column)
-
-        # self.COL_ROW_LAST
-        cell = gtk.CellRendererText()
-        cell.set_property('editable', True)
-        cell.connect('edited', self._cb_edited_text, 
-                     model, self.COL_ROW_LAST, 'row_last')
-        column = gtk.TreeViewColumn('row_last', cell)
-        column.set_attributes(cell, text=self.COL_ROW_LAST)
-        tv.append_column(column)
-
-
-        # error bars are not yet implemented, so I disabled the next two
-#         # self.COL_CXERR
-#         cell = gtk.CellRendererText()
-#         cell.set_property('editable', True)
-#         cell.connect('edited', self._cb_edited_text, 
-#                      model, self.COL_CXERR, 'cxerr')
-#         column = gtk.TreeViewColumn('cxerr', cell)
-#         column.set_attributes(cell, text=self.COL_CXERR)
-#         tv.append_column(column)
-
-#         # self.COL_CYERR
-#         cell = gtk.CellRendererText()
-#         cell.set_property('editable', True)
-#         cell.connect('edited', self._cb_edited_text, 
-#                      model, self.COL_CYERR, 'cyerr')
-#         column = gtk.TreeViewColumn('cyerr', cell)
-#         column.set_attributes(cell, text=self.COL_CYERR)
-#         tv.append_column(column)
-
-        # put treeview 'tv' in a scrolled window 'sw'
-        sw = gtk.ScrolledWindow()
-        sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-        sw.add(tv)
-        tv.show()        
-        sw.show()    
 
         #
         # Below the scrolled window, we add some boxes for group
@@ -690,11 +722,6 @@ class NewLinesTab(AbstractTab):
     
 
     #--- CHECK IN/CHECK OUT -----------------------------------------------    
-
-#     def check_in(self):
-#         for c in self.clist:
-#             self.check_in()
-
             
     def check_out(self, undolist=[]):
 
@@ -764,53 +791,9 @@ class NewLinesTab(AbstractTab):
         
         undolist.append(ul)
 
-            
-    def check_in(self):
-        model = self.treeview.get_model()
-        model.clear()
-
-        lines = self.layer.lines
-        for line in lines:            
-            model.append(None, self.model_row_from_line(line))
-
-        # group boxes
-        for gb in self.gblist:
-            gb.check_in()
-
-    def model_row_from_line(self, line):
-        source = line.source
-        if source is not None: source_key = source.key
-        else: source_key = ""
-        return [line,
-                line.visible,
-                line.label or "",
-                line.rget('style', ""),
-                line.rget('marker', ""),
-                line.rget('width', ""),
-                source_key,
-                str(line.rget('cx',"")),
-                str(line.rget('cy',"")),
-                str(line.rget('row_first',"")),
-                str(line.rget('row_last',"")),                
-                str(line.rget('cxerr',"")),
-                str(line.rget('cyerr',""))]
 
 
-    #----------------------------------------------------------------------
-    # GUI Callbacks
-    #
 
-    def _cb_edited_text(self, cell, path, new_text, model, column, prop_key):
-        # check if the new_text is appropriate for the property
-        prop = objects.Line().get_prop(prop_key)
-        try:
-            if new_text == "": new_text = None
-            new_text = prop.check(new_text)
-        except (TypeError, ValueError):
-            print "Invalid value"
-        else:
-            if new_text is None: new_text=""
-            model[path][column] = str(new_text)
 
     def _cb_toggled_bool(self, cell, path, model, column):
         model[path][column] = not model[path][column]
