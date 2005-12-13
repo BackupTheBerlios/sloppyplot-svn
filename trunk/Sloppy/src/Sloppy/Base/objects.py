@@ -38,7 +38,7 @@ map_halign = {'center':0, 'left':1, 'right': 2}
 
 (GROUP_TYPE_CYCLE,
  GROUP_TYPE_FIXED,
- GROUP_TYPE_INCREMENT) = range(3)
+ GROUP_TYPE_RANGE) = range(3)
 
 
 
@@ -110,7 +110,7 @@ MAP = {
 'group_type': {
     'cycle': GROUP_TYPE_CYCLE,
     'fixed': GROUP_TYPE_FIXED,
-    'increment': GROUP_TYPE_INCREMENT
+    'range': GROUP_TYPE_RANGE
     },
 
 'group_linestyle_type': {
@@ -237,7 +237,10 @@ class Layer(HasProperties, HasSignals):
         allow_override = Boolean(reset=True)        
         value = Property(Line.style.check, reset=Line.style.on_default)
         cycle_list = List(Line.style.check)
-            
+        range_start = Float(reset=1.0)
+        range_end = Float(reset=None)
+        range_step = Float(reset=1.0)
+        
     group_linestyle = Property(type=GroupLineStyle,                               
                                reset=GroupLineStyle(type=GROUP_TYPE_FIXED),
                                blurb="Line Style")
@@ -248,6 +251,9 @@ class Layer(HasProperties, HasSignals):
         allow_override = Boolean(reset=True)        
         value = Property(Line.marker.check, reset=Line.marker.on_default)
         cycle_list = List(Line.marker.check)
+        range_start = Float(reset=1.0)
+        range_end = Float(reset=None)
+        range_step = Float(reset=1.0)
         
     group_linemarker = Property(type=GroupLineMarker,
                                 reset=GroupLineMarker(type=GROUP_TYPE_FIXED),
@@ -259,8 +265,9 @@ class Layer(HasProperties, HasSignals):
         allow_override = Boolean(reset=True)        
         value = Property(Line.width.check, reset=Line.width.on_default)
         cycle_list = List(Line.width.check)
-        increment = Float(default=1.0)
-
+        range_start = Float(reset=1.0)
+        range_end = Float(reset=None)
+        range_step = Float(reset=1.0)
         
     group_linewidth = Property(type=GroupLineWidth,
                            reset=GroupLineWidth(type=GROUP_TYPE_FIXED),
@@ -271,7 +278,9 @@ class Layer(HasProperties, HasSignals):
         allow_override = Boolean(reset=True)        
         value = Property(Line.color.check, reset=Line.color.on_default)
         cycle_list = List(Line.color.check)
-        increment = Float(default=1.0)
+        range_start = Float(reset=1.0)
+        range_end = Float(reset=None)
+        range_step = Float(reset=1.0)
         
     group_linecolor = Property(type=GroupLineColor,
                                reset=GroupLineColor(type=GROUP_TYPE_CYCLE,

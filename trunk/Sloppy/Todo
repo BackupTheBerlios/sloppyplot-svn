@@ -2,8 +2,11 @@
 Next in Queue:
 
 (A) Group Properties
-    - serialize group properties
+
+    - serialize group properties => save and load
+
     - Allow setting group properties in layerwin
+      => continue work on range and pwconnect.ListWizard
 
   => marker and style should internally be treated as integers.
      This way, we can use increments on them.

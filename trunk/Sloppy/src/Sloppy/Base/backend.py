@@ -263,11 +263,15 @@ class Backend(object, HasSignals):
 
         type = group.type
         if type == objects.GROUP_TYPE_CYCLE:
-            return group.cycle_list[line_index % len(group.cycle_list)]
+            if len(group.cycle_list) > 0:
+                return group.cycle_list[line_index % len(group.cycle_list)]
+            else:
+                return None
         elif type == objects.GROUP_TYPE_FIXED:
             return group.value
-        elif type == objects.GROUP_TYPE_INCREMENT:
-            return group.increment * line_index
+        elif type == objects.GROUP_TYPE_RANGE:
+            # TODO: this is just a hack
+            return group.range_start + group.range_step * line_index
         else:
             logger.error("Undefined type of group property: %s" % type)
             return container.get(propname)

@@ -228,3 +228,13 @@ def register_stock_icons(imgdir, prefix=""):
             iconset = gtk.IconSet(pixbuf)
             iconfactory.add(stock_id, iconset)
     iconfactory.add_default()
+
+
+def get_active_combobox_item(widget, column_index=0):
+    index = widget.get_active()
+    if index == -1:                
+        return None
+    else:
+        model = widget.get_model()
+        iter = model.get_iter((index,))
+        return model.get_value(iter, column_index)

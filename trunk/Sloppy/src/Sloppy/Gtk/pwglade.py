@@ -150,10 +150,11 @@ def construct_connectors(owner):
     return clist
 
 
-def guess_connector(prop):
-    if prop.get_mapping() is not None:
+def guess_connector_classname(prop):
+    cdict = prop.check.checkdict
+    if cdict.has_key('mapping'):
         return "ComboBox"
-    elif prop.get_value_list() is not None:
+    elif cdict.has_key('valid'):
         return "ComboBox"
     elif isinstance(prop, pBoolean):
         return "TrueFalseComboBox"
@@ -163,6 +164,14 @@ def guess_connector(prop):
     else:
         return "Entry"
 
+
+# DEPRECATED
+guess_connector = guess_connector_classname
+
+
+def new_connector(owner, key):
+    prop = owner.get_prop(key)    
+    return pwconnect.connectors[guess_connector_classname(prop)](owner, key)
 
 
 def smart_construct_connectors(container, include=None, exclude=None):

@@ -324,15 +324,16 @@ class Backend( backend.Backend ):
         style = self.get_group_value(line, 'style',
                                       layer.group_linestyle, line_index)
         global linestyle_mappings
-        print "LINESTYLE = ", style
-        style = linestyle_mappings[style]
+        try: style = linestyle_mappings[style]
+        except KeyError: style = linestyle_mappings.values()[1]
 
         #:line.marker
         #:layer.group_linemarker
         marker = self.get_group_value(line, 'marker',
                                        layer.group_linemarker, line_index)
         global linemarker_mappings
-        marker = linemarker_mappings[marker]
+        try: marker = linemarker_mappings[marker]
+        except KeyError: marker = linemarker_mappings.values()[0]
         
         #:line.width
         #:layer.group_linewidth

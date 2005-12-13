@@ -94,14 +94,8 @@ class Toolbox(gtk.Window):
         combobox.add_attribute(cell, 'text', 1)
 
         def changed_cb(entry):
-            index = entry.get_active()
-            if index == -1:                
-                self.set_backend(None)
-            else:
-                model = entry.get_model()
-                iter = model.get_iter((index,))
-                backend = model.get_value(iter, 0)
-                self.set_backend(backend)
+            backend = uihelper.get_active_combobox_item(entry)
+            self.set_backend(backend)
         combobox.connect('changed', changed_cb)
         combobox.show()
 

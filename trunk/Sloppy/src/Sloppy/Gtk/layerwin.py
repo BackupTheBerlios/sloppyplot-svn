@@ -80,7 +80,6 @@ class LayerWindow(gtk.Window):
                     LineTab(app, layer)]:
             nb.append_page(tab)
             nb.set_tab_label_text(tab, tab.title)
-            tab.check_in()
             self.tabdict[tab.title] = tab
 
 
@@ -115,6 +114,12 @@ class LayerWindow(gtk.Window):
         vbox.pack_end(btnbox, False, False)
         self.add(vbox)
         self.show_all()
+
+        # After we have shown everything, we check in.
+        # This is necessary for the GroupBox objects, because
+        # they hide elements depending on some values.
+        for tab in self.tabdict.itervalues():
+            tab.check_in()
 
         self.notebook = nb
         
@@ -174,6 +179,25 @@ class GroupBox(gtk.HBox):
     See Base.objects.Group for details.
     """
 
+    # we have basically a widget_type and
+    # then we have some extra widgets which determine
+    # the extra information for that specific type:
+    
+    # type == GROUP_TYPE_FIXED:
+    #   widget_value
+
+    # type == GROUP_TYPE_RANGE:
+    #   widget.range_start
+    #   widget.range_end
+    #   widget.range_step
+
+    # type  == GROUP_TYPE_CYCLE:
+    #   widget_cycle_list
+
+    # As one can see, the last two types are rather complicated...
+    #  - I will start with the first one, widget_value ! -- OK
+    #  - Next one is range_xxx.
+    
     def __init__(self, layer, propname):
 
         gtk.HBox.__init__(self)
@@ -184,37 +208,56 @@ class GroupBox(gtk.HBox):
         self.group = layer.get_value(propname)
         
         # create widgets and put them into a horizontal box
+        self.widget_allow_override = pwconnect.CheckButton(self.group,'allow_override')
+        self.widget_type = pwconnect.ComboBox(self.group, 'type')
+        self.widget_value = pwglade.new_connector(self.group, 'value')
+        self.widget_range_start = pwconnect.SpinButton(self.group, 'range_start')
+        self.widget_range_stop = pwconnect.SpinButton(self.group, 'range_end')
+        self.widget_range_step = pwconnect.SpinButton(self.group, 'range_step')        
 
-        # check button
         self.clist = [
-            pwconnect.ComboBox(self.group, 'type'),
-            pwconnect.Entry(self.group, 'value')
+            self.widget_allow_override,            
+            self.widget_type,
+            self.widget_value,
+            self.widget_range_start,
+            self.widget_range_stop,
+            self.widget_range_step
             ]
-
-        # only add increment connector if GROUPT_TYPE_INCREMENT is available.
-        try: self.group.get_prop('type').check('increment')
-        except: pass
-        else: self.clist.append(pwconnect.Entry(self.group, 'increment'))
-
-        self.clist.append(pwconnect.CheckButton(self.group,'allow_override'))
-
-        # TODO: cycle_list
-
+        
+        # TODO: cycle_list        
 
         for connector in self.clist:
             connector.create_widget()
             self.pack_start(connector.widget,False,True)
-            
+
         self.show_all()
+
+        # add special signals        
+        self.widget_type.combobox.connect('changed', self.on_type_changed)   
     
         
     def check_in(self):        
         for container in self.clist:
             container.check_in()
+        self.refresh_widget_visibility(self.group.type)
         
     def check_out(self, undolist=[]):
         for container in self.clist:
             container.check_out(undolist=undolist)
+
+
+    def on_type_changed(self, sender):
+        new_type = uihelper.get_active_combobox_item(sender, 1)
+        self.refresh_widget_visibility(new_type)
+
+    def refresh_widget_visibility(self, new_type):
+        print "CHECKING IN !!!!", new_type     
+        self.widget_value.widget.set_property('visible',
+                                              new_type==objects.GROUP_TYPE_FIXED)
+
+        self.widget_range_start.widget.set_property('visible', new_type==objects.GROUP_TYPE_RANGE)
+        self.widget_range_stop.widget.set_property('visible', new_type==objects.GROUP_TYPE_RANGE)
+        self.widget_range_step.widget.set_property('visible', new_type==objects.GROUP_TYPE_RANGE) 
         
     
 
