@@ -314,7 +314,7 @@ class CheckInList(Transformation):
         items = []        
         for key in ['mapping', 'type', 'coerce', 'range', 'valid', 'invalid']:
             if checkdict.has_key(key):
-                items.append(checkdict.pop(key))
+                items.append(checkdict.get(key))
 
         self.checkdict = checkdict
         self.items = items
