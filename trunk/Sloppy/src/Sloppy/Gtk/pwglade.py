@@ -151,7 +151,7 @@ def construct_connectors(owner):
 
 
 def guess_connector(prop):
-    if prop.get_value_dict() is not None:
+    if prop.get_mapping() is not None:
         return "ComboBox"
     elif prop.get_value_list() is not None:
         return "ComboBox"

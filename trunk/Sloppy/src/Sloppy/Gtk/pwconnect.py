@@ -236,14 +236,15 @@ class ComboBox(Connector):
 
         # fill model
         model.clear()
-        value_dict = self.prop.get_value_dict()
-        if value_dict is not None:
-            for key, value in value_dict.dict.iteritems():
+
+        mapping = self.prop.get_mapping()
+        if mapping is not None:
+            for key, value in mapping.dict.iteritems():
                 model.append((key or "<None>", value))
                 self.value_dict[value] = value
                 self.value_list.append(value)                
         else:
-            # if no ValueDict was found, try ValueList
+            # if no Mapping was found, try ValueList
             value_list = self.prop.get_value_list()
             if value_list is not None:
                 for value in value_list.values:

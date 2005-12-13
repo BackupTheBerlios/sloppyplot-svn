@@ -79,6 +79,35 @@ PV = {
     'layer.type' : ['line2d', 'contour']
     }
 
+MAP = {
+
+'line.marker':
+{
+"None" : None,
+"points" : 0,
+"pixels" : 1,
+"circle symbols" : 2,
+"triangle up symbols" : 3,
+"triangle down symbols" : 4,
+"triangle left symbols" : 5,
+"triangle right symbols" : 6,
+"square symbols" : 7,
+"plus symbols" : 8,
+"cross symbols" : 9,
+"diamond symbols" : 10,
+"thin diamond symbols" : 11,
+"tripod down symbols" : 12,
+"tripod up symbols" : 13,
+"tripod left symbols" : 14,
+"tripod right symbols" : 15,
+"hexagon symbols" : 16,
+"rotated hexagon symbols" : 17,
+"pentagon symbols" : 18,
+"vertical line symbols" : 19,
+"horizontal line symbols" : 20,
+"steps" : 21
+}
+}
 
 #------------------------------------------------------------------------------
 # BASE OBJECTS
@@ -95,7 +124,17 @@ def create_group(prop):
         increment = pFloat(default=1.0)
     return G
 
-        
+
+class NewGroup(HasProps):
+    range_start = pFloat(default=1.0)
+    range_end = pFloat(default=1.0)
+    range_step = pFloat(default=1.0)
+
+# range_xxx makes sense for line width, maybe for line color
+# However, for marker and style we currently have strings.
+# It might be possible to implement the long wanted ValueDict
+# and make marker and style integer values. But then we would
+# still have floats, not integers, 
 
                     
 class TextLabel(HasProps):
@@ -118,8 +157,8 @@ class Axis(HasProps):
     start = pFloat(blurb='Start')
     end = pFloat(blurb='End')
 
-    scale = pString(CheckValid(PV['axis.scale']), blurb='Scale',
-                    default=PV['axis.scale'][0])
+    scale = Prop(coerce=str, valid=PV['axis.scale'],
+                 blurb="Scale", reset=PV['axis.scale'][0])
     format = pString(blurb='Format')
 
 
@@ -127,24 +166,25 @@ class Line(HasProps):
     " A single line or collection of points in a Plot. "
     label = pUnicode()
 
-    visible = pBoolean(default=True)
+    visible = pBoolean(reset=True)
     style = Prop(CheckValid(PV['line.style']), default=PV['line.style'][0])    
     width = pFloat(CheckBounds(min=0, max=10), default=1)   
 
     color = pString(default='g')
 
-    marker = Prop(CheckValid(PV['line.marker']), default=PV['line.marker'][0])
+    #marker = Prop(CheckValid(PV['line.marker']), default=PV['line.marker'][0])
+    marker = Prop(Mapping(MAP['line.marker']), default=0)
     marker_color = pString(default='black')
 
     # source stuff (soon deprecated)
-    cx = pInteger(CheckBounds(min=0), blurb="x-column", default=0)
-    cy = pInteger(CheckBounds(min=0), blurb="y-column", default=1)
-    row_first = pInteger(CheckBounds(min=0))
-    row_last = pInteger(CheckBounds(min=0))
+    cx = pInteger(range=(0,None), blurb="x-column", default=0)
+    cy = pInteger(range=(0,None), blurb="y-column", default=1)
+    row_first = Prop(coerce=int, range=(0,None))
+    row_last = Prop(coerce=int, range=(0,None))
     #value_range = Prop(transform=str)    
-    cxerr = pInteger(CheckBounds(min=0))
-    cyerr = pInteger(CheckBounds(min=0))
-    source = Prop(CheckType(Dataset))
+    cxerr = Prop(coerce=int, range=(0,None))
+    cyerr = Prop(coerce=int, range=(0,None))
+    source = Prop(type=Dataset)
 
     def source_to_string(self):
 
@@ -175,28 +215,26 @@ class Line(HasProps):
 class Legend(HasProps):
     " Plot legend. "
     label = pUnicode(doc='Legend Label')
-    visible = pBoolean(default=True)
-    border = pBoolean(default=False)
-    position = Prop(CheckValid(PV['legend.position']),
-                    default=PV['legend.position'][0])
-    x = pFloat(CheckBounds(min=0.0, max=1.0), default=0.7)
-    y = pFloat(CheckBounds(min=0.0, max=1.0), default=0.0)
+    visible = pBoolean(reset=True)
+    border = pBoolean(reset=False)
+    position = Prop(valid=PV['legend.position'],
+                    reset=PV['legend.position'][0])
+    x = pFloat(range=(0.0,1.0), default=0.7)
+    y = pFloat(range=(0.0,1.0), default=0.0)
 
 
 class Layer(HasProps, HasSignals):
-    type = pString(CheckValid(PV['layer.type']),
-                   default=PV['layer.type'][0])
+    type = pString(valid=PV['layer.type'], reset=PV['layer.type'][0])
     title = pUnicode(blurb="Title")
-    lines = pList(CheckType(Line), blurb="Lines")
-    grid = pBoolean(blurb="Grid", doc="Display a grid",
-                    default=False)
-    visible = pBoolean(blurb="Visible", default=True)
-    legend = Prop(CheckType(Legend), reset=(lambda: Legend()))
+    lines = pList(type=Line, blurb="Lines")
+    grid = pBoolean(reset=False, blurb="Grid", doc="Display a grid")
+    visible = pBoolean(reset=True, blurb="Visible")
+    legend = Prop(type=Legend, reset=lambda: Legend())
 
-    x = pFloat(CheckBounds(min=0.0, max=1.0), default=0.11)
-    y = pFloat(CheckBounds(min=0.0, max=1.0), default=0.125)
-    width = pFloat(CheckBounds(min=0.0, max=1.0), default=0.775)
-    height = pFloat(CheckBounds(min=0.0, max=1.0), default=0.79)
+    x = pFloat(range=(0.0,1.0), default=0.11)
+    y = pFloat(range=(0.0,1.0), default=0.125)
+    width = pFloat(range=(0.0,1.0), default=0.775)
+    height = pFloat(range=(0.0,1.0), default=0.79)
 
     #
     # group properties
@@ -224,11 +262,11 @@ class Layer(HasProps, HasSignals):
     #
     
 
-    labels = pList(CheckType(TextLabel))
+    labels = pList(type=TextLabel)
 
     # axes
-    xaxis = Prop(CheckType(Axis), reset=(lambda:Axis()))
-    yaxis = Prop(CheckType(Axis), reset=(lambda:Axis()))
+    xaxis = Prop(type=Axis, reset=(lambda:Axis()))
+    yaxis = Prop(type=Axis, reset=(lambda:Axis()))
     
     def get_axes(self):
         return {'x':self.xaxis, 'y':self.yaxis}
@@ -253,12 +291,12 @@ class Plot(HasProps, HasSignals):
     title = pUnicode(blurb="Title")
     comment = pUnicode(blurb="Comment")
     
-    legend = Prop(CheckType(Legend))
-    lines = pList(CheckType(Line))
-    labels = pList(CheckType(TextLabel))
-    layers = pList(CheckType(Layer), blurb="Layers")
+    legend = Prop(type=Legend)
+    lines = pList(type=Line)
+    labels = pList(type=TextLabel)
+    layers = pList(type=Layer, blurb="Layers")
 
-    views = pList(CheckType(View), blurb="Views")
+    views = pList(type=View, blurb="Views")
 
     # might be used to notify the user that this
     # has been edited, e.g. by displaying a star

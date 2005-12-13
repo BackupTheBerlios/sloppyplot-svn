@@ -680,6 +680,7 @@ class LinesTreeView(gtk.TreeView):
                 new_text = None
             new_text = prop.check(new_text)
         except (TypeError, ValueError):
+            raise # TESTING
             print "Invalid value"
         else:
             if new_text is None:

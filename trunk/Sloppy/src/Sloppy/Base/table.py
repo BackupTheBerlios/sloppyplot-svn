@@ -55,7 +55,7 @@ class AsArray(Transformation):
 class pArray(Prop):
 
     def __init__(self, rank=1, doc=None, blurb=None):
-        Prop.__init__(self, AsArray(rank), doc=doc, blurb=blurb)
+        Prop.__init__(self, coerce=AsArray(rank), doc=doc, blurb=blurb)
         self.rank = rank
 
         

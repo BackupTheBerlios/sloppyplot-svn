@@ -23,7 +23,7 @@
 pUnicode, pInteger, pFloat, pWeakref, pDict
 
 @group checks: Coerce, CheckRegexp, CheckType, CheckTuple, CheckAll,
-CheckBounds, CheckValid, CheckInvalid, ValueDict
+CheckBounds, CheckValid, CheckInvalid, ValueDict, Mapping
 """
 
 import weakref
@@ -40,7 +40,7 @@ __all__ = ["HasProps",
            "Prop", "pInteger", "pFloat", "pWeakref", "pKeyword", "pString",
            "pBoolean", "pList", "pDictionary", "pDict", "pUnicode",
            #
-           "ValueDict", # experimental
+           "ValueDict", "Mapping", # experimental
            #
            "Check", "Transformation", "Coerce", "CoerceBool", "CheckRegexp", "CheckType",
            "CheckTuple", "CheckAll", "CheckBounds", "CheckValid", "CheckInvalid"
@@ -171,6 +171,9 @@ class CoerceBool(Transformation):
             else:
                 return bool(value)
 
+    def description(self):
+        return "Coerce to Boolean"
+
 class CheckRegexp(Check):
     
     """ Check value against a given regular expression. """
@@ -189,6 +192,16 @@ class CheckRegexp(Check):
 
     
 
+class CustomCheck(Check):
+    " Check value using a given function. "
+    def __init__(self, function, doc="custom check"):
+        self.function = function
+        self.description = (lambda self: doc)
+
+    def __call__(self, value):
+        return self.function(value)
+    
+    
 class CheckType(Check):
 
     """ Check value against a single type or a list of types. """
@@ -261,8 +274,75 @@ class CheckAll(Transformation):
         for item in self.items:
             rv.append("  " + item.description())
         return "\n".join(rv)
+
         
 
+class CheckInList(Transformation):
+
+    def __init__(self, *checks, **kwargs):
+
+        checkdict = {}
+        checks = list(checks)
+            
+        # create new checks from the kwargs and put them into checkdict        
+        create_check = {'mapping' : Mapping,
+                        'type' : CheckType,
+                        'types': CheckType,                        
+                        'coerce' : Coerce,
+                        'custom' : CustomCheck,
+                        'range': lambda range: CheckBounds(*range),
+                        'valid': CheckValid,
+                        'invalid': CheckInvalid
+                        }
+                        #'range': CheckRange       
+        for key, value in kwargs.iteritems():
+            checks.append(create_check[key](value))
+
+        # add custom checks and put them into checkdict
+        check_map =  {'Mapping': 'mapping',
+                      'CheckType': 'type',
+                      'Coerce': 'coerce',
+                      'CheckValid': 'valid',
+                      'CheckInvalid': 'invalid',
+                      'CheckBounds': 'range',
+                      'CustomCheck': 'custom'}
+        for check in checks:
+            if isinstance(check, CheckInList):
+                checkdict.update(check.checkdict)                
+            else:                
+                key = check_map[check.__class__.__name__]
+                checkdict[key] = check
+
+        # now create the check list in a certain order
+        items = []        
+        for key in ['coerce', 'type', 'mapping', 'range', 'valid', 'invalid']:
+            if checkdict.has_key(key):
+                items.append(checkdict.pop(key))
+
+        self.checkdict = checkdict
+        self.items = items
+
+        
+
+    def __call__(self, value):
+        for item in self.items:
+            if isinstance(item, Transformation):
+                value = item(value)
+            else:
+                item(value)
+        return value
+
+    def __len__(self):
+        return len(self.items)
+
+
+    def description(self):
+        rv = ["Check all of the following:"]
+        for item in self.items:
+            rv.append("  " + item.description())
+        return "\n".join(rv)
+
+        
 
 class CheckValid(Check):
 
@@ -323,12 +403,7 @@ class CheckBounds(Check):
         return "Valid range: %s:%s" % (self.min or "", self.max or "")
 
 
-
-#------------------------------------------------------------------------------
-# TESTING AREA
-#
-
-class ValueDict(Transformation):
+class Mapping(Transformation):
 
     """ Map the given value according to the dict.
 
@@ -347,6 +422,7 @@ class ValueDict(Transformation):
         except KeyError:
             raise ValueError("Could not find value '%s' in the list of mappings '%s'" % (value, self.dict))
 
+ValueDict = Mapping # deprecated
 
 
 
@@ -369,11 +445,17 @@ class Prop:
         @keyword blurb: Short description.
         @keyword doc: Longer description.
         """
-
+       
         self.blurb = kwargs.pop('blurb', None)
         self.doc = kwargs.pop('doc', None)
 
-        self.check = CheckAll(check or [])
+        # new style
+        check_kwargs = kwargs.copy()
+        if check_kwargs.has_key('default'):
+            check_kwargs.pop('default')
+        if check_kwargs.has_key('reset'):
+            check_kwargs.pop('reset')
+        self.check = CheckInList(*check, **check_kwargs)
 
         default = kwargs.pop('default', None)
         if inspect.isfunction(default) or inspect.ismethod(default):
@@ -406,10 +488,10 @@ class Prop:
     # Helper methods for introspection
     #
 
-    def get_value_dict(self):
-        """ Return first instance of ValueDict or None. """
+    def get_mapping(self):
+        """ Return first instance of Mapping or None. """
         for item in self.check.items:
-            if isinstance(item, ValueDict):
+            if isinstance(item, Mapping):
                 return item
         else:
             return None
@@ -434,7 +516,7 @@ class Prop:
         """ Collect all values of the prop specified by CheckInvalid. """
         values = []
         for item in self.check.items:
-            if isinstance(item, CheckValid):
+            if isinstance(item, CheckInvalid):
                 values.extend(item.values)
         return values
 
@@ -513,7 +595,7 @@ pDict = pDictionary
 
 class pBoolean(Prop):
     def __init__(self, **kwargs):
-        Prop.__init__(self, CoerceBool(), **kwargs)
+        Prop.__init__(self, coerce=CoerceBool(), **kwargs)
 
 pBool = pBoolean
 
@@ -521,8 +603,8 @@ pBool = pBoolean
 class pKeyword(Prop):
     def __init__(self, **kwargs):
         Prop.__init__(self,
-                      CheckType(basestring), #
-                      CheckRegexp('^[\-\.\s\w]*$'),
+                      type=basestring, #
+                      custom=CheckRegexp('^[\-\.\s\w]*$'), # TODO?
                       **kwargs)
 
 class pString(Prop):
