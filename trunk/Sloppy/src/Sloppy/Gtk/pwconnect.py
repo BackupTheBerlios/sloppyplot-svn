@@ -260,7 +260,8 @@ class ComboBox(Connector):
               (lambda sender: combobox.set_sensitive(sender.get_active())))
         else:
             self.checkbutton = None
-            if self.value_dict.has_key(None) is False:
+            if self.value_dict.has_key(None) is False \
+                   and self.prop.on_default() is not None:
                 model.append(("default [%s]" % self.prop.on_default(), None))
                 self.value_dict[None] = None
                 self.value_list.append(None)

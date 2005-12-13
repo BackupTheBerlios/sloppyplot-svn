@@ -186,13 +186,19 @@ class GroupBox(gtk.HBox):
         # create widgets and put them into a horizontal box
 
         # check button
-        self.clist = [\
+        self.clist = [
             pwconnect.ComboBox(self.group, 'type'),
-            pwconnect.Entry(self.group, 'value'),
-            pwconnect.Entry(self.group, 'increment'),
-            pwconnect.CheckButton(self.group,'allow_override')
-            # TODO: cycle_list
+            pwconnect.Entry(self.group, 'value')
             ]
+
+        # only add increment connector if GROUPT_TYPE_INCREMENT is available.
+        try: self.group.get_prop('type').check('increment')
+        except: pass
+        else: self.clist.append(pwconnect.Entry(self.group, 'increment'))
+
+        self.clist.append(pwconnect.CheckButton(self.group,'allow_override'))
+
+        # TODO: cycle_list
 
 
         for connector in self.clist:

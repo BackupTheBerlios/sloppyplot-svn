@@ -74,7 +74,9 @@ PV = {
                    "vertical line symbols",
                    "horizontal line symbols"
                    "steps"],
-    'layer.type' : ['line2d', 'contour']
+    'layer.type' : ['line2d', 'contour'],
+
+    'group_linestyle_type' : [GROUP_TYPE_CYCLE, GROUP_TYPE_FIXED]
     }
 
 MAP = {
@@ -109,35 +111,24 @@ MAP = {
     'cycle': GROUP_TYPE_CYCLE,
     'fixed': GROUP_TYPE_FIXED,
     'increment': GROUP_TYPE_INCREMENT
-    }
+    },
+
+'group_linestyle_type': {
+    'cycle': GROUP_TYPE_CYCLE,
+    'fixed': GROUP_TYPE_FIXED,
+    },
+
+'group_linemarker_type': {
+    'cycle': GROUP_TYPE_CYCLE,
+    'fixed': GROUP_TYPE_FIXED,
+    },
+
+
 }
 
 #------------------------------------------------------------------------------
 # BASE OBJECTS
 #
-
-class Group(HasProperties):
-    type = Integer(mapping = MAP['group_type'], default=0)
-    allow_override = Boolean(default=True)
-
-def create_group(prop):
-    class G(Group):
-        value = Property(prop.check, default=prop.on_default)
-        cycle_list = List(prop.check)
-        increment = Float(default=1.0)
-    return G
-
-
-class NewGroup(HasProperties):
-    range_start = Float(default=1.0)
-    range_end = Float(default=1.0)
-    range_step = Float(default=1.0)
-
-# range_xxx makes sense for line width, maybe for line color
-# However, for marker and style we currently have strings.
-# It might be possible to implement the long wanted ValueDict
-# and make marker and style integer values. But then we would
-# still have floats, not integers, 
 
                     
 class TextLabel(HasProperties):
@@ -239,31 +230,56 @@ class Layer(HasProperties, HasSignals):
     height = Float(range=(0.0,1.0), default=0.79)
 
     #
-    # group properties
+    # Group Properties
     #
-    gLineStyle = create_group(Line.style)
-    group_linestyle = Property(type=gLineStyle,
-                               reset=gLineStyle(type=GROUP_TYPE_FIXED),
+    class GroupLineStyle(HasProperties):
+        type = Integer(mapping=MAP['group_linestyle_type'], reset=0)
+        allow_override = Boolean(reset=True)        
+        value = Property(Line.style.check, reset=Line.style.on_default)
+        cycle_list = List(Line.style.check)
+            
+    group_linestyle = Property(type=GroupLineStyle,                               
+                               reset=GroupLineStyle(type=GROUP_TYPE_FIXED),
                                blurb="Line Style")
 
-    gLineMarker = create_group(Line.marker)
-    group_linemarker = Property(type=gLineMarker,
-                                reset=gLineMarker(type=GROUP_TYPE_FIXED),
+
+    class GroupLineMarker(HasProperties):
+        type = Integer(mapping=MAP['group_linemarker_type'], reset=0)
+        allow_override = Boolean(reset=True)        
+        value = Property(Line.marker.check, reset=Line.marker.on_default)
+        cycle_list = List(Line.marker.check)
+        
+    group_linemarker = Property(type=GroupLineMarker,
+                                reset=GroupLineMarker(type=GROUP_TYPE_FIXED),
                                 blurb="Line Marker")
 
-    gLineWidth = create_group(Line.width)
-    group_linewidth = Property(type=gLineWidth,
-                           reset=gLineWidth(type=GROUP_TYPE_FIXED),
+    
+    class GroupLineWidth(HasProperties):
+        type = Integer(mapping=MAP['group_type'], reset=0)
+        allow_override = Boolean(reset=True)        
+        value = Property(Line.width.check, reset=Line.width.on_default)
+        cycle_list = List(Line.width.check)
+        increment = Float(default=1.0)
+
+        
+    group_linewidth = Property(type=GroupLineWidth,
+                           reset=GroupLineWidth(type=GROUP_TYPE_FIXED),
                            blurb="Line Width")
 
-    gLineColor = create_group(Line.color)
-    group_linecolor = Property(type=gLineColor,
-                               reset=gLineColor(type=GROUP_TYPE_CYCLE,
-                                                cycle_list=['g','b','r']),
+    class GroupLineColor(HasProperties):
+        type = Integer(mapping=MAP['group_type'], reset=0)
+        allow_override = Boolean(reset=True)        
+        value = Property(Line.color.check, reset=Line.color.on_default)
+        cycle_list = List(Line.color.check)
+        increment = Float(default=1.0)
+        
+    group_linecolor = Property(type=GroupLineColor,
+                               reset=GroupLineColor(type=GROUP_TYPE_CYCLE,
+                                                    cycle_list=['g','b','r']),
                                blurb="Line Color")
-    #
-    
 
+
+    #   
     labels = List(type=TextLabel)
 
     # axes
