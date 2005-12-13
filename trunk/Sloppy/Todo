@@ -4,6 +4,32 @@ Next in Queue:
 (A) Group Properties
     - serialize group properties
     - Allow setting group properties in layerwin
+
+  => marker and style should internally be treated as integers.
+     This way, we can use increments on them.
+
+     _ANOTHER_ variant would be to assume that if we have a Property
+     with a mapping, then +1 means: go to the next item in the mapping.
+     But what is the next item :-)
+
+     _SO BASICALLY_ this means that we don't need a mapping, but rather
+     a value list, and that next item means next in list.
+
+     if prop has value-list:
+         index = prop.value-list.index(prop.current-value)
+         index += 1
+         prop.current-value = prop.value-list[index]
+
+     Integers only make sense when we have to add/subtract them, which we 
+     would never do.
+    
+     Maybe the corresponding group property should have a method that takes
+     care of these internals!  That would be nifty:
+
+     group_property.reset()
+     group_property.next()
+
+     ACTUALLY this seems to be the best solution to me.
   
 ---
 Toolbox combo is broken :-(

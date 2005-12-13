@@ -40,9 +40,6 @@ map_halign = {'center':0, 'left':1, 'right': 2}
  GROUP_TYPE_FIXED,
  GROUP_TYPE_INCREMENT) = range(3)
 
-map_groupproperty_types = {'cycle': GROUP_TYPE_CYCLE,
-                           'fixed': GROUP_TYPE_FIXED,
-                           'increment': GROUP_TYPE_INCREMENT}
 
 
 # ----------------------------------------------------------------------
@@ -82,32 +79,37 @@ PV = {
 
 MAP = {
 
-'line.marker':
-{
-"None" : None,
-"points" : 0,
-"pixels" : 1,
-"circle symbols" : 2,
-"triangle up symbols" : 3,
-"triangle down symbols" : 4,
-"triangle left symbols" : 5,
-"triangle right symbols" : 6,
-"square symbols" : 7,
-"plus symbols" : 8,
-"cross symbols" : 9,
-"diamond symbols" : 10,
-"thin diamond symbols" : 11,
-"tripod down symbols" : 12,
-"tripod up symbols" : 13,
-"tripod left symbols" : 14,
-"tripod right symbols" : 15,
-"hexagon symbols" : 16,
-"rotated hexagon symbols" : 17,
-"pentagon symbols" : 18,
-"vertical line symbols" : 19,
-"horizontal line symbols" : 20,
-"steps" : 21
-}
+'line.marker': {
+    "None" : None,
+    "points" : 0,
+    "pixels" : 1,
+    "circle symbols" : 2,
+    "triangle up symbols" : 3,
+    "triangle down symbols" : 4,
+    "triangle left symbols" : 5,
+    "triangle right symbols" : 6,
+    "square symbols" : 7,
+    "plus symbols" : 8,
+    "cross symbols" : 9,
+    "diamond symbols" : 10,
+    "thin diamond symbols" : 11,
+    "tripod down symbols" : 12,
+    "tripod up symbols" : 13,
+    "tripod left symbols" : 14,
+    "tripod right symbols" : 15,
+    "hexagon symbols" : 16,
+    "rotated hexagon symbols" : 17,
+    "pentagon symbols" : 18,
+    "vertical line symbols" : 19,
+    "horizontal line symbols" : 20,
+    "steps" : 21
+    },
+
+'group_type': {
+    'cycle': GROUP_TYPE_CYCLE,
+    'fixed': GROUP_TYPE_FIXED,
+    'increment': GROUP_TYPE_INCREMENT
+    }
 }
 
 #------------------------------------------------------------------------------
@@ -115,7 +117,7 @@ MAP = {
 #
 
 class Group(HasProperties):
-    type = Integer(mapping = map_groupproperty_types, default=0)
+    type = Integer(mapping = MAP['group_type'], default=0)
     allow_override = Boolean(default=True)
 
 def create_group(prop):
