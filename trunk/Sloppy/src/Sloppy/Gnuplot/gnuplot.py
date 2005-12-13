@@ -243,7 +243,7 @@ class Backend(backend.Backend):
                 continue
             logging.debug("Change counter %d, old %d" % (ds.change_counter, change_counter))
             if ds.has_changes(change_counter):                              
-                filename = os.path.join(destdir, utils.as_filename(filename))
+                filename = os.path.join(destdir, filename)
                 logger.debug('exporting "%s" to dir "%s"' % (ds, destdir))            
                 exporter.write_to_file(filename, ds.data)
                 self.exports[source][1] = ds.change_counter

@@ -2,12 +2,11 @@
 Next in Queue:
 
 (A) Group Properties
-
     - serialize group properties
-
     - Allow setting group properties in layerwin
-      Maybe rework layerwin completely ?
   
+---
+Toolbox combo is broken :-(
 
 
 -----
@@ -35,26 +34,16 @@ ASCII Import:
 FOR 0.5.2:
 ==========
 
-
-
 (B) Metadata
-
     - display metadata, so that the import makes more sense.
-
     - maybe allow to edit the regular expressions that lead to the import metadata?
 
 
 (C) little things
-
     - allow comments for plots and datasets.
     
-    - props: CheckValid, ValueDict -> better naming convention.
-
-
 (D) LayerWin and Toolbox
-
-    - try to rewrite the layerwin using the new pwconnect mechanism.
-    
+    - Fix Toolbox combo
     - Toolbox: 
       Add a combobox similar to the existing one with all the layers
       The existing layer tool should be put into a tab and could offer

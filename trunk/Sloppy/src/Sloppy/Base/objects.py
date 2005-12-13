@@ -172,7 +172,8 @@ class Line(HasProperties):
     color = String(default='g')
 
     #marker = Property(CheckValid(PV['line.marker']), default=PV['line.marker'][0])
-    marker = Property(mapping=MAP['line.marker'], default=0)
+    #marker = Property(mapping=MAP['line.marker'], default=0)
+    marker = Property(valid=PV['line.marker'],default=PV['line.marker'][0])
     marker_color = String(default='black')
 
     # source stuff (soon deprecated)
