@@ -114,6 +114,7 @@ def new_label(spj, element):
     label = TextLabel(**element.attrib)
     return label
 
+
 def new_line(spj, element):
     source = element.attrib.get('source', None)
     try:
@@ -132,17 +133,25 @@ def new_legend(spj, element):
     
 
 def new_layer(spj, element):
-    layer = Layer(**element.attrib)
+
+    # group properties
+    group_properties = {}
+    for eGroup in element.findall('Groups/Group'):
+        key = eGroup.attrib.pop('key')
+        if key == 'linestyle':
+            print "Creating new linestyle object"
+            group_properties['group_linestyle'] = Layer.GroupLineStyle(**eGroup.attrib)
+        
+    # create new layer
+    kwargs = element.attrib
+    kwargs.update(group_properties)
+    layer = Layer(**kwargs)
 
     # TODO: test type and _then_ assign the data    
     for eLine in element.findall('Line'):        
         layer.lines.append(new_line(spj, eLine))        
-
-    # TODO:
-    ### group properties
-    ###group_markers = element.findall('GroupMarkers')
     
-    
+    # axes
     for eAxis in element.findall('Axis'):
         key = eAxis.attrib.pop('key', 'x')
         a = Axis(**eAxis.attrib)
@@ -151,6 +160,7 @@ def new_layer(spj, element):
         elif key == 'y':
             layer.yaxis = a
 
+    # legend
     eLegend = element.find('Legend')
     if eLegend is not None:
         layer.legend = new_legend(spj, eLegend)
@@ -175,6 +185,8 @@ def new_plot(spj, element):
     return plot
 
 
+
+#------------------------------------------------------------------------------
 
 def fromTree(tree):
     eProject = tree.getroot()
@@ -287,19 +299,36 @@ def toElement(project):
             eLayer = SubElement(eLayers, "Layer")
             attrs = layer.get_values(['type', 'grid', 'title', 'visible'], default=None)            
             iohelper.set_attributes(eLayer, attrs)
-                            
+
+            # group properties
+            eGroups = SubElement(eLayer, "Groups")
+
+            # linestyle
+            key = 'group_linestyle'
+            group = layer.get_value(key)
+            print "Writing group property ", key
+            eGroup = SubElement(eGroups, "Group")
+            # TODO: cycle_list is missing, because it is a list!
+            attrs = group.get_values(include=['value', 'range_start', 'range_end', 'range_step'],
+                                     default=None)
+            attrs['key'] = 'linestyle'
+            iohelper.set_attributes(eGroup, attrs)
+                
+            # axes
             for (key, axis) in layer.axes.iteritems():
                 eAxis = SubElement(eLayer, "Axis")
                 attrs = axis.get_values(['label', 'scale', 'start', 'end', 'format'],default=None)
                 attrs['key'] = key
                 iohelper.set_attributes(eAxis, attrs)
 
+            # legend
             legend = layer.legend
             if legend is not None:
                 eLegend = SubElement(eLayer, "Legend")
                 attrs = legend.get_values(['label','position','visible','border','x','y'],default=None)
                 iohelper.set_attributes(eLegend, attrs)
-                                     
+
+            # lines
             for line in layer.lines:
                 eLine = SubElement(eLayer, "Line")
 

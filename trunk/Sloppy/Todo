@@ -8,6 +8,10 @@ Next in Queue:
     - Allow setting group properties in layerwin
       => continue work on range and pwconnect.ListWizard
 
+
+  NOTE: layerwin uses range_stop, not range_end. I should fix that.
+
+
   => marker and style should internally be treated as integers.
      This way, we can use increments on them.
 

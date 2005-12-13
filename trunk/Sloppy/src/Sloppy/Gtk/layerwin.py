@@ -251,7 +251,6 @@ class GroupBox(gtk.HBox):
         self.refresh_widget_visibility(new_type)
 
     def refresh_widget_visibility(self, new_type):
-        print "CHECKING IN !!!!", new_type     
         self.widget_value.widget.set_property('visible',
                                               new_type==objects.GROUP_TYPE_FIXED)
 
