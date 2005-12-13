@@ -324,6 +324,7 @@ class Backend( backend.Backend ):
         style = self.get_group_value(line, 'style',
                                       layer.group_linestyle, line_index)
         global linestyle_mappings
+        print "LINESTYLE = ", style
         style = linestyle_mappings[style]
 
         #:line.marker
@@ -346,6 +347,8 @@ class Backend( backend.Backend ):
         #:line.marker_color
         marker_color = line.marker_color
 
+        print "LINEWIDTH = ", width
+        
         #--- PLOT LINE ---
         l, = axes.plot( xdata, ydata,
                         linewidth=width,

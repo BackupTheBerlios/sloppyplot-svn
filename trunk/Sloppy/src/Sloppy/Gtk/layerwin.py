@@ -207,9 +207,8 @@ class GroupBox(gtk.HBox):
             container.check_in()
         
     def check_out(self, undolist=[]):
-        pass
-        #for container in self.clist:
-        #    container.check_out(undolist=undolist)
+        for container in self.clist:
+            container.check_out(undolist=undolist)
         
     
 
@@ -234,8 +233,7 @@ class AbstractTab(gtk.VBox):
     def check_out(self, undolist=[]):
         ul = UndoList().describe("Multiple actions")
         for c in self.clist:
-            uwrap.smart_set(c.container, c.key, c.get_data(), undolist=ul)
-            c.check_out() # why not put in the undolist here?
+            c.check_out(undolist=undolist)
         undolist.append(ul)
 
 

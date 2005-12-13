@@ -43,6 +43,7 @@ except ImportError:
 
 import gtk
 
+from Sloppy.Base import uwrap
 from Sloppy.Lib.Props import CheckBounds
 import sys
 
@@ -105,9 +106,12 @@ class Connector(object):
         """        
         raise RuntimeError("get_data() needs to be implemented.")
     
-    def check_out(self):
+    def check_out(self, undolist=[]):
         " Set value in container "
-        self.set_value(self.get_data())
+        new_value = self.get_data()
+        if new_value != self.last_value:
+            uwrap.smart_set(self.container, self.key, new_value, undolist=undolist)
+            self.last_value = new_value
 
     #----------------------------------------------------------------------
     # UI Stuff
