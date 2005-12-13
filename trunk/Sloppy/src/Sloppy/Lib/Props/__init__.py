@@ -43,8 +43,6 @@ License, or (at your option) any later version.
 @contact: mithrandir42@web.de  
 """
 
-
 from props import *
-
-
+from common import *
 

@@ -32,13 +32,10 @@ import inspect
 
 from typed_containers import TypedList, TypedDict
 
-
 __extra_epydoc_fields__ = [('prop', 'Prop', 'Props')]
 
-__all__ = ["HasProps",
-           #
-           "Prop", "pInteger", "pFloat", "pWeakref", "pKeyword", "pString",
-           "pBoolean", "pList", "pDictionary", "pDict", "pUnicode",
+__all__ = ["HasProps", "HasProperties", "Prop", "Property", "List",
+           "Dictionary", "pList", "pDict", "pDictionary",
            #
            "ValueDict", "Mapping", # experimental
            #
@@ -315,7 +312,7 @@ class CheckInList(Transformation):
 
         # now create the check list in a certain order
         items = []        
-        for key in ['coerce', 'type', 'mapping', 'range', 'valid', 'invalid']:
+        for key in ['mapping', 'type', 'coerce', 'range', 'valid', 'invalid']:
             if checkdict.has_key(key):
                 items.append(checkdict.pop(key))
 
@@ -428,10 +425,10 @@ ValueDict = Mapping # deprecated
 
 
 #------------------------------------------------------------------------------
-# Base Class 'Prop'
+# Base Class 'Property'
 #
 
-class Prop:
+class Property:
 
     def __init__(self, *check, **kwargs):
         """        
@@ -473,7 +470,7 @@ class Prop:
                 reset = self.check(reset)
             self.on_reset = (lambda: reset)
 
-        self.name = None # set by the owning HasProps class
+        self.name = None # set by the owning HasProperties class
         
 
     def meta_attribute(self, key):
@@ -526,22 +523,15 @@ class Prop:
         minimum, maximum = None, None
         for item in self.check.items:
             if isinstance(item, CheckBounds):
-                return item.min, item.max
-        
+                return item.min, item.max                             
 
 
-                      
 
-#------------------------------------------------------------------------------
-# Prop implementations (pXXX)
-#
-
-
-class pList(Prop):
+class List(Property):
 
     def __init__(self, *check, **kwargs):
         kwargs.update({'reset' : self.do_reset})        
-        Prop.__init__(self, *check, **kwargs)
+        Property.__init__(self, *check, **kwargs)
         self.item_check = self.check
         self.check = self.DoCheck(self.item_check)
 
@@ -564,11 +554,11 @@ class pList(Prop):
         return TypedList(check=self.item_check)
 
                 
-class pDictionary(Prop):
+class Dictionary(Property):
 
     def __init__(self, *check, **kwargs):
         kwargs.update({'reset' : self.do_reset})
-        Prop.__init__(self, *check, **kwargs)
+        Property.__init__(self, *check, **kwargs)
         self.item_check = self.check
         self.check = self.DoCheck(self.item_check)
 
@@ -590,60 +580,19 @@ class pDictionary(Prop):
     def do_reset(self):
         return TypedDict(check=self.item_check)
 
-pDict = pDictionary
 
-
-class pBoolean(Prop):
-    def __init__(self, **kwargs):
-        Prop.__init__(self, coerce=CoerceBool(), **kwargs)
-
-pBool = pBoolean
-
-
-class pKeyword(Prop):
-    def __init__(self, **kwargs):
-        Prop.__init__(self,
-                      type=basestring, #
-                      custom=CheckRegexp('^[\-\.\s\w]*$'), # TODO?
-                      **kwargs)
-
-class pString(Prop):
-    """ Coerce to regular string. """
-    def __init__(self, *check, **kwargs):
-        Prop.__init__(self, Coerce(str), *check, **kwargs)
-
-        
-class pUnicode(Prop):
-    """ Coerce to regular string. """
-    def __init__(self, *check, **kwargs):
-        Prop.__init__(self, Coerce(unicode), *check, **kwargs)
-        
-
-class pInteger(Prop):
-    def __init__(self, *check, **kwargs):
-        Prop.__init__(self, Coerce(int), *check, **kwargs)
-
-
-class pFloat(Prop):
-    def __init__(self, *check, **kwargs):
-        Prop.__init__(self, Coerce(float), *check, **kwargs)
-
-        
-class pWeakref(Prop):
-
-    def __init__(self, *check, **kwargs):
-        Prop.__init__(self, *check, **kwargs)
-        
-    def meta_attribute(self, key):
-        return WeakMetaAttribute(self, key)
+Prop = Property
+pDictionary = Dictionary
+pDict = Dictionary
+pList = List
 
 
 
 #------------------------------------------------------------------------------
-# HasProps
+# HasProperties
 #
 
-class HasProps(object):
+class HasProperties(object):
 
     """
     Base class for any class that uses Props.
@@ -685,7 +634,7 @@ class HasProps(object):
     
     def __setattr__(self, key, value):
         if key in ('_props','_values'):
-            raise RuntimeError("Attributes '_props' and '_values' cannot be altered for HasProps objects.")
+            raise RuntimeError("Attributes '_props' and '_values' cannot be altered for HasProperties objects.")
         
         prop = object.__getattribute__(self, '_props').get(key,None)
         if prop is not None and isinstance(prop, Prop):
@@ -811,4 +760,5 @@ class HasProps(object):
     
 
 
+HasProps = HasProperties
 
