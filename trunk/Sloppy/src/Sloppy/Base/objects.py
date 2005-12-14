@@ -123,6 +123,11 @@ MAP = {
     'fixed': GROUP_TYPE_FIXED,
     },
 
+'group_linecolor_type': {
+    'cycle': GROUP_TYPE_CYCLE,
+    'fixed': GROUP_TYPE_FIXED,
+    },
+
 
 }
 
@@ -274,7 +279,7 @@ class Layer(HasProperties, HasSignals):
                            blurb="Line Width")
 
     class GroupLineColor(HasProperties):
-        type = Integer(mapping=MAP['group_type'], reset=GROUP_TYPE_CYCLE)
+        type = Integer(mapping=MAP['group_linecolor_type'], reset=GROUP_TYPE_CYCLE)
         allow_override = Boolean(reset=True)        
         value = Property(Line.color.check, reset=Line.color.on_default)
         cycle_list = List(Line.color.check, reset=lambda:['g','b','r'])
