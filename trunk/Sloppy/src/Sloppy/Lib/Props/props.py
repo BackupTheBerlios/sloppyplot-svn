@@ -530,8 +530,12 @@ class Property:
 class List(Property):
 
     def __init__(self, *check, **kwargs):
-        kwargs.update({'reset' : self.do_reset})        
+        # The keyword arguments reset and default refer to the list.
+        # They don't make sense for the items.       
+        if kwargs.has_key('reset') is False:
+            kwargs['reset'] = self.do_reset
         Property.__init__(self, *check, **kwargs)
+        
         self.item_check = self.check
         self.check = self.DoCheck(self.item_check)
 

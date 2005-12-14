@@ -133,19 +133,29 @@ def new_legend(spj, element):
     
 
 def new_layer(spj, element):
+        
+    # create new layer
+    layer = Layer(**element.attrib)
 
     # group properties
     group_properties = {}
-    for eGroup in element.findall('Groups/Group'):
-        key = eGroup.attrib.pop('key')
-        if key == 'linestyle':
-            print "Creating new linestyle object"
-            group_properties['group_linestyle'] = Layer.GroupLineStyle(**eGroup.attrib)
-        
-    # create new layer
-    kwargs = element.attrib
-    kwargs.update(group_properties)
-    layer = Layer(**kwargs)
+    eGroups = element.find('Groups')
+    if eGroups is not None:
+        # We iterate over all group properties and look for elements
+        # with tags that match the group property's classname, e.g.
+        # <GroupLineMarker>...</GroupLineMarker> for the Property
+        # Layer.marker.
+        keys = ['group_linestyle', 'group_linewidth', 'group_linecolor', 'group_linemarker']
+        for key in keys:
+            classname = layer.get_value(key).__class__.__name__
+            groupclass = layer.get_value(key).__class__
+            eGroup = eGroups.find(classname)
+            if eGroup is not None:
+                eGroup.attrib['type'] = int(eGroup.attrib['type'])
+                group_properties[key] = groupclass(**eGroup.attrib)
+                print "CYCLE LIST", group_properties[key].cycle_list
+
+    layer.set_values(**group_properties)
 
     # TODO: test type and _then_ assign the data    
     for eLine in element.findall('Line'):        
@@ -303,16 +313,22 @@ def toElement(project):
             # group properties
             eGroups = SubElement(eLayer, "Groups")
 
-            # linestyle
-            key = 'group_linestyle'
-            group = layer.get_value(key)
-            print "Writing group property ", key
-            eGroup = SubElement(eGroups, "Group")
-            # TODO: cycle_list is missing, because it is a list!
-            attrs = group.get_values(include=['value', 'range_start', 'range_end', 'range_step'],
+            def groups_to_element(eGroups, keys):
+                for key in keys:
+                    print "Writing group property ", key                
+                    group = layer.get_value(key)
+                    if group is not None:
+                        groupname = group.__class__.__name__
+                        eGroup = SubElement(eGroups, groupname)
+                        # TODO: cycle_list is missing, because it is a list!
+                        attrs = group.get_values(include=['type','value', 'range_start', 'range_stop', 'range_step'],
                                      default=None)
-            attrs['key'] = 'linestyle'
-            iohelper.set_attributes(eGroup, attrs)
+                        iohelper.set_attributes(eGroup, attrs)
+                        
+            groups_to_element(eGroups, ['group_linestyle',
+                                        'group_linemarker',
+                                        'group_linewidth',
+                                        'group_linecolor'])
                 
             # axes
             for (key, axis) in layer.axes.iteritems():

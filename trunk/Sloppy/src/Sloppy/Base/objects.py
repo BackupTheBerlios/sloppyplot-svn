@@ -233,58 +233,57 @@ class Layer(HasProperties, HasSignals):
     # Group Properties
     #
     class GroupLineStyle(HasProperties):
-        type = Integer(mapping=MAP['group_linestyle_type'], reset=0)
+        type = Integer(mapping=MAP['group_linestyle_type'], reset=GROUP_TYPE_FIXED)
         allow_override = Boolean(reset=True)        
         value = Property(Line.style.check, reset=Line.style.on_default)
         cycle_list = List(Line.style.check)
         range_start = Float(reset=1.0)
-        range_end = Float(reset=None)
+        range_stop = Float(reset=None)
         range_step = Float(reset=1.0)
         
     group_linestyle = Property(type=GroupLineStyle,                               
-                               reset=GroupLineStyle(type=GROUP_TYPE_FIXED),
+                               reset=lambda:Layer.GroupLineStyle(),
                                blurb="Line Style")
 
 
     class GroupLineMarker(HasProperties):
-        type = Integer(mapping=MAP['group_linemarker_type'], reset=0)
+        type = Integer(mapping=MAP['group_linemarker_type'], reset=GROUP_TYPE_FIXED)
         allow_override = Boolean(reset=True)        
         value = Property(Line.marker.check, reset=Line.marker.on_default)
         cycle_list = List(Line.marker.check)
         range_start = Float(reset=1.0)
-        range_end = Float(reset=None)
+        range_stop = Float(reset=None)
         range_step = Float(reset=1.0)
         
     group_linemarker = Property(type=GroupLineMarker,
-                                reset=GroupLineMarker(type=GROUP_TYPE_FIXED),
+                                reset=lambda:Layer.GroupLineMarker(),
                                 blurb="Line Marker")
 
     
     class GroupLineWidth(HasProperties):
-        type = Integer(mapping=MAP['group_type'], reset=0)
+        type = Integer(mapping=MAP['group_type'], reset=GROUP_TYPE_FIXED)
         allow_override = Boolean(reset=True)        
         value = Property(Line.width.check, reset=Line.width.on_default)
         cycle_list = List(Line.width.check)
         range_start = Float(reset=1.0)
-        range_end = Float(reset=None)
+        range_stop = Float(reset=None)
         range_step = Float(reset=1.0)
         
     group_linewidth = Property(type=GroupLineWidth,
-                           reset=GroupLineWidth(type=GROUP_TYPE_FIXED),
+                           reset=lambda:Layer.GroupLineWidth(),
                            blurb="Line Width")
 
     class GroupLineColor(HasProperties):
-        type = Integer(mapping=MAP['group_type'], reset=0)
+        type = Integer(mapping=MAP['group_type'], reset=GROUP_TYPE_CYCLE)
         allow_override = Boolean(reset=True)        
         value = Property(Line.color.check, reset=Line.color.on_default)
-        cycle_list = List(Line.color.check)
+        cycle_list = List(Line.color.check, reset=lambda:['g','b','r'])
         range_start = Float(reset=1.0)
-        range_end = Float(reset=None)
+        range_stop = Float(reset=None)
         range_step = Float(reset=1.0)
         
     group_linecolor = Property(type=GroupLineColor,
-                               reset=GroupLineColor(type=GROUP_TYPE_CYCLE,
-                                                    cycle_list=['g','b','r']),
+                               reset=lambda:Layer.GroupLineColor(),
                                blurb="Line Color")
 
 

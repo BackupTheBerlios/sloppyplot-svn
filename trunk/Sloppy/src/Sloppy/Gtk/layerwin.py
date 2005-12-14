@@ -188,7 +188,7 @@ class GroupBox(gtk.HBox):
 
     # type == GROUP_TYPE_RANGE:
     #   widget.range_start
-    #   widget.range_end
+    #   widget.range_stop
     #   widget.range_step
 
     # type  == GROUP_TYPE_CYCLE:
@@ -212,7 +212,7 @@ class GroupBox(gtk.HBox):
         self.widget_type = pwconnect.ComboBox(self.group, 'type')
         self.widget_value = pwglade.new_connector(self.group, 'value')
         self.widget_range_start = pwconnect.SpinButton(self.group, 'range_start')
-        self.widget_range_stop = pwconnect.SpinButton(self.group, 'range_end')
+        self.widget_range_stop = pwconnect.SpinButton(self.group, 'range_stop')
         self.widget_range_step = pwconnect.SpinButton(self.group, 'range_step')        
 
         self.clist = [
