@@ -1,71 +1,16 @@
 
-Next in Queue:
+FOR 0.5.2:
+==========
 
 (A) Group Properties
 
-    - serialize group properties => save and load
+    - gui for cycle list... (=> listwizard?)
 
-    - Allow setting group properties in layerwin
-      => continue work on range and pwconnect.ListWizard
+   - backend: get_group_values. Either fix it.
+     Maybe we could have a runner object with a method
+     reset() and next().
 
-
-  NOTE: layerwin uses range_stop, not range_end. I should fix that.
-
-
-  => marker and style should internally be treated as integers.
-     This way, we can use increments on them.
-
-     _ANOTHER_ variant would be to assume that if we have a Property
-     with a mapping, then +1 means: go to the next item in the mapping.
-     But what is the next item :-)
-
-     _SO BASICALLY_ this means that we don't need a mapping, but rather
-     a value list, and that next item means next in list.
-
-     if prop has value-list:
-         index = prop.value-list.index(prop.current-value)
-         index += 1
-         prop.current-value = prop.value-list[index]
-
-     Integers only make sense when we have to add/subtract them, which we 
-     would never do.
-    
-     Maybe the corresponding group property should have a method that takes
-     care of these internals!  That would be nifty:
-
-     group_property.reset()
-     group_property.next()
-
-     ACTUALLY this seems to be the best solution to me.
-  
----
-Toolbox combo is broken :-(
-
-
------
-ASCII Import:
-
-- If we always read the header, then the header could leave the file 
-  descriptor at the first non-comment line?  There would be no need for
-  a tell or seek.
-
-- throw away trailing and leading whitespaces: string.strip(line)
-  where string is a module
-
-- another way to split up strings: separator.separate(line)
-  where separator is the separator
-
-- allow None items?
-  if null.count(string.strip(item)) > 0:
-     collist[index].add_element(None)
-
-- determine type: is int? is float? if neither, then assume string
-
-- super(ThisClass, self).__init__(args)  (without self)
-
-- 
-FOR 0.5.2:
-==========
+(E) Make sure all the good properties work in gnuplot as well...
 
 (B) Metadata
     - display metadata, so that the import makes more sense.
@@ -76,7 +21,7 @@ FOR 0.5.2:
     - allow comments for plots and datasets.
     
 (D) LayerWin and Toolbox
-    - Fix Toolbox combo
+    - Fix Toolbox combo (is it broken?)
     - Toolbox: 
       Add a combobox similar to the existing one with all the layers
       The existing layer tool should be put into a tab and could offer
@@ -99,9 +44,30 @@ DETAILS FOR 0.5.3:
 
 ------------------------------------------------------------------------------
 ------------------------------------------------------------------------------
-- have an option in the import dialog to always ask for options.
-  The equivalent in the dnd process would be to have the control 
-  key or something similar pressed down.
+-----
+ASCII Import:
+
+- If we always read the header, then the header could leave the file 
+  descriptor at the first non-comment line?  There would be no need for
+  a tell or seek.
+
+- throw away trailing and leading whitespaces: string.strip(line)
+  where string is a module
+
+- another way to split up strings: separator.separate(line)
+  where separator is the separator
+
+- allow None items?
+  if null.count(string.strip(item)) > 0:
+     collist[index].add_element(None)
+
+- determine type: is int? is float? if neither, then assume string
+
+- super(ThisClass, self).__init__(args)  (without self)
+
+
+
+
 
 - What if we have two templates for the same extension?
 
