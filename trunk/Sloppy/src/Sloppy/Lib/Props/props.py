@@ -55,7 +55,24 @@ def as_list(o):
         return list(o)
     else:
         return [o]
+
+
+class DictionaryLookup(object):
+
+    def __init__(self, adict):
+        object.__setattr__(self, '_adict', adict)
+
+    def __getattribute__(self, key):
+        adict = object.__getattribute__(self, '_adict')         
+        return adict[key]
+
+    def __setattr__(self, key, value):
+        adict = object.__getattribute__(self, '_adict')
+        adict[key] = value
             
+    def __str__(self):
+        adict = object.__getattribute__(self, '_adict')
+        return "Available items: %s" % str(adict)
 
 
 #------------------------------------------------------------------------------
@@ -117,8 +134,8 @@ class Check:
     @raise TypeError:
     @raise ValueError:
     """
-
-    def description(self):
+    
+    def get_description(self):
         return "No description for %s" % str(self)
 
 
@@ -146,7 +163,7 @@ class Coerce(Transformation):
         else:
             return self.type(value)
 
-    def description(self):
+    def get_description(self):
         return "Coerce to: %s" % self.type
 
 
@@ -168,7 +185,7 @@ class CoerceBool(Transformation):
             else:
                 return bool(value)
 
-    def description(self):
+    def get_description(self):
         return "Coerce to Boolean"
 
 class CheckRegexp(Check):
@@ -184,7 +201,7 @@ class CheckRegexp(Check):
         if match is None:
             raise ValueError("Value %s does not match the regular expression %s" % (value,self.regexp))
 
-    def description(self):
+    def get_description(self):
         return "Must match regular expression: '%s'" % self.regexp
 
     
@@ -216,7 +233,7 @@ class CheckType(Check):
         else:
             raise TypeError("Invalid type '%s', must be one of '%s'" % (type(value), self.types))
 
-    def description(self):
+    def get_description(self):
         return "Require type(s): %s." % self.types
 
 
@@ -234,7 +251,7 @@ class CheckTuple(Check):
         else:
             raise TypeError("Value must be tuple of length %d!" % self.length )
 
-    def description(self):
+    def get_description(self):
         return "Require tuple of length %d." % self.length
 
     
@@ -266,7 +283,7 @@ class CheckAll(Transformation):
         return len(self.items)
 
 
-    def description(self):
+    def get_description(self):
         rv = ["Check all of the following:"]
         for item in self.items:
             rv.append("  " + item.description())
@@ -274,13 +291,13 @@ class CheckAll(Transformation):
 
         
 
-class CheckInList(Transformation):
+class CheckList(Transformation):
 
     def __init__(self, *checks, **kwargs):
 
         checkdict = {}
         checks = list(checks)
-            
+        
         # create new checks from the kwargs and put them into checkdict        
         create_check = {'mapping' : Mapping,
                         'type' : CheckType,
@@ -304,7 +321,7 @@ class CheckInList(Transformation):
                       'CheckBounds': 'range',
                       'CustomCheck': 'custom'}
         for check in checks:
-            if isinstance(check, CheckInList):
+            if isinstance(check, CheckList):
                 checkdict.update(check.checkdict)                
             else:                
                 key = check_map[check.__class__.__name__]
@@ -318,7 +335,6 @@ class CheckInList(Transformation):
 
         self.checkdict = checkdict
         self.items = items
-
         
 
     def __call__(self, value):
@@ -333,12 +349,13 @@ class CheckInList(Transformation):
         return len(self.items)
 
 
-    def description(self):
+    def get_description(self):
         rv = ["Check all of the following:"]
         for item in self.items:
-            rv.append("  " + item.description())
+            rv.append("  " + item.get_description())
         return "\n".join(rv)
 
+    
         
 
 class CheckValid(Check):
@@ -354,7 +371,7 @@ class CheckValid(Check):
         if (value in self.values) is False:
             raise ValueError("Value %s is not in the list of valid values: %s" % (value, self.values))
 
-    def description(self):
+    def get_description(self):
         return "Valid values: '%s'" % self.values
 
     
@@ -372,7 +389,7 @@ class CheckInvalid(Check):
         if value in self.values:
             raise ValueError("Value %s in in the list of invalid values: %s" % (value, self.values))    
 
-    def description(self):
+    def get_description(self):
         return "Invalid values: '%s'" % self.values
 
                 
@@ -396,7 +413,7 @@ class CheckBounds(Check):
                or (self.max is not None and value > self.max):
             raise ValueError("Value %s should be in between [%s:%s]" % (value, self.min, self.max))
 
-    def description(self):
+    def get_description(self):
         return "Valid range: %s:%s" % (self.min or "", self.max or "")
 
 
@@ -452,7 +469,7 @@ class Property:
             check_kwargs.pop('default')
         if check_kwargs.has_key('reset'):
             check_kwargs.pop('reset')
-        self.check = CheckInList(*check, **check_kwargs)
+        self.check = CheckList(*check, **check_kwargs)
 
         default = kwargs.pop('default', None)
         if inspect.isfunction(default) or inspect.ismethod(default):
@@ -471,14 +488,19 @@ class Property:
             self.on_reset = (lambda: reset)
 
         self.name = None # set by the owning HasProperties class
-        
+
+        self.checks = DictionaryLookup(self.check.checkdict)
 
     def meta_attribute(self, key):
         return MetaAttribute(self, key)
 
-    def description(self):
+    def get_description(self):
         if self.check is not None:
-            return self.check.description()
+            return self.check.get_description()
+
+    # DEPRECATED
+    def description(self):
+        return self.get_description()
     
 
     #----------------------------------------------------------------------
@@ -500,7 +522,13 @@ class Property:
                 return item
         else:
             return None
-        
+
+
+    # BIG FAT TODO:
+    # Replace these with something like
+    #  property.checks.valid
+    #  property.checks.range
+    
     def valid_values(self):
         """ Collect all values of the prop specified by CheckValid. """
         values = []
@@ -607,7 +635,7 @@ class HasProperties(object):
         # Initialize props and values dict
         object.__setattr__(self, '_values', {})
         object.__setattr__(self, '_props', {})
-
+        
         # We need to init the Props of all classes that the object instance
         # belongs to.  To give meaningful error messages, we reverse the
         # order and define the base class Props first.
@@ -631,13 +659,15 @@ class HasProperties(object):
         if len(kwargs) > 0:
             raise ValueError("Unrecognized keyword arguments: %s" % kwargs)
 
+        # quick property retrieval: self.props.key
+        object.__setattr__(self, 'props', DictionaryLookup(self._props))
 
     #----------------------------------------------------------------------
     # Setting/Getting Magic
     #
     
     def __setattr__(self, key, value):
-        if key in ('_props','_values'):
+        if key in ('props', '_props','_values'):
             raise RuntimeError("Attributes '_props' and '_values' cannot be altered for HasProperties objects.")
         
         prop = object.__getattribute__(self, '_props').get(key,None)
