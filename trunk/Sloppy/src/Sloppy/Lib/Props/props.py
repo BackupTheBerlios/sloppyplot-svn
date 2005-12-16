@@ -68,6 +68,8 @@ class DictionaryLookup(object):
 
     def __setattr__(self, key, value):
         adict = object.__getattribute__(self, '_adict')
+        if adict.has_key(key) is False:
+            raise KeyError("'%s' cannot be set, because it doesn't exist yet." % key)
         adict[key] = value
             
     def __str__(self):

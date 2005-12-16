@@ -23,6 +23,7 @@ class GroupCycle(Group):
     def __init__(self, container, key):
         Group.__init__(self, key=key)
         self.props.values = List(container.get_prop(key).check)
+        self.props.test = List(container.get_prop(key).check)
         
         
 
