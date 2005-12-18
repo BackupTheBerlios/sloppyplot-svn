@@ -43,7 +43,7 @@ import logging
 logger = logging.getLogger('Base.projectio')
 
 
-FILEFORMAT = "0.5"
+FILEFORMAT = "0.5.2"
 
 """
 File format history:
@@ -56,7 +56,10 @@ File format history:
     This is an incompatible change, so I decided to drop the
     prior conversions for 0.4.6. Sorry, but this is what Alpha
     software really means.
-    
+
+  - 0.5 -> 0.5.2: implemented line.color.  Since line.color was not accessible
+    through the GUI until then, there is no conversion of existing entries.
+  
 """
 
 class ParseError(Exception):
@@ -137,25 +140,25 @@ def new_layer(spj, element):
     # create new layer
     layer = Layer(**element.attrib)
 
-    # group properties
-    group_properties = {}
-    eGroups = element.find('Groups')
-    if eGroups is not None:
-        # We iterate over all group properties and look for elements
-        # with tags that match the group property's classname, e.g.
-        # <GroupLineMarker>...</GroupLineMarker> for the Property
-        # Layer.marker.
-        keys = ['group_linestyle', 'group_linewidth', 'group_linecolor', 'group_linemarker']
-        for key in keys:
-            classname = layer.get_value(key).__class__.__name__
-            groupclass = layer.get_value(key).__class__
-            eGroup = eGroups.find(classname)
-            if eGroup is not None:
-                eGroup.attrib['type'] = int(eGroup.attrib['type'])
-                group_properties[key] = groupclass(**eGroup.attrib)
-                print "CYCLE LIST", group_properties[key].cycle_list
+#     # group properties
+#     group_properties = {}
+#     eGroups = element.find('Groups')
+#     if eGroups is not None:
+#         # We iterate over all group properties and look for elements
+#         # with tags that match the group property's classname, e.g.
+#         # <GroupLineMarker>...</GroupLineMarker> for the Property
+#         # Layer.marker.
+#         keys = ['group_linestyle', 'group_linewidth', 'group_linecolor', 'group_linemarker']
+#         for key in keys:
+#             classname = layer.get_value(key).__class__.__name__
+#             groupclass = layer.get_value(key).__class__
+#             eGroup = eGroups.find(classname)
+#             if eGroup is not None:
+#                 eGroup.attrib['type'] = int(eGroup.attrib['type'])
+#                 group_properties[key] = groupclass(**eGroup.attrib)
+#                 print "CYCLE LIST", group_properties[key].cycle_list
 
-    layer.set_values(**group_properties)
+#     layer.set_values(**group_properties)
 
     # TODO: test type and _then_ assign the data    
     for eLine in element.findall('Line'):        
@@ -209,14 +212,9 @@ def fromTree(tree):
         return new_version
     
     while (version is not None and version != FILEFORMAT):
-        #elif version=='0.4':
-        #    version = raise_version('0.4.3')
-        #    continue
-        #
-        #if version=='0.4.3':
-        #    version = raise_version('0.4.6')
-        #    continue
-        #else:
+        if version=='0.5':
+            version = raise_version('0.5.2')
+            continue
         raise IOError("Invalid Sloppy File Format Version %s. Aborting Import." % version)
 
     for eDataset in eProject.findall('Datasets/*'):
@@ -310,25 +308,25 @@ def toElement(project):
             attrs = layer.get_values(['type', 'grid', 'title', 'visible'], default=None)            
             iohelper.set_attributes(eLayer, attrs)
 
-            # group properties
-            eGroups = SubElement(eLayer, "Groups")
+#             # group properties
+#             eGroups = SubElement(eLayer, "Groups")
 
-            def groups_to_element(eGroups, keys):
-                for key in keys:
-                    print "Writing group property ", key                
-                    group = layer.get_value(key)
-                    if group is not None:
-                        groupname = group.__class__.__name__
-                        eGroup = SubElement(eGroups, groupname)
-                        # TODO: cycle_list is missing, because it is a list!
-                        attrs = group.get_values(include=['type','value', 'range_start', 'range_stop', 'range_step'],
-                                     default=None)
-                        iohelper.set_attributes(eGroup, attrs)
+#             def groups_to_element(eGroups, keys):
+#                 for key in keys:
+#                     print "Writing group property ", key                
+#                     group = layer.get_value(key)
+#                     if group is not None:
+#                         groupname = group.__class__.__name__
+#                         eGroup = SubElement(eGroups, groupname)
+#                         # TODO: cycle_list is missing, because it is a list!
+#                         attrs = group.get_values(include=['type','value', 'range_start', 'range_stop', 'range_step'],
+#                                      default=None)
+#                         iohelper.set_attributes(eGroup, attrs)
                         
-            groups_to_element(eGroups, ['group_linestyle',
-                                        'group_linemarker',
-                                        'group_linewidth',
-                                        'group_linecolor'])
+#             groups_to_element(eGroups, ['group_linestyle',
+#                                         'group_linemarker',
+#                                         'group_linewidth',
+#                                         'group_linecolor'])
                 
             # axes
             for (key, axis) in layer.axes.iteritems():

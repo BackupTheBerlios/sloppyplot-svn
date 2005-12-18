@@ -6,10 +6,10 @@
 from props import *
 
 
-__all__ = ["Integer", "Float", "Weakref", "Keyword", "String",
+__all__ = ["Integer", "Float", "Keyword", "String",
            "Boolean", "Unicode",
            #
-           "pInteger", "pFloat", "pWeakref", "pKeyword", "pString",
+           "pInteger", "pFloat", "pKeyword", "pString",
            "pBoolean", "pUnicode"
            ]
 
@@ -17,7 +17,29 @@ __all__ = ["Integer", "Float", "Weakref", "Keyword", "String",
 
 class Boolean(Prop):
     def __init__(self, **kwargs):
-        Prop.__init__(self, coerce=CoerceBool(), **kwargs)
+        Prop.__init__(self, CoerceBool(), **kwargs)
+
+    
+class CoerceBool(Transformation):
+
+    def __init__(self):
+        pass
+
+    def __call__(self, owner, key, value):
+        if value is None:
+            return None
+        else:
+            if isinstance(value, basestring):
+                if "true".find(value.lower()) > -1:
+                    return True
+                elif "false".find(value.lower()) > -1:
+                    return False
+            else:
+                return bool(value)
+
+    def get_description(self):
+        return "Coerce to Boolean"
+
 
 class Keyword(Prop):
     def __init__(self, **kwargs):
@@ -46,20 +68,10 @@ class Float(Prop):
     def __init__(self, *check, **kwargs):
         Prop.__init__(self, coerce=float, *check, **kwargs)
 
-        
-class Weakref(Prop):
-
-    def __init__(self, *check, **kwargs):
-        Prop.__init__(self, *check, **kwargs)
-        
-    def meta_attribute(self, key):
-        return WeakMetaAttribute(self, key)
 
 
 
 # for compatibility reasons:
-
-pWeakref = Weakref
 pInteger = Integer
 pUnicode = Unicode
 pString = String

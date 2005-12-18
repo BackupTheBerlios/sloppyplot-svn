@@ -1,4 +1,54 @@
 
+
+COLORS:
+  - the raw value must be stored (hey, this sounds like traits...)
+    WHERE?  The values are stored in HasProperties._values[key].
+    We could add another variable '_inputvalues' or something like this.
+    This means: unprocessed input that lead to the given value.
+    Problem: Do we really want two values? Maybe make it optional!
+
+  - all functions using the color must use the internal value, which 
+    is (r,g,b) => get, rget; set
+
+
+
+
+
+
+- to simplify the line dialog, we could have a button that determines
+  what is displayes:  show_style, show_contents, show_both
+
+
+
+- Property.check.mapping right now is a requirement.
+  It would be nice to have such thing as a suggestion.
+
+- Idea:
+
+  IN:
+  - type_check (including coercion)
+  - content_check (may be a mapping, a transformation, a list to check against)
+
+  OUT:
+  - ???  
+
+
+
+
+HEY !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
+
+Having _two_ different values might be a good idea.  Then we don't
+need the distinction between default values anymore. We would have an
+internal value (3-tuple) and an external value (color string,
+rgb-tuple, whatever the user specified).
+
+The default value is simply the internal value when the user has
+specified an external value of None!
+
+
+
+
+------------------------
 I have a new idea for group properties, which would have
 a different user interface and would be 100% extensible, in
 case there ever were any new line properties:

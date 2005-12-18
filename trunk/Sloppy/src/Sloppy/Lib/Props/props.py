@@ -39,26 +39,23 @@ __all__ = ["HasProps", "HasProperties", "Prop", "Property", "List",
            #
            "ValueDict", "Mapping", # experimental
            #
-           "Check", "Transformation", "Coerce", "CoerceBool", "CheckRegexp", "CheckType",
+           "Check", "Transformation", "Coerce", "CheckRegexp", "CheckType",
            "CheckTuple", "CheckAll", "CheckBounds", "CheckValid", "CheckInvalid"
            ]
 
 #------------------------------------------------------------------------------
-# Helper Methods
+# Helper Stuff
 #
 
-def as_list(o):
-    # make sure we are talking about a list!
-    if isinstance(o, list):
-        return o
-    elif isinstance(o, tuple):
-        return list(o)
-    else:
-        return [o]
-
-
 class DictionaryLookup(object):
+    """ Helper class to allow access to members of a dictionary.
 
+    >>> mydict = {'One': 1, 'Two': 2}
+    >>> dl = DictionaryLookup(mydict)
+    >>> print dl.One
+    >>> print dl.Two
+    """
+    
     def __init__(self, adict):
         object.__setattr__(self, '_adict', adict)
 
@@ -78,53 +75,6 @@ class DictionaryLookup(object):
 
 
 #------------------------------------------------------------------------------
-# Meta Attributes
-#
-
-class MetaAttribute(object):
-
-    def __init__(self, prop, key):
-        object.__init__(self)
-        self.key = key
-        self.prop = prop
-
-    def __get__(self, inst, nd=False):
-        rv = inst._values[self.key]
-        if rv is not None or nd is True:
-            return rv
-        else:
-            return self.prop.on_default()
-
-    def __set__(self, owner, value):
-        try:
-            value = self.prop.check(value)
-            owner._values[self.key] = value
-        except TypeError, msg:
-            raise TypeError("Failed to set property '%s' of container '%s' to '%s':\n  %s" %
-                            (self.key, repr(owner), value, msg))
-        except ValueError, msg:
-            raise ValueError("Failed to set property '%s' of container '%s' to '%s':\n %s" %
-                             (self.key, repr(owner), value, msg))
-
-
-class WeakMetaAttribute(MetaAttribute):
-    
-    def __get__(self, owner, nd=False):
-        value = MetaAttribute.__get__(self, owner, nd)
-        if value is not None:
-            return value()
-        else:
-             return value
-
-    def __set__(self, owner, value):
-        value = self.prop.check(value)
-        if value is not None:
-            value = weakref.ref(value)
-        owner._values[self.key] = value
-
-
-
-#------------------------------------------------------------------------------
 # Check objects
 #
 
@@ -137,10 +87,6 @@ class Check:
     @raise ValueError:
     """
     
-    def get_description(self):
-        return "No description for %s" % str(self)
-
-
 
 class Transformation(Check):
     """ Abstract base class for all value transformations.
@@ -159,7 +105,7 @@ class Coerce(Transformation):
     def __init__(self, _type):
         self.type = _type
 
-    def __call__(self, value):
+    def __call__(self, owner, key, value):
         if value is None:
             return None
         else:
@@ -170,26 +116,7 @@ class Coerce(Transformation):
 
 
 
-class CoerceBool(Transformation):
-
-    def __init__(self):
-        pass
-
-    def __call__(self, value):
-        if value is None:
-            return None
-        else:
-            if isinstance(value, basestring):
-                if "true".find(value.lower()) > -1:
-                    return True
-                elif "false".find(value.lower()) > -1:
-                    return False
-            else:
-                return bool(value)
-
-    def get_description(self):
-        return "Coerce to Boolean"
-
+    
 class CheckRegexp(Check):
     
     """ Check value against a given regular expression. """
@@ -198,7 +125,9 @@ class CheckRegexp(Check):
         self.regexp=regexp
         self._expression = re.compile(regexp)
 
-    def __call__(self, value):
+    def __call__(self, owner, key, value):
+        if value is None:
+            return
         match = self._expression.match(value)
         if match is None:
             raise ValueError("Value %s does not match the regular expression %s" % (value,self.regexp))
@@ -214,8 +143,8 @@ class CustomCheck(Check):
         self.function = function
         self.description = (lambda self: doc)
 
-    def __call__(self, value):
-        return self.function(value)
+    def __call__(self, owner, key, value):
+        return self.function(owner, key, value)
     
     
 class CheckType(Check):
@@ -223,9 +152,9 @@ class CheckType(Check):
     """ Check value against a single type or a list of types. """
 
     def __init__(self, *types):
-        self.types = as_list(types)
+        self.types = list(types)
 
-    def __call__(self, value):
+    def __call__(self, owner, key, value):
         if value is None:
             return
         
@@ -247,7 +176,7 @@ class CheckTuple(Check):
     def __init__(self, length):
         self.length = length
         
-    def __call__(self, value):
+    def __call__(self, owner, key, value):
         if isinstance(value, tuple) and len(value) == self.length:
             return
         else:
@@ -273,7 +202,7 @@ class CheckAll(Transformation):
                     raise TypeError("Invalid Check specified: %s of %s" % (item, type(item)))
                 self.items.append(item)
         
-    def __call__(self, value):
+    def __call__(self, owner, key, value):
         for item in self.items:
             if isinstance(item, Transformation):
                 value = item(value)
@@ -310,7 +239,7 @@ class CheckList(Transformation):
                         'valid': CheckValid,
                         'invalid': CheckInvalid
                         }
-                        #'range': CheckRange       
+                        #'range': CheckR <ange       
         for key, value in kwargs.iteritems():
             checks.append(create_check[key](value))
 
@@ -325,13 +254,16 @@ class CheckList(Transformation):
         for check in checks:
             if isinstance(check, CheckList):
                 checkdict.update(check.checkdict)                
-            else:                
-                key = check_map[check.__class__.__name__]
+            else:
+                try:
+                    key = check_map[check.__class__.__name__]
+                except KeyError:
+                    key = 'custom'
                 checkdict[key] = check
 
         # now create the check list in a certain order
         items = []        
-        for key in ['mapping', 'type', 'coerce', 'range', 'valid', 'invalid']:
+        for key in ['custom', 'mapping', 'type', 'coerce', 'range', 'valid', 'invalid']:
             if checkdict.has_key(key):
                 items.append(checkdict.get(key))
 
@@ -339,12 +271,12 @@ class CheckList(Transformation):
         self.items = items
         
 
-    def __call__(self, value):
+    def __call__(self, owner, key, value):
         for item in self.items:
             if isinstance(item, Transformation):
-                value = item(value)
+                value = item(owner, key, value)
             else:
-                item(value)
+                item(owner, key, value)
         return value
 
     def __len__(self):
@@ -365,9 +297,9 @@ class CheckValid(Check):
     """ Require value to be in the list of valid values. """
     
     def __init__(self, values):
-        self.values = as_list(values)
+        self.values = list(values)
         
-    def __call__(self, value):
+    def __call__(self, owner, key, value):
         if value is None:
             return
         if (value in self.values) is False:
@@ -383,9 +315,9 @@ class CheckInvalid(Check):
     """ Make sure value is not in the list of invalid values. """
 
     def __init__(self, values):
-        self.values = as_list(values)       
+        self.values = list(values)       
 
-    def __call__(self, value):
+    def __call__(self, owner, key, value):
         if value is None:
             return
         if value in self.values:
@@ -407,7 +339,7 @@ class CheckBounds(Check):
         self.min=min
         self.max=max
 
-    def __call__(self, value):
+    def __call__(self, owner, key, value):
         if value is None:
             return None
         
@@ -430,7 +362,7 @@ class Mapping(Transformation):
         self.dict = adict
         self.values = adict.values()
 
-    def __call__(self, value):
+    def __call__(self, owner, key, value):
         if value in self.values:
             return value
         try:
@@ -477,25 +409,41 @@ class Property:
         if inspect.isfunction(default) or inspect.ismethod(default):
             self.on_default = default
         else:
-            if default is not None:
-                default = self.check(default)
-            self.on_default = (lambda: default)
+            self.on_default = lambda owner, key: self.check(owner,key,default)
 
         reset = kwargs.pop('reset', None)
         if inspect.isfunction(reset) or inspect.ismethod(reset):
             self.on_reset = reset
         else:
-            if reset is not None:
-                reset = self.check(reset)
-            self.on_reset = (lambda: reset)
+            self.on_reset = lambda owner, key: self.check(owner,key,reset)
 
         self.name = None # set by the owning HasProperties class
 
         self.checks = DictionaryLookup(self.check.checkdict)
 
-    def meta_attribute(self, key):
-        return MetaAttribute(self, key)
+    def get_value(self, owner, key, nd=False):
+        rv = owner._values[key]
+        if rv is not None or nd is True:
+            return rv
+        else:
+            return self.on_default(owner, key)
 
+        
+    def set_value(self, owner, key, value):
+        try:            
+            owner._values[key] = self.check(owner, key, value)
+        except TypeError, msg:
+            raise
+            raise TypeError("Failed to set property '%s' of container '%s' to '%s':\n  %s" %
+                            (key, repr(owner), value, msg))
+        except ValueError, msg:
+            raise ValueError("Failed to set property '%s' of container '%s' to '%s':\n %s" %
+                             (key, repr(owner), value, msg))
+        else:
+            pass
+            #print "Value successfully set. We used %s." % str(value)
+            
+        
     def get_description(self):
         if self.check is not None:
             return self.check.get_description()
@@ -575,17 +523,17 @@ class List(Property):
             self.check = check
             self.items = [] # needed because Prop.check requires such an item!
 
-        def __call__(self, value):
+        def __call__(self, owner, key, value):
             if isinstance(value, TypedList):
                 return value
             elif isinstance(value, list):
-                return TypedList(value, self.check)
+                return TypedList(owner, key, value, self.check)
             else:            
                 raise TypeError("The value '%s' has %s while it should be a list." %
                                 (value, type(value)))
         
-    def do_reset(self):
-        return TypedList(check=self.item_check)
+    def do_reset(self, owner, key):
+        return TypedList(owner, key, check=self.item_check)
 
                 
 class Dictionary(Property):
@@ -602,17 +550,17 @@ class Dictionary(Property):
             self.check = check
             self.items = [] # needed because Prop.check requires such an item!            
 
-        def __call__(self, value):
+        def __call__(self, owner, key, value):
             if isinstance(value, TypedDict):
                 return value
             elif isinstance(value, dict):
-                return TypedDict(value, self.check)
+                return TypedDict(owner, key, value, self.check)
             else:            
                 raise TypeError("The value '%s' has %s while it should be a dictionary." %
                                 (value, type(value)))
 
-    def do_reset(self):
-        return TypedDict(check=self.item_check)
+    def do_reset(self, owner, key):
+        return TypedDict(owner, key, check=self.item_check)
 
 
 Prop = Property
@@ -651,7 +599,8 @@ class HasProperties(object):
                     if self._props.has_key(key):
                         raise KeyError("%s defines Prop '%s', which has already been defined by a base class!" % (klass,key)  )
                     self._props[key] = value
-                    self._values[key] = value.on_reset()
+                    self._values[key] = value.on_reset(self, key)
+                    
                     kwvalue = kwargs.pop(key,None)
                     if kwvalue is not None:
                         self.__setattr__(key,kwvalue)
@@ -674,7 +623,7 @@ class HasProperties(object):
         
         prop = object.__getattribute__(self, '_props').get(key,None)
         if prop is not None and isinstance(prop, Prop):
-            prop.meta_attribute(key).__set__(self, value)
+            prop.set_value(self, key, value)
         else:
             object.__setattr__(self, key, value)
     
@@ -682,10 +631,10 @@ class HasProperties(object):
         """ `nd` = nodefault = ignore Prop's default value. """                         
         if key in ('_props','_values'):
             return object.__getattribute__(self, key)
-        else:
+        else:            
             prop = object.__getattribute__(self, '_props').get(key,None)
             if prop is not None and isinstance(prop, Prop):
-                return prop.meta_attribute(key).__get__(self, nd=nd)
+                return prop.get_value(self, key, nd=nd)
             else:
                 return object.__getattribute__(self, key)                       
 
@@ -750,7 +699,7 @@ class HasProperties(object):
     def clear(self, include=None, exclude=None):
         " Clear all props. "
         for key in self._limit_keys(include=include, exclude=exclude):
-            self._values[key] = self._props[key].on_reset()
+            self._values[key] = self._props[key].on_reset(self, key)
 
     #----------------------------------------------------------------------
     # Prop Handling

@@ -383,6 +383,9 @@ class LineTab(AbstractTab):
                        GroupBox(self.layer, 'group_linewidth'),
                        GroupBox(self.layer, 'group_linecolor')]
 
+        # DISABLE GROUP BOXES RIGHT NOW!
+        self.gblist = []
+
         # Wrap group boxes into a table       
         table = gtk.Table(rows=len(self.gblist), columns=3)
 
@@ -406,10 +409,12 @@ class LineTab(AbstractTab):
         frame2 = uihelper.new_section('Group Properties', table)
 
         #
-        # Put everythng together!
+        # Put everything together!
         #
         self.pack_start(frame1,True,True)
-        self.pack_start(frame2,False,True)
+
+        # DISABLE GROUP BOXES RIGHT NOW
+        #self.pack_start(frame2,False,True)
 
         self.show_all()
 
@@ -511,7 +516,7 @@ class LinesTreeView(gtk.TreeView):
         column = gtk.TreeViewColumn('color')
 
         # set up model with available colors and with an item _custom colors_
-        system_colors = [None, 'black', 'green','red','blue']
+        system_colors = [None] + objects.PV['line.color']
         color_model = gtk.ListStore(str)
         for color in system_colors:
             color_model.append((color or "",))
@@ -569,6 +574,12 @@ class LinesTreeView(gtk.TreeView):
 
         # MODEL_MARKER_COLOR
         column = gtk.TreeViewColumn('marker color')
+
+        # set up model with available colors and with an item _custom colors_
+        system_colors = [None] + objects.PV['line.marker_color']
+        color_model = gtk.ListStore(str)
+        for color in system_colors:
+            color_model.append((color or "",))
         
         cell = gtk.CellRendererCombo()
         cell.set_property('editable', True)

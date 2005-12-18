@@ -76,6 +76,9 @@ PV = {
                    "steps"],
     'layer.type' : ['line2d', 'contour'],
 
+    'line.color' : ['green', 'red', 'blue', 'black'],
+    'line.marker_color' : ['green', 'red', 'blue', 'black'],
+    
     'group_linestyle_type' : [GROUP_TYPE_CYCLE, GROUP_TYPE_FIXED]
     }
 
@@ -169,13 +172,15 @@ class Line(HasProperties):
 
     visible = Boolean(reset=True)
     style = Property(valid=PV['line.style'], default=PV['line.style'][0])    
-    width = Float(range=(0,10), default=1)   
-    color = String(default='g')
+    width = Float(range=(0,10), default=1)
+    # TODO: the color list PV['line.color'] should be a suggestion,
+    # TODO: not a requirement.
+    color = String(valid=PV['line.color'], default=PV['line.color'][0])
 
     #marker = Property(CheckValid(PV['line.marker']), default=PV['line.marker'][0])
     #marker = Property(mapping=MAP['line.marker'], default=0)
     marker = Property(valid=PV['line.marker'],default=PV['line.marker'][0])
-    marker_color = String(default='black')
+    marker_color = String(valid=PV['line.marker_color'], default=PV['line.marker_color'][0])
 
     # source stuff (soon deprecated)
     cx = Integer(range=(0,None), blurb="x-column", default=0)
@@ -230,7 +235,7 @@ class Layer(HasProperties, HasSignals):
     lines = List(type=Line, blurb="Lines")
     grid = Boolean(reset=False, blurb="Grid", doc="Display a grid")
     visible = Boolean(reset=True, blurb="Visible")
-    legend = Property(type=Legend, reset=lambda: Legend())
+    legend = Property(type=Legend, reset=lambda o,k: Legend())
 
     x = Float(range=(0.0,1.0), default=0.11)
     y = Float(range=(0.0,1.0), default=0.125)
@@ -250,7 +255,7 @@ class Layer(HasProperties, HasSignals):
         range_step = Float(reset=1.0)
         
     group_linestyle = Property(type=GroupLineStyle,                               
-                               reset=lambda:Layer.GroupLineStyle(),
+                               reset=lambda o,k:Layer.GroupLineStyle(),
                                blurb="Line Style")
 
 
@@ -264,7 +269,7 @@ class Layer(HasProperties, HasSignals):
         range_step = Float(reset=1.0)
         
     group_linemarker = Property(type=GroupLineMarker,
-                                reset=lambda:Layer.GroupLineMarker(),
+                                reset=lambda o,k:Layer.GroupLineMarker(),
                                 blurb="Line Marker")
 
     
@@ -278,20 +283,20 @@ class Layer(HasProperties, HasSignals):
         range_step = Float(reset=1.0)
         
     group_linewidth = Property(type=GroupLineWidth,
-                           reset=lambda:Layer.GroupLineWidth(),
+                           reset=lambda o,k:Layer.GroupLineWidth(),
                            blurb="Line Width")
 
     class GroupLineColor(HasProperties):
         type = Integer(mapping=MAP['group_linecolor_type'], reset=GROUP_TYPE_CYCLE)
         allow_override = Boolean(reset=True)        
         value = Property(Line.color.check, reset=Line.color.on_default)
-        cycle_list = List(Line.color.check, reset=lambda:['g','b','r'])
+        cycle_list = List(Line.color.check, reset=lambda o,k:['g','b','r'])
         range_start = Float(reset=1.0)
         range_stop = Float(reset=None)
         range_step = Float(reset=1.0)
         
     group_linecolor = Property(type=GroupLineColor,
-                               reset=lambda:Layer.GroupLineColor(),
+                               reset=lambda o,k:Layer.GroupLineColor(),
                                blurb="Line Color")
 
 
@@ -299,8 +304,8 @@ class Layer(HasProperties, HasSignals):
     labels = List(type=TextLabel)
 
     # axes
-    xaxis = Property(type=Axis, reset=(lambda:Axis()))
-    yaxis = Property(type=Axis, reset=(lambda:Axis()))
+    xaxis = Property(type=Axis, reset=lambda o,k:Axis())
+    yaxis = Property(type=Axis, reset=lambda o,k:Axis())
     
     def get_axes(self):
         return {'x':self.xaxis, 'y':self.yaxis}

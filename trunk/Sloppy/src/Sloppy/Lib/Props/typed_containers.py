@@ -21,8 +21,10 @@
 
 class TypedList:
 
-    def __init__(self, _list=None, check=None):
-        self.check = check or (lambda v: v)
+    def __init__(self, owner, key, _list=None, check=None):
+        self.owner = owner
+        self.key = key
+        self.check = check or (lambda o,k,v: v)
         self.metadata = {'check' : self.check}
         self.data = []
         if _list is not None:
@@ -89,7 +91,7 @@ class TypedList:
     #------------------------------------------------------------------------------
     def check_item(self, item):
         try:
-            return self.check(item)
+            return self.check(self.owner, self.key, item)
         except TypeError, msg:
             raise TypeError("Item '%s' added to TypedList '%s' is invalid:\n %s" %
                             (item, repr(self), msg))
@@ -114,8 +116,10 @@ class TypedList:
     
 class TypedDict:
 
-    def __init__(self, _dict=None, check=None):
-        self.check = check or (lambda v: v)
+    def __init__(self, owner, key, _dict=None, check=None):
+        self.owner = owner
+        self.key = key
+        self.check = check or (lambda o,k,v: v)
         self.metadata = {'check' : self.check}        
         self.data = {}
         if _dict is not None:
@@ -185,7 +189,7 @@ class TypedDict:
     #------------------------------------------------------------------------------
     def check_item(self, item):
         try:
-            return self.check(item)
+            return self.check(self.owner, self.key, item)
         except TypeError, msg:
             raise TypeError("Item '%s' added to TypedDict '%s' is invalid:\n %s" %
                             (item, repr(self), msg))
@@ -203,3 +207,4 @@ class TypedDict:
             return adict
         else:
             raise TypeError("Dict required, got %s instead." % type(adict))
+
