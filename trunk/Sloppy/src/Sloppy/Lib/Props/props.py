@@ -630,20 +630,20 @@ class HasProperties(object):
         if key in ('props', '_props','_values', '_pvalues'):
             raise RuntimeError("Attribute '%s' cannot be altered for HasProperties objects." % key)
         
-        prop = object.__getattribute__(self, '_props').get(key,None)
-        if prop is not None and isinstance(prop, Prop):
-            prop.set_value(self, key, value)
+        props = object.__getattribute__(self, '_props')
+        if props.has_key(key):
+            props[key].set_value(self, key, value)
         else:
             object.__setattr__(self, key, value)
     
     def __getattribute__(self, key, nd=False):
         """ `nd` = nodefault = ignore Prop's default value. """                         
-        if key in ('_props','_values'):
+        if key in ('_props','_values', '_pvalues'):
             return object.__getattribute__(self, key)
-        else:            
-            prop = object.__getattribute__(self, '_props').get(key,None)
-            if prop is not None and isinstance(prop, Prop):
-                return prop.get_value(self, key, nd=nd)
+        else:
+            props = object.__getattribute__(self, '_props')
+            if props.has_key(key):
+                return props[key].get_value(self, key, nd=nd)
             else:
                 return object.__getattribute__(self, key)                       
 
@@ -751,14 +751,7 @@ class HasProperties(object):
             include = [key for key in include if key not in exclude]
         return include
 
-    def _set_pvalue(self, key, value):
-        pvalues = object.__getattribute__(self, '_pvalues')
-        pvalues[key] = value    
 
-    def _clear_pvalue(self, key):
-        pvalues = object.__getattribute__(self, '_pvalues')
-        if pvalues.has_key(key):
-            pvalues.pop(key)
 
 
 HasProps = HasProperties
