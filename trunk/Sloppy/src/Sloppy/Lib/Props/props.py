@@ -409,13 +409,19 @@ class Property:
         if inspect.isfunction(default) or inspect.ismethod(default):
             self.on_default = default
         else:
-            self.on_default = lambda owner, key: self.check(owner,key,default)
+            if default is None:
+                self.on_default = lambda o,k: default
+            else:
+                self.on_default = lambda owner, key: self.check(owner,key,default)
 
         reset = kwargs.pop('reset', None)
         if inspect.isfunction(reset) or inspect.ismethod(reset):
             self.on_reset = reset
         else:
-            self.on_reset = lambda owner, key: self.check(owner,key,reset)
+            if reset is None:
+                self.on_reset = lambda o,k: reset
+            else:
+                self.on_reset = lambda owner, key: self.check(owner,key,reset)
 
         self.name = None # set by the owning HasProperties class
 
@@ -432,6 +438,7 @@ class Property:
     def set_value(self, owner, key, value):
         try:            
             owner._values[key] = self.check(owner, key, value)
+            owner._pvalues[key] = value
         except TypeError, msg:
             raise
             raise TypeError("Failed to set property '%s' of container '%s' to '%s':\n  %s" %
@@ -583,6 +590,7 @@ class HasProperties(object):
     def __init__(self, **kwargs):
         
         # Initialize props and values dict
+        object.__setattr__(self, '_pvalues', {})
         object.__setattr__(self, '_values', {})
         object.__setattr__(self, '_props', {})
         
@@ -600,6 +608,7 @@ class HasProperties(object):
                         raise KeyError("%s defines Prop '%s', which has already been defined by a base class!" % (klass,key)  )
                     self._props[key] = value
                     self._values[key] = value.on_reset(self, key)
+                    self._pvalues[key] = self._values[key] 
                     
                     kwvalue = kwargs.pop(key,None)
                     if kwvalue is not None:
@@ -618,8 +627,8 @@ class HasProperties(object):
     #
     
     def __setattr__(self, key, value):
-        if key in ('props', '_props','_values'):
-            raise RuntimeError("Attributes '_props' and '_values' cannot be altered for HasProperties objects.")
+        if key in ('props', '_props','_values', '_pvalues'):
+            raise RuntimeError("Attribute '%s' cannot be altered for HasProperties objects." % key)
         
         prop = object.__getattribute__(self, '_props').get(key,None)
         if prop is not None and isinstance(prop, Prop):
@@ -741,8 +750,15 @@ class HasProperties(object):
         if exclude is not None:
             include = [key for key in include if key not in exclude]
         return include
-    
-    
+
+    def _set_pvalue(self, key, value):
+        pvalues = object.__getattribute__(self, '_pvalues')
+        pvalues[key] = value    
+
+    def _clear_pvalue(self, key):
+        pvalues = object.__getattribute__(self, '_pvalues')
+        if pvalues.has_key(key):
+            pvalues.pop(key)
 
 
 HasProps = HasProperties
