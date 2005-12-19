@@ -864,7 +864,8 @@ def main(filename=None):
     if filename is None:
         app.set_project(Project())
         #filename = os.path.join(app.path.get('example_dir'), 'example_01.spj')
-
+        # FOR TESTING
+        app._cb_experimental_plot(None)
     else:
         try:
             logger.debug("Trying to load file %s" % filename)

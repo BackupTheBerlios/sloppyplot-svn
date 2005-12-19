@@ -32,16 +32,10 @@ import inspect
 
 from typed_containers import TypedList, TypedDict
 
-__extra_epydoc_fields__ = [('prop', 'Prop', 'Props')]
 
-__all__ = ["HasProps", "HasProperties", "Prop", "Property", "List",
-           "Dictionary", "pList", "pDict", "pDictionary",
-           #
-           "ValueDict", "Mapping", # experimental
-           #
-           "Check", "Transformation", "Coerce", "CheckRegexp", "CheckType",
-           "CheckTuple", "CheckAll", "CheckBounds", "CheckValid", "CheckInvalid"
-           ]
+__all__ = ["HasProperties", "Property", "Validator", "List", #"Dictionary",
+           "VMap", "VBMap", "VString", "VInteger", "VFloat", "VBoolean",
+           "VRegexp", "VUnicode"]
 
 #------------------------------------------------------------------------------
 # Helper Stuff
@@ -74,50 +68,104 @@ class DictionaryLookup(object):
         return "Available items: %s" % str(adict)
 
 
+class Undefined:
+    def __str__(self): return "Undefined"
+
+
 #------------------------------------------------------------------------------
-# Check objects
+# Validators
 #
 
-class Check:
-    """ Abstract base class for all value check.
+class Validator:
+    def is_mapping(self): return False
 
-    In a derived class, implement __call__(self, value).
 
-    @raise TypeError:
-    @raise ValueError:
-    """
+class VMap(Validator):
+
+    """ Map the given value according to the dict. """
+    
+    def __init__(self, adict):
+        self.dict = adict
+
+    def check(self, owner, key, value):
+        try:
+            return self.dict[value]
+        except KeyError:
+            raise ValueError("one of '%s'" % (self.dict.keys()))
+
+    def is_mapping(self):
+        return True
+
     
 
-class Transformation(Check):
-    """ Abstract base class for all value transformations.
+class VBMap(Validator):
 
-    In a derived class, implement __call__(self, value).
-
-    @raise ValueError:
-    @raise TypeError:
     """
-    pass
+    Map the given value according to the dict
+    _or_ accept the given value if it is in the dict's values.
+    """
+
+    def __init__(self, adict):
+        self.dict = adict
+        self.values = adict.values()
+
+    def check(self, owner, key, value):
+        if value in self.values:
+            return value
+        try:
+            return self.dict[value]
+        except KeyError:
+            raise ValueError("one of '%s' or '%s'" % (self.dict.keys(), self.dict.values()))
+
+    def is_mapping(self):
+        return True
 
 
+class VNone(Validator):
 
-class Coerce(Transformation):
-
-    def __init__(self, _type):
-        self.type = _type
-
-    def __call__(self, owner, key, value):
+    def check(self, owner, key, value):
         if value is None:
             return None
-        else:
-            return self.type(value)
-
-    def get_description(self):
-        return "Coerce to: %s" % self.type
+        raise TypeError("None")
 
 
+class VBoolean(Validator):
 
-    
-class CheckRegexp(Check):
+    def check(self, owner, key, value):
+        if isinstance(value, bool):
+            return bool(value)
+        elif isinstance(value, basestring):
+            if "true".find(value.lower()) > -1:
+                return True
+            elif "false".find(value.lower()) > -1:
+                return False
+        elif isinstance(value, (int,float)):
+            return bool(value)
+
+        raise ValueError("Not a valid True/False value.")
+
+
+class VString(Validator):
+    def check(self, owner, key, value):
+        return str(value)
+
+
+class VUnicode(Validator):
+    def check(self, owner, key, value):
+        return unicode(value)
+
+
+class VInteger(Validator):
+    def check(self, owner, key, value):
+        return int(value)
+
+
+class VFloat(Validator):
+    def check(self, owner, key, value):
+        return float(value)
+
+
+class VRegexp(Validator):
     
     """ Check value against a given regular expression. """
     
@@ -125,253 +173,36 @@ class CheckRegexp(Check):
         self.regexp=regexp
         self._expression = re.compile(regexp)
 
-    def __call__(self, owner, key, value):
-        if value is None:
-            return
+    def check(self, owner, key, value):
         match = self._expression.match(value)
-        if match is None:
-            raise ValueError("Value %s does not match the regular expression %s" % (value,self.regexp))
-
-    def get_description(self):
-        return "Must match regular expression: '%s'" % self.regexp
-
-    
-
-class CustomCheck(Check):
-    " Check value using a given function. "
-    def __init__(self, function, doc="custom check"):
-        self.function = function
-        self.description = (lambda self: doc)
-
-    def __call__(self, owner, key, value):
-        return self.function(owner, key, value)
-    
-    
-class CheckType(Check):
-
-    """ Check value against a single type or a list of types. """
-
-    def __init__(self, *types):
-        self.types = list(types)
-
-    def __call__(self, owner, key, value):
-        if value is None:
-            return
-        
-        for _type in self.types:                   
-            if isinstance(value, _type):
-                return
-        else:
-            raise TypeError("Invalid type '%s', must be one of '%s'" % (type(value), self.types))
-
-    def get_description(self):
-        return "Require type(s): %s." % self.types
-
-
-
-class CheckTuple(Check):
-
-    """ Check that the value is a tuple of a given length. """
-
-    def __init__(self, length):
-        self.length = length
-        
-    def __call__(self, owner, key, value):
-        if isinstance(value, tuple) and len(value) == self.length:
-            return
-        else:
-            raise TypeError("Value must be tuple of length %d!" % self.length )
-
-    def get_description(self):
-        return "Require tuple of length %d." % self.length
-
-    
-        
-class CheckAll(Transformation):
-
-    """ Apply all given Check's to the value. """
-    
-    def __init__(self, clist=None):
-
-        # Make sure that the given list of Check instances are valid.
-        self.items = []
-
-        if clist is not None:
-            for item in clist:
-                if not isinstance(item, Check):
-                    raise TypeError("Invalid Check specified: %s of %s" % (item, type(item)))
-                self.items.append(item)
-        
-    def __call__(self, owner, key, value):
-        for item in self.items:
-            if isinstance(item, Transformation):
-                value = item(value)
-            else:
-                item(value)
-        return value
-
-    def __len__(self):
-        return len(self.items)
-
-
-    def get_description(self):
-        rv = ["Check all of the following:"]
-        for item in self.items:
-            rv.append("  " + item.description())
-        return "\n".join(rv)
-
-        
-
-class CheckList(Transformation):
-
-    def __init__(self, *checks, **kwargs):
-
-        checkdict = {}
-        checks = list(checks)
-        
-        # create new checks from the kwargs and put them into checkdict        
-        create_check = {'mapping' : Mapping,
-                        'type' : CheckType,
-                        'types': CheckType,                        
-                        'coerce' : Coerce,
-                        'custom' : CustomCheck,
-                        'range': lambda range: CheckBounds(*range),
-                        'valid': CheckValid,
-                        'invalid': CheckInvalid
-                        }
-                        #'range': CheckR <ange       
-        for key, value in kwargs.iteritems():
-            checks.append(create_check[key](value))
-
-        # add custom checks and put them into checkdict
-        check_map =  {'Mapping': 'mapping',
-                      'CheckType': 'type',
-                      'Coerce': 'coerce',
-                      'CheckValid': 'valid',
-                      'CheckInvalid': 'invalid',
-                      'CheckBounds': 'range',
-                      'CustomCheck': 'custom'}
-        for check in checks:
-            if isinstance(check, CheckList):
-                checkdict.update(check.checkdict)                
-            else:
-                try:
-                    key = check_map[check.__class__.__name__]
-                except KeyError:
-                    key = 'custom'
-                checkdict[key] = check
-
-        # now create the check list in a certain order
-        items = []        
-        for key in ['custom', 'mapping', 'type', 'coerce', 'range', 'valid', 'invalid']:
-            if checkdict.has_key(key):
-                items.append(checkdict.get(key))
-
-        self.checkdict = checkdict
-        self.items = items
-        
-
-    def __call__(self, owner, key, value):
-        for item in self.items:
-            if isinstance(item, Transformation):
-                value = item(owner, key, value)
-            else:
-                item(owner, key, value)
-        return value
-
-    def __len__(self):
-        return len(self.items)
-
-
-    def get_description(self):
-        rv = ["Check all of the following:"]
-        for item in self.items:
-            rv.append("  " + item.get_description())
-        return "\n".join(rv)
-
-    
-        
-
-class CheckValid(Check):
-
-    """ Require value to be in the list of valid values. """
-    
-    def __init__(self, values):
-        self.values = list(values)
-        
-    def __call__(self, owner, key, value):
-        if value is None:
-            return
-        if (value in self.values) is False:
-            raise ValueError("Value %s is not in the list of valid values: %s" % (value, self.values))
-
-    def get_description(self):
-        return "Valid values: '%s'" % self.values
-
-    
-
-class CheckInvalid(Check):
-
-    """ Make sure value is not in the list of invalid values. """
-
-    def __init__(self, values):
-        self.values = list(values)       
-
-    def __call__(self, owner, key, value):
-        if value is None:
-            return
-        if value in self.values:
-            raise ValueError("Value %s in in the list of invalid values: %s" % (value, self.values))    
-
-    def get_description(self):
-        return "Invalid values: '%s'" % self.values
-
-                
-                
-class CheckBounds(Check):
-    """
-    Check if the given value is in between the given bounds [min:max].
-
-    If min or max is None, then the appropriate direction is unbound.
-    A value of None is always valid.    
-    """
-    def __init__(self, min=None, max=None):
-        self.min=min
-        self.max=max
-
-    def __call__(self, owner, key, value):
-        if value is None:
-            return None
-        
-        if (self.min is not None and value < self.min) \
-               or (self.max is not None and value > self.max):
-            raise ValueError("Value %s should be in between [%s:%s]" % (value, self.min, self.max))
-
-    def get_description(self):
-        return "Valid range: %s:%s" % (self.min or "", self.max or "")
-
-
-class Mapping(Transformation):
-
-    """ Map the given value according to the dict.
-
-    @todo: Not yet finished.
-    """
-    
-    def __init__(self, adict):
-        self.dict = adict
-        self.values = adict.values()
-
-    def __call__(self, owner, key, value):
-        if value in self.values:
+        if match is not None:
             return value
-        try:
-            return self.dict[value]
-        except KeyError:
-            raise ValueError("Could not find value '%s' in the list of mappings '%s'" % (value, self.dict))
 
-ValueDict = Mapping # deprecated
+        raise ValueError("Value %s does not match the regular expression %s" % (value,self.regexp))
 
+                
+                
+# class CheckBounds(Check):
+#     """
+#     Check if the given value is in between the given bounds [min:max].
+
+#     If min or max is None, then the appropriate direction is unbound.
+#     A value of None is always valid.    
+#     """
+#     def __init__(self, min=None, max=None):
+#         self.min=min
+#         self.max=max
+
+#     def __call__(self, owner, key, value):
+#         if value is None:
+#             return None
+        
+#         if (self.min is not None and value < self.min) \
+#                or (self.max is not None and value > self.max):
+#             raise ValueError("Value %s should be in between [%s:%s]" % (value, self.min, self.max))
+
+#     def get_description(self):
+#         return "Valid range: %s:%s" % (self.min or "", self.max or "")
 
 
 
@@ -380,199 +211,139 @@ ValueDict = Mapping # deprecated
 #
 
 class Property:
-
-    def __init__(self, *check, **kwargs):
-        """        
-
-        @keyword default: value/ function that will be
-        assigned/called if prop value is requested but is None.
+    
+    def __init__(self, *validators, **kwargs):
         
-        @keyword reset: value/function that will be assigned/called on
-        initialization
-        
-        @keyword blurb: Short description.
-        @keyword doc: Longer description.
-        """
-       
         self.blurb = kwargs.pop('blurb', None)
-        self.doc = kwargs.pop('doc', None)
-
-        # FOR TRANSITION TO NEW STYLE PROPERTIES:
-        # only define self.check if it is not already defined.
-        if hasattr(self, 'check') is None:
-            check_kwargs = kwargs.copy()
-            if check_kwargs.has_key('default'):
-                check_kwargs.pop('default')
-            if check_kwargs.has_key('reset'):
-                check_kwargs.pop('reset')
-            self.check = CheckList(*check, **check_kwargs)
-            self.checks = DictionaryLookup(self.check.checkdict)
-
-        default = kwargs.pop('default', None)
-        if inspect.isfunction(default) or inspect.ismethod(default):
-            self.on_default = default
-        else:
-            if default is None:
-                self.on_default = lambda o,k: default
+        self.doc = kwargs.pop('doc', None)        
+        self.validators = []
+        
+        # first item in validators is actually the default value
+        # unless it is a validator instance
+        if len(validators) > 0:
+            default = validators[0]
+            print "Found default value", default
+            if not isinstance(default, Validator):
+                self.default = default
+                validators = tuple(validators[1:])
             else:
-                self.on_default = lambda owner, key: self.check(owner,key,default)
+                self.default = Undefined
 
-        reset = kwargs.pop('reset', None)
-        if inspect.isfunction(reset) or inspect.ismethod(reset):
-            self.on_reset = reset
-        else:
-            if reset is None:
-                self.on_reset = lambda o,k: reset
+        # init validators
+        vlist = []        
+        for item in validators:
+            if isinstance(item, Validator):
+                vlist.append(item)
+            elif item is None:
+                vlist.append(VNone())
+            elif isinstance(item, dict):
+                # 1:1 mapping if there is only a map as validator
+                if len(validators) == 1:
+                    vlist.append(VBMap(item))
+                else:
+                    vlist.append(VMap(item))
+            elif isinstance(item, Property):
+                vlist.extend(item.vlist)
+            elif issubclass(item, Property):
+                vlist.extend(item().vlist)
             else:
-                self.on_reset = lambda owner, key: self.check(owner,key,reset)
+                raise TypeError("Unknown validator: %s" % item)
 
-    def get_value(self, owner, key, nd=False):
-        rv = owner._values[key]
-        if rv is not None or nd is True:
-            return rv
-        else:
-            return self.on_default(owner, key)
+        self.vlist = vlist
 
+
+    def check(self, owner, key, value):
+        error = ""
+        
+        for validator in self.vlist:
+            try:
+                value = validator.check(owner, key, value)                    
+#                 if validator.is_mapping is True:
+#                     unmapped_value = value
+#                     value = validator.check(owner, key, value)
+#                     owner._pvalues[key] = unmapped_value
+#                 else:
+              
+            except ValueError, msg:
+                error += str(msg)
+            except TypeError, msg:
+                error += str(msg)
+            except:
+                raise
+            else:
+                return value
+
+        raise TypeError(error)
+
+
+
+    def get_value(self, owner, key):
+        return owner._values[key]
         
     def set_value(self, owner, key, value):
-        try:            
-            owner._values[key] = self.check(owner, key, value)
-            owner._pvalues[key] = value
+        try:
+            owner._ivalues[key] = self.check(owner, key, value)
+            owner._values[key] = value
         except TypeError, msg:
-            raise
             raise TypeError("Failed to set property '%s' of container '%s' to '%s':\n  %s" %
-                            (key, repr(owner), value, msg))
+                            (key, owner.__class__.__name__, value, msg))
         except ValueError, msg:
             raise ValueError("Failed to set property '%s' of container '%s' to '%s':\n %s" %
-                             (key, repr(owner), value, msg))
-        else:
-            pass
-            #print "Value successfully set. We used %s." % str(value)
-            
-        
-    def get_description(self):
-        if self.check is not None:
-            return self.check.get_description()
+                             (key, owner.__class__.__name__, value, msg))
 
-    # DEPRECATED
-    def description(self):
-        return self.get_description()
-    
-
-    #----------------------------------------------------------------------
-    # Helper methods for introspection
-    #
-
-    def get_mapping(self):
-        """ Return first instance of Mapping or None. """
-        for item in self.check.items:
-            if isinstance(item, Mapping):
-                return item
-        else:
-            return None
-
-    def get_value_list(self):
-        """ Return first instance of CheckValid or None. """
-        for item in self.check.items:
-            if isinstance(item, CheckValid):
-                return item
-        else:
-            return None
-
-
-    # BIG FAT TODO:
-    # Replace these with something like
-    #  property.checks.valid
-    #  property.checks.range
-    
-    def valid_values(self):
-        """ Collect all values of the prop specified by CheckValid. """
-        values = []
-        for item in self.check.items:
-            if isinstance(item, CheckValid):
-                values.extend(item.values)
-        return values
-
-    def invalid_values(self):
-        """ Collect all values of the prop specified by CheckInvalid. """
-        values = []
-        for item in self.check.items:
-            if isinstance(item, CheckInvalid):
-                values.extend(item.values)
-        return values
-
-    def boundaries(self):
-        """ Return the min, max boundary values given by the first
-        instance of CheckBounds. """
-        minimum, maximum = None, None
-        for item in self.check.items:
-            if isinstance(item, CheckBounds):
-                return item.min, item.max                             
 
 
 
 class List(Property):
 
-    def __init__(self, *check, **kwargs):
-        # The keyword arguments reset and default refer to the list.
-        # They don't make sense for the items.       
-        if kwargs.has_key('reset') is False:
-            kwargs['reset'] = self.do_reset
-        Property.__init__(self, *check, **kwargs)
-        
-        self.item_check = self.check
-        self.check = self.DoCheck(self.item_check)
+    def __init__(self, *validators, **kwargs):
+        # The default value refers to the list.
+        Property.__init__(self, *validators, **kwargs)
 
-    class DoCheck(Transformation):
+    def check(self, owner, key, value):
+        check = (lambda v: Property.check(self, owner, key, v))        
+        if isinstance(value, TypedList):
+            value.check = check
+            return value
+        if isinstance(value, list):
+            return TypedList(check, value)
+        else:            
+            raise TypeError("The value '%s' has %s while it should be a list." %
+                            (value, type(value)))
 
-        def __init__(self, check):
-            self.check = check
-            self.items = [] # needed because Prop.check requires such an item!
-
-        def __call__(self, owner, key, value):
-            if isinstance(value, TypedList):
-                return value
-            elif isinstance(value, list):
-                return TypedList(owner, key, value, self.check)
-            else:            
-                raise TypeError("The value '%s' has %s while it should be a list." %
-                                (value, type(value)))
-        
-    def do_reset(self, owner, key):
-        return TypedList(owner, key, check=self.item_check)
-
+    
                 
-class Dictionary(Property):
+# class Dictionary(Property):
 
-    def __init__(self, *check, **kwargs):
-        kwargs.update({'reset' : self.do_reset})
-        Property.__init__(self, *check, **kwargs)
-        self.item_check = self.check
-        self.check = self.DoCheck(self.item_check)
+#     def __init__(self, *check, **kwargs):
+#         kwargs.update({'reset' : self.do_reset})
+#         Property.__init__(self, *check, **kwargs)
+#         self.item_check = self.check
+#         self.check = self.DoCheck(self.item_check)
 
-    class DoCheck(Transformation):
+#     class DoCheck(Transformation):
 
-        def __init__(self, check):
-            self.check = check
-            self.items = [] # needed because Prop.check requires such an item!            
+#         def __init__(self, check):
+#             self.check = check
+#             self.items = [] # needed because Prop.check requires such an item!            
 
-        def __call__(self, owner, key, value):
-            if isinstance(value, TypedDict):
-                return value
-            elif isinstance(value, dict):
-                return TypedDict(owner, key, value, self.check)
-            else:            
-                raise TypeError("The value '%s' has %s while it should be a dictionary." %
-                                (value, type(value)))
+#         def __call__(self, owner, key, value):
+#             if isinstance(value, TypedDict):
+#                 return value
+#             elif isinstance(value, dict):
+#                 return TypedDict(owner, key, value, self.check)
+#             else:            
+#                 raise TypeError("The value '%s' has %s while it should be a dictionary." %
+#                                 (value, type(value)))
 
-    def do_reset(self, owner, key):
-        return TypedDict(owner, key, check=self.item_check)
+#     def do_reset(self, owner, key):
+#         return TypedDict(owner, key, check=self.item_check)
 
 
-Prop = Property
-pDictionary = Dictionary
-pDict = Dictionary
-pList = List
+# Prop = Property
+# pDictionary = Dictionary
+# pDict = Dictionary
+# pList = List
 
 
 
@@ -589,7 +360,7 @@ class HasProperties(object):
     def __init__(self, **kwargs):
         
         # Initialize props and values dict
-        object.__setattr__(self, '_pvalues', {})
+        object.__setattr__(self, '_ivalues', {})
         object.__setattr__(self, '_values', {})
         object.__setattr__(self, '_props', {})
         
@@ -601,18 +372,21 @@ class HasProperties(object):
         
         for klass in classlist:
             # initialize default values
-            for key, value in klass.__dict__.iteritems():
-                if isinstance(value, Prop):
+            for key, prop in klass.__dict__.iteritems():
+                if isinstance(prop, Property):
                     if self._props.has_key(key):
                         raise KeyError("%s defines Prop '%s', which has already been defined by a base class!" % (klass,key)  )
-                    self._props[key] = value
-                    self._values[key] = value.on_reset(self, key)
-                    self._pvalues[key] = self._values[key] 
+                    self._props[key] = prop
+                    #self._values[key] = Undefined
+                    #self._ivalues[key] = Undefined
                     
                     kwvalue = kwargs.pop(key,None)
                     if kwvalue is not None:
                         self.__setattr__(key,kwvalue)
-
+                    else:
+                        if prop.default is not Undefined:                           
+                            self.set_value(key, prop.default)
+                        
         # complain if there are unused keyword arguments
         if len(kwargs) > 0:
             raise ValueError("Unrecognized keyword arguments: %s" % kwargs)
@@ -625,7 +399,7 @@ class HasProperties(object):
     #
     
     def __setattr__(self, key, value):
-        if key in ('props', '_props','_values', '_pvalues'):
+        if key in ('props', '_props','_values', '_ivalues'):
             raise RuntimeError("Attribute '%s' cannot be altered for HasProperties objects." % key)
         
         props = object.__getattribute__(self, '_props')
@@ -634,14 +408,14 @@ class HasProperties(object):
         else:
             object.__setattr__(self, key, value)
     
-    def __getattribute__(self, key, nd=False):
+    def __getattribute__(self, key):
         """ `nd` = nodefault = ignore Prop's default value. """                         
-        if key in ('_props','_values', '_pvalues'):
+        if key in ('_props','_values', '_ivalues'):
             return object.__getattribute__(self, key)
         else:
             props = object.__getattribute__(self, '_props')
             if props.has_key(key):
-                return props[key].get_value(self, key, nd=nd)
+                return props[key].get_value(self, key)
             else:
                 return object.__getattribute__(self, key)                       
 
@@ -662,12 +436,13 @@ class HasProperties(object):
         for (key, value) in kwargs.iteritems():
             self.__setattr__(key, value)
 
-                   
+    set = set_value
+    
 
     def get_value(self, key, **kwargs):
         if kwargs.has_key('default') is True:
             default = kwargs.get('default', None)
-            value = self.__getattribute__(key, nd=True)
+            value = self.__getattribute__(key)
             if value is None:
                 return default
             else:
@@ -675,6 +450,13 @@ class HasProperties(object):
         else:
             return self.__getattribute__(key)            
 
+    def get_ivalue(self, key):
+        ivalues = object.__getattribute__(self, '_ivalues')
+        return ivalues[key]
+
+    # TODO: ivalues/values for List/Dictionary objects.
+    # TODO: The List uses Property.check, which returns only
+    # TODO: the ivalue.
     
     def get_values(self, include=None, exclude=None, **kwargs):
 
@@ -694,19 +476,6 @@ class HasProperties(object):
                 rv[key] = self.__getattribute__(key)
 
         return rv
-
-    mget = get_values  # NEEDED ?
-    get = get_value
-
-    # DEPRECATED   
-    def rget(self, key, default=None):
-        return self.get_value(key, default=default)
-
-    
-    def clear(self, include=None, exclude=None):
-        " Clear all props. "
-        for key in self._limit_keys(include=include, exclude=exclude):
-            self._values[key] = self._props[key].on_reset(self, key)
 
     #----------------------------------------------------------------------
     # Prop Handling

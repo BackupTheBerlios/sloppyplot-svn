@@ -21,15 +21,11 @@
 
 class TypedList:
 
-    def __init__(self, owner, key, _list=None, check=None):
-        self.owner = owner
-        self.key = key
-        self.check = check or (lambda o,k,v: v)
-        self.metadata = {'check' : self.check}
+    def __init__(self, check, _list=None):
+        self.check = check        
         self.data = []
         if _list is not None:
             self.data = self.check_list(_list)
-
 
     #------------------------------------------------------------------------------
     def __repr__(self): return repr(self.data)
@@ -45,24 +41,33 @@ class TypedList:
     def __contains__(self, item): return item in self.data
     def __len__(self): return len(self.data)
 
-    def __getitem__(self, i): return self.data[i]
-    def __setitem__(self, i, item): self.data[i] = self.check_item(item)
-    def __delitem__(self, i): del self.data[i]
+    def __getitem__(self, i):
+        return self.data[i]
+    
+    def __setitem__(self, i, item):
+        self.data[i] = self.check_item(item)
+    
+    def __delitem__(self, i):
+        del self.data[i]
     
     def __getslice__(self, i, j):
         i = max(i, 0); j = max(j, 0)
-        return self.__class__(self.data[i:j],**self.metadata())
+        return self.__class__(self.data[i:j])
+    
     def __setslice__(self, i, j, other):
         i = max(i, 0); j = max(j, 0)
         self.data[i:j] = self.check_list(other)
+        
     def __delslice__(self, i, j):
         i = max(i, 0); j = max(j, 0)
         del self.data[i:j]
 
     def __add__(self, other):
-        return self.__class__(self.data + self.check_list(other), **self.metadata)
+        return self.__class__(self.data + self.check_list(other))
+    
     def __radd__(self, other):
-        return self.__class__(self.check_list(other) + self.data, **self.metadata)
+        return self.__class__(self.check_list(other) + self.data)
+    
     def __iadd__(self, other):
         self.data += self.check_list(other)
         return self
@@ -74,15 +79,32 @@ class TypedList:
         self.data *= n
         return self
 
-    def append(self, item): self.data.append(self.check_item(item))
-    def insert(self, i, item): self.data.insert(i, self.check_item(item))
-    def pop(self, i=-1): return self.data.pop(i)
-    def remove(self, item): self.data.remove(item)
-    def count(self, item): return self.data.count(item)
-    def index(self, item, *args): return self.data.index(item, *args)
-    def reverse(self): self.data.reverse()
-    def sort(self, *args, **kwds): self.data.sort(*args, **kwds)
-    def extend(self, other): self.data.extend(self.check_list(other))              
+    def append(self, item):
+        self.data.append(self.check_item(item))
+        
+    def insert(self, i, item):
+        self.data.insert(i, self.check_item(item))
+        
+    def pop(self, i=-1):
+        return self.data.pop(i)
+    
+    def remove(self, item):
+        self.data.remove(item)
+        
+    def count(self, item):
+        return self.data.count(item)
+    
+    def index(self, item, *args):
+        return self.data.index(item, *args)
+    
+    def reverse(self):
+        self.data.reverse()
+        
+    def sort(self, *args, **kwds):
+        self.data.sort(*args, **kwds)
+        
+    def extend(self, other):
+        self.data.extend(self.check_list(other))              
 
     def __iter__(self):
         for member in self.data:
@@ -91,7 +113,7 @@ class TypedList:
     #------------------------------------------------------------------------------
     def check_item(self, item):
         try:
-            return self.check(self.owner, self.key, item)
+            return self.check(item)
         except TypeError, msg:
             raise TypeError("Item '%s' added to TypedList '%s' is invalid:\n %s" %
                             (item, repr(self), msg))

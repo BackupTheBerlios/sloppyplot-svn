@@ -1,14 +1,40 @@
 
 
-COLORS:
-  - the raw value must be stored (hey, this sounds like traits...)
-    WHERE?  The values are stored in HasProperties._values[key].
-    We could add another variable '_inputvalues' or something like this.
-    This means: unprocessed input that lead to the given value.
-    Problem: Do we really want two values? Maybe make it optional!
 
-  - all functions using the color must use the internal value, which 
-    is (r,g,b) => get, rget; set
+TODO:
+
+- Validator.is_mapping => where should the unmapped value be stored?
+  We could use _unmapped_values, _BUT_ what happens if we have a List or
+  a Dictionary? 
+
+  color = 'black'
+  colors = [(0,0,0), 'black']
+
+  For color, we would simply need one unmapped value;
+  For colors however we need a whole list that needs to be synced...
+
+  The container offers one attribute:
+  
+  container._uvalues
+
+  And the property with a given `key` can access
+
+  container._uvalues[key]
+
+  The List must make sure that this attribute is a list
+
+  self.uvalues = container._uvalues[key]
+
+  And must then set it wherever necessary; so we have two operations for 
+  each list operation..... :-(
+
+
+
+- Property.validators => VTryAll() => VTryAll.check; this way, we can 
+  pass the validator to the typed list.
+
+- List, Dictionary
+
 
 
 
@@ -17,22 +43,6 @@ COLORS:
 
 - to simplify the line dialog, we could have a button that determines
   what is displayes:  show_style, show_contents, show_both
-
-
-
-- Property.check.mapping right now is a requirement.
-  It would be nice to have such thing as a suggestion.
-
-- Idea:
-
-  IN:
-  - type_check (including coercion)
-  - content_check (may be a mapping, a transformation, a list to check against)
-
-  OUT:
-  - ???  
-
-
 
 
 HEY !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
@@ -127,6 +137,8 @@ Some problems I see:
 FOR 0.5.2:
 ==========
 
+- show_all() is bad for group boxes, because it resizes the whole dialog.
+
 (A) Group Properties
 
     - gui for cycle list... (=> listwizard?)
@@ -137,6 +149,10 @@ FOR 0.5.2:
 
 (E) Make sure all the good properties work in gnuplot as well...
 
+
+
+
+---------------------------
 (B) Metadata
     - display metadata, so that the import makes more sense.
     - maybe allow to edit the regular expressions that lead to the import metadata?
@@ -144,6 +160,7 @@ FOR 0.5.2:
 
 (C) little things
     - allow comments for plots and datasets.
+    - pwconnect.create widget should not require use_checkbutton.
     
 (D) LayerWin and Toolbox
     - Fix Toolbox combo (is it broken?)

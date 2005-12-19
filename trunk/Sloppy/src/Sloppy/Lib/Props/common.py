@@ -6,76 +6,29 @@
 from props import *
 
 
-__all__ = ["Integer", "Float", "Keyword", "String",
-           "Boolean", "Unicode",
-           #
-           "pInteger", "pFloat", "pKeyword", "pString",
-           "pBoolean", "pUnicode"
-           ]
+__all__ = ["Integer", "Float", "Keyword", "String", "Boolean", "Unicode"]
 
 
+class String(Property):
+    def __init__(self, *validators, **kwargs):
+        Property.__init__(self, *validators + (VString(),), **kwargs)
 
-class Boolean(Prop):
-    def __init__(self, **kwargs):
-        Prop.__init__(self, CoerceBool(), **kwargs)
+class Boolean(Property):
+    def __init__(self, *validators, **kwargs):
+        Property.__init__(self, *validators + (VBoolean(),), **kwargs)
 
-    
-class CoerceBool(Transformation):
+class Keyword(Property):
+    def __init__(self, *validators, **kwargs):
+        Property.__init__(self, *validators + (VRegexp('^[\-\.\s\w]*$'),), **kwargs)
 
-    def __init__(self):
-        pass
+class Unicode(Property):
+    def __init__(self, *validators, **kwargs):
+        Property.__init__(self, *validators + (VUnicode(),), **kwargs)
 
-    def __call__(self, owner, key, value):
-        if value is None:
-            return None
-        else:
-            if isinstance(value, basestring):
-                if "true".find(value.lower()) > -1:
-                    return True
-                elif "false".find(value.lower()) > -1:
-                    return False
-            else:
-                return bool(value)
+class Integer(Property):
+    def __init__(self, *validators, **kwargs):
+        Property.__init__(self, *validators + (VInteger(),), **kwargs)
 
-    def get_description(self):
-        return "Coerce to Boolean"
-
-
-class Keyword(Prop):
-    def __init__(self, **kwargs):
-        Prop.__init__(self, type=basestring, #
-                      custom=CheckRegexp('^[\-\.\s\w]*$'), # TODO?
-                      **kwargs)
-
-class String(Prop):
-    """ Coerce to regular string. """
-    def __init__(self, *check, **kwargs):
-        Prop.__init__(self, coerce=str, *check, **kwargs)
-
-        
-class Unicode(Prop):
-    """ Coerce to regular string. """
-    def __init__(self, *check, **kwargs):
-        Prop.__init__(self, coerce=unicode, *check, **kwargs)
-        
-
-class Integer(Prop):
-    def __init__(self, *check, **kwargs):
-        Prop.__init__(self, coerce=int, *check, **kwargs)
-
-
-class Float(Prop):
-    def __init__(self, *check, **kwargs):
-        Prop.__init__(self, coerce=float, *check, **kwargs)
-
-
-
-
-# for compatibility reasons:
-pInteger = Integer
-pUnicode = Unicode
-pString = String
-pKeyword = Keyword
-pFloat = Float
-pBoolean = Boolean
-
+class Float(Property):
+    def __init__(self, *validators, **kwargs):
+        Property.__init__(self, *validators + (VFloat(),), **kwargs)

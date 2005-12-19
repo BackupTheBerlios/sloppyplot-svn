@@ -500,3 +500,61 @@ class SpinButton(Connector):
 
         
 connectors['SpinButton'] = SpinButton
+
+
+
+
+class List(Connector):
+
+    def init(self):
+        # The value_display widget only holds a string
+        # representation of the list, so an additional
+        # variable is needed to hold the current value.
+        self.current_value = []
+        
+    def create_widget(self, use_checkbutton=False):
+
+        vd = self.value_display = gtk.Entry()
+        eb = self.edit_button = gtk.Button(stock=gtk.STOCK_EDIT)
+        widget = self.widget = gtk.HBox()
+
+        vd.set_property('editable', False)
+        eb.connect("clicked", self.on_edit_button_clicked)        
+        widget.pack_start(vd,False,True)
+        widget.pack_start(eb,False,True)
+
+    def check_in(self):
+        self.current_value = self.get_value()
+        self.update_display()
+        self.last_value = self.current_value
+
+    def get_data(self):
+        return self.current_value
+    
+    def update_display(self):
+        self.value_display.set_text(unicode(self.current_value))
+
+    def on_edit_button_clicked(self, sender):
+        dialog = ListWizardDialog()        
+        try:
+            dialog.run()
+        finally:
+            dialog.destroy()
+
+
+class ListWizardDialog(gtk.Dialog):
+    # similar to ModifyTable Dialog.
+
+    def __init__(self):
+        gtk.Dialog.__init__(self, "Edit List", None,
+                            gtk.DIALOG_MODAL|gtk.DIALOG_DESTROY_WITH_PARENT,
+                            (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
+                             gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
+        self.set_size_request(320,400)
+    
+        tv = gtk.TreeView()
+        self.vbox.add(tv)
+
+
+connectors['List'] = List
+

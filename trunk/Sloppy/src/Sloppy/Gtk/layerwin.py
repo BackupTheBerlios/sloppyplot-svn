@@ -214,14 +214,16 @@ class GroupBox(gtk.HBox):
         self.widget_range_start = pwconnect.SpinButton(self.group, 'range_start')
         self.widget_range_stop = pwconnect.SpinButton(self.group, 'range_stop')
         self.widget_range_step = pwconnect.SpinButton(self.group, 'range_step')        
-
+        self.widget_cycle_list = pwconnect.List(self.group, 'cycle_list')
+        
         self.clist = [
             self.widget_allow_override,            
             self.widget_type,
             self.widget_value,
             self.widget_range_start,
             self.widget_range_stop,
-            self.widget_range_step
+            self.widget_range_step,
+            self.widget_cycle_list
             ]
         
         # TODO: cycle_list        
@@ -229,7 +231,7 @@ class GroupBox(gtk.HBox):
         for connector in self.clist:
             connector.create_widget()
             self.pack_start(connector.widget,False,True)
-
+            
         self.show_all()
 
         # add special signals        
@@ -258,7 +260,7 @@ class GroupBox(gtk.HBox):
         self.widget_range_stop.widget.set_property('visible', new_type==objects.GROUP_TYPE_RANGE)
         self.widget_range_step.widget.set_property('visible', new_type==objects.GROUP_TYPE_RANGE) 
         
-    
+        self.widget_cycle_list.widget.set_property('visible', new_type==objects.GROUP_TYPE_CYCLE)        
 
 
 ###############################################################################
