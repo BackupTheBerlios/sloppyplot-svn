@@ -28,8 +28,7 @@ class VRGBColor(Validator):
 
         raise TypeError("a 3-tuple or a string")
 
-    def is_mapping(self):
-        return True
+    is_mapping = True
 
     
 class RGBColor(Property):
@@ -59,6 +58,7 @@ class Line(HasProperties):
 
     style = Property(None, {'none':None,'solid':1,'dashed':2})
     colors = List([], color) # same as colors = Property([], VList(color))
+    history = Dictionary({}, keyword)
 
 #..............................................................................    
 line = Line()
@@ -73,7 +73,7 @@ def test_set_value(object, key, value):
 
 test_set_value(line, 'color', 'red')
 test_set_value(line, 'color', None)
-test_set_value(line, 'color', (0,0,0))
+test_set_value(line, 'color', (0.0,0,0))
 test_set_value(line, 'color', '#ffaaEE')
 #test_set_value(line, 'color', 42)
 
@@ -117,3 +117,12 @@ print line.colors
 #line.colors = 'Niki'
 #line.colors = ['reda']
 
+line.colors[0] = 'red'
+test_set_value(line, 'width', 3.2)
+
+
+line.history['1982'] = 'aa'
+print line.history
+
+#line.history['1986'] = 41
+#print line.history
