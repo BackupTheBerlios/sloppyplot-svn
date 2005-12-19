@@ -10,6 +10,8 @@ class VRGBColor(Validator):
         if isinstance(value, (list,tuple)):
             # assume 3-tuple (red,green,blue)
             if len(value) == 3:
+                # mapped value = tuple(value)
+                # unmapped value = value
                 return tuple(value)
             else:
                 raise ValueError("Color tuple must be a 3-tuple (RGB).")
@@ -18,6 +20,8 @@ class VRGBColor(Validator):
             # if string starts with '#', then we expect a hex color code
             if value.startswith('#'):
                 try:
+                    # unmapped value = value
+                    # mapped value...
                     return [int(c, 16)/255. for c in (value[1:2], value[3:4], value[5:6])]
                 except:
                     raise ValueError("Hex color code must be six digits long and must be 0-9,A-F only.")                
@@ -54,8 +58,7 @@ class Line(HasProperties):
     length = Float(4)
 
     style = Property(None, {'none':None,'solid':1,'dashed':2})
-
-    colors = List([], RGBColor)
+    colors = List([], color) # same as colors = Property([], VList(color))
 
 #..............................................................................    
 line = Line()
@@ -65,7 +68,7 @@ print "default values:", line.get_values()
 def test_set_value(object, key, value):
     print "Setting %s of %s to '%s'" % (key, object, value)
     object.set_value(key,value)
-    print "  => internal value: %s" % str(object.get_ivalue(key))
+    print "  => mapped  value: %s" % str(object.get_mvalue(key))
     print "  => visible value : %s" % str(object.get_value(key))
 
 test_set_value(line, 'color', 'red')
@@ -108,5 +111,9 @@ line.colors = new_list
 
 print "---"
 print line.get_value('colors')
-print line.get_ivalue('colors')
+print line.get_mvalue('colors')
+print line.colors
+
+#line.colors = 'Niki'
+#line.colors = ['reda']
 

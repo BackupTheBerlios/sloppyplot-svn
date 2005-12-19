@@ -21,9 +21,10 @@
 
 class TypedList:
 
-    def __init__(self, check, _list=None):
-        self.check = check        
+    def __init__(self, check_item, _list=None):
+        self.check_item = check_item
         self.data = []
+        self.mdata = []
         if _list is not None:
             self.data = self.check_list(_list)
 
@@ -46,13 +47,13 @@ class TypedList:
     
     def __setitem__(self, i, item):
         self.data[i] = self.check_item(item)
-    
+        
     def __delitem__(self, i):
         del self.data[i]
     
     def __getslice__(self, i, j):
         i = max(i, 0); j = max(j, 0)
-        return self.__class__(self.data[i:j])
+        return self.__class__(self.check_item, self.data[i:j])
     
     def __setslice__(self, i, j, other):
         i = max(i, 0); j = max(j, 0)
@@ -63,17 +64,17 @@ class TypedList:
         del self.data[i:j]
 
     def __add__(self, other):
-        return self.__class__(self.data + self.check_list(other))
+        return self.__class__(self.check_item, self.data + self.check_list(other))
     
     def __radd__(self, other):
-        return self.__class__(self.check_list(other) + self.data)
-    
+        return self.__class__(self.check_item, self.check_list(other) + self.data)
+        
     def __iadd__(self, other):
         self.data += self.check_list(other)
         return self
 
     def __mul__(self, n):
-        return self.__class__(self.data*n)
+        return self.__class__(self.check_item, self.data*n)
     __rmul__ = __mul__
     def __imul__(self, n):
         self.data *= n
@@ -112,16 +113,9 @@ class TypedList:
 
     #------------------------------------------------------------------------------
     def check_item(self, item):
-        try:
-            return self.check(item)
-        except TypeError, msg:
-            raise TypeError("Item '%s' added to TypedList '%s' is invalid:\n %s" %
-                            (item, repr(self), msg))
-        except ValueError, msg:
-            raise ValueError("Item '%s' added to TypedList '%s' is invalid:\n %s" %
-                            (item, repr(self), msg))
-
-
+        " check_item must be set from outside. "
+        return item
+    
     def check_list(self, alist):
         if isinstance(alist, TypedList):
             return alist.data
@@ -133,6 +127,101 @@ class TypedList:
         else:
             raise TypeError("List required, got %s instead." % type(alist))
 
+
+class MTypedList(TypedList):
+    
+    def __setitem__(self, i, item):
+        self.data[i] = self.check_item(item)
+        self.mdata[i] = item
+        
+    def __delitem__(self, i):
+        del self.data[i]
+        del self.mdata[i]
+    
+    def __getslice__(self, i, j):
+        i = max(i, 0); j = max(j, 0)
+        return self.__class__(self.check_item, self.data[i:j], self.mdata[i:j])
+    
+    def __setslice__(self, i, j, other):
+        i = max(i, 0); j = max(j, 0)
+        self.data[i:j] = self.check_list(other)
+        self.mdata[i:j] = other[i:j]
+        
+    def __delslice__(self, i, j):
+        i = max(i, 0); j = max(j, 0)
+        del self.data[i:j]
+        del self.mdata[i:j]
+
+    def __add__(self, other):
+        return self.__class__(self.check_item,
+                              self.data + self.check_list(other),
+                              self.mdata + other)
+
+    def __radd__(self, other):
+        return self.__class__(self.check_item,
+                              self.check_list(other) + self.data,
+                              other + self.mdata)
+        
+    def __iadd__(self, other):
+        self.data += self.check_list(other)
+        self.mdata += other
+        return self
+
+    def __mul__(self, n):
+        return self.__class__(self.check_item, self.data*n, self.mdata*n)
+    __rmul__ = __mul__
+    def __imul__(self, n):
+        self.data *= n
+        self.mdata *= n
+        return self
+
+    def append(self, item):
+        self.data.append(self.check_item(item))
+        self.mdata.append(item)
+        
+    def insert(self, i, item):
+        self.data.insert(i, self.check_item(item))
+        
+    def pop(self, i=-1):
+        return self.data.pop(i)
+    
+    def remove(self, item):
+        self.data.remove(item)
+        
+    def count(self, item):
+        return self.data.count(item)
+    
+    def index(self, item, *args):
+        return self.data.index(item, *args)
+    
+    def reverse(self):
+        self.data.reverse()
+        
+    def sort(self, *args, **kwds):
+        self.data.sort(*args, **kwds)
+        
+    def extend(self, other):
+        self.data.extend(self.check_list(other))              
+
+    def __iter__(self):
+        for member in self.data:
+            yield member
+
+    #------------------------------------------------------------------------------
+    def check_item(self, item):
+        " check_item must be set from outside. "
+        return item
+    
+    def check_list(self, alist):
+        if isinstance(alist, TypedList):
+            return alist.data
+        elif isinstance(alist, (list,tuple)):
+            newlist = []
+            for item in alist:
+                newlist.append(self.check_item(item))
+            return newlist
+        else:
+            raise TypeError("List required, got %s instead." % type(alist))
 
 
     
@@ -214,10 +303,10 @@ class TypedDict:
             return self.check(self.owner, self.key, item)
         except TypeError, msg:
             raise TypeError("Item '%s' added to TypedDict '%s' is invalid:\n %s" %
-                            (item, repr(self), msg))
+                            (str(item), repr(self), msg))
         except ValueError, msg:
             raise ValueError("Item '%s' added to TypedDict '%s' is invalid:\n %s" %
-                            (item, repr(self), msg))
+                            (str(item), repr(self), msg))
 
 
     def check_dict(self, adict):

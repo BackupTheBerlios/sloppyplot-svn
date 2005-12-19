@@ -18,24 +18,16 @@
 # $HeadURL$
 # $Id$
 
-"""
-@group props: pList, pDictionary, pBoolean, pKeyword, pString,
-pUnicode, pInteger, pFloat, pWeakref, pDict
 
-@group checks: Coerce, CheckRegexp, CheckType, CheckTuple, CheckAll,
-CheckBounds, CheckValid, CheckInvalid, ValueDict, Mapping
-"""
-
-import weakref
 import re
 import inspect
 
 from typed_containers import TypedList, TypedDict
 
 
-__all__ = ["HasProperties", "Property", "Validator", "List", #"Dictionary",
+__all__ = ["HasProperties", "Property", "Validator", 
            "VMap", "VBMap", "VString", "VInteger", "VFloat", "VBoolean",
-           "VRegexp", "VUnicode"]
+           "VRegexp", "VUnicode", "VList"]
 
 #------------------------------------------------------------------------------
 # Helper Stuff
@@ -71,21 +63,25 @@ class DictionaryLookup(object):
 class Undefined:
     def __str__(self): return "Undefined"
 
+class PropertyError(Exception):
+    pass
 
 #------------------------------------------------------------------------------
 # Validators
 #
 
 class Validator:
-    def is_mapping(self): return False
+    is_mapping = False
 
 
 class VMap(Validator):
 
     """ Map the given value according to the dict. """
+
+    is_mapping = True
     
     def __init__(self, adict):
-        self.dict = adict
+        self.dict = adict    
 
     def check(self, owner, key, value):
         try:
@@ -105,9 +101,11 @@ class VBMap(Validator):
     _or_ accept the given value if it is in the dict's values.
     """
 
+    is_mapping = True
+        
     def __init__(self, adict):
         self.dict = adict
-        self.values = adict.values()
+        self.values = adict.values()        
 
     def check(self, owner, key, value):
         if value in self.values:
@@ -180,7 +178,73 @@ class VRegexp(Validator):
 
         raise ValueError("Value %s does not match the regular expression %s" % (value,self.regexp))
 
-                
+class VTryAll(Validator):
+
+    def __init__(self, *validators):
+        # init validators
+        vlist = []
+        is_mapping = False
+        for item in validators:
+            if isinstance(item, Validator):
+                vlist.append(item)
+                is_mapping = is_mapping or item.is_mapping
+            elif item is None:
+                vlist.append(VNone())
+                is_mapping = is_mapping or VNone.is_mapping
+            elif isinstance(item, dict):
+                # 1:1 mapping if there is only a map as validator
+                if len(validators) == 1:
+                    vlist.append(VBMap(item))
+                else:
+                    vlist.append(VMap(item))
+                is_mapping = True
+            elif isinstance(item, Property):
+                vlist.extend(item.validator.vlist)
+                is_mapping = is_mapping or item.validator.is_mapping
+            elif issubclass(item, Property):
+                vlist.extend(item().validator.vlist)
+                is_mapping = is_mapping or item.validator.is_mapping
+            else:
+                raise TypeError("Unknown validator: %s" % item)
+
+        self.vlist = vlist
+        self.is_mapping = is_mapping
+
+
+    def check(self, owner, key, value):
+        error = []
+        
+        for validator in self.vlist:
+            try:
+                value = validator.check(owner, key, value)                    
+            except ValueError, msg:
+                error.append(str(msg))
+            except TypeError, msg:
+                error.append(str(msg))
+            except:
+                raise
+            else:
+                return value
+
+        raise TypeError(' or '.join(error))
+
+
+class VList(Validator):
+
+    def __init__(self, *validators):        
+        self.item_validator = VTryAll(*validators)
+
+    def check(self, owner, key, value):
+        check_item = lambda v: self.item_validator.check(owner, key, v)
+        if isinstance(value, TypedList):
+            value.check_item = check_item
+            return value
+        if isinstance(value, list):
+            return TypedList(check_item, value)
+        else:            
+            raise TypeError("a list")
+
+                 
                 
 # class CheckBounds(Check):
 #     """
@@ -216,7 +280,6 @@ class Property:
         
         self.blurb = kwargs.pop('blurb', None)
         self.doc = kwargs.pop('doc', None)        
-        self.validators = []
         
         # first item in validators is actually the default value
         # unless it is a validator instance
@@ -229,52 +292,7 @@ class Property:
             else:
                 self.default = Undefined
 
-        # init validators
-        vlist = []        
-        for item in validators:
-            if isinstance(item, Validator):
-                vlist.append(item)
-            elif item is None:
-                vlist.append(VNone())
-            elif isinstance(item, dict):
-                # 1:1 mapping if there is only a map as validator
-                if len(validators) == 1:
-                    vlist.append(VBMap(item))
-                else:
-                    vlist.append(VMap(item))
-            elif isinstance(item, Property):
-                vlist.extend(item.vlist)
-            elif issubclass(item, Property):
-                vlist.extend(item().vlist)
-            else:
-                raise TypeError("Unknown validator: %s" % item)
-
-        self.vlist = vlist
-
-
-    def check(self, owner, key, value):
-        error = ""
-        
-        for validator in self.vlist:
-            try:
-                value = validator.check(owner, key, value)                    
-#                 if validator.is_mapping is True:
-#                     unmapped_value = value
-#                     value = validator.check(owner, key, value)
-#                     owner._pvalues[key] = unmapped_value
-#                 else:
-              
-            except ValueError, msg:
-                error += str(msg)
-            except TypeError, msg:
-                error += str(msg)
-            except:
-                raise
-            else:
-                return value
-
-        raise TypeError(error)
-
+        self.validator = VTryAll(*validators)
 
 
     def get_value(self, owner, key):
@@ -282,34 +300,14 @@ class Property:
         
     def set_value(self, owner, key, value):
         try:
-            owner._ivalues[key] = self.check(owner, key, value)
-            owner._values[key] = value
-        except TypeError, msg:
-            raise TypeError("Failed to set property '%s' of container '%s' to '%s':\n  %s" %
-                            (key, owner.__class__.__name__, value, msg))
-        except ValueError, msg:
-            raise ValueError("Failed to set property '%s' of container '%s' to '%s':\n %s" %
-                             (key, owner.__class__.__name__, value, msg))
-
-
-
-
-class List(Property):
-
-    def __init__(self, *validators, **kwargs):
-        # The default value refers to the list.
-        Property.__init__(self, *validators, **kwargs)
-
-    def check(self, owner, key, value):
-        check = (lambda v: Property.check(self, owner, key, v))        
-        if isinstance(value, TypedList):
-            value.check = check
-            return value
-        if isinstance(value, list):
-            return TypedList(check, value)
-        else:            
-            raise TypeError("The value '%s' has %s while it should be a list." %
-                            (value, type(value)))
+            if self.validator.is_mapping is False:
+                owner._values[key] = self.validator.check(owner, key, value)
+            else:
+                owner._values[key] = value
+                owner._mvalues[key] = self.validator.check(owner, key, value)
+        except Exception,msg:
+            raise PropertyError("Failed to set property '%s' of container '%s' to '%s': Value must be %s." %
+                                (key, owner.__class__.__name__, value, str(msg)))
 
     
                 
@@ -340,11 +338,8 @@ class List(Property):
 #         return TypedDict(owner, key, check=self.item_check)
 
 
-# Prop = Property
 # pDictionary = Dictionary
 # pDict = Dictionary
-# pList = List
-
 
 
 #------------------------------------------------------------------------------
@@ -360,7 +355,7 @@ class HasProperties(object):
     def __init__(self, **kwargs):
         
         # Initialize props and values dict
-        object.__setattr__(self, '_ivalues', {})
+        object.__setattr__(self, '_mvalues', {})
         object.__setattr__(self, '_values', {})
         object.__setattr__(self, '_props', {})
         
@@ -378,7 +373,7 @@ class HasProperties(object):
                         raise KeyError("%s defines Prop '%s', which has already been defined by a base class!" % (klass,key)  )
                     self._props[key] = prop
                     #self._values[key] = Undefined
-                    #self._ivalues[key] = Undefined
+                    #self._mvalues[key] = Undefined
                     
                     kwvalue = kwargs.pop(key,None)
                     if kwvalue is not None:
@@ -399,7 +394,7 @@ class HasProperties(object):
     #
     
     def __setattr__(self, key, value):
-        if key in ('props', '_props','_values', '_ivalues'):
+        if key in ('props', '_props','_values', '_mvalues'):
             raise RuntimeError("Attribute '%s' cannot be altered for HasProperties objects." % key)
         
         props = object.__getattribute__(self, '_props')
@@ -410,7 +405,7 @@ class HasProperties(object):
     
     def __getattribute__(self, key):
         """ `nd` = nodefault = ignore Prop's default value. """                         
-        if key in ('_props','_values', '_ivalues'):
+        if key in ('_props','_values', '_mvalues'):
             return object.__getattribute__(self, key)
         else:
             props = object.__getattribute__(self, '_props')
@@ -440,19 +435,23 @@ class HasProperties(object):
     
 
     def get_value(self, key, **kwargs):
+        
         if kwargs.has_key('default') is True:
             default = kwargs.get('default', None)
             value = self.__getattribute__(key)
-            if value is None:
+            if value is Undefined:
                 return default
             else:
                 return value
         else:
             return self.__getattribute__(key)            
 
-    def get_ivalue(self, key):
-        ivalues = object.__getattribute__(self, '_ivalues')
-        return ivalues[key]
+    def get_mvalue(self, key):
+        ivalues = object.__getattribute__(self, '_mvalues')
+        if ivalues.has_key(key):
+            return ivalues.get(key)
+
+        return self.get_value(key)
 
     # TODO: ivalues/values for List/Dictionary objects.
     # TODO: The List uses Property.check, which returns only
@@ -467,7 +466,7 @@ class HasProperties(object):
             default = kwargs.get('default', None)            
             for key in keys:            
                 value = self.__getattribute__(key, nd=True)
-                if value is None:
+                if value is Undefined:
                     rv[key] = default
                 else:
                     rv[key] = value

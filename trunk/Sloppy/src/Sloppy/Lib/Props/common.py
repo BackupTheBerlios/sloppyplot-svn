@@ -6,7 +6,7 @@
 from props import *
 
 
-__all__ = ["Integer", "Float", "Keyword", "String", "Boolean", "Unicode"]
+__all__ = ["Integer", "Float", "Keyword", "String", "Boolean", "Unicode", "List"]
 
 
 class String(Property):
@@ -32,3 +32,14 @@ class Integer(Property):
 class Float(Property):
     def __init__(self, *validators, **kwargs):
         Property.__init__(self, *validators + (VFloat(),), **kwargs)
+
+class List(Property):
+    def __init__(self, *validators, **kwargs):
+        if len(validators) == 0:
+            Property.__init__(self, VList(), **kwargs)
+        elif len(validators) == 1:            
+            default = validators[0]
+            Property.__init__(self, default, VList(), **kwargs)
+        else:
+            default = validators[0]
+            Property.__init__(self, default, VList(*validators[1:]), **kwargs)
