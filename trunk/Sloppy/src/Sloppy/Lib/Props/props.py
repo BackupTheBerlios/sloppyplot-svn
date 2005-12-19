@@ -397,13 +397,16 @@ class Property:
         self.blurb = kwargs.pop('blurb', None)
         self.doc = kwargs.pop('doc', None)
 
-        # new style
-        check_kwargs = kwargs.copy()
-        if check_kwargs.has_key('default'):
-            check_kwargs.pop('default')
-        if check_kwargs.has_key('reset'):
-            check_kwargs.pop('reset')
-        self.check = CheckList(*check, **check_kwargs)
+        # FOR TRANSITION TO NEW STYLE PROPERTIES:
+        # only define self.check if it is not already defined.
+        if hasattr(self, 'check') is None:
+            check_kwargs = kwargs.copy()
+            if check_kwargs.has_key('default'):
+                check_kwargs.pop('default')
+            if check_kwargs.has_key('reset'):
+                check_kwargs.pop('reset')
+            self.check = CheckList(*check, **check_kwargs)
+            self.checks = DictionaryLookup(self.check.checkdict)
 
         default = kwargs.pop('default', None)
         if inspect.isfunction(default) or inspect.ismethod(default):
@@ -422,10 +425,6 @@ class Property:
                 self.on_reset = lambda o,k: reset
             else:
                 self.on_reset = lambda owner, key: self.check(owner,key,reset)
-
-        self.name = None # set by the owning HasProperties class
-
-        self.checks = DictionaryLookup(self.check.checkdict)
 
     def get_value(self, owner, key, nd=False):
         rv = owner._values[key]
@@ -613,7 +612,6 @@ class HasProperties(object):
                     kwvalue = kwargs.pop(key,None)
                     if kwvalue is not None:
                         self.__setattr__(key,kwvalue)
-                    value.name = key
 
         # complain if there are unused keyword arguments
         if len(kwargs) > 0:
