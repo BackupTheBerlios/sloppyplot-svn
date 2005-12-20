@@ -181,6 +181,19 @@ class VRegexp(Validator):
         
         raise ValueError("a string matching the regular expression %s" % self.regexp)
 
+class VChoices(Validator):
+
+    def __init__(self, alist):
+        self.values = alist
+
+    def check(self, owner, key, value):
+        print "Checking ", value
+        if value in self.values:
+            return value
+        print "No"
+        raise ValueError("one of %s" % str(self.values))
+        
+        
 class VTryAll(Validator):
 
     def __init__(self, *validators):
@@ -201,6 +214,8 @@ class VTryAll(Validator):
                 else:
                     vlist.append(VMap(item))
                 is_mapping = True
+            elif isinstance(item, (list,tuple)):
+                vlist.append(VChoices(list(item)))
             elif isinstance(item, Property):
                 vlist.extend(item.validator.vlist)
                 is_mapping = is_mapping or item.validator.is_mapping
@@ -220,8 +235,11 @@ class VTryAll(Validator):
         
         for validator in self.vlist:
             try:
-                value = validator.check(owner, key, value)                    
+                print "OK?", type(validator), validator.__class__.__name__
+                value = validator.check(owner, key, value)
+                print "OK"
             except ValueError, msg:
+                print "Value Error"
                 error.append(str(msg))
             except TypeError, msg:
                 error.append(str(msg))
@@ -230,6 +248,7 @@ class VTryAll(Validator):
             else:
                 return value
 
+        print "No"
         raise TypeError(' or '.join(error))
 
 
@@ -273,7 +292,9 @@ class VDictionary(Validator):
             return TypedDict(check_item, value)
         else:            
             raise TypeError("a dict")
-                 
+
+    
+    
                 
 # class CheckBounds(Check):
 #     """
@@ -314,7 +335,6 @@ class Property:
         # unless it is a validator instance
         if len(validators) > 0:
             default = validators[0]
-            print "Found default value", default
             if not isinstance(default, Validator):
                 self.default = default
                 validators = tuple(validators[1:])
@@ -323,7 +343,7 @@ class Property:
 
         self.validator = VTryAll(*validators)
 
-
+        
     def get_value(self, owner, key):
         return owner._values[key]
         

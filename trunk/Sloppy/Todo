@@ -1,5 +1,21 @@
 
 
+IDEA:
+
+String(0, [0,1,2,3])
+
+means right now: a string _or_ one of [0,1,2,3]
+but it would be cool if it meant: a string _and_ one of [0,1,2,3]
+
+All absolute requirements could be dealt with by defining them as
+real properties. Problem: This becomes invalid:
+
+String(0, None)
+
+But then you might just say:
+
+Property(None, None, String) 
+
 
 If you have a mapped value, then we must still apply the preceding 
 Validators. OK. No problem.  But right now we do not use their
