@@ -27,7 +27,7 @@ from typed_containers import TypedList, TypedDict
 
 __all__ = ["HasProperties", "Property", "Validator", 
            "VMap", "VBMap", "VString", "VInteger", "VFloat", "VBoolean",
-           "VRegexp", "VUnicode", "VList"]
+           "VRegexp", "VUnicode", "VList", "VDictionary"]
 
 #------------------------------------------------------------------------------
 # Helper Stuff
@@ -172,11 +172,14 @@ class VRegexp(Validator):
         self._expression = re.compile(regexp)
 
     def check(self, owner, key, value):
-        match = self._expression.match(value)
-        if match is not None:
-            return value
-
-        raise ValueError("Value %s does not match the regular expression %s" % (value,self.regexp))
+        try:
+            match = self._expression.match(value)
+            if match is not None:
+                return value
+        except:
+            pass
+        
+        raise ValueError("a string matching the regular expression %s" % self.regexp)
 
 class VTryAll(Validator):
 
@@ -202,8 +205,9 @@ class VTryAll(Validator):
                 vlist.extend(item.validator.vlist)
                 is_mapping = is_mapping or item.validator.is_mapping
             elif issubclass(item, Property):
-                vlist.extend(item().validator.vlist)
-                is_mapping = is_mapping or item.validator.is_mapping
+                i = item()
+                vlist.extend(i.validator.vlist)
+                is_mapping = is_mapping or i.validator.is_mapping
             else:
                 raise TypeError("Unknown validator: %s" % item)
 
@@ -235,7 +239,12 @@ class VList(Validator):
         self.item_validator = VTryAll(*validators)
 
     def check(self, owner, key, value):
-        check_item = lambda v: self.item_validator.check(owner, key, v)
+        def check_item(v):
+            try:
+                return self.item_validator.check(owner, key, v)
+            except Exception, msg:
+                raise PropertyError("Failed to set item in list property '%s' of container '%s' to '%s': Value must be %s." %
+                                    (key, owner.__class__.__name__, value, str(msg)))
         if isinstance(value, TypedList):
             value.check_item = check_item
             return value
@@ -244,6 +253,26 @@ class VList(Validator):
         else:            
             raise TypeError("a list")
 
+class VDictionary(Validator):
+
+    def __init__(self, *validators):
+        self.item_validator = VTryAll(*validators)
+
+    def check(self, owner, key, value):
+        def check_item(v):
+            try:
+                return self.item_validator.check(owner, key, v)
+            except Exception, msg:
+                raise PropertyError("Failed to set item in dictionary property '%s' of container '%s' to '%s': Value must be %s." %
+                                    (key, owner.__class__.__name__, value, str(msg)))
+            
+        if isinstance(value, TypedDict):
+            value.check_item = check_item
+            return value
+        elif isinstance(value, dict):
+            return TypedDict(check_item, value)
+        else:            
+            raise TypeError("a dict")
                  
                 
 # class CheckBounds(Check):
@@ -311,35 +340,6 @@ class Property:
 
     
                 
-# class Dictionary(Property):
-
-#     def __init__(self, *check, **kwargs):
-#         kwargs.update({'reset' : self.do_reset})
-#         Property.__init__(self, *check, **kwargs)
-#         self.item_check = self.check
-#         self.check = self.DoCheck(self.item_check)
-
-#     class DoCheck(Transformation):
-
-#         def __init__(self, check):
-#             self.check = check
-#             self.items = [] # needed because Prop.check requires such an item!            
-
-#         def __call__(self, owner, key, value):
-#             if isinstance(value, TypedDict):
-#                 return value
-#             elif isinstance(value, dict):
-#                 return TypedDict(owner, key, value, self.check)
-#             else:            
-#                 raise TypeError("The value '%s' has %s while it should be a dictionary." %
-#                                 (value, type(value)))
-
-#     def do_reset(self, owner, key):
-#         return TypedDict(owner, key, check=self.item_check)
-
-
-# pDictionary = Dictionary
-# pDict = Dictionary
 
 
 #------------------------------------------------------------------------------
