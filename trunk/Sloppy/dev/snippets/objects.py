@@ -146,11 +146,11 @@ class TextLabel(HasProperties):
     text = Unicode('', blurb="Displayed Text")
     x = Float(0.0, blurb="X-Position")
     y = Float(0.0, blurb="Y-Position")
-    system = Integer(0, MAP['position_system'],
+    system = Property(MAP['position_system'],
                       blurb="Coordinate System")
-    valign = Integer(0, MAP['position_valign'],
+    valign = Property(MAP['position_valign'],
                       blurb="Vertical Alignment")
-    halign = Integer(0, MAP['position_halign'],
+    halign = Property(MAP['position_halign'],
                       blurb="Horizontal Aligment")
     
 
@@ -161,14 +161,14 @@ class Axis(HasProperties):
     start = Float(0.0, blurb='Start')
     end = Float(0.0, blurb='End')
 
-    scale = Property('linear', PV['axis.scale'])
+    scale = Property(PV['axis.scale'])
     format = String('', blurb='Format')
 
 
 a = Axis()
 print a.scale
 a.scale = 'log'
-a.scale = 'lalala'
+#a.scale = 'lalala'
 print a.scale
 
 # class Line(HasProperties):
@@ -223,15 +223,14 @@ print a.scale
 
 
 
-# class Legend(HasProperties):
-#     " Plot legend. "
-#     label = Unicode(doc='Legend Label')
-#     visible = Boolean(reset=True)
-#     border = Boolean(reset=False)
-#     position = Property(valid=PV['legend.position'],
-#                     reset=PV['legend.position'][0])
-#     x = Float(range=(0.0,1.0), default=0.7)
-#     y = Float(range=(0.0,1.0), default=0.0)
+class Legend(HasProperties):
+    " Plot legend. "
+    label = Unicode(doc='Legend Label')
+    visible = Boolean(True)
+    border = Boolean(False)
+    position = Property(PV['legend.position'])   
+    x = FloatRange(0.0, 1.0, default=0.7)
+    y = FloatRange(0.0, 1.0, default=0.0)
 
 
 # class Layer(HasProperties, HasSignals):

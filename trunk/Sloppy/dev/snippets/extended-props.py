@@ -39,31 +39,29 @@ class RGBColor(Property):
         'red': (0.0, 1.0, 0.0)
         }
     
-    def __init__(self, *validators, **kwargs):
-        Property.__init__(self,
-                             *validators + (VRGBColor(),VMap(self.color_map)),
-                             **kwargs)                    
+    def __init__(self, default=Undefined, **kwargs):
+        Property.__init__(self, VRGBColor(),VMap(self.color_map),
+                          default=default, **kwargs)                    
 #------------------------------------------------------------------------------
 
 
         
 class Line(HasProperties):
-    color = RGBColor('black', None)
+    color = RGBColor('black')
     label = String()
-    is_visible = Boolean(True, None)
+    is_visible = Boolean(True)
     keyword = Keyword()
     comment = Unicode()
     width = Integer(2)
-    length = Float(4)
+    length = Float(default=4)
 
-    style = Property(None, {'none':None,'solid':1,'dashed':2})
-    colors = List([], color) # same as colors = Property([], VList(color))
-    history = Dictionary({}, keyword)
+    style = Property({'none':None,'solid':1,'dashed':2})
+    colors = List(color) 
+    history = Dictionary(keyword)
 
 #..............................................................................    
 line = Line()
 print "default values:", line.get_values()
-
 
 def test_set_value(object, key, value):
     print "Setting %s of %s to '%s'" % (key, object, value)
@@ -71,8 +69,12 @@ def test_set_value(object, key, value):
     print "  => mapped  value: %s" % str(object.get_mvalue(key))
     print "  => visible value : %s" % str(object.get_value(key))
 
+
+#------------------------------------------------------------------------------
+raise SystemExit
+#------------------------------------------------------------------------------
 test_set_value(line, 'color', 'red')
-test_set_value(line, 'color', None)
+#test_set_value(line, 'color', None)
 test_set_value(line, 'color', (0.0,0,0))
 test_set_value(line, 'color', '#ffaaEE')
 #test_set_value(line, 'color', 42)
@@ -84,16 +86,14 @@ test_set_value(line, 'is_visible', True)
 test_set_value(line, 'is_visible', False)
 test_set_value(line, 'is_visible', 'false')
 
-test_set_value(line, 'is_visible', None)
+#test_set_value(line, 'is_visible', None)
 
 
 test_set_value(line, 'keyword', 'Niki')
-#test_set_value(line, 'keyword', 'Ätzend')
 
 test_set_value(line, 'style', 'solid')
 test_set_value(line, 'style', 'dashed')
 test_set_value(line, 'style', 1)
-
 
 line.colors.append( (0,0,0.5) )
 print line.colors

@@ -25,9 +25,10 @@ import inspect
 from typed_containers import TypedList, TypedDict
 
 
-__all__ = ["HasProperties", "Property", "Validator", 
+__all__ = ["HasProperties", "Property", "List", "Dictionary",
+           "Validator", "Undefined",
            "VMap", "VBMap", "VString", "VInteger", "VFloat", "VBoolean",
-           "VRegexp", "VUnicode", "VList", "VDictionary"]
+           "VRegexp", "VUnicode", "VList", "VDictionary", "VRange"]
 
 #------------------------------------------------------------------------------
 # Helper Stuff
@@ -61,7 +62,8 @@ class DictionaryLookup(object):
 
 
 class Undefined:
-    def __str__(self): return "Undefined"
+    def __str__(self):
+        return "Undefined"
 
 class PropertyError(Exception):
     pass
@@ -196,7 +198,13 @@ class VChoices(Validator):
         
 class VTryAll(Validator):
 
-    def __init__(self, *validators):
+    def __init__(self, *validators, **kwargs):
+        """
+        Create a Validator that tries to match one of the given
+        validators and stops as soon as one is matched.
+        """
+        default = kwargs.get('default', Undefined)
+        
         # init validators
         vlist = []
         is_mapping = False
@@ -214,8 +222,12 @@ class VTryAll(Validator):
                 else:
                     vlist.append(VMap(item))
                 is_mapping = True
+                if len(item) > 0:
+                    default = item.keys()[0]
             elif isinstance(item, (list,tuple)):
                 vlist.append(VChoices(list(item)))
+                if len(item) > 0:
+                    default = item[0]
             elif isinstance(item, Property):
                 vlist.extend(item.validator.vlist)
                 is_mapping = is_mapping or item.validator.is_mapping
@@ -226,6 +238,7 @@ class VTryAll(Validator):
             else:
                 raise TypeError("Unknown validator: %s" % item)
 
+        self.default = default
         self.vlist = vlist
         self.is_mapping = is_mapping
 
@@ -235,11 +248,8 @@ class VTryAll(Validator):
         
         for validator in self.vlist:
             try:
-                print "OK?", type(validator), validator.__class__.__name__
                 value = validator.check(owner, key, value)
-                print "OK"
             except ValueError, msg:
-                print "Value Error"
                 error.append(str(msg))
             except TypeError, msg:
                 error.append(str(msg))
@@ -248,7 +258,6 @@ class VTryAll(Validator):
             else:
                 return value
 
-        print "No"
         raise TypeError(' or '.join(error))
 
 
@@ -294,26 +303,23 @@ class VDictionary(Validator):
             raise TypeError("a dict")
 
     
-    
-                
-# class CheckBounds(Check):
-#     """
-#     Check if the given value is in between the given bounds [min:max].
+class VRange(Validator):
 
-#     If min or max is None, then the appropriate direction is unbound.
-#     A value of None is always valid.    
-#     """
-#     def __init__(self, min=None, max=None):
-#         self.min=min
-#         self.max=max
+    """
+    Check if the given value is in between the given bounds [min:max].
+    If min or max is None, then the appropriate direction is unbound.
+    A value of None is always invalid.
+    """
+     
+    def __init__(self, min=None, max=None):
+        self.min=min
+        self.max=max
 
-#     def __call__(self, owner, key, value):
-#         if value is None:
-#             return None
-        
-#         if (self.min is not None and value < self.min) \
-#                or (self.max is not None and value > self.max):
-#             raise ValueError("Value %s should be in between [%s:%s]" % (value, self.min, self.max))
+    def check(self, owner, key, value):
+        if (value is None) \
+               or (self.min is not None and value < self.min) \
+               or (self.max is not None and value > self.max):
+            raise ValueError("Value %s should be in between [%s:%s]" % (value, self.min, self.max))
 
 #     def get_description(self):
 #         return "Valid range: %s:%s" % (self.min or "", self.max or "")
@@ -327,22 +333,10 @@ class VDictionary(Validator):
 class Property:
     
     def __init__(self, *validators, **kwargs):
-        
-        self.blurb = kwargs.pop('blurb', None)
-        self.doc = kwargs.pop('doc', None)        
-        
-        # first item in validators is actually the default value
-        # unless it is a validator instance
-        if len(validators) > 0:
-            default = validators[0]
-            if not isinstance(default, Validator):
-                self.default = default
-                validators = tuple(validators[1:])
-            else:
-                self.default = Undefined
-
-        self.validator = VTryAll(*validators)
-
+        self.blurb = kwargs.get('blurb', None)
+        self.doc = kwargs.get('doc', None)
+        self.validator = VTryAll(*validators, **kwargs)
+        self.default = self.validator.default
         
     def get_value(self, owner, key):
         return owner._values[key]
@@ -358,7 +352,19 @@ class Property:
             raise PropertyError("Failed to set property '%s' of container '%s' to '%s': Value must be %s." %
                                 (key, owner.__class__.__name__, value, str(msg)))
 
-    
+
+class List(Property):
+    def __init__(self, *validators, **kwargs):
+        if kwargs.has_key('default') is False:
+            kwargs['default'] = []
+        Property.__init__(self, VList(*validators), **kwargs)
+
+
+class Dictionary(Property):
+    def __init__(self, *validators, **kwargs):        
+        if kwargs.has_key('default') is False:
+            kwargs['default'] = {}
+        Property.__init__(self, VDictionary(*validators), **kwargs)
                 
 
 
@@ -399,8 +405,10 @@ class HasProperties(object):
                     if kwvalue is not None:
                         self.__setattr__(key,kwvalue)
                     else:
-                        if prop.default is not Undefined:                           
+                        if prop.default is not Undefined:  
                             self.set_value(key, prop.default)
+                        else:
+                            self._values[key] = Undefined
                         
         # complain if there are unused keyword arguments
         if len(kwargs) > 0:

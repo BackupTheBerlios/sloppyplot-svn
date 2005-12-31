@@ -6,53 +6,40 @@
 from props import *
 
 
-__all__ = ["Integer", "Float", "Keyword", "String", "Boolean",
-           "Unicode", "List", "Dictionary"]
+__all__ = ["Integer", "Float", "Keyword", "String", "Boolean", "Unicode",
+           "IntRange", "FloatRange"]
 
 
 class String(Property):
-    def __init__(self, *validators, **kwargs):
-        Property.__init__(self, *validators + (VString(),), **kwargs)
+    def __init__(self, default=Undefined, **kwargs):
+        Property.__init__(self, VString(),
+                          default=default, **kwargs)
 
 class Boolean(Property):
-    def __init__(self, *validators, **kwargs):
-        Property.__init__(self, *validators + (VBoolean(),), **kwargs)
+    def __init__(self, default=Undefined, **kwargs):
+        Property.__init__(self, VBoolean(), **kwargs)
 
 class Keyword(Property):
-    def __init__(self, *validators, **kwargs):
-        Property.__init__(self, *validators + (VRegexp('^[\-\.\s\w]*$'),), **kwargs)
+    def __init__(self, default=Undefined, **kwargs):
+        Property.__init__(self, VRegexp('^[\-\.\s\w]*$'), **kwargs)
 
 class Unicode(Property):
-    def __init__(self, *validators, **kwargs):
-        Property.__init__(self, *validators + (VUnicode(),), **kwargs)
+    def __init__(self, default=Undefined, **kwargs):
+        Property.__init__(self, VUnicode(), **kwargs)
 
 class Integer(Property):
-    def __init__(self, *validators, **kwargs):
-        Property.__init__(self, *validators + (VInteger(),), **kwargs)
+    def __init__(self, default=Undefined, **kwargs):
+        Property.__init__(self, VInteger(), **kwargs)
 
 class Float(Property):
-    def __init__(self, *validators, **kwargs):
-        Property.__init__(self, *validators + (VFloat(),), **kwargs)
+    def __init__(self, default=Undefined, **kwargs):
+        Property.__init__(self, VFloat(), **kwargs)
 
-class List(Property):
-    def __init__(self, *validators, **kwargs):
-        if len(validators) == 0:
-            Property.__init__(self, VList(), **kwargs)
-        elif len(validators) == 1:            
-            default = validators[0]
-            Property.__init__(self, default, VList(), **kwargs)
-        else:
-            default = validators[0]
-            Property.__init__(self, default, VList(*validators[1:]), **kwargs)
+        
+class IntRange(Property):
+    def __init__(self, min=None, max=None, **kwargs):
+        Property.__init__(self, VInteger(), VRange(min,max), **kwargs)
 
-
-class Dictionary(Property):
-    def __init__(self, *validators, **kwargs):
-        if len(validators) == 0:
-            Property.__init__(self, VDictionary(), **kwargs)
-        elif len(validators) == 1:            
-            default = validators[0]
-            Property.__init__(self, default, VDictionary(), **kwargs)
-        else:
-            default = validators[0]
-            Property.__init__(self, default, VDictionary(*validators[1:]), **kwargs)
+class FloatRange(Property):
+    def __init__(self, min=None, max=None, **kwargs):
+        Property.__init__(self, VFloat(), VRange(min,max), **kwargs)

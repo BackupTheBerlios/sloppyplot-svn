@@ -1,5 +1,19 @@
 
 
+(1) Legend.position 
+      position = Property(PV['legend.position'])
+
+    If Property gets a list as default value, then we must set the
+    default value accordingly.
+    I guess I need to rewrite the code in Property and VTryAll to
+    handle all these possible use cases properly.
+
+(2) Implement VRange and write common.Range.  Use it for position.x and position.y
+
+
+
+---------------------
+
 IDEA:
 
 String(0, [0,1,2,3])
