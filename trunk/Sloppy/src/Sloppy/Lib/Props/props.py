@@ -25,8 +25,8 @@ import inspect
 from typed_containers import TypedList, TypedDict
 
 
-__all__ = ["HasProperties", "Property", "List", "Dictionary",
-           "Validator", "Undefined",
+__all__ = ["HasProperties", "Property", "List", "Dictionary", "Undefined",
+           "Validator", "ValidatorList", "RequireOne", "RequireAll",
            "VMap", "VBMap", "VString", "VInteger", "VFloat", "VBoolean",
            "VRegexp", "VUnicode", "VList", "VDictionary", "VRange"]
 
@@ -163,7 +163,7 @@ class VInteger(Validator):
 class VFloat(Validator):
     def check(self, owner, key, value):
         return float(value)
-
+    
 
 class VRegexp(Validator):
     
@@ -195,76 +195,13 @@ class VChoices(Validator):
         print "No"
         raise ValueError("one of %s" % str(self.values))
         
-        
-class VTryAll(Validator):
 
-    def __init__(self, *validators, **kwargs):
-        """
-        Create a Validator that tries to match one of the given
-        validators and stops as soon as one is matched.
-        """
-        default = kwargs.get('default', Undefined)
-        
-        # init validators
-        vlist = []
-        is_mapping = False
-        for item in validators:
-            if isinstance(item, Validator):
-                vlist.append(item)
-                is_mapping = is_mapping or item.is_mapping
-            elif item is None:
-                vlist.append(VNone())
-                is_mapping = is_mapping or VNone.is_mapping
-            elif isinstance(item, dict):
-                # 1:1 mapping if there is only a map as validator
-                if len(validators) == 1:
-                    vlist.append(VBMap(item))
-                else:
-                    vlist.append(VMap(item))
-                is_mapping = True
-                if len(item) > 0:
-                    default = item.keys()[0]
-            elif isinstance(item, (list,tuple)):
-                vlist.append(VChoices(list(item)))
-                if len(item) > 0:
-                    default = item[0]
-            elif isinstance(item, Property):
-                vlist.extend(item.validator.vlist)
-                is_mapping = is_mapping or item.validator.is_mapping
-            elif issubclass(item, Property):
-                i = item()
-                vlist.extend(i.validator.vlist)
-                is_mapping = is_mapping or i.validator.is_mapping
-            else:
-                raise TypeError("Unknown validator: %s" % item)
-
-        self.default = default
-        self.vlist = vlist
-        self.is_mapping = is_mapping
-
-
-    def check(self, owner, key, value):
-        error = []
-        
-        for validator in self.vlist:
-            try:
-                value = validator.check(owner, key, value)
-            except ValueError, msg:
-                error.append(str(msg))
-            except TypeError, msg:
-                error.append(str(msg))
-            except:
-                raise
-            else:
-                return value
-
-        raise TypeError(' or '.join(error))
-
+      
 
 class VList(Validator):
 
     def __init__(self, *validators):        
-        self.item_validator = VTryAll(*validators)
+        self.item_validator = construct_validator_list(*validators)
 
     def check(self, owner, key, value):
         def check_item(v):
@@ -284,7 +221,7 @@ class VList(Validator):
 class VDictionary(Validator):
 
     def __init__(self, *validators):
-        self.item_validator = VTryAll(*validators)
+        self.item_validator = construct_validator_list(*validators)
 
     def check(self, owner, key, value):
         def check_item(v):
@@ -319,11 +256,94 @@ class VRange(Validator):
         if (value is None) \
                or (self.min is not None and value < self.min) \
                or (self.max is not None and value > self.max):
-            raise ValueError("Value %s should be in between [%s:%s]" % (value, self.min, self.max))
+            raise ValueError("in the range [%s:%s]" % (self.min, self.max))
 
 #     def get_description(self):
 #         return "Valid range: %s:%s" % (self.min or "", self.max or "")
 
+
+#------------------------------------------------------------------------------
+# Validator Lists
+
+class ValidatorList(Validator):
+
+    def __init__(self, *validators, **kwargs):
+
+        default = kwargs.get('default', Undefined)
+
+        # init validators
+        vlist = []
+        is_mapping = False
+        for item in validators:
+            if isinstance(item, Validator):
+                vlist.append(item)
+                is_mapping = is_mapping or item.is_mapping
+            elif item is None:
+                vlist.append(VNone())
+                is_mapping = is_mapping or VNone.is_mapping
+                default = None
+            elif isinstance(item, dict):
+                # 1:1 mapping if there is only a map as validator
+                if len(validators) == 1:
+                    vlist.append(VBMap(item))
+                else:
+                    vlist.append(VMap(item))
+                is_mapping = True
+                if len(item) > 0:
+                    default = item.keys()[0]
+            elif isinstance(item, (list,tuple)):
+                vlist.append(VChoices(list(item)))
+                if len(item) > 0:
+                    default = item[0]
+            elif isinstance(item, Property):
+                vlist.extend(item.validator.vlist)
+                is_mapping = is_mapping or item.validator.is_mapping
+                default = Property.default
+            elif issubclass(item, Property):
+                i = item()
+                vlist.extend(i.validator.vlist)
+                is_mapping = is_mapping or i.validator.is_mapping
+                default = i.default
+            else:
+                raise TypeError("Unknown validator: %s" % item)
+
+        self.default = default
+        self.vlist = vlist
+        self.is_mapping = is_mapping
+
+class RequireOne(ValidatorList):
+
+    def check(self, owner, key, value):
+        for validator in self.vlist:
+            try:
+                value = validator.check(owner, key, value)
+            except:
+                continue
+            else:
+                return value
+        raise
+
+
+class RequireAll(ValidatorList):
+
+    def check(self, owner, key, value):
+
+        try:
+            for validator in self.vlist:
+                value = validator.check(owner, key, value)
+        except:
+            # TODO: construct error message
+            raise
+
+        return value
+
+def construct_validator_list(*validators):
+    if len(validators) == 0:
+        return RequireOne()
+    elif len(validators) == 1 and isinstance(validators[0], ValidatorList):
+            return validators[0]
+    else:
+        return RequireOne(*validators)
 
 
 #------------------------------------------------------------------------------
@@ -335,7 +355,7 @@ class Property:
     def __init__(self, *validators, **kwargs):
         self.blurb = kwargs.get('blurb', None)
         self.doc = kwargs.get('doc', None)
-        self.validator = VTryAll(*validators, **kwargs)
+        self.validator = construct_validator_list(*validators)
         self.default = self.validator.default
         
     def get_value(self, owner, key):

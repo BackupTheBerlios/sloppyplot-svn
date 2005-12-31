@@ -165,12 +165,6 @@ class Axis(HasProperties):
     format = String('', blurb='Format')
 
 
-a = Axis()
-print a.scale
-a.scale = 'log'
-#a.scale = 'lalala'
-print a.scale
-
 # class Line(HasProperties):
 #     " A single line or collection of points in a Plot. "
 #     label = Unicode()
@@ -233,13 +227,14 @@ class Legend(HasProperties):
     y = FloatRange(0.0, 1.0, default=0.0)
 
 
-# class Layer(HasProperties, HasSignals):
-#     type = String(valid=PV['layer.type'], reset=PV['layer.type'][0])
-#     title = Unicode(blurb="Title")
-#     lines = List(type=Line, blurb="Lines")
-#     grid = Boolean(reset=False, blurb="Grid", doc="Display a grid")
-#     visible = Boolean(reset=True, blurb="Visible")
-#     legend = Property(type=Legend, reset=lambda o,k: Legend())
+
+class Layer(HasProperties, HasSignals):
+    type = Property(PV['layer.type'])
+    title = Unicode(blurb="Title")
+    lines = List(Line, blurb="Lines")
+    grid = Boolean(default=False, blurb="Grid", doc="Display a grid")
+    visible = Boolean(reset=True, blurb="Visible")
+#    legend = Property(Legend, reset=lambda o,k: Legend())
 
 #     x = Float(range=(0.0,1.0), default=0.11)
 #     y = Float(range=(0.0,1.0), default=0.125)

@@ -1,81 +1,10 @@
 
 
-(1) Legend.position 
-      position = Property(PV['legend.position'])
 
-    If Property gets a list as default value, then we must set the
-    default value accordingly.
-    I guess I need to rewrite the code in Property and VTryAll to
-    handle all these possible use cases properly.
+( ) default value = a new instance ?
 
-(2) Implement VRange and write common.Range.  Use it for position.x and position.y
+( ) Mapped Lists / Dictionaries
 
-
-
----------------------
-
-IDEA:
-
-String(0, [0,1,2,3])
-
-means right now: a string _or_ one of [0,1,2,3]
-but it would be cool if it meant: a string _and_ one of [0,1,2,3]
-
-All absolute requirements could be dealt with by defining them as
-real properties. Problem: This becomes invalid:
-
-String(0, None)
-
-But then you might just say:
-
-Property(None, None, String) 
-
-
-If you have a mapped value, then we must still apply the preceding 
-Validators. OK. No problem.  But right now we do not use their
-changed values.
-
-If e.g. you _first_ convert the input to a string, and then you map
-this string, then it would be nice to have the mapped string as
-_mvalue, but have the string (and not the integer) as a value.  This
-does not work right now, because VTryAll does not set the value and
-VTryAll is either is_mapped or not, depending on its contents.
-
-Hmmmm.............
-
-TODO:
-
-- Validator.is_mapping => where should the unmapped value be stored?
-  We could use _unmapped_values, _BUT_ what happens if we have a List or
-  a Dictionary? 
-
-  color = 'black'
-  colors = [(0,0,0), 'black']
-
-  For color, we would simply need one unmapped value;
-  For colors however we need a whole list that needs to be synced...
-
-  The container offers one attribute:
-  
-  container._uvalues
-
-  And the property with a given `key` can access
-
-  container._uvalues[key]
-
-  The List must make sure that this attribute is a list
-
-  self.uvalues = container._uvalues[key]
-
-  And must then set it wherever necessary; so we have two operations for 
-  each list operation..... :-(
-
-
-
-- Property.validators => VTryAll() => VTryAll.check; this way, we can 
-  pass the validator to the typed list.
-
-- List, Dictionary
 
 
 
