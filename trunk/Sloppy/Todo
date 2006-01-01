@@ -3,9 +3,9 @@
 
 ( ) default value = a new instance ?
 
+    Maybe have    on_default as a more generic solution to default?
+
 ( ) Mapped Lists / Dictionaries
-
-
 
 
 

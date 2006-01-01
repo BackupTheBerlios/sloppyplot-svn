@@ -12,6 +12,7 @@ class VRGBColor(Validator):
             if len(value) == 3:
                 # mapped value = tuple(value)
                 # unmapped value = value
+                
                 return tuple(value)
             else:
                 raise ValueError("Color tuple must be a 3-tuple (RGB).")
@@ -45,6 +46,9 @@ class RGBColor(Property):
 #------------------------------------------------------------------------------
 
 
+class MySubclass:
+    def __init__(self, owner):
+        print "Owner is ", owner
         
 class Line(HasProperties):
     color = RGBColor('black')
@@ -59,9 +63,12 @@ class Line(HasProperties):
     colors = List(color) 
     history = Dictionary(keyword)
 
+    myline = Instance(MySubclass, on_default=lambda o: MySubclass(o))
+    
 #..............................................................................    
 line = Line()
-print "default values:", line.get_values()
+#print "default values:", line.get_values()
+print line.myline
 
 def test_set_value(object, key, value):
     print "Setting %s of %s to '%s'" % (key, object, value)

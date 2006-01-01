@@ -7,7 +7,7 @@ from props import *
 
 
 __all__ = ["Integer", "Float", "Keyword", "String", "Boolean", "Unicode",
-           "IntegerRange", "FloatRange"]
+           "IntegerRange", "FloatRange", "Instance"]
 
 
 class String(Property):
@@ -43,3 +43,8 @@ class IntegerRange(Property):
 class FloatRange(Property):
     def __init__(self, min=None, max=None, **kwargs):
         Property.__init__(self, RequireAll(VFloat(), VRange(min,max)), **kwargs)
+
+class Instance(Property):
+    def __init__(self, type, **kwargs):
+        Property.__init__(self, VInstance(type), **kwargs)
+        

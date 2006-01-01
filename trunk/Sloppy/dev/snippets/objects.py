@@ -27,7 +27,7 @@ Collection of all basic data objects used for SloppyPlot.
 
 from Sloppy.Lib.Signals import HasSignals
 from Sloppy.Lib.Undo import udict
-from Sloppy.Lib.Props import HasProperties, Property
+from Sloppy.Lib.Props import HasProperties, Property, List, Dictionary
 from Sloppy.Lib.Props.common import *
        
         
@@ -165,12 +165,12 @@ class Axis(HasProperties):
     format = String('', blurb='Format')
 
 
-# class Line(HasProperties):
-#     " A single line or collection of points in a Plot. "
-#     label = Unicode()
+class Line(HasProperties):
+    " A single line or collection of points in a Plot. "
+    label = Unicode()
 
-#     visible = Boolean(reset=True)
-#     style = Property(valid=PV['line.style'], default=PV['line.style'][0])    
+    visible = Boolean(True)
+    style = Property(PV['line.style'])    
 #     width = Float(range=(0,10), default=1)
 #     # TODO: the color list PV['line.color'] should be a suggestion,
 #     # TODO: not a requirement.
@@ -234,16 +234,16 @@ class Layer(HasProperties, HasSignals):
     lines = List(Line, blurb="Lines")
     grid = Boolean(default=False, blurb="Grid", doc="Display a grid")
     visible = Boolean(reset=True, blurb="Visible")
-#    legend = Property(Legend, reset=lambda o,k: Legend())
+    legend = Instance(Legend, on_default=lambda o: Legend())
 
-#     x = Float(range=(0.0,1.0), default=0.11)
-#     y = Float(range=(0.0,1.0), default=0.125)
-#     width = Float(range=(0.0,1.0), default=0.775)
-#     height = Float(range=(0.0,1.0), default=0.79)
+    x = FloatRange(0.0, 1.0, default=0.11)
+    y = FloatRange(0.0, 1.0, default=0.125)
+    width = FloatRange(0.0, 1.0, default=0.775)
+    height = FloatRange(0.0, 1.0, default=0.79)
 
-#     #
-#     # Group Properties
-#     #
+    #
+    # Group Properties
+    #
 #     class GroupLineStyle(HasProperties):
 #         type = Integer(mapping=MAP['group_linestyle_type'], reset=GROUP_TYPE_FIXED)
 #         allow_override = Boolean(reset=True)        
@@ -299,23 +299,23 @@ class Layer(HasProperties, HasSignals):
 #                                blurb="Line Color")
 
 
-#     #   
-#     labels = List(type=TextLabel)
+    #   
+    labels = List(TextLabel)
 
-#     # axes
-#     xaxis = Property(type=Axis, reset=lambda o,k:Axis())
-#     yaxis = Property(type=Axis, reset=lambda o,k:Axis())
+    # axes
+    xaxis = Instance(Axis, on_default=lambda o: Axis())
+    yaxis = Instance(Axis, on_default=lambda o: Axis())
     
-#     def get_axes(self):
-#         return {'x':self.xaxis, 'y':self.yaxis}
-#     axes = property(get_axes)
+    def get_axes(self):
+        return {'x':self.xaxis, 'y':self.yaxis}
+    axes = property(get_axes)
 
-#     def __init__(self, **kwargs):
-#         HasProperties.__init__(self, **kwargs)
+    def __init__(self, **kwargs):
+        HasProperties.__init__(self, **kwargs)
 
-#         HasSignals.__init__(self)
-#         self.sig_register('notify')
-#         self.sig_register('notify::labels')
+        HasSignals.__init__(self)
+        self.sig_register('notify')
+        self.sig_register('notify::labels')
         
 
 # class View(HasProperties):

@@ -28,7 +28,8 @@ from typed_containers import TypedList, TypedDict
 __all__ = ["HasProperties", "Property", "List", "Dictionary", "Undefined",
            "Validator", "ValidatorList", "RequireOne", "RequireAll",
            "VMap", "VBMap", "VString", "VInteger", "VFloat", "VBoolean",
-           "VRegexp", "VUnicode", "VList", "VDictionary", "VRange"]
+           "VRegexp", "VUnicode", "VList", "VDictionary", "VRange",
+           "VInstance"]
 
 #------------------------------------------------------------------------------
 # Helper Stuff
@@ -262,6 +263,18 @@ class VRange(Validator):
 #         return "Valid range: %s:%s" % (self.min or "", self.max or "")
 
 
+class VInstance(Validator):
+
+    def __init__(self, _type):
+        self.type = _type
+
+    def check(self, owner, key, value):
+        if isinstance(value, self.type):
+            return value
+        else:
+            raise TypeError("instance of %s" % self.type)
+
+
 #------------------------------------------------------------------------------
 # Validator Lists
 
@@ -270,6 +283,7 @@ class ValidatorList(Validator):
     def __init__(self, *validators, **kwargs):
 
         default = kwargs.get('default', Undefined)
+        on_default = kwargs.get('on_default', lambda o: default)
 
         # init validators
         vlist = []
@@ -281,7 +295,7 @@ class ValidatorList(Validator):
             elif item is None:
                 vlist.append(VNone())
                 is_mapping = is_mapping or VNone.is_mapping
-                default = None
+                on_default = lambda o: None
             elif isinstance(item, dict):
                 # 1:1 mapping if there is only a map as validator
                 if len(validators) == 1:
@@ -290,24 +304,26 @@ class ValidatorList(Validator):
                     vlist.append(VMap(item))
                 is_mapping = True
                 if len(item) > 0:
-                    default = item.keys()[0]
+                    on_default = lambda o: item.keys()[0]
             elif isinstance(item, (list,tuple)):
                 vlist.append(VChoices(list(item)))
                 if len(item) > 0:
-                    default = item[0]
+                    on_default = lambda o: item[0]
             elif isinstance(item, Property):
                 vlist.extend(item.validator.vlist)
                 is_mapping = is_mapping or item.validator.is_mapping
-                default = Property.default
+                on_default = item.on_default
             elif issubclass(item, Property):
                 i = item()
                 vlist.extend(i.validator.vlist)
                 is_mapping = is_mapping or i.validator.is_mapping
-                default = i.default
+                on_default = i.on_default
+            elif inspect.isclass(item):
+                vlist.append(VInstance(item))
             else:
                 raise TypeError("Unknown validator: %s" % item)
 
-        self.default = default
+        self.on_default = on_default
         self.vlist = vlist
         self.is_mapping = is_mapping
 
@@ -337,13 +353,13 @@ class RequireAll(ValidatorList):
 
         return value
 
-def construct_validator_list(*validators):
+def construct_validator_list(*validators, **kwargs):
     if len(validators) == 0:
         return RequireOne()
     elif len(validators) == 1 and isinstance(validators[0], ValidatorList):
-            return validators[0]
+            return validators[0] # TODO: what about **kwargs?
     else:
-        return RequireOne(*validators)
+        return RequireOne(*validators, **kwargs)
 
 
 #------------------------------------------------------------------------------
@@ -355,8 +371,9 @@ class Property:
     def __init__(self, *validators, **kwargs):
         self.blurb = kwargs.get('blurb', None)
         self.doc = kwargs.get('doc', None)
-        self.validator = construct_validator_list(*validators)
-        self.default = self.validator.default
+        self.validator = construct_validator_list(*validators, **kwargs)
+
+        self.on_default = self.validator.on_default
         
     def get_value(self, owner, key):
         return owner._values[key]
@@ -372,9 +389,17 @@ class Property:
             raise PropertyError("Failed to set property '%s' of container '%s' to '%s': Value must be %s." %
                                 (key, owner.__class__.__name__, value, str(msg)))
 
+    def get_default(self, owner):
+        return self.on_default(owner)
+    
+        
 
 class List(Property):
     def __init__(self, *validators, **kwargs):
+        # TODO: maybe I should set the default value
+        # after initializing the Property.  After all the
+        # ValidatorList default value is useless for the list,
+        # isn't it?
         if kwargs.has_key('default') is False:
             kwargs['default'] = []
         Property.__init__(self, VList(*validators), **kwargs)
@@ -425,8 +450,9 @@ class HasProperties(object):
                     if kwvalue is not None:
                         self.__setattr__(key,kwvalue)
                     else:
-                        if prop.default is not Undefined:  
-                            self.set_value(key, prop.default)
+                        default = prop.get_default(self)
+                        if default is not Undefined:  
+                            self.set_value(key, default)
                         else:
                             self._values[key] = Undefined
                         
@@ -452,7 +478,6 @@ class HasProperties(object):
             object.__setattr__(self, key, value)
     
     def __getattribute__(self, key):
-        """ `nd` = nodefault = ignore Prop's default value. """                         
         if key in ('_props','_values', '_mvalues'):
             return object.__getattribute__(self, key)
         else:
