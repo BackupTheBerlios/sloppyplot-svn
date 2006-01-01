@@ -143,27 +143,40 @@ class VBoolean(Validator):
         elif isinstance(value, (int,float)):
             return bool(value)
 
-        raise ValueError("Not a valid True/False value.")
+        raise ValueError("a valid True/False value.")
 
 
 class VString(Validator):
     def check(self, owner, key, value):
-        return str(value)
+        try:
+            return str(value)
+        except:
+            raise TypeError("a string")
 
 
 class VUnicode(Validator):
     def check(self, owner, key, value):
-        return unicode(value)
+        try:
+            return unicode(value)
+        except:
+            raise TypeError("a unicode string")
 
 
 class VInteger(Validator):
     def check(self, owner, key, value):
-        return int(value)
+        try:
+            return int(value)
+        except:
+            raise TypeError("an integer")
+            
 
 
 class VFloat(Validator):
     def check(self, owner, key, value):
-        return float(value)
+        try:
+            return float(value)
+        except:
+            raise TypeError("a floating point number")
     
 
 class VRegexp(Validator):
@@ -272,7 +285,7 @@ class VInstance(Validator):
         if isinstance(value, self.type):
             return value
         else:
-            raise TypeError("instance of %s" % self.type)
+            raise TypeError("an instance of %s" % self.type)
 
 
 #------------------------------------------------------------------------------

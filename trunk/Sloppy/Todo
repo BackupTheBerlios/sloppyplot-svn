@@ -1,9 +1,6 @@
 
 
-
-( ) default value = a new instance ?
-
-    Maybe have    on_default as a more generic solution to default?
+( ) Group Properties...
 
 ( ) Mapped Lists / Dictionaries
 
@@ -22,11 +19,6 @@ Having _two_ different values might be a good idea.  Then we don't
 need the distinction between default values anymore. We would have an
 internal value (3-tuple) and an external value (color string,
 rgb-tuple, whatever the user specified).
-
-The default value is simply the internal value when the user has
-specified an external value of None!
-
-
 
 
 ------------------------

@@ -28,6 +28,7 @@ from Sloppy.Base.error import NoData
 from Sloppy.Base.dataio import read_table_from_stream, read_table_from_file
 from Sloppy.Base.table import Table
 
+
 from Sloppy.Lib.Signals import HasSignals
 from Sloppy.Lib.Undo import UndoInfo, UndoList
 from Sloppy.Lib.Props import *
@@ -37,7 +38,7 @@ from Numeric import ArrayType
 
 #------------------------------------------------------------------------------
 
-class Dataset(HasProps, HasSignals):
+class Dataset(HasProperties, HasSignals):
 
     """
     A Dataset is a wrapper for any data used for plotting.
@@ -76,10 +77,10 @@ class Dataset(HasProps, HasSignals):
 
     """
     
-    key = pKeyword()
-    label = pUnicode()
-    metadata = pDictionary(Coerce(unicode))
-    data = Prop(CheckType(Table, ArrayType,None))
+    key = Keyword()
+    label = Unicode()
+    metadata = Dictionary(Unicode)
+    data = Property(Table, ArrayType, None)
 
     def __init__(self, **kwargs):
         HasProps.__init__(self, **kwargs)

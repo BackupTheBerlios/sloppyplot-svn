@@ -23,14 +23,18 @@
 Collection of all basic data objects used for SloppyPlot.
 """
  
-#from Sloppy.Base.dataset import Dataset
+from Sloppy.Base.dataset import Dataset
 
 from Sloppy.Lib.Signals import HasSignals
 from Sloppy.Lib.Undo import udict
 from Sloppy.Lib.Props import HasProperties, Property, List, Dictionary
 from Sloppy.Lib.Props.common import *
-       
-        
+from Sloppy.Lib.Props.special import *
+
+from properties import *
+
+
+      
 (GROUP_TYPE_CYCLE,
  GROUP_TYPE_FIXED,
  GROUP_TYPE_RANGE) = range(3)
@@ -49,26 +53,6 @@ PV = {
                         'outside', 'at position'],
     'axis.scale': ['linear','log'],
     'line.style' : ["solid","dashed","dash-dot","dotted","steps","None"],
-    'line.marker' : ["None","points","pixels","circle symbols",
-                   "triangle up symbols",
-                   "triangle down symbols",
-                   "triangle left symbols",
-                   "triangle right symbols",
-                   "square symbols",
-                   "plus symbols",
-                   "cross symbols",
-                   "diamond symbols",
-                   "thin diamond symbols",
-                   "tripod down symbols",
-                   "tripod up symbols",
-                   "tripod left symbols",
-                   "tripod right symbols",
-                   "hexagon symbols",
-                   "rotated hexagon symbols",
-                   "pentagon symbols",
-                   "vertical line symbols",
-                   "horizontal line symbols"
-                   "steps"],
     'layer.type' : ['line2d', 'contour'],
 
     'line.color' : ['green', 'red', 'blue', 'black'],
@@ -164,54 +148,52 @@ class Axis(HasProperties):
     scale = Property(PV['axis.scale'])
     format = String('', blurb='Format')
 
-
+    
+        
 class Line(HasProperties):
     " A single line or collection of points in a Plot. "
     label = Unicode()
-
     visible = Boolean(True)
+    
     style = Property(PV['line.style'])    
-#     width = Float(range=(0,10), default=1)
-#     # TODO: the color list PV['line.color'] should be a suggestion,
-#     # TODO: not a requirement.
-#     color = String(valid=PV['line.color'], default=PV['line.color'][0])
+    width = FloatRange(0,10, default=1)
+    color = RGBColor('black')
 
-#     #marker = Property(CheckValid(PV['line.marker']), default=PV['line.marker'][0])
-#     #marker = Property(mapping=MAP['line.marker'], default=0)
-#     marker = Property(valid=PV['line.marker'],default=PV['line.marker'][0])
-#     marker_color = String(valid=PV['line.marker_color'], default=PV['line.marker_color'][0])
+    marker = MarkerStyle()
+    marker_color = RGBColor('black')
+    marker_size = FloatRange(0,None,default=1)        
+    
+    # source stuff (soon deprecated)
+    cx = IntegerRange(0,None, default=0, blurb="x-column")
+    cy = IntegerRange(0,None, default=1, blurb="y-column")
+    row_first = IntegerRange(0,None)
+    row_last = IntegerRange(0,None)
+    #value_range = Property(transform=str)    
+    cxerr = IntegerRange(0,None)
+    cyerr = IntegerRange(0,None)
+    source = Instance(Dataset)
 
-#     # source stuff (soon deprecated)
-#     cx = Integer(range=(0,None), blurb="x-column", default=0)
-#     cy = Integer(range=(0,None), blurb="y-column", default=1)
-#     row_first = Property(coerce=int, range=(0,None))
-#     row_last = Property(coerce=int, range=(0,None))
-#     #value_range = Property(transform=str)    
-#     cxerr = Property(coerce=int, range=(0,None))
-#     cyerr = Property(coerce=int, range=(0,None))
-#     source = Property(type=Dataset)
+    def source_to_string(self):
 
-#     def source_to_string(self):
+        source = '"%s"' % source.key
 
-#         source = '"%s"' % source.key
+        if cx is Undefined and cy is Undefined:
+            using = None
+        else:
+            using = 'using %s:%s' % (cx or '*', cy or '*')
 
-#         if cx is None and cy is None:
-#             using = None
-#         else:
-#             using = 'using %s:%s' % (cx or '*', cy or '*')
-
-#         if row_first is None and row_last is None:
-#             rows = None
-#         else:
-#             rows = 'rows %s:%s' % (row_first or '*', row_last or '*')
+        if row_first is Undefined and row_last is Undefined:
+            rows = None
+        else:
+            rows = 'rows %s:%s' % (row_first or '*', row_last or '*')
             
-#         return ' '.join((item for item in [source,using,rows] if item is not None))
+        return ' '.join((item for item in [source,using,rows] if item is not None))
 
 
-#     def source_from_string(self, string):
-#         # using regular expressions to parse the string
-#         # TODO: this does not work yet
-#         regexp = '(?P<source>\".*\"|[^ ]+)(\s+using\s+(?P<using>.+))?(\s+rows\s+(?P<rows>.+))?'
+    def source_from_string(self, string):
+        # using regular expressions to parse the string
+        # TODO: this does not work yet
+        regexp = '(?P<source>\".*\"|[^ ]+)(\s+using\s+(?P<using>.+))?(\s+rows\s+(?P<rows>.+))?'
         
         
 
@@ -318,23 +300,23 @@ class Layer(HasProperties, HasSignals):
         self.sig_register('notify::labels')
         
 
-# class View(HasProperties):
-#     start = Float(blurb='Start')
-#     end = Float(blurb='End')
+class View(HasProperties):
+    start = Float(blurb='Start')
+    end = Float(blurb='End')
     
 
-# class Plot(HasProperties, HasSignals):
-#     key = Keyword(blurb="Key")
+class Plot(HasProperties, HasSignals):
+    key = Keyword(blurb="Key")
 
-#     title = Unicode(blurb="Title")
-#     comment = Unicode(blurb="Comment")
+    title = Unicode(blurb="Title")
+    comment = Unicode(blurb="Comment")
     
-#     legend = Property(type=Legend)
-#     lines = List(type=Line)
-#     labels = List(type=TextLabel)
-#     layers = List(type=Layer, blurb="Layers")
+    legend = Instance(Legend)
+    lines = List(Line)
+    labels = List(TextLabel)
+    layers = List(Layer, blurb="Layers")
 
-#     views = List(type=View, blurb="Views")
+    views = List(View, blurb="Views")
 
 #     # might be used to notify the user that this
 #     # has been edited, e.g. by displaying a star
@@ -342,49 +324,49 @@ class Layer(HasProperties, HasSignals):
 #     edit_mark = pBoolean()
     
 
-#     def __init__(self, *args, **kwargs):
-#         HasProperties.__init__(self, *args, **kwargs)
+    def __init__(self, *args, **kwargs):
+        HasProperties.__init__(self, *args, **kwargs)
 
-#         HasSignals.__init__(self)
-#         self.sig_register("closed")
-#         self.sig_register("changed")
+        HasSignals.__init__(self)
+        self.sig_register("closed")
+        self.sig_register("changed")
         
 #     #----------------------------------------------------------------------
     
-#     def close(self):
-#         self.sig_emit('closed')        
+    def close(self):
+        self.sig_emit('closed')        
 
-#     def detach(self):
-#         self.sig_emit('closed')        
+    def detach(self):
+        self.sig_emit('closed')        
     
 
 
-# #------------------------------------------------------------------------------
-# # Factory Methods
-# #
+#------------------------------------------------------------------------------
+# Factory Methods
+#
 
-# def new_lineplot2d(**kwargs):
-#     """
-#     Create a one-layer line plot with the given keyword arguments.
-#     Arguments that do not match a Plot property are passed on to
-#     the Layer.
-#     """
+def new_lineplot2d(**kwargs):
+    """
+    Create a one-layer line plot with the given keyword arguments.
+    Arguments that do not match a Plot property are passed on to
+    the Layer.
+    """
 
-#     plot = Plot()
+    plot = Plot()
     
-#     # pass only those keywords to the plot that are meaningful
-#     plot_kwargs = dict()
-#     for key in plot.get_props().keys():
-#         if kwargs.has_key(key):
-#             plot_kwargs[key] = kwargs.pop(key)
-#     plot.set_values(**plot_kwargs)
+    # pass only those keywords to the plot that are meaningful
+    plot_kwargs = dict()
+    for key in plot.get_props().keys():
+        if kwargs.has_key(key):
+            plot_kwargs[key] = kwargs.pop(key)
+    plot.set_values(**plot_kwargs)
 
-#     # ...and then create the appropriate layer, assuming
-#     # that all remaining keyword arguments are meant for the layer
-#     kwargs.update( {'type' : 'line2d'} )
-#     plot.layers = [Layer(**kwargs)]
+    # ...and then create the appropriate layer, assuming
+    # that all remaining keyword arguments are meant for the layer
+    kwargs.update( {'type' : 'line2d'} )
+    plot.layers = [Layer(**kwargs)]
     
-#     return plot
+    return plot
     
 
 

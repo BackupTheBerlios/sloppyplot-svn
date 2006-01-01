@@ -31,12 +31,12 @@ from Sloppy.Lib.Props import *
 
 
 
-class AsArray(Transformation):
+class VArray(Validator):
 
     def __init__(self, _rank):
         self._rank = _rank
 
-    def __call__(self, value):
+    def check(self, owner, key, value):
         # check type
         if isinstance(value, ArrayType):
             pass            
@@ -52,23 +52,22 @@ class AsArray(Transformation):
         return value
 
 
-class pArray(Prop):
+class Array(Property):
 
     def __init__(self, rank=1, doc=None, blurb=None):
-        Prop.__init__(self, coerce=AsArray(rank), doc=doc, blurb=blurb)
+        Property.__init__(self, VArray(rank), doc=doc, blurb=blurb)
         self.rank = rank
 
         
         
-class Column(HasProps):
+class Column(HasProperties):
 
-    key = pUnicode()
+    key = Unicode()
     
-    designation = pString(CheckValid(['X','Y','XY','XERR', 'YERR', 'LABEL']),
-                          default='X')
-    query = pString()
-    label = pUnicode()
-    data = pArray(rank=1)
+    designation = Property(['X','Y','XY','XERR', 'YERR', 'LABEL'])
+    query = String()
+    label = Unicode()
+    data = Array(rank=1)
 
     public_props = ['key', 'label', 'designation']
 

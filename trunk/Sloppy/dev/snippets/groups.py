@@ -37,7 +37,7 @@ class GroupCycleRunner:
     
 class Group(HasProperties):
     key = String()
-    allow_override = Boolean(default=True)
+    allow_override = Boolean(True)
 
     def new_runner(self):
         return None
@@ -48,12 +48,9 @@ class GroupFixed(Group):
     value = Property()
     
     def __init__(self, container, key, **kwargs):
-        #self.value = Property(container.get_prop(key).check)
-        # TODO: write workaround for this:
-        # TODO: HasProperties.redefine_property  oder so
-        object.__setattr__(self, 'value', Property(container.get_prop(key).check))
-        Group.__init__(self, key=key, **kwargs)
-        #self.props.value = Property(container.get_prop(key).check)
+        Group.__init__(self, key=key)
+        self.props.value = Property(container.get_prop(key))
+        self.set_values(**kwargs)
 
     def new_runner(self):
         return GroupFixedRunner(self.value)
@@ -63,7 +60,7 @@ class GroupCycle(Group):
 
     def __init__(self, container, key):
         Group.__init__(self, key=key)
-        self.props.values = List(container.get_prop(key).check)
+        self.props.values = List(container.get_prop(key))
 
     def new_runner(self):
         return GroupCycleRunner(self.values)
@@ -76,9 +73,9 @@ class GroupRange(Group):
 
     def __init__(self, container, key):
         Group.__init__(self, key=key)
-        self.props.start = Property(container.get_prop(key).check)
-        self.props.stop = Property(container.get_prop(key).check)
-        self.props.step = Property(container.get_prop(key).check)
+        self.props.start = Property(container.get_prop(key))
+        self.props.stop = Property(container.get_prop(key))
+        self.props.step = Property(container.get_prop(key))
         
         
 
@@ -92,10 +89,7 @@ tc = TestContainer(an_int=5, a_string="Niklas")
 gf_int = GroupFixed(tc, 'an_int', value=3)
 gf_string = GroupFixed(tc, 'a_string')
 
-print gf_int.props.value.get_description()
-print gf_string.props.value.get_description()
-
-#gf_int.value = 'Annekatrin' # fails
+gf_int.value = 'Annekatrin' # fails
 gf_string.value = 5 # o.k., converted to string
 
 #gf_int.value = 5
@@ -105,7 +99,7 @@ print gf_int.value
 print gf_string.value
 
 print gf_int.props.value
-print gf_int.props.value.checks
+##print gf_int.props.value.checks
 
 
 runner = gf_int.new_runner()

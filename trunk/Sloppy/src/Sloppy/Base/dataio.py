@@ -58,7 +58,7 @@ class ExportError(Exception):
 
 
 
-class Importer(HasProps):
+class Importer(HasProperties):
 
     """
 
@@ -86,8 +86,8 @@ class Importer(HasProps):
 
     # Still experimental:
     # These two properties can be used to interact with the application
-    app = Prop(CheckType(object))
-    progress_indicator = Prop(CheckType(object))
+    app = Property(object)
+    progress_indicator = Property(object)
     
     def read_table_from_stream(self,fd):
         return None
@@ -127,7 +127,7 @@ class Importer(HasProps):
 
 
 
-class Exporter(HasProps):
+class Exporter(HasProperties):
 
     filemode = '' # set to 'b' for binary objects
     
@@ -163,28 +163,28 @@ exporter_registry = {}
 export_templates = {}
 
 
-class IOTemplate(HasProps):
+class IOTemplate(HasProperties):
 
-    extensions = pString(\
+    extensions = String(\
         default="",
         blurb="File extensions",
         doc=DS['IOTemplate:extensions']
         )
     
-    blurb = pUnicode(\
+    blurb = Unicode(\
         blurb="Description",
         doc=DS['IOTemplate:blurb']
         )
 
-    skip_options = pBoolean(\
+    skip_options = Boolean(\
         default=False,
         blurb="Skip Options",
         doc=DS['IOTemplate:skip_options']
         ) 
 
-    defaults = pDict()    
-    importer_key = pString()
-    is_internal = pBoolean(default=False) #
+    defaults = Dictionary()    
+    importer_key = String()
+    is_internal = Boolean(False) #
     
 
     def new_instance(self):
