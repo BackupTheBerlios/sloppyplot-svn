@@ -35,7 +35,6 @@ from Numeric import array, ArrayType, ones, zeros, arange, sin
 
 from tableview import TableView
 import uihelper
-import propwidgets
 
 from options_dialog import OptionsDialog
 

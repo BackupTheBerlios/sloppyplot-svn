@@ -47,46 +47,62 @@ class XTerminal(Terminal):
         return cmd_list
 
    
-class PostscriptTerminal(Terminal, HasProps):
+class PostscriptTerminal(Terminal, HasProperties):
 
-    mode = pString(CheckValid(['eps', 'landscape', 'portrait']),
-                   default='eps',
-                   blurb="mode", doc="Output mode")
-    enhanced = Prop(CheckValid(['enhanced', 'noenhanced']),
-                    default='enhanced',
-                    blurb="PS mode",
-                    doc="Enable subscripts, superscripts, mixed fonts")
-    color = Prop(CheckValid(['color','monochrome']),
-                 default='color',
-                 blurb="color mode",
-                 doc="Color mode")
-    blacktext = pBoolean(blurb="black text only",
-                         doc="all text in black, even in color mode")
-    solid = Prop(CheckValid(['solid', 'dashed']),
-                 default='solid',
-                 blurb="Line style")
-    dashlength = pFloat(CheckBounds(min=0.0),
-                           blurb="dash length",
-                           doc = "Scales the length of dashed-line segments")
-    linewidth = pFloat(CheckBounds(min=0.0),
-                          blurb="line width",
-                          doc = "Scales all linewidths")
-    duplexing = Prop(CheckValid(['defaultplex', 'simplex', 'duplex']),
-                     default='defaultplex')
-    rounded = Prop(CheckValid(['rounded', 'butt']),
-                   default='rounded',
-                   blurb="Cap style",
-                   doc="Whether line caps and line joins should be rounded")
-    fontname = pString(blurb="font name",
-                       doc="Name of a valid PostScript font")
-    fontsize = pFloat(CheckBounds(min=0.0),
-                      blurb="font size",
-                      doc="Size of the font in PostScript points.")
-
-    # additional information: timestamp
-    timestamp = pBoolean(blurb="add timestamp",
-                         doc="Whether to add a timestamp")
-
+    mode = Property(\
+      ['eps', 'landscape', 'portrait'],
+      blurb="mode",
+      doc="Output mode"
+      )    
+    enhanced = Property(\
+      ['enhanced', 'noenhanced'],
+      blurb="PS mode",
+      doc="Enable subscripts, superscripts, mixed fonts"
+      )    
+    color = Property(\
+      ['color','monochrome'],
+      blurb="color mode",
+      doc="Color mode"
+      )
+    blacktext = Boolean(\
+      blurb="black text only",
+      doc="all text in black, even in color mode"
+      )
+    solid = Property(\
+      ['solid', 'dashed'],
+      blurb="Line style"
+      )
+    dashlength = FloatRange(\
+      0.0, None,
+      blurb="dash length",
+      doc = "Scales the length of dashed-line segments"
+      )
+    linewidth = FloatRange(\
+      0.0, None,
+      blurb="line width",
+      doc = "Scales all linewidths"
+      )
+    duplexing = Property(\
+      ['defaultplex', 'simplex', 'duplex']
+      )
+    rounded = Property(\
+      ['rounded', 'butt'],
+      blurb="Cap style",
+      doc="Whether line caps and line joins should be rounded"
+      )
+    fontname = String(\
+      blurb="font name",
+      doc="Name of a valid PostScript font"
+      )
+    fontsize = FloatRange(
+      0.0, None,
+      blurb="font size",
+      doc="Size of the font in PostScript points."
+      )
+    timestamp = Boolean(\
+      blurb="add timestamp",
+      doc="Whether to add a timestamp"
+      )
 
     public_props = ['mode', 'enhanced',
                     'duplexing', 'fontname', 'fontsize',

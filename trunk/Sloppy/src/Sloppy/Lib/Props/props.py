@@ -296,7 +296,7 @@ class ValidatorList(Validator):
     def __init__(self, *validators, **kwargs):
 
         default = kwargs.get('default', Undefined)
-        on_default = kwargs.get('on_default', lambda o: default)
+        on_default = kwargs.get('on_default', lambda o,k: default)
 
         # init validators
         vlist = []
@@ -308,7 +308,7 @@ class ValidatorList(Validator):
             elif item is None:
                 vlist.append(VNone())
                 is_mapping = is_mapping or VNone.is_mapping
-                on_default = lambda o: None
+                on_default = lambda o,k: None
             elif isinstance(item, dict):
                 # 1:1 mapping if there is only a map as validator
                 if len(validators) == 1:
@@ -317,11 +317,11 @@ class ValidatorList(Validator):
                     vlist.append(VMap(item))
                 is_mapping = True
                 if len(item) > 0:
-                    on_default = lambda o: item.keys()[0]
+                    on_default = lambda o,k: item.keys()[0]
             elif isinstance(item, (list,tuple)):
                 vlist.append(VChoices(list(item)))
                 if len(item) > 0:
-                    on_default = lambda o: item[0]
+                    on_default = lambda o,k: item[0]
             elif isinstance(item, Property):
                 vlist.extend(item.validator.vlist)
                 is_mapping = is_mapping or item.validator.is_mapping
@@ -402,8 +402,8 @@ class Property:
             raise PropertyError("Failed to set property '%s' of container '%s' to '%s': Value must be %s." %
                                 (key, owner.__class__.__name__, value, str(msg)))
 
-    def get_default(self, owner):
-        return self.on_default(owner)
+    def get_default(self, owner, key):
+        return self.on_default(owner, key)
     
         
 
@@ -463,7 +463,7 @@ class HasProperties(object):
                     if kwvalue is not None:
                         self.__setattr__(key,kwvalue)
                     else:
-                        default = prop.get_default(self)
+                        default = prop.get_default(self, key)
                         if default is not Undefined:  
                             self.set_value(key, default)
                         else:

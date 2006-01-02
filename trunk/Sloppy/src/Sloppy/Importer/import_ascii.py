@@ -68,47 +68,47 @@ class Importer(dataio.Importer):
 
     # Header
     header_size = \
-     pInteger(
-        CheckBounds(min=0),
+     IntegerRange(
+        0, None,
         blurb="Header size",
         doc="Number of header lines"
         )
 
     header_end_re = \
-     pString(
+     String(
         default='\s*[+-]?\d+.*',
         doc="Regular expression that indicates the end of the header (if header size is not set)"
         )
 
     header_include_end = \
-     pBoolean(
+     Boolean(
         default=False,
         doc="Whether to include the last line of the header in the header"
         )
 
     header_keys_ln = \
-     pInteger(
-        CheckBounds(min=0),
+     IntegerRange(
+        0,None,
         blurb="Key line",
         doc="Number of the line that contains the column keys"
         )
 
     header_keysplit_re = \
-     pString(
+     String(
         blurb="Key split expression",
         default="\s*,\s*",
         doc="Regular expression that splits up the column keys."
         )
 
     header_keytrim_re = \
-     pString(
+     String(
         blurb="Key trim expression",
         default='\s*[#]?\s*(?P<keys>.*)\s*',
         doc="Regular expression that trims the key line before splitting it up"
         )
 
     header_metadata_re = \
-     pString(
+     String(
         blurb="Header metadata expression",
         default = '\s*[\#]?\s*(?P<key>.*?)\s*:\s*(?P<value>.*)\s*',
         doc = "Regular expression to match metadata key-value pairs."
@@ -120,58 +120,57 @@ class Importer(dataio.Importer):
     # Other
     
     delimiter = \
-     pString(
-        CheckValid([None,',', '\t',';', '\s*']),
+     String(
+        [None,',', '\t',';', '\s*'],
         blurb ="Delimiter",
         doc="Column delimiter that separates the columns"
         )
     
     custom_delimiter = \
-     pString(
+     String(
         blurb="Custom delimiter",
         doc="Custom delimiter used if delimiter is None"
         )
     
     ncols = \
-     pInteger(
-        CheckBounds(min=0),
+     IntegerRange(
+        0,None,
         default=None,
         blurb="Columns",
         doc="Number of columns"
         )
 
 
-    table = Prop(CheckType(Table))
+    table = Instance(Table)
     
-    keys = pList()
+    keys = List()
 
-    labels = pList()
+    labels = List()
     
     designations = \
-     pString(
-        CheckValid(['X', 'Y', 'X|Y', 'XY']),
+     Property(
+        ['X', 'Y', 'X|Y', 'XY'],
         default='X|Y',        
         blurb="Designations",
-        doc=DS['import_ascii:designations'],
+        doc=DS['import_ascii:designations']
         )
 
     typecodes = \
-     Prop(
-        CheckType(basestring, list),
+     Property(list, basestring,
         default='d'
         )
 
     growth_offset = \
-     pInteger(
-        CheckBounds(min=10),
+     IntegerRange(
+        10,None,
         default=100
         )
 
 
     # results
-    result_metadata = pDict(pUnicode().check)
-    result_keys = pList(pKeyword().check)
-    result_header_size = pInteger()
+    result_metadata = Dictionary(Unicode)
+    result_keys = List(Keyword)
+    result_header_size = Integer()
     
     #----
     public_props = ['delimiter', 'custom_delimiter', 'ncols', 'header_size',

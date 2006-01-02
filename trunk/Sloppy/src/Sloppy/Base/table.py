@@ -30,7 +30,6 @@ from Sloppy.Lib.Signals import HasSignals
 from Sloppy.Lib.Props import *
 
 
-
 class VArray(Validator):
 
     def __init__(self, _rank):

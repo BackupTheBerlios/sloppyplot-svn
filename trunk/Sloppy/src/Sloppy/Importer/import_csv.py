@@ -43,10 +43,9 @@ class Importer(dataio.Importer):
     # Properties
     #
 
-    header_size = pInteger(CheckBounds(min=0), default=0,
-                            blurb="Number of header lines")
+    header_size = IntegerRange(0,None, default=0, blurb="Number of header lines")
 
-    column_props = pList(types=dict)
+    column_props = List(dict)
 
     def read_table_from_stream(self, fd):
 

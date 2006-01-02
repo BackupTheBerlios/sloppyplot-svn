@@ -24,12 +24,13 @@ Collection of all basic data objects used for SloppyPlot.
 """
  
 from Sloppy.Base.dataset import Dataset
+from Sloppy.Base.properties import *
 
 from Sloppy.Lib.Signals import HasSignals
 from Sloppy.Lib.Undo import udict
 from Sloppy.Lib.Props import HasProperties, Property, List, Dictionary
 from Sloppy.Lib.Props.common import *
-from Sloppy.Lib.Props.special import *
+
 
 from properties import *
 
@@ -216,7 +217,7 @@ class Layer(HasProperties, HasSignals):
     lines = List(Line, blurb="Lines")
     grid = Boolean(default=False, blurb="Grid", doc="Display a grid")
     visible = Boolean(reset=True, blurb="Visible")
-    legend = Instance(Legend, on_default=lambda o: Legend())
+    legend = Instance(Legend, on_default=lambda o,k: Legend())
 
     x = FloatRange(0.0, 1.0, default=0.11)
     y = FloatRange(0.0, 1.0, default=0.125)
@@ -226,67 +227,67 @@ class Layer(HasProperties, HasSignals):
     #
     # Group Properties
     #
-#     class GroupLineStyle(HasProperties):
-#         type = Integer(mapping=MAP['group_linestyle_type'], reset=GROUP_TYPE_FIXED)
-#         allow_override = Boolean(reset=True)        
-#         value = Property(Line.style.check, reset=Line.style.on_default)
-#         cycle_list = List(Line.style.check)
-#         range_start = Float(reset=1.0)
-#         range_stop = Float(reset=None)
-#         range_step = Float(reset=1.0)
+    class GroupLineStyle(HasProperties):
+        type = Property(MAP['group_linestyle_type'], default=GROUP_TYPE_FIXED)
+        allow_override = Boolean(True)        
+        value = Property(Line.style, on_default=Line.style.on_default)
+        cycle_list = List(Line.style)
+        range_start = Float(1.0)
+        range_stop = Float(None)
+        range_step = Float(1.0)
         
-#     group_linestyle = Property(type=GroupLineStyle,                               
-#                                reset=lambda o,k:Layer.GroupLineStyle(),
-#                                blurb="Line Style")
+    group_linestyle = Property(GroupLineStyle,                               
+                               on_default=lambda o,k:Layer.GroupLineStyle(),
+                               blurb="Line Style")
 
 
-#     class GroupLineMarker(HasProperties):
-#         type = Integer(mapping=MAP['group_linemarker_type'], reset=GROUP_TYPE_FIXED)
-#         allow_override = Boolean(reset=True)        
-#         value = Property(Line.marker.check, reset=Line.marker.on_default)
-#         cycle_list = List(Line.marker.check)
-#         range_start = Float(reset=1.0)
-#         range_stop = Float(reset=None)
-#         range_step = Float(reset=1.0)
+    class GroupLineMarker(HasProperties):
+        type = Property(MAP['group_linemarker_type'], default=GROUP_TYPE_FIXED)
+        allow_override = Boolean(True)        
+        value = Property(Line.marker, on_default=Line.marker.on_default)
+        cycle_list = List(Line.marker)
+        range_start = Float(1.0)
+        range_stop = Float(None)
+        range_step = Float(1.0)
         
-#     group_linemarker = Property(type=GroupLineMarker,
-#                                 reset=lambda o,k:Layer.GroupLineMarker(),
-#                                 blurb="Line Marker")
+    group_linemarker = Property(GroupLineMarker,
+                                on_default=lambda o,k:Layer.GroupLineMarker(),
+                                blurb="Line Marker")
 
     
-#     class GroupLineWidth(HasProperties):
-#         type = Integer(mapping=MAP['group_type'], reset=GROUP_TYPE_FIXED)
-#         allow_override = Boolean(reset=True)        
-#         value = Property(Line.width.check, reset=Line.width.on_default)
-#         cycle_list = List(Line.width.check)
-#         range_start = Float(reset=1.0)
-#         range_stop = Float(reset=None)
-#         range_step = Float(reset=1.0)
+    class GroupLineWidth(HasProperties):
+        type = Integer(mapping=MAP['group_type'], reset=GROUP_TYPE_FIXED)
+        allow_override = Boolean(True)        
+        value = Property(Line.width, on_default=Line.width.on_default)
+        cycle_list = List(Line.width)
+        range_start = Float(1.0)
+        range_stop = Float(None)
+        range_step = Float(1.0)
         
-#     group_linewidth = Property(type=GroupLineWidth,
-#                            reset=lambda o,k:Layer.GroupLineWidth(),
-#                            blurb="Line Width")
+    group_linewidth = Property(GroupLineWidth,
+                           on_default=lambda o,k:Layer.GroupLineWidth(),
+                           blurb="Line Width")
 
-#     class GroupLineColor(HasProperties):
-#         type = Integer(mapping=MAP['group_linecolor_type'], reset=GROUP_TYPE_CYCLE)
-#         allow_override = Boolean(reset=True)        
-#         value = Property(Line.color.check, reset=Line.color.on_default)
-#         cycle_list = List(Line.color.check, reset=lambda o,k:['g','b','r'])
-#         range_start = Float(reset=1.0)
-#         range_stop = Float(reset=None)
-#         range_step = Float(reset=1.0)
+    class GroupLineColor(HasProperties):
+        type = Property(MAP['group_linecolor_type'], default=GROUP_TYPE_CYCLE)
+        allow_override = Boolean(True)        
+        value = Property(Line.color, on_default=Line.color.on_default)
+        cycle_list = List(Line.color, on_default=lambda o,k:['g','b','r'])
+        range_start = Float(1.0)
+        range_stop = Float(None)
+        range_step = Float(1.0)
         
-#     group_linecolor = Property(type=GroupLineColor,
-#                                reset=lambda o,k:Layer.GroupLineColor(),
-#                                blurb="Line Color")
+    group_linecolor = Property(GroupLineColor,
+                               on_default=lambda o,k:Layer.GroupLineColor(),
+                               blurb="Line Color")
 
 
     #   
     labels = List(TextLabel)
 
     # axes
-    xaxis = Instance(Axis, on_default=lambda o: Axis())
-    yaxis = Instance(Axis, on_default=lambda o: Axis())
+    xaxis = Instance(Axis, on_default=lambda o,k: Axis())
+    yaxis = Instance(Axis, on_default=lambda o,k: Axis())
     
     def get_axes(self):
         return {'x':self.xaxis, 'y':self.yaxis}

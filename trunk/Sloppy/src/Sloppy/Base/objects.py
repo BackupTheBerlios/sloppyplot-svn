@@ -24,18 +24,18 @@ Collection of all basic data objects used for SloppyPlot.
 """
  
 from Sloppy.Base.dataset import Dataset
-
+from Sloppy.Base.properties import *
 
 from Sloppy.Lib.Signals import HasSignals
 from Sloppy.Lib.Undo import udict
 from Sloppy.Lib.Props import HasProperties, Property, List, Dictionary
 from Sloppy.Lib.Props.common import *
-       
-        
-map_system = {'data' : 0, 'graph': 1, 'screen': 2, 'display': 3}
-map_valign = {'center':0, 'top':1, 'bottom':2}
-map_halign = {'center':0, 'left':1, 'right': 2}
 
+
+from properties import *
+
+
+      
 (GROUP_TYPE_CYCLE,
  GROUP_TYPE_FIXED,
  GROUP_TYPE_RANGE) = range(3)
@@ -54,26 +54,6 @@ PV = {
                         'outside', 'at position'],
     'axis.scale': ['linear','log'],
     'line.style' : ["solid","dashed","dash-dot","dotted","steps","None"],
-    'line.marker' : ["None","points","pixels","circle symbols",
-                   "triangle up symbols",
-                   "triangle down symbols",
-                   "triangle left symbols",
-                   "triangle right symbols",
-                   "square symbols",
-                   "plus symbols",
-                   "cross symbols",
-                   "diamond symbols",
-                   "thin diamond symbols",
-                   "tripod down symbols",
-                   "tripod up symbols",
-                   "tripod left symbols",
-                   "tripod right symbols",
-                   "hexagon symbols",
-                   "rotated hexagon symbols",
-                   "pentagon symbols",
-                   "vertical line symbols",
-                   "horizontal line symbols"
-                   "steps"],
     'layer.type' : ['line2d', 'contour'],
 
     'line.color' : ['green', 'red', 'blue', 'black'],
@@ -83,6 +63,10 @@ PV = {
     }
 
 MAP = {
+
+'position_system' : {'data' : 0, 'graph': 1, 'screen': 2, 'display': 3},
+'position_valign' : {'center':0, 'top':1, 'bottom':2},
+'position_halign' : {'center':0, 'left':1, 'right': 2},
 
 'line.marker': {
     "None" : None,
@@ -144,64 +128,62 @@ MAP = {
                     
 class TextLabel(HasProperties):
     " Single text label. "
-    text = Unicode(blurb="Displayed Text")
-    x = Float(blurb="X-Position")
-    y = Float(blurb="Y-Position")
-    system = Integer(mapping=map_system, default=0,
+    text = Unicode('', blurb="Displayed Text")
+    x = Float(0.0, blurb="X-Position")
+    y = Float(0.0, blurb="Y-Position")
+    system = Property(MAP['position_system'],
                       blurb="Coordinate System")
-    valign = Integer(mapping=map_valign, default=0,
+    valign = Property(MAP['position_valign'],
                       blurb="Vertical Alignment")
-    halign = Integer(mapping=map_halign, default=0,
+    halign = Property(MAP['position_halign'],
                       blurb="Horizontal Aligment")
     
 
 
 class Axis(HasProperties):
     " A single axis for a plot. "
-    label = Unicode(blurb='Label')
-    start = Float(blurb='Start')
-    end = Float(blurb='End')
+    label = Unicode('', blurb='Label')
+    start = Float(0.0, blurb='Start')
+    end = Float(0.0, blurb='End')
 
-    scale = String(valid=PV['axis.scale'], blurb="Scale", reset=PV['axis.scale'][0])
-    format = String(blurb='Format')
+    scale = Property(PV['axis.scale'])
+    format = String('', blurb='Format')
 
-
+    
+        
 class Line(HasProperties):
     " A single line or collection of points in a Plot. "
     label = Unicode()
+    visible = Boolean(True)
+    
+    style = Property(PV['line.style'])    
+    width = FloatRange(0,10, default=1)
+    color = RGBColor('black')
 
-    visible = Boolean(reset=True)
-    style = Property(valid=PV['line.style'], default=PV['line.style'][0])    
-    width = Float(range=(0,10), default=1)
-    # TODO: the color list PV['line.color'] should be a suggestion,
-    # TODO: not a requirement.
-    color = String(valid=PV['line.color'], default=PV['line.color'][0])
-
-    #marker = Property(CheckValid(PV['line.marker']), default=PV['line.marker'][0])
-    #marker = Property(mapping=MAP['line.marker'], default=0)
-    marker = Property(valid=PV['line.marker'],default=PV['line.marker'][0])
-    marker_color = String(valid=PV['line.marker_color'], default=PV['line.marker_color'][0])
-
+    marker = MarkerStyle()
+    marker_color = RGBColor('black')
+    marker_size = FloatRange(0,None,default=1)        
+    
     # source stuff (soon deprecated)
-    cx = Integer(range=(0,None), blurb="x-column", default=0)
-    cy = Integer(range=(0,None), blurb="y-column", default=1)
-    row_first = Property(coerce=int, range=(0,None))
-    row_last = Property(coerce=int, range=(0,None))
+    cx = IntegerRange(0,None, default=0, blurb="x-column")
+    cy = IntegerRange(0,None, default=1, blurb="y-column")
+    row_first = IntegerRange(0,None)
+    row_last = IntegerRange(0,None)
     #value_range = Property(transform=str)    
-    cxerr = Property(coerce=int, range=(0,None))
-    cyerr = Property(coerce=int, range=(0,None))
-    source = Property(type=Dataset)
+    cxerr = IntegerRange(0,None)
+    cyerr = IntegerRange(0,None)
+    source = Instance(Dataset)
 
     def source_to_string(self):
 
         source = '"%s"' % source.key
 
-        if cx is None and cy is None:
+        if cx is Undefined and cy is Undefined:
             using = None
         else:
             using = 'using %s:%s' % (cx or '*', cy or '*')
 
-        if row_first is None and row_last is None:
+        if row_first is Undefined and row_last is Undefined:
             rows = None
         else:
             rows = 'rows %s:%s' % (row_first or '*', row_last or '*')
@@ -221,91 +203,91 @@ class Line(HasProperties):
 class Legend(HasProperties):
     " Plot legend. "
     label = Unicode(doc='Legend Label')
-    visible = Boolean(reset=True)
-    border = Boolean(reset=False)
-    position = Property(valid=PV['legend.position'],
-                    reset=PV['legend.position'][0])
-    x = Float(range=(0.0,1.0), default=0.7)
-    y = Float(range=(0.0,1.0), default=0.0)
+    visible = Boolean(True)
+    border = Boolean(False)
+    position = Property(PV['legend.position'])   
+    x = FloatRange(0.0, 1.0, default=0.7)
+    y = FloatRange(0.0, 1.0, default=0.0)
+
 
 
 class Layer(HasProperties, HasSignals):
-    type = String(valid=PV['layer.type'], reset=PV['layer.type'][0])
+    type = Property(PV['layer.type'])
     title = Unicode(blurb="Title")
-    lines = List(type=Line, blurb="Lines")
-    grid = Boolean(reset=False, blurb="Grid", doc="Display a grid")
+    lines = List(Line, blurb="Lines")
+    grid = Boolean(default=False, blurb="Grid", doc="Display a grid")
     visible = Boolean(reset=True, blurb="Visible")
-    legend = Property(type=Legend, reset=lambda o,k: Legend())
+    legend = Instance(Legend, on_default=lambda o,k: Legend())
 
-    x = Float(range=(0.0,1.0), default=0.11)
-    y = Float(range=(0.0,1.0), default=0.125)
-    width = Float(range=(0.0,1.0), default=0.775)
-    height = Float(range=(0.0,1.0), default=0.79)
+    x = FloatRange(0.0, 1.0, default=0.11)
+    y = FloatRange(0.0, 1.0, default=0.125)
+    width = FloatRange(0.0, 1.0, default=0.775)
+    height = FloatRange(0.0, 1.0, default=0.79)
 
     #
     # Group Properties
     #
     class GroupLineStyle(HasProperties):
-        type = Integer(mapping=MAP['group_linestyle_type'], reset=GROUP_TYPE_FIXED)
-        allow_override = Boolean(reset=True)        
-        value = Property(Line.style.check, reset=Line.style.on_default)
-        cycle_list = List(Line.style.check)
-        range_start = Float(reset=1.0)
-        range_stop = Float(reset=None)
-        range_step = Float(reset=1.0)
+        type = Property(MAP['group_linestyle_type'], default=GROUP_TYPE_FIXED)
+        allow_override = Boolean(True)        
+        value = Property(Line.style, on_default=Line.style.on_default)
+        cycle_list = List(Line.style)
+        range_start = Float(1.0)
+        range_stop = Float(None)
+        range_step = Float(1.0)
         
-    group_linestyle = Property(type=GroupLineStyle,                               
-                               reset=lambda o,k:Layer.GroupLineStyle(),
+    group_linestyle = Property(GroupLineStyle,                               
+                               on_default=lambda o,k:Layer.GroupLineStyle(),
                                blurb="Line Style")
 
 
     class GroupLineMarker(HasProperties):
-        type = Integer(mapping=MAP['group_linemarker_type'], reset=GROUP_TYPE_FIXED)
-        allow_override = Boolean(reset=True)        
-        value = Property(Line.marker.check, reset=Line.marker.on_default)
-        cycle_list = List(Line.marker.check)
-        range_start = Float(reset=1.0)
-        range_stop = Float(reset=None)
-        range_step = Float(reset=1.0)
+        type = Property(MAP['group_linemarker_type'], default=GROUP_TYPE_FIXED)
+        allow_override = Boolean(True)        
+        value = Property(Line.marker, on_default=Line.marker.on_default)
+        cycle_list = List(Line.marker)
+        range_start = Float(1.0)
+        range_stop = Float(None)
+        range_step = Float(1.0)
         
-    group_linemarker = Property(type=GroupLineMarker,
-                                reset=lambda o,k:Layer.GroupLineMarker(),
+    group_linemarker = Property(GroupLineMarker,
+                                on_default=lambda o,k:Layer.GroupLineMarker(),
                                 blurb="Line Marker")
 
     
     class GroupLineWidth(HasProperties):
         type = Integer(mapping=MAP['group_type'], reset=GROUP_TYPE_FIXED)
-        allow_override = Boolean(reset=True)        
-        value = Property(Line.width.check, reset=Line.width.on_default)
-        cycle_list = List(Line.width.check)
-        range_start = Float(reset=1.0)
-        range_stop = Float(reset=None)
-        range_step = Float(reset=1.0)
+        allow_override = Boolean(True)        
+        value = Property(Line.width, on_default=Line.width.on_default)
+        cycle_list = List(Line.width)
+        range_start = Float(1.0)
+        range_stop = Float(None)
+        range_step = Float(1.0)
         
-    group_linewidth = Property(type=GroupLineWidth,
-                           reset=lambda o,k:Layer.GroupLineWidth(),
+    group_linewidth = Property(GroupLineWidth,
+                           on_default=lambda o,k:Layer.GroupLineWidth(),
                            blurb="Line Width")
 
     class GroupLineColor(HasProperties):
-        type = Integer(mapping=MAP['group_linecolor_type'], reset=GROUP_TYPE_CYCLE)
-        allow_override = Boolean(reset=True)        
-        value = Property(Line.color.check, reset=Line.color.on_default)
-        cycle_list = List(Line.color.check, reset=lambda o,k:['g','b','r'])
-        range_start = Float(reset=1.0)
-        range_stop = Float(reset=None)
-        range_step = Float(reset=1.0)
+        type = Property(MAP['group_linecolor_type'], default=GROUP_TYPE_CYCLE)
+        allow_override = Boolean(True)        
+        value = Property(Line.color, on_default=Line.color.on_default)
+        cycle_list = List(Line.color, on_default=lambda o,k:['g','b','r'])
+        range_start = Float(1.0)
+        range_stop = Float(None)
+        range_step = Float(1.0)
         
-    group_linecolor = Property(type=GroupLineColor,
-                               reset=lambda o,k:Layer.GroupLineColor(),
+    group_linecolor = Property(GroupLineColor,
+                               on_default=lambda o,k:Layer.GroupLineColor(),
                                blurb="Line Color")
 
 
     #   
-    labels = List(type=TextLabel)
+    labels = List(TextLabel)
 
     # axes
-    xaxis = Property(type=Axis, reset=lambda o,k:Axis())
-    yaxis = Property(type=Axis, reset=lambda o,k:Axis())
+    xaxis = Instance(Axis, on_default=lambda o,k: Axis())
+    yaxis = Instance(Axis, on_default=lambda o,k: Axis())
     
     def get_axes(self):
         return {'x':self.xaxis, 'y':self.yaxis}
@@ -330,17 +312,17 @@ class Plot(HasProperties, HasSignals):
     title = Unicode(blurb="Title")
     comment = Unicode(blurb="Comment")
     
-    legend = Property(type=Legend)
-    lines = List(type=Line)
-    labels = List(type=TextLabel)
-    layers = List(type=Layer, blurb="Layers")
+    legend = Instance(Legend)
+    lines = List(Line)
+    labels = List(TextLabel)
+    layers = List(Layer, blurb="Layers")
 
-    views = List(type=View, blurb="Views")
+    views = List(View, blurb="Views")
 
-    # might be used to notify the user that this
-    # has been edited, e.g. by displaying a star
-    # in a treeview.
-    edit_mark = pBoolean()
+#     # might be used to notify the user that this
+#     # has been edited, e.g. by displaying a star
+#     # in a treeview.
+#     edit_mark = pBoolean()
     
 
     def __init__(self, *args, **kwargs):
@@ -350,7 +332,7 @@ class Plot(HasProperties, HasSignals):
         self.sig_register("closed")
         self.sig_register("changed")
         
-    #----------------------------------------------------------------------
+#     #----------------------------------------------------------------------
     
     def close(self):
         self.sig_emit('closed')        
