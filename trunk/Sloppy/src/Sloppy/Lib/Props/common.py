@@ -3,7 +3,7 @@
 " Common Properties. "
 
 
-from props import *
+from main import *
 
 
 __all__ = ["Integer", "Float", "Keyword", "String", "Boolean", "Unicode",

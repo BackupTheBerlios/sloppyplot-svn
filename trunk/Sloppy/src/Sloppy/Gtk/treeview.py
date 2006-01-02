@@ -30,6 +30,8 @@ from Sloppy.Base.dataset import *
 from Sloppy.Base import pdict, uwrap
 import uihelper
 
+from Sloppy.Lib.Props.main import PropertyError
+
 #------------------------------------------------------------------------------
 import logging
 logger = logging.getLogger('Gtk.treeview')
@@ -275,10 +277,14 @@ class ProjectTreeView( gtk.TreeView ):
         object = model[path][self.MODEL_OBJECT]
 
         ul = UndoList()
-        if isinstance(object , Dataset):
-            self.project.rename_dataset(object, new_text, undolist=ul)
-        elif isinstance(object, Plot):
-            self.project.rename_plot(object, new_text, undolist=ul)
+
+        try:
+            if isinstance(object , Dataset):
+                self.project.rename_dataset(object, new_text, undolist=ul)
+            elif isinstance(object, Plot):
+                self.project.rename_plot(object, new_text, undolist=ul)
+        except PropertyError, msg:
+            self.app.error_msg(msg)
 
         if len(ul) > 0:
             self.project.journal.append(ul)        
