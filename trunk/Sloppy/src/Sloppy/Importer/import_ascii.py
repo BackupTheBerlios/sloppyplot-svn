@@ -135,7 +135,6 @@ class Importer(dataio.Importer):
     ncols = \
      IntegerRange(
         0,None,
-        default=None,
         blurb="Columns",
         doc="Number of columns"
         )

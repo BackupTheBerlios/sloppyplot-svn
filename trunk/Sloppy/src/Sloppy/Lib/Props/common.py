@@ -38,7 +38,7 @@ class Float(Property):
         
 class IntegerRange(Property):
     def __init__(self, min=None, max=None, **kwargs):
-        Property.__init__(self, VInteger(), VRange(min,max), **kwargs)
+        Property.__init__(self, RequireAll(VInteger(), VRange(min,max)), **kwargs)
 
 class FloatRange(Property):
     def __init__(self, min=None, max=None, **kwargs):

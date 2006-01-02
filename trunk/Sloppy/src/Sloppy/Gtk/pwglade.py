@@ -151,12 +151,12 @@ def construct_connectors(owner):
 
 
 def guess_connector_classname(prop):
-    cdict = prop.check.checkdict
-    if cdict.has_key('mapping'):
-        return "ComboBox"
-    elif cdict.has_key('valid'):
-        return "ComboBox"
-    elif isinstance(prop, Boolean):
+#     cdict = prop.validator.vlist
+#     if cdict.has_key('mapping'):
+#         return "ComboBox"
+#     elif cdict.has_key('valid'):
+#         return "ComboBox"
+    if isinstance(prop, Boolean):
         return "TrueFalseComboBox"
         #return "CheckButton"
     elif isinstance(prop, IntegerRange):
@@ -181,7 +181,7 @@ def smart_construct_connectors(container, include=None, exclude=None):
     for key in keys:
         prop = container.get_prop(key)
         ctype = guess_connector(prop)
-        connector = pwconnect.connectors[ctype](container, prop.name)
+        connector = pwconnect.connectors[ctype](container, key)
         connector.create_widget()
         connector.widget.show()     
         clist.append(connector)

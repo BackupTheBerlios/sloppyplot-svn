@@ -47,6 +47,8 @@ from Sloppy.Base import uwrap
 import sys
 
 
+from Sloppy.Lib.Props.main import Undefined, VRange
+
 
 __all__ = ['Connector', 'connectors',
            #
@@ -340,9 +342,9 @@ class TrueFalseComboBox(ComboBox):
         # fill combo
         model.clear()
         if use_checkbutton is False:
-            self.value_dict[None] = None
-            self.value_list.append(None)
-            model.append(('default [%s]' % self.prop.on_default(), None))
+            self.value_dict[Undefined] = Undefined
+            self.value_list.append(Undefined)
+            model.append(('undefined', Undefined))
         
         value_dict = {'True': True, 'False': False}
         for key, value in value_dict.iteritems():
@@ -448,11 +450,11 @@ class SpinButton(Connector):
 
         sb = self.spinbutton
         sb.set_numeric(True)
-        
-        cbounds = [c for c in self.prop.check.items if isinstance(c, CheckBounds)]
-        if len(cbounds) > 0:
-            c = cbounds[0]
-            lower,upper = c.min, c.max
+
+        vranges = [v for v in self.prop.validator.vlist if isinstance(v, VRange)]
+        if len(vranges) > 0:
+            vrange = vranges[0]
+            lower,upper = vrange.min, vrange.max
         else:
             lower,upper = None,None
 
