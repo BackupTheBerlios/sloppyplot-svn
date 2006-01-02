@@ -551,7 +551,7 @@ class HasProperties(object):
         if kwargs.has_key('default') is True:
             default = kwargs.get('default', None)            
             for key in keys:            
-                value = self.__getattribute__(key, nd=True)
+                value = self.__getattribute__(key)
                 if value is Undefined:
                     rv[key] = default
                 else:
