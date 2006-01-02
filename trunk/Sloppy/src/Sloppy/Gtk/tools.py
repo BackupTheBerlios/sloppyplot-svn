@@ -32,7 +32,6 @@ from Sloppy.Base import uwrap, error
 
 from Sloppy.Lib.Undo import ulist, UndoList
 from Sloppy.Lib.ElementTree.ElementTree import Element, SubElement
-from Sloppy.Lib.Props import pBoolean
 
 import uihelper
 

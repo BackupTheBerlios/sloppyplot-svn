@@ -44,7 +44,6 @@ except ImportError:
 import gtk
 
 from Sloppy.Base import uwrap
-from Sloppy.Lib.Props import CheckBounds
 import sys
 
 

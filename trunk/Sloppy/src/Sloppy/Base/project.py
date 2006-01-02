@@ -65,19 +65,19 @@ SloppyPlot, you can extract the file from this archive by hand.
 }
 
 
-class Project(HasProps, HasSignals):
+class Project(HasProperties, HasSignals):
 
-    label = pUnicode()
-    comment = pUnicode()
+    label = Unicode()
+    comment = Unicode()
 
-    plots = pList(CheckType(Plot))
-    datasets = pList(CheckType(Dataset))
+    plots = List(Plot)
+    datasets = List(Dataset)
 
-    backends = pList(CheckType(Backend))
+    backends = List(Backend)
     
     
     def __init__(self,*args,**kwargs):
-        HasProps.__init__(self, **kwargs)
+        HasProperties.__init__(self, **kwargs)
 
         HasSignals.__init__(self)
         self.sig_register("close")

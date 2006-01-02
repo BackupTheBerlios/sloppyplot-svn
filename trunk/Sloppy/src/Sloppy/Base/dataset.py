@@ -83,7 +83,7 @@ class Dataset(HasProperties, HasSignals):
     data = Property(Table, ArrayType, None)
 
     def __init__(self, **kwargs):
-        HasProps.__init__(self, **kwargs)
+        HasProperties.__init__(self, **kwargs)
         self.change_counter = 0
         self.__is_valid = True
         self._table_import = None

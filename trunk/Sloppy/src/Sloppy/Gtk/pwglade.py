@@ -45,7 +45,7 @@ import gtk
 import pwconnect
 
 
-from Sloppy.Lib.Props import HasProps,Prop, pBoolean, pInteger, pUnicode, CheckValid, CheckBounds
+from Sloppy.Lib.Props import *
 
 #------------------------------------------------------------------------------
 
@@ -156,10 +156,10 @@ def guess_connector_classname(prop):
         return "ComboBox"
     elif cdict.has_key('valid'):
         return "ComboBox"
-    elif isinstance(prop, pBoolean):
+    elif isinstance(prop, Boolean):
         return "TrueFalseComboBox"
         #return "CheckButton"
-    elif isinstance(prop, pInteger):
+    elif isinstance(prop, IntegerRange):
         return "SpinButton"
     else:
         return "Entry"

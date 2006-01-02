@@ -38,7 +38,6 @@ import uihelper
 import pwconnect, pwglade
 
 from Sloppy.Base import dataio
-from Sloppy.Lib.Props import pKeyword
        
         
 

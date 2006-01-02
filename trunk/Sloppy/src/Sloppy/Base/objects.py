@@ -256,7 +256,7 @@ class Layer(HasProperties, HasSignals):
 
     
     class GroupLineWidth(HasProperties):
-        type = Integer(mapping=MAP['group_type'], reset=GROUP_TYPE_FIXED)
+        type = Integer(mapping=MAP['group_type'], default=GROUP_TYPE_FIXED)
         allow_override = Boolean(True)        
         value = Property(Line.width, on_default=Line.width.on_default)
         cycle_list = List(Line.width)

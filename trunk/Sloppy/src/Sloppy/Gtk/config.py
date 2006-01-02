@@ -28,7 +28,7 @@ import gtk
 from Sloppy.Base import dataio
 
 import uihelper, pwglade
-from Sloppy.Lib.Props import pKeyword
+from Sloppy.Lib.Props import Keyword
 
 
 DS={
@@ -296,7 +296,7 @@ class ImportTemplatesPage(gtk.VBox):
                     # check if key itself is valid                
                     new_key = entry.get_text()
                     try:
-                        new_key = pKeyword().check(new_key)
+                        new_key = Keyword().check(new_key)
                     except ValueError:
                         hint.set_text("Key is invalid. Try again.")
                         hint.show()

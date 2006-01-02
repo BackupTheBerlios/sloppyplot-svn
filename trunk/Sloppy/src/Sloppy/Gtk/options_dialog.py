@@ -28,7 +28,6 @@ pygtk.require('2.0') # TBR
 import gtk, gobject
 
 
-from Sloppy.Lib.Props import pBoolean
 import pwconnect, pwglade, uihelper
 
 
