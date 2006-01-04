@@ -11,30 +11,28 @@ __all__ = ["Integer", "Float", "Keyword", "String", "Boolean", "Unicode",
 
 
 class String(Property):
-    def __init__(self, default=Undefined, **kwargs):
-        Property.__init__(self, VString(),
-                          default=default, **kwargs)
+    def __init__(self, **kwargs):
+        Property.__init__(self, VString(), **kwargs)
 
 class Boolean(Property):
-    def __init__(self, default=Undefined, **kwargs):
+    def __init__(self, **kwargs):
         Property.__init__(self, VBoolean(), **kwargs)
 
 class Keyword(Property):
-    def __init__(self, default=Undefined, **kwargs):
+    def __init__(self, **kwargs):
         Property.__init__(self, VRegexp('^[\-\.\s\w]*$'), **kwargs)
 
 class Unicode(Property):
-    def __init__(self, default=Undefined, **kwargs):
+    def __init__(self, **kwargs):
         Property.__init__(self, VUnicode(), **kwargs)
 
 class Integer(Property):
-    def __init__(self, default=Undefined, **kwargs):
+    def __init__(self, **kwargs):
         Property.__init__(self, VInteger(), **kwargs)
 
 class Float(Property):
-    def __init__(self, default=Undefined, **kwargs):
+    def __init__(self, **kwargs):
         Property.__init__(self, VFloat(), **kwargs)
-
         
 class IntegerRange(Property):
     def __init__(self, min=None, max=None, **kwargs):

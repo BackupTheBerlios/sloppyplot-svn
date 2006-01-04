@@ -25,7 +25,8 @@ import inspect
 from typed_containers import TypedList, TypedDict
 
 
-__all__ = ["HasProperties", "Property", "List", "Dictionary", "Undefined",
+__all__ = ["HasProperties", "Property", "PropertyError",
+           "List", "Dictionary", "Undefined",
            "Validator", "ValidatorList", "RequireOne", "RequireAll",
            "VMap", "VBMap", "VString", "VInteger", "VFloat", "VBoolean",
            "VRegexp", "VUnicode", "VList", "VDictionary", "VRange",
