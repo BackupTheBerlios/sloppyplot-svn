@@ -30,13 +30,11 @@ except ImportError:
 
 import gtk
 
-
-from Sloppy.Base import uwrap
 import sys
 
-
+from Sloppy.Base import uwrap
 from Sloppy.Lib.Props.main import *
-
+from Sloppy.Base.properties import *
 
 
 class Connector(object):
@@ -320,7 +318,7 @@ class Map(Connector):
         prop = self.container.get_prop(self.key)
         vmaps = [v for v in prop.validator.vlist if isinstance(v, VMap)]
         if len(vmaps) == 0:
-            raise TypeError("Property for connector 'MappedValue' has no mapping!")
+            raise TypeError("Property for connector 'Map' has no map validator!")
         self.vmap = vmap = vmaps[0]        
         if vmap is not None:
             for key, value in vmap.dict.iteritems():
@@ -405,3 +403,183 @@ class RGBColor(Connector):
         self.last_value = gdk_color
     
 connectors['RGBColor'] = RGBColor
+
+
+###############################################################################
+
+class Choice(Connector):
+
+    """ Suitable for VChoice. """
+    
+    def init(self):
+        self.vchoice = None
+        self.last_index = -1
+        
+    def create_widget(self):
+        # create combobox
+        self.combobox = gtk.ComboBox()
+
+        # create combobox model
+        combobox = self.combobox
+        model = gtk.ListStore(str, object)
+        combobox.set_model(model)
+        cell = gtk.CellRendererText()
+        combobox.pack_start(cell, True)
+        combobox.add_attribute(cell, 'text', 0)
+
+        # fill model
+        prop = self.container.get_prop(self.key)
+        vchoices = [v for v in prop.validator.vlist if isinstance(v, VChoice)]
+        if len(vchoices) == 0:
+            raise TypeError("Property for connector 'Choice' has no choice validator!")
+        self.vchoice = vchoice = vchoices[0]
+
+        model.clear()
+        for value in vchoice.values:
+            model.append((unicode(value), value))
+
+        # pack everything together
+        self.widget = gtk.HBox()
+
+        widget = self.widget
+        widget.pack_start(combobox,True,True)
+        widget.show_all()
+
+        return self.widget
+        
+    #----------------------------------------------------------------------
+
+    def check_in(self):
+        value = self.container.get_value(self.key)
+        values = self.vchoice.values
+        
+        if value != Undefined:
+            try:
+                index = values.index(value)
+            except:
+                raise ValueError("Connector for %s.%s failed to retrieve prop value '%s' in list of available values '%s'" % (self.container.__class__.__name__, self.key, value, values))
+
+            model = self.combobox.get_model()
+            iter = model.get_iter((index,))
+            self.combobox.set_active_iter(iter)
+            self.last_index = index
+            
+        self.last_value = value
+
+    
+    def get_data(self):
+        index = self.combobox.get_active()
+        if index == self.last_index:
+            return self.get_value()
+        elif index < 0:
+            return Undefined            
+        else:
+            model = self.combobox.get_model()
+            prop = self.container.get_prop(self.key)
+            return model[index][1]
+
+
+connectors['Choice'] = Choice
+
+
+###############################################################################
+
+class Boolean(Connector):
+
+    def init(self):
+        self.values = []
+        self.last_index = -1
+        
+    def create_widget(self):
+
+        # create combobox
+        self.combobox = gtk.ComboBox()
+
+        # create model
+        combobox = self.combobox        
+        model = gtk.ListStore(str, object)
+        combobox.set_model(model)
+        cell = gtk.CellRendererText()
+        combobox.pack_start(cell, True)
+        combobox.add_attribute(cell, 'text', 0)
+
+        # fill combo
+        try:
+            self.prop.check(None)
+        except:
+            value_dict = {}
+        else:
+            value_dict = {'None': None}
+        value_dict.update({'True': True, 'False': False})
+
+        model.clear()        
+        for key, value in value_dict.iteritems():
+            model.append((key, value))
+        self.values = value_dict.values()
+        
+        #
+        # pack everything together
+        #
+        self.widget = gtk.HBox()
+
+        widget = self.widget
+        widget.pack_start(combobox,True,True)
+        widget.show_all()
+
+        return self.widget
+
+
+    def check_in(self):
+        value = self.get_value()
+
+        if value is not Undefined:            
+            index = self.values.index(value)
+
+            model = self.combobox.get_model()
+            iter = model.get_iter((index,))
+            self.combobox.set_active_iter(iter)
+
+        self.last_value = value
+        self.last_index = index
+
+    def get_data(self):
+        index = self.combobox.get_active()
+        if index == self.last_index:
+            return self.get_value()
+        elif index < 0:
+            return Undefined            
+        else:
+            model = self.combobox.get_model()
+            prop = self.container.get_prop(self.key)
+            return model[index][1]
+
+        
+        
+connectors['Boolean'] = Boolean
+
+
+
+###############################################################################
+
+def determine_connector(owner, key):
+    prop = owner.get_prop(key)
+    vlist = prop.validator.vlist
+
+    while len(vlist) > 0:
+        v = vlist[0]
+        if isinstance(v, VMap):
+            return connectors['Map'](owner, key)
+        elif isinstance(v, (VUnicode,VInteger,VFloat,VString)):
+            return connectors['Unicode'](owner, key)
+        elif isinstance(v, VRange):
+            return connectors['Range'](owner, key)
+        elif isinstance(v, VRGBColor):
+            return connectors['RGBColor'](owner, key)
+        elif isinstance(v, VChoice):
+            return connectors['Choice'](owner, key)
+        elif isinstance(v, VBoolean):
+            return connectors['Boolean'](owner, key)
+
+        vlist.pop(0)
+
+    raise RuntimeError("No connector found for property.")

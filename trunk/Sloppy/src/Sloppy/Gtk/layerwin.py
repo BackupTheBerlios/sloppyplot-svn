@@ -210,7 +210,7 @@ class GroupBox(gtk.HBox):
         # create widgets and put them into a horizontal box
         self.widget_allow_override = pwconnect.CheckButton(self.group,'allow_override')
         self.widget_type = pwconnect.ComboBox(self.group, 'type')
-        self.widget_value = pwglade.new_connector(self.group, 'value')
+        self.widget_value = pwconnect.new_connector(self.group, 'value')
         self.widget_range_start = pwconnect.SpinButton(self.group, 'range_start')
         self.widget_range_stop = pwconnect.SpinButton(self.group, 'range_stop')
         self.widget_range_step = pwconnect.SpinButton(self.group, 'range_step')        
@@ -296,7 +296,7 @@ class LayerTab(AbstractTab):
 
         keys = ['title', 'visible', 'grid']
 
-        clist = pwglade.smart_construct_connectors(layer, include=keys)
+        clist = pwconnect.new_connectors(layer, include=keys)
         table = pwglade.construct_table(clist)
         frame = uihelper.new_section("Layer", table)
         self.add(frame)
@@ -316,7 +316,7 @@ class LegendTab(AbstractTab):
 
         keys = ['label', 'position', 'visible', 'border', 'x', 'y']
         
-        clist = pwglade.smart_construct_connectors(legend, include=keys)
+        clist = pwconnect.new_connectors(legend, include=keys)
         table = pwglade.construct_table(clist)
         frame = uihelper.new_section("Legend", table)
         self.add(frame)
@@ -338,7 +338,7 @@ class AxesTab(AbstractTab):
 
         self.clist = []
         for key, axis in axesdict.iteritems():
-            connectors = pwglade.smart_construct_connectors(axis, include=keys)
+            connectors = pwconnect.new_connectors(axis, include=keys)
             table = pwglade.construct_table(connectors)
             frame = uihelper.new_section(key, table)
             self.pack_start(frame, False, True)
@@ -380,10 +380,11 @@ class LineTab(AbstractTab):
         #
         # Construct Group Boxes
         #
-        self.gblist = [GroupBox(self.layer, 'group_linestyle'),
-                       GroupBox(self.layer, 'group_linemarker'),
-                       GroupBox(self.layer, 'group_linewidth'),
-                       GroupBox(self.layer, 'group_linecolor')]
+        #self.gblist = [GroupBox(self.layer, 'group_linestyle'),
+        #               GroupBox(self.layer, 'group_linemarker'),
+        #               GroupBox(self.layer, 'group_linewidth'),
+        #               GroupBox(self.layer, 'group_linecolor')]
+        self.gblist = []
 
         # DISABLE GROUP BOXES RIGHT NOW!
         self.gblist = []
@@ -537,41 +538,41 @@ class LinesTreeView(gtk.TreeView):
         # MODEL_STYLE
         column = gtk.TreeViewColumn('style')
         
-        # set up model with all available line styles
-        linestyle_model = gtk.ListStore(str)
-        value_list = [None] + objects.Line.style.valid_values()
-        for style in value_list:
-            linestyle_model.append( (style or "",) )
+#         # set up model with all available line styles
+#         linestyle_model = gtk.ListStore(str)
+#         value_list = [None] + objects.Line.style.valid_values()
+#         for style in value_list:
+#             linestyle_model.append( (style or "",) )
 
-        cell = gtk.CellRendererCombo()
-        cell.set_property('editable', True)
-        cell.connect('edited', self.on_edited_combo, self.MODEL_STYLE)
-        cell.set_property('text-column', 0)
-        cell.set_property('model', linestyle_model)
+#         cell = gtk.CellRendererCombo()
+#         cell.set_property('editable', True)
+#         cell.connect('edited', self.on_edited_combo, self.MODEL_STYLE)
+#         cell.set_property('text-column', 0)
+#         cell.set_property('model', linestyle_model)
 
-        column.pack_start(cell)
-        column.set_attributes(cell, text=self.MODEL_STYLE)
-        self.append_column(column)
+#         column.pack_start(cell)
+#         column.set_attributes(cell, text=self.MODEL_STYLE)
+#         self.append_column(column)
 
 
         # MODEL_MARKER
         column = gtk.TreeViewColumn('marker')
 
-        # set up model with all available markers
-        marker_model = gtk.ListStore(str)
-        value_list = [None] + objects.Line.marker.valid_values()
-        for marker in value_list:
-            marker_model.append( (marker or "",) )
+#         # set up model with all available markers
+#         marker_model = gtk.ListStore(str)
+#         value_list = [None] + objects.Line.marker.valid_values()
+#         for marker in value_list:
+#             marker_model.append( (marker or "",) )
 
-        cell = gtk.CellRendererCombo()
-        cell.set_property('editable', True)
-        cell.connect('edited', self.on_edited_combo, self.MODEL_MARKER)
-        cell.set_property('text-column', 0)
-        cell.set_property('model', marker_model)
+#         cell = gtk.CellRendererCombo()
+#         cell.set_property('editable', True)
+#         cell.connect('edited', self.on_edited_combo, self.MODEL_MARKER)
+#         cell.set_property('text-column', 0)
+#         cell.set_property('model', marker_model)
 
-        column.pack_start(cell)
-        column.set_attributes(cell, text=self.MODEL_MARKER)
-        self.append_column(column)
+#         column.pack_start(cell)
+#         column.set_attributes(cell, text=self.MODEL_MARKER)
+#         self.append_column(column)
 
 
         # MODEL_MARKER_COLOR
@@ -770,18 +771,18 @@ class LinesTreeView(gtk.TreeView):
         return [line,
                 line.visible,
                 line.label or "",
-                line.rget('width', None),
-                line.rget('color', None),                                
-                line.rget('style', None),
-                line.rget('marker', None),
-                line.rget('marker_color', None),                
+                line.get('width', None),
+                line.get('color', None),                                
+                line.get('style', None),
+                line.get('marker', None),
+                line.get('marker_color', None),                
                 source_key,
-                str(line.rget('cx',"")),
-                str(line.rget('cy',"")),
-                str(line.rget('row_first',"")),
-                str(line.rget('row_last',"")),                
-                str(line.rget('cxerr',"")),
-                str(line.rget('cyerr',""))
+                str(line.get('cx',"")),
+                str(line.get('cy',"")),
+                str(line.get('row_first',"")),
+                str(line.get('row_last',"")),                
+                str(line.get('cxerr',"")),
+                str(line.get('cyerr',""))
                 ]
 
 

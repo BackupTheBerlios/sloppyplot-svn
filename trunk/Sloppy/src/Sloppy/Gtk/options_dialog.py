@@ -54,7 +54,8 @@ class OptionsDialog(gtk.Dialog):
 
 
         self.owner = owner
-        self.connectors = pwglade.construct_connectors(owner)
+        include = owner.get('public_props', None)
+        self.connectors = pwconnect.new_connectors(owner, include=include)
         if len(self.connectors) == 0:
             raise NoOptionsError
         

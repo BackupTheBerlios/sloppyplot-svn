@@ -7,6 +7,7 @@ from Sloppy.Lib.Props import *
 from Sloppy.Lib.Undo import UndoList
 from Sloppy.Base.properties import *
 
+
 class Recipe(HasProperties):
     name = Unicode()
     name_or_None = Property(Unicode, None)
@@ -16,39 +17,31 @@ class Recipe(HasProperties):
 
     weight = Float(default=214.32)
     foodcolor = RGBColor('black')
+
+    beverage = Property(["wine", "coke", "water"])
+
+    is_delicious = Boolean(True)
+    is_recommended = Property(Boolean,None, default=True)
+
+    mydict = Dictionary()
+
     
     
 recipe = Recipe(name="Toast Hawaii", calories=512, difficulty="average")
 recipe.foodcolor=(0.0,1.0,0.3)
+recipe.mydict = {'one':1}
+
+raise SystemExit
+
 win = gtk.Window()
 
-
-def determine_connector(owner, key):
-    prop = owner.get_prop(key)
-    vlist = prop.validator.vlist
-
-    while len(vlist) > 0:
-        v = vlist[0]
-        if isinstance(v, VMap):
-            return pwconnect.connectors['Map'](owner, key)
-        elif isinstance(v, (VUnicode,VInteger,VFloat,VString)):
-            return pwconnect.connectors['Unicode'](owner, key)
-        elif isinstance(v, VRange):
-            return pwconnect.connectors['Range'](owner, key)
-        elif isinstance(v, VRGBColor):
-            return pwconnect.connectors['RGBColor'](owner, key)
-
-        vlist.pop(0)
-
-    raise RuntimeError("No connector found for property.")
-            
     
     
 vbox = gtk.VBox()
 
 clist = []
 for key in recipe.get_props().keys():
-    connector = determine_connector(recipe, key)
+    connector = pwconnect.determine_connector(recipe, key)
     vbox.add(connector.create_widget())
     connector.check_in()
     clist.append(connector)

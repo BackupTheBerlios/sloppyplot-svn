@@ -27,7 +27,7 @@ Configuration dialog and widgets.
 import gtk
 from Sloppy.Base import dataio
 
-import uihelper, pwglade
+import uihelper, pwglade, pwconnect
 from Sloppy.Lib.Props import Keyword
 
 
@@ -231,9 +231,10 @@ class ImportTemplatesPage(gtk.VBox):
                          (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
                           gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
 
-        clist1 = pwglade.smart_construct_connectors(template, include=['blurb','extensions','skip_options'])
-        clist2 = pwglade.smart_construct_connectors(importer, include=importer.public_props)
+        clist1 = pwconnect.new_connectors(template, include=['blurb','extensions','skip_options'])
+        clist2 = pwconnect.new_connectors(importer, include=importer.public_props)
         clist = clist1 + clist2
+
         table = pwglade.construct_table(clist)
 
         if allow_edit is False:
@@ -384,7 +385,7 @@ class ImportTemplatesPage(gtk.VBox):
         # let user input key
         key = self.input_key("New Template")
         if key is None:
-            return        
+            return
 
         # edit template
         response = self.do_edit(template)        

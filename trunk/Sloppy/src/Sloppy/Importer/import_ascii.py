@@ -68,8 +68,10 @@ class Importer(dataio.Importer):
 
     # Header
     header_size = \
-     IntegerRange(
-        0, None,
+     Property(
+        Integer,
+        VRange(0, None),
+        default=None,
         blurb="Header size",
         doc="Number of header lines"
         )
@@ -120,7 +122,7 @@ class Importer(dataio.Importer):
     # Other
     
     delimiter = \
-     String(
+     Property(
         [None,',', '\t',';', '\s*'],
         blurb ="Delimiter",
         doc="Column delimiter that separates the columns"
@@ -133,8 +135,10 @@ class Importer(dataio.Importer):
         )
     
     ncols = \
-     IntegerRange(
-        0,None,
+     Property(
+        Integer,
+        VRange(0,None),
+        default=None,
         blurb="Columns",
         doc="Number of columns",
         )

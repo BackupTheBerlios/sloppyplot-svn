@@ -232,9 +232,9 @@ class Layer(HasProperties, HasSignals):
         allow_override = Boolean(True)        
         value = Property(Line.style, on_default=Line.style.on_default)
         cycle_list = List(Line.style)
-        range_start = Float(1.0)
-        range_stop = Float(None)
-        range_step = Float(1.0)
+        range_start = Property(Float, None, default=1.0)
+        range_stop = Property(Float, None, default=None)
+        range_step = Property(Float, None, default=1.0)
         
     group_linestyle = Property(GroupLineStyle,                               
                                on_default=lambda:Layer.GroupLineStyle(),
@@ -246,9 +246,9 @@ class Layer(HasProperties, HasSignals):
         allow_override = Boolean(True)        
         value = Property(Line.marker, on_default=Line.marker.on_default)
         cycle_list = List(Line.marker)
-        range_start = Float(1.0)
-        range_stop = Float(None)
-        range_step = Float(1.0)
+        range_start = Property(Float, None, default=1.0)
+        range_stop = Property(Float, None, default=None)
+        range_step = Property(Float, None, default=1.0)
         
     group_linemarker = Property(GroupLineMarker,
                                 on_default=lambda:Layer.GroupLineMarker(),
@@ -260,9 +260,9 @@ class Layer(HasProperties, HasSignals):
         allow_override = Boolean(True)        
         value = Property(Line.width, on_default=Line.width.on_default)
         cycle_list = List(Line.width)
-        range_start = Float(1.0)
-        range_stop = Float(None)
-        range_step = Float(1.0)
+        range_start = Property(Float, None, default=1.0)
+        range_stop = Property(Float, None, default=None)
+        range_step = Property(Float, None, default=1.0)
         
     group_linewidth = Property(GroupLineWidth,
                            on_default=lambda:Layer.GroupLineWidth(),
@@ -273,9 +273,9 @@ class Layer(HasProperties, HasSignals):
         allow_override = Boolean(True)        
         value = Property(Line.color, on_default=Line.color.on_default)
         cycle_list = List(Line.color, on_default=lambda:['g','b','r'])
-        range_start = Float(1.0)
-        range_stop = Float(None)
-        range_step = Float(1.0)
+        range_start = Property(Float, None, default=1.0)
+        range_stop = Property(Float, None, default=None)
+        range_step = Property(Float, None, default=1.0)
         
     group_linecolor = Property(GroupLineColor,
                                on_default=lambda:Layer.GroupLineColor(),

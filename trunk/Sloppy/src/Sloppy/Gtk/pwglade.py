@@ -177,7 +177,7 @@ def new_connector(owner, key):
 
 
 def smart_construct_connectors(container, include=None, exclude=None):
-    keys = container._limit_keys(include=include,exclude=exclude)
+    keys = container.get_keys(include=include,exclude=exclude)
 
     clist = []
     for key in keys:

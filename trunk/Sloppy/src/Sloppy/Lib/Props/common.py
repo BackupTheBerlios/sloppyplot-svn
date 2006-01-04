@@ -11,38 +11,40 @@ __all__ = ["Integer", "Float", "Keyword", "String", "Boolean", "Unicode",
 
 
 class String(Property):
-    def __init__(self, **kwargs):
-        Property.__init__(self, VString(), **kwargs)
+    def __init__(self, default=Undefined, **kwargs):
+        Property.__init__(self, VString(), default=default, **kwargs)
 
 class Boolean(Property):
-    def __init__(self, **kwargs):
-        Property.__init__(self, VBoolean(), **kwargs)
+    def __init__(self, default=Undefined, **kwargs):
+        Property.__init__(self, VBoolean(), default=default, **kwargs)
 
 class Keyword(Property):
-    def __init__(self, **kwargs):
-        Property.__init__(self, VRegexp('^[\-\.\s\w]*$'), **kwargs)
+    def __init__(self, default=Undefined, **kwargs):
+        Property.__init__(self, VRegexp('^[\-\.\s\w]*$'), default=default, **kwargs)
 
 class Unicode(Property):
-    def __init__(self, **kwargs):
-        Property.__init__(self, VUnicode(), **kwargs)
+    def __init__(self, default=Undefined, **kwargs):
+        Property.__init__(self, VUnicode(), default=default, **kwargs)
 
 class Integer(Property):
-    def __init__(self, **kwargs):
-        Property.__init__(self, VInteger(), **kwargs)
+    def __init__(self, default=Undefined, **kwargs):
+        Property.__init__(self, VInteger(), default=default, **kwargs)
 
 class Float(Property):
-    def __init__(self, **kwargs):
-        Property.__init__(self, VFloat(), **kwargs)
+    def __init__(self, default=Undefined, **kwargs):
+        Property.__init__(self, VFloat(), default=default, **kwargs)
         
 class IntegerRange(Property):
-    def __init__(self, min=None, max=None, **kwargs):
-        Property.__init__(self, RequireAll(VInteger(), VRange(min,max)), **kwargs)
+    def __init__(self, min=None, max=None, default=Undefined, **kwargs):
+        Property.__init__(self, RequireAll(VInteger(), VRange(min,max)),
+                          default=default, **kwargs)
 
 class FloatRange(Property):
-    def __init__(self, min=None, max=None, **kwargs):
-        Property.__init__(self, RequireAll(VFloat(), VRange(min,max)), **kwargs)
+    def __init__(self, min=None, max=None, default=Undefined, **kwargs):
+        Property.__init__(self, RequireAll(VFloat(), VRange(min,max)),
+                          default=default, **kwargs)
 
 class Instance(Property):
-    def __init__(self, type, **kwargs):
-        Property.__init__(self, VInstance(type), **kwargs)
+    def __init__(self, type, default=Undefined, **kwargs):
+        Property.__init__(self, VInstance(type), default=default, **kwargs)
         

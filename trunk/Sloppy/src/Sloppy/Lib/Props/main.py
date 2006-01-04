@@ -30,7 +30,7 @@ __all__ = ["HasProperties", "Property", "PropertyError",
            "Validator", "ValidatorList", "RequireOne", "RequireAll",
            "VMap", "VBMap", "VString", "VInteger", "VFloat", "VBoolean",
            "VRegexp", "VUnicode", "VList", "VDictionary", "VRange",
-           "VInstance"]
+           "VInstance", "VChoice"]
 
 #------------------------------------------------------------------------------
 # Helper Stuff
@@ -205,16 +205,14 @@ class VRegexp(Validator):
         
         raise ValueError("a string matching the regular expression %s" % self.regexp)
 
-class VChoices(Validator):
+class VChoice(Validator):
 
     def __init__(self, alist):
         self.values = alist
 
     def check(self, value):
-        print "Checking ", value
         if value in self.values:
             return value
-        print "No"
         raise ValueError("one of %s" % str(self.values))
         
 
@@ -249,9 +247,8 @@ class VDictionary(Validator):
         def check_item(v):
             try:
                 return self.item_validator.check(v)
-            except Exception, msg:
-                raise PropertyError("Failed to set item in dictionary property '%s' of container '%s' to '%s': Value must be %s." %
-                                    (key, owner.__class__.__name__, value, str(msg)))
+            except:
+                raise ValueError("a dictionary")
             
         if isinstance(value, TypedDict):
             value.check_item = check_item
@@ -259,7 +256,7 @@ class VDictionary(Validator):
         elif isinstance(value, dict):
             return TypedDict(check_item, value)
         else:            
-            raise TypeError("a dict")
+            raise TypeError("a dictionary")
 
     
 class VRange(Validator):
@@ -328,7 +325,7 @@ class ValidatorList(Validator):
                 if len(item) > 0:
                     on_default = lambda: item.keys()[0]
             elif isinstance(item, (list,tuple)):
-                vlist.append(VChoices(list(item)))
+                vlist.append(VChoice(list(item)))
                 if len(item) > 0:
                     on_default = lambda: item[0]
             elif isinstance(item, Property):
@@ -352,6 +349,9 @@ class ValidatorList(Validator):
 class RequireOne(ValidatorList):
 
     def check(self, value):
+        if len(self.vlist) == 0:
+            return value
+        
         for validator in self.vlist:
             try:
                 value = validator.check(value)
@@ -364,8 +364,7 @@ class RequireOne(ValidatorList):
 
 class RequireAll(ValidatorList):
 
-    def check(self, value):
-
+    def check(self, value):       
         try:
             for validator in self.vlist:
                 value = validator.check(value)
@@ -535,17 +534,12 @@ class HasProperties(object):
     set = set_value
     
 
-    def get_value(self, key, **kwargs):
-        
-        if kwargs.has_key('default') is True:
-            default = kwargs.get('default', None)
-            value = self.__getattribute__(key)
-            if value is Undefined:
-                return default
-            else:
-                return value
+    def get_value(self, key, default=Undefined):
+        value = self.__getattribute__(key)
+        if value is Undefined:
+            return default
         else:
-            return self.__getattribute__(key)            
+            return value
 
     def get_mvalue(self, key):
         mvalues = object.__getattribute__(self, '_mvalues')
@@ -554,6 +548,8 @@ class HasProperties(object):
 
         return self.get_value(key)
 
+    get = get_value
+    
     # TODO: ivalues/values for List/Dictionary objects.
     # TODO: The List uses Property.check, which returns only
     # TODO: the ivalue.
@@ -561,7 +557,7 @@ class HasProperties(object):
     def get_values(self, include=None, exclude=None, **kwargs):
 
         rv = {}
-        keys = self._limit_keys(include=include, exclude=exclude)
+        keys = self.get_keys(include=include, exclude=exclude)
         
         if kwargs.has_key('default') is True:
             default = kwargs.get('default', None)            
@@ -586,7 +582,7 @@ class HasProperties(object):
 
     def get_props(self, include=None, exclude=None):
         rv = {}
-        for key in self._limit_keys(include=include, exclude=exclude):
+        for key in self.get_keys(include=include, exclude=exclude):
             rv[key] = self._props[key]
 
         return rv
@@ -602,16 +598,15 @@ class HasProperties(object):
     def create_changeset(self, container):
         changeset = {}
         for key, value in container.get_values(default=None).iteritems():
-            old_value = self.rget(key)
+            old_value = self.get(key)
             if value != old_value:
                 changeset[key] = value
         return changeset       
 
 
     #----------------------------------------------------------------------
-    # internal
     
-    def _limit_keys(self, include=None, exclude=None):
+    def get_keys(self, include=None, exclude=None):
         if include is None:
             include = self._values.keys()        
         if exclude is not None:

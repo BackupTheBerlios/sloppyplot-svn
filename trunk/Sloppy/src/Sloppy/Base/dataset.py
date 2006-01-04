@@ -81,7 +81,7 @@ class Dataset(HasProperties, HasSignals):
     label = Unicode()
     metadata = Dictionary(Unicode)
     data = Property(Table, ArrayType, None)
-
+    
     def __init__(self, **kwargs):
         HasProperties.__init__(self, **kwargs)
         self.change_counter = 0
