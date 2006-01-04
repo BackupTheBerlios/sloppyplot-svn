@@ -35,7 +35,7 @@ from Sloppy.Base import uwrap
 import sys
 
 
-from Sloppy.Lib.Props.main import VRange, PropertyError
+from Sloppy.Lib.Props.main import *
 
 
 
@@ -108,8 +108,13 @@ connectors = {}
 
 
 
+
+###############################################################################
+
 class Unicode(Connector):
 
+    """ Suitable for VUnicode. """
+    
     def create_widget(self):                      
 
         # create entry
@@ -193,10 +198,12 @@ connectors['Unicode'] = Unicode
 
 
 
-#------------------------------------------------------------------------------
+###############################################################################
 
 class Range(Connector):
 
+    """ Suitable for VRange. """
+    
     def create_widget(self):
         #
         # create spinbutton
@@ -283,3 +290,81 @@ class Range(Connector):
 
         
 connectors['Range'] = Range
+
+
+###############################################################################
+
+class Map(Connector):
+
+    """ Suitable for VMap and VBMap. """
+    
+    def init(self):
+        self.vmap = None
+        self.last_index = -1
+        
+    def create_widget(self):
+        # create combobox
+        self.combobox = gtk.ComboBox()
+
+        # create combobox model
+        combobox = self.combobox
+        model = gtk.ListStore(str, object)
+        combobox.set_model(model)
+        cell = gtk.CellRendererText()
+        combobox.pack_start(cell, True)
+        combobox.add_attribute(cell, 'text', 0)
+
+        # fill model
+        model.clear()
+
+        prop = self.container.get_prop(self.key)
+        vmaps = [v for v in prop.validator.vlist if isinstance(v, VMap)]
+        if len(vmaps) == 0:
+            raise TypeError("Property for connector 'MappedValue' has no mapping!")
+        self.vmap = vmap = vmaps[0]        
+        if vmap is not None:
+            for key, value in vmap.dict.iteritems():
+                model.append((unicode(key), key))
+
+        # pack everything together
+        self.widget = gtk.HBox()
+
+        widget = self.widget
+        widget.pack_start(combobox,True,True)
+        widget.show_all()
+
+        return self.widget
+        
+    #----------------------------------------------------------------------
+
+    def check_in(self):
+        value = self.container.get_mvalue(self.key)
+        values = self.vmap.dict.values()
+        
+        if value != Undefined:
+            try:
+                index = values.index(value)
+            except:
+                raise ValueError("Connector for %s.%s failed to retrieve prop value '%s' in list of available values '%s'" % (self.container.__class__.__name__, self.key, value, values))
+
+            model = self.combobox.get_model()
+            iter = model.get_iter((index,))
+            self.combobox.set_active_iter(iter)
+            self.last_index = index
+            
+        self.last_value = value
+
+    
+    def get_data(self):
+        index = self.combobox.get_active()
+        if index == self.last_index:
+            return self.get_value()
+        elif index < 0:
+            return Undefined            
+        else:
+            model = self.combobox.get_model()
+            prop = self.container.get_prop(self.key)
+            return model[index][1]
+
+
+connectors['Map'] = Map

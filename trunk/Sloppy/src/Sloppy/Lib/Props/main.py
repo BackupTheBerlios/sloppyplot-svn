@@ -84,6 +84,8 @@ class VMap(Validator):
     is_mapping = True
     
     def __init__(self, adict):
+        if not isinstance(adict, dict):
+            raise TypeError("Mapping for VMap validator must be a dictionary, not a %s" % type(adict))
         self.dict = adict    
 
     def check(self, value):
@@ -97,7 +99,7 @@ class VMap(Validator):
 
     
 
-class VBMap(Validator):
+class VBMap(VMap):
 
     """
     Map the given value according to the dict
@@ -107,7 +109,7 @@ class VBMap(Validator):
     is_mapping = True
         
     def __init__(self, adict):
-        self.dict = adict
+        VMap.__init__(self, adict)
         self.values = adict.values()        
 
     def check(self, value):
@@ -545,9 +547,9 @@ class HasProperties(object):
             return self.__getattribute__(key)            
 
     def get_mvalue(self, key):
-        ivalues = object.__getattribute__(self, '_mvalues')
-        if ivalues.has_key(key):
-            return ivalues.get(key)
+        mvalues = object.__getattribute__(self, '_mvalues')
+        if mvalues.has_key(key):
+            return mvalues.get(key)
 
         return self.get_value(key)
 

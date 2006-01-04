@@ -10,13 +10,14 @@ class Recipe(HasProperties):
     name = Unicode()
     name_or_None = Property(Unicode, None)
     calories = Property(VRange(0,None), None)
+    # works with VBMap as well!
+    difficulty = Property(VMap({"easy":1, "average":2, "hard":3}))
     
-    
-recipe = Recipe(name="Toast Hawaii", calories=512)
+recipe = Recipe(name="Toast Hawaii", calories=512, difficulty="average")
 
 win = gtk.Window()
 
-connector = pwconnect.connectors['Range'](recipe, 'calories')
+connector = pwconnect.connectors['Map'](recipe, 'difficulty')
 win.add(connector.create_widget())
 connector.check_in()
 
@@ -24,6 +25,7 @@ win.show_all()
 
 def do_quit(udata):
     ul = UndoList()
+    print "Value before checkout: ", connector.get_value()
     connector.check_out(undolist=ul)
     print "New value: ", connector.get_value()
     ul.execute()
