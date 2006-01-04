@@ -368,3 +368,40 @@ class Map(Connector):
 
 
 connectors['Map'] = Map
+
+
+###############################################################################
+
+class RGBColor(Connector):
+
+    def create_widget(self):
+        self.colorbutton = gtk.ColorButton()
+        self.widget = self.colorbutton
+
+        widget = self.widget
+        
+        return self.widget
+    
+    def to_gdk_color(self, color):
+        return gtk.gdk.Color(int(color[0]*65535), int(color[1]*65535), int(color[2]*65535))
+
+    def to_rgb(self, color):
+        return (color.red/65535.0, color.green/65535.0, color.blue/65535.0)
+
+    def get_data(self):
+        gdk_color = self.colorbutton.get_color()
+        print "Comparing ", gdk_color, self.last_value
+        if (gdk_color.red == self.last_value.red) and \
+               (gdk_color.blue == self.last_value.blue) and \
+               (gdk_color.green == self.last_value.green):
+            return self.container.get_mvalue(self.key)
+        
+        return self.to_rgb(gdk_color)
+
+    def check_in(self):
+        rgb_color = self.container.get_mvalue(self.key) or (0.0,0.0,0.0)
+        gdk_color = self.to_gdk_color(rgb_color)
+        self.colorbutton.set_color(gdk_color)
+        self.last_value = gdk_color
+    
+connectors['RGBColor'] = RGBColor

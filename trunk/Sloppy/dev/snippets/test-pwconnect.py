@@ -5,6 +5,7 @@ import gtk
 
 from Sloppy.Lib.Props import *
 from Sloppy.Lib.Undo import UndoList
+from Sloppy.Base.properties import *
 
 class Recipe(HasProperties):
     name = Unicode()
@@ -14,9 +15,11 @@ class Recipe(HasProperties):
     difficulty = Property({"easy":1, "average":2, "hard":3})
 
     weight = Float(default=214.32)
+    foodcolor = RGBColor('black')
+    
     
 recipe = Recipe(name="Toast Hawaii", calories=512, difficulty="average")
-
+recipe.foodcolor=(0.0,1.0,0.3)
 win = gtk.Window()
 
 
@@ -32,6 +35,8 @@ def determine_connector(owner, key):
             return pwconnect.connectors['Unicode'](owner, key)
         elif isinstance(v, VRange):
             return pwconnect.connectors['Range'](owner, key)
+        elif isinstance(v, VRGBColor):
+            return pwconnect.connectors['RGBColor'](owner, key)
 
         vlist.pop(0)
 

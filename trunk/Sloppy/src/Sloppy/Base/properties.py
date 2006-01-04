@@ -2,12 +2,12 @@
 
 from Sloppy.Lib.Props import *
 
-__all__ = ["RGBColor", "MarkerStyle", "BooleanOrNone"]
+__all__ = ["VRGBColor", "RGBColor", "MarkerStyle", "BooleanOrNone"]
 
     
 class VRGBColor(Validator):
     
-    def check(self, owner, key, value):
+    def check(self, value):
         if isinstance(value, (list,tuple)):
             # assume 3-tuple (red,green,blue)
             if len(value) == 3:
