@@ -86,7 +86,7 @@ class VMap(Validator):
     def __init__(self, adict):
         self.dict = adict    
 
-    def check(self, owner, key, value):
+    def check(self, value, owner=None, key=None):
         try:
             return self.dict[value]
         except KeyError:
@@ -110,7 +110,7 @@ class VBMap(Validator):
         self.dict = adict
         self.values = adict.values()        
 
-    def check(self, owner, key, value):
+    def check(self, value, owner=None, key=None):
         if value in self.values:
             return value
         try:
@@ -124,7 +124,7 @@ class VBMap(Validator):
 
 class VNone(Validator):
 
-    def check(self, owner, key, value):
+    def check(self, value, owner=None, key=None):
         if value is None:
             return None
         raise TypeError("None")
@@ -132,7 +132,7 @@ class VNone(Validator):
 
 class VBoolean(Validator):
 
-    def check(self, owner, key, value):
+    def check(self, value, owner=None, key=None):
         if isinstance(value, bool):
             return bool(value)
         elif isinstance(value, basestring):
@@ -143,11 +143,11 @@ class VBoolean(Validator):
         elif isinstance(value, (int,float)):
             return bool(value)
 
-        raise ValueError("a valid True/False value.")
+        raise ValueError("a valid True/False value")
 
 
 class VString(Validator):
-    def check(self, owner, key, value):
+    def check(self, value, owner=None, key=None):
         try:
             return str(value)
         except:
@@ -155,7 +155,7 @@ class VString(Validator):
 
 
 class VUnicode(Validator):
-    def check(self, owner, key, value):
+    def check(self, value, owner=None, key=None):
         try:
             return unicode(value)
         except:
@@ -163,7 +163,7 @@ class VUnicode(Validator):
 
 
 class VInteger(Validator):
-    def check(self, owner, key, value):
+    def check(self, value, owner=None, key=None):
         try:
             return int(value)
         except:
@@ -172,7 +172,7 @@ class VInteger(Validator):
 
 
 class VFloat(Validator):
-    def check(self, owner, key, value):
+    def check(self, value, owner=None, key=None):
         try:
             return float(value)
         except:
@@ -187,7 +187,7 @@ class VRegexp(Validator):
         self.regexp=regexp
         self._expression = re.compile(regexp)
 
-    def check(self, owner, key, value):
+    def check(self, value, owner=None, key=None):
         try:
             match = self._expression.match(value)
             if match is not None:
@@ -202,7 +202,7 @@ class VChoices(Validator):
     def __init__(self, alist):
         self.values = alist
 
-    def check(self, owner, key, value):
+    def check(self, value, owner=None, key=None):
         print "Checking ", value
         if value in self.values:
             return value
@@ -217,10 +217,10 @@ class VList(Validator):
     def __init__(self, *validators):        
         self.item_validator = construct_validator_list(*validators)
 
-    def check(self, owner, key, value):
+    def check(self, value, owner=None, key=None):
         def check_item(v):
             try:
-                return self.item_validator.check(owner, key, v)
+                return self.item_validator.check(v, owner, key)
             except Exception, msg:
                 raise PropertyError("Failed to set item in list property '%s' of container '%s' to '%s': Value must be %s." %
                                     (key, owner.__class__.__name__, value, str(msg)))
@@ -237,10 +237,10 @@ class VDictionary(Validator):
     def __init__(self, *validators):
         self.item_validator = construct_validator_list(*validators)
 
-    def check(self, owner, key, value):
+    def check(self, value, owner=None, key=None):
         def check_item(v):
             try:
-                return self.item_validator.check(owner, key, v)
+                return self.item_validator.check(v, owner, key)
             except Exception, msg:
                 raise PropertyError("Failed to set item in dictionary property '%s' of container '%s' to '%s': Value must be %s." %
                                     (key, owner.__class__.__name__, value, str(msg)))
@@ -266,7 +266,7 @@ class VRange(Validator):
         self.min=min
         self.max=max
 
-    def check(self, owner, key, value):
+    def check(self, value, owner=None, key=None):
         if (value is None) \
                or (self.min is not None and value < self.min) \
                or (self.max is not None and value > self.max):
@@ -281,7 +281,7 @@ class VInstance(Validator):
     def __init__(self, _type):
         self.type = _type
 
-    def check(self, owner, key, value):
+    def check(self, value, owner=None, key=None):
         if isinstance(value, self.type):
             return value
         else:
@@ -342,10 +342,10 @@ class ValidatorList(Validator):
 
 class RequireOne(ValidatorList):
 
-    def check(self, owner, key, value):
+    def check(self, value, owner=None, key=None):
         for validator in self.vlist:
             try:
-                value = validator.check(owner, key, value)
+                value = validator.check(value, owner, key)
             except:
                 continue
             else:
@@ -355,11 +355,11 @@ class RequireOne(ValidatorList):
 
 class RequireAll(ValidatorList):
 
-    def check(self, owner, key, value):
+    def check(self, value, owner=None, key=None):
 
         try:
             for validator in self.vlist:
-                value = validator.check(owner, key, value)
+                value = validator.check(value, owner, key)
         except:
             # TODO: construct error message
             raise
@@ -391,20 +391,26 @@ class Property:
     def get_value(self, owner, key):
         return owner._values[key]
         
-    def set_value(self, owner, key, value):
+    def set_value(self, value, owner, key):
         try:
             if self.validator.is_mapping is False:
-                owner._values[key] = self.validator.check(owner, key, value)
+                owner._values[key] = self.validator.check(value, owner, key)
             else:
                 owner._values[key] = value
-                owner._mvalues[key] = self.validator.check(owner, key, value)
+                owner._mvalues[key] = self.validator.check(value, owner, key)
         except Exception,msg:
             raise PropertyError("Failed to set property '%s' of container '%s' to '%s': Value must be %s." %
                                 (key, owner.__class__.__name__, value, str(msg)))
 
     def get_default(self, owner, key):
         return self.on_default(owner, key)
-    
+
+    def check(self, value, owner=None, key=None):
+        try:
+            self.validator.check(value, owner, key)
+        except Exception,msg:
+            raise PropertyError("Failed to set property '%s' of container '%s' to '%s': Value must be %s." %
+                                (key, owner.__class__.__name__, value, str(msg)))
         
 
 class List(Property):
@@ -486,7 +492,7 @@ class HasProperties(object):
         
         props = object.__getattribute__(self, '_props')
         if props.has_key(key):
-            props[key].set_value(self, key, value)
+            props[key].set_value(value, self, key)
         else:
             object.__setattr__(self, key, value)
     

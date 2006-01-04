@@ -35,7 +35,7 @@ class VArray(Validator):
     def __init__(self, _rank):
         self._rank = _rank
 
-    def check(self, owner, key, value):
+    def check(self, value, owner=None, key=None):
         # check type
         if isinstance(value, ArrayType):
             pass            

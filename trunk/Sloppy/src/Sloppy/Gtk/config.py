@@ -297,7 +297,7 @@ class ImportTemplatesPage(gtk.VBox):
                     new_key = entry.get_text()
                     try:
                         new_key = Keyword().check(new_key)
-                    except ValueError:
+                    except PropertyError:
                         hint.set_text("Key is invalid. Try again.")
                         hint.show()
                         continue

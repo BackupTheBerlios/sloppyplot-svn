@@ -136,7 +136,7 @@ class Importer(dataio.Importer):
      IntegerRange(
         0,None,
         blurb="Columns",
-        doc="Number of columns"
+        doc="Number of columns",
         )
 
 

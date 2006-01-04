@@ -148,7 +148,7 @@ class TypedDict:
     def clear(self): self.data.clear()
     def copy(self):
         if self.__class__ is TypedDict:
-            return TypedDict(self.data.copy(), **self.metadata)
+            return TypedDict(self.data.copy())
         # OK ?
         import copy
         data = self.data

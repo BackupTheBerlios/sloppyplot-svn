@@ -1,5 +1,12 @@
 
 
+( ) Any property: allow Undefined or not?
+    maybe as keyword parameter? But then it should be set to yes by default,
+    because the default default parameter is Undefined.
+ 
+    allow_undefined=True
+
+
 ( ) Group Properties...
 
 ( ) Mapped Lists / Dictionaries
