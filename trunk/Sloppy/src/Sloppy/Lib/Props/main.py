@@ -122,12 +122,6 @@ class VBMap(Validator):
         return True
 
 
-class VUndefined(Validator):
-    def check(self, value):
-        if value == Undefined:
-            return value
-        else:
-            raise ValueError("Undefined")
 
 class VNone(Validator):
 
@@ -156,7 +150,7 @@ class VBoolean(Validator):
 class VString(Validator):
     def check(self, value):
         try:
-            if value is Undefined:
+            if value is None:
                 raise
             return str(value)
         except:
@@ -166,7 +160,7 @@ class VString(Validator):
 class VUnicode(Validator):
     def check(self, value):
         try:
-            if value is Undefined:
+            if value is None:
                 raise
             return unicode(value)
         except:
@@ -282,6 +276,7 @@ class VRange(Validator):
                or (self.min is not None and value < self.min) \
                or (self.max is not None and value > self.max):
             raise ValueError("in the range [%s:%s]" % (self.min, self.max))
+        return value
 
 #     def get_description(self):
 #         return "Valid range: %s:%s" % (self.min or "", self.max or "")
@@ -342,9 +337,6 @@ class ValidatorList(Validator):
                 vlist.extend(i.validator.vlist)
                 is_mapping = is_mapping or i.validator.is_mapping
                 on_default = i.on_default
-            elif item == Undefined:
-                vlist.append(VUndefined())
-                on_default = Undefined
             elif inspect.isclass(item):
                 vlist.append(VInstance(item))
             else:

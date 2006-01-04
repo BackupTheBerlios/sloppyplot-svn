@@ -8,15 +8,15 @@ from Sloppy.Lib.Undo import UndoList
 
 class Recipe(HasProperties):
     name = Unicode()
-    name_or_Undefined = Property(Unicode, Undefined)
+    name_or_None = Property(Unicode, None)
+    calories = Property(VRange(0,None), None)
     
-recipe = Recipe(name="Toast Hawaii")
-
-recipe.name_or_Undefined = Undefined
+    
+recipe = Recipe(name="Toast Hawaii", calories=512)
 
 win = gtk.Window()
 
-connector = pwconnect.connectors['Unicode'](recipe, 'name_or_Undefined')
+connector = pwconnect.connectors['Range'](recipe, 'calories')
 win.add(connector.create_widget())
 connector.check_in()
 

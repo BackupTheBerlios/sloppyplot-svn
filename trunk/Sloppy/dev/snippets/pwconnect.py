@@ -35,7 +35,7 @@ from Sloppy.Base import uwrap
 import sys
 
 
-from Sloppy.Lib.Props.main import Undefined, VRange, PropertyError
+from Sloppy.Lib.Props.main import VRange, PropertyError
 
 
 
@@ -122,7 +122,7 @@ class Unicode(Connector):
         # create checkbutton if requested
         try:
             prop = self.container.get_prop(self.key)
-            prop.check(Undefined)
+            prop.check(None)
         except PropertyError:
             self.checkbutton = None            
         else:
@@ -140,7 +140,7 @@ class Unicode(Connector):
             widget.pack_start(self.checkbutton,False,True)                    
         widget.show_all()
 
-        return widget
+        return self.widget
         
     def on_focus_in_event(self, widget, event):
         self.last_value = widget.get_text()
@@ -163,14 +163,14 @@ class Unicode(Connector):
         value = self.get_value()
 
         if self.checkbutton is not None:
-            state = value is not Undefined
+            state = value is not None
             self.checkbutton.set_active(state)
             self.entry.set_sensitive(state)            
         else:
-            if value is Undefined:
+            if value is None:
                 value = ""
             
-        if value is not Undefined:
+        if value is not None:
             self.entry.set_text(unicode(value))
         self.last_value = value
 
@@ -181,7 +181,7 @@ class Unicode(Connector):
         if self.checkbutton is not None:
             state = self.checkbutton.get_active()
             if state is False:
-                return Undefined
+                return None
             
         try:
             return self.prop.check(value)
@@ -191,3 +191,95 @@ class Unicode(Connector):
 
 connectors['Unicode'] = Unicode
 
+
+
+#------------------------------------------------------------------------------
+
+class Range(Connector):
+
+    def create_widget(self):
+        #
+        # create spinbutton
+        #
+        self.spinbutton = gtk.SpinButton()
+
+        #
+        # create checkbutton, if None is a valid value.
+        #
+        try:
+            prop = self.container.get_prop(self.key)
+            prop.check(None)
+        except PropertyError:
+            self.checkbutton = None
+        else:
+            self.checkbutton = gtk.CheckButton()
+            self.checkbutton.connect("toggled",\
+              (lambda sender: self.spinbutton.set_sensitive(sender.get_active())))
+            
+        #
+        # pack everything together
+        #
+        self.widget = gtk.HBox()
+
+        widget = self.widget
+        widget.pack_start(self.spinbutton,True,True)
+        if self.checkbutton is not None:
+            widget.pack_start(self.checkbutton,False,True)
+        widget.show_all()
+
+
+        #
+        # set spinbutton values
+        #
+
+        sb = self.spinbutton
+        sb.set_numeric(True)
+
+        vranges = [v for v in self.prop.validator.vlist if isinstance(v, VRange)]
+        if len(vranges) > 0:
+            vrange = vranges[0]
+            lower,upper = vrange.min, vrange.max
+        else:
+            lower,upper = None,None
+
+        if lower is None:
+            lower = -sys.maxint
+
+        if upper is None:
+            upper = +sys.maxint
+
+        sb.set_range(float(lower), float(upper))
+        sb.set_increments(1,1)
+        sb.set_digits(0)
+
+        return self.widget
+    
+        
+    def check_in(self):
+        value = self.get_value()
+        if value is not None:
+            value = float(value)
+        
+        if self.checkbutton is not None:
+            state = value is not None
+            self.checkbutton.set_active(state)
+            self.spinbutton.set_sensitive(state)
+        if value is not None:
+            self.spinbutton.set_value(value)
+
+        self.last_value = value
+            
+        
+
+    def get_data(self):
+        if (self.checkbutton is not None) and \
+               (self.checkbutton.get_active() is not True):
+            return None
+
+        try:
+            return self.prop.check(self.spinbutton.get_value())
+        except:
+            raise ValueError("Invalid value %s in spinbutton." % self.spinbutton.get_value())
+
+        
+connectors['Range'] = Range
