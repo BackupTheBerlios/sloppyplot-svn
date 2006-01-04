@@ -1,11 +1,12 @@
 
-import pwconnect
+from Sloppy.Gtk.pwconnect import *
 import gtk
 
 
 from Sloppy.Lib.Props import *
 from Sloppy.Lib.Undo import UndoList
 from Sloppy.Base.properties import *
+
 
 
 class Recipe(HasProperties):
@@ -23,15 +24,10 @@ class Recipe(HasProperties):
     is_delicious = Boolean(True)
     is_recommended = Property(Boolean,None, default=True)
 
-    mydict = Dictionary()
-
     
     
 recipe = Recipe(name="Toast Hawaii", calories=512, difficulty="average")
 recipe.foodcolor=(0.0,1.0,0.3)
-recipe.mydict = {'one':1}
-
-raise SystemExit
 
 win = gtk.Window()
 
@@ -41,7 +37,7 @@ vbox = gtk.VBox()
 
 clist = []
 for key in recipe.get_props().keys():
-    connector = pwconnect.determine_connector(recipe, key)
+    connector = new_connector(recipe, key)
     vbox.add(connector.create_widget())
     connector.check_in()
     clist.append(connector)

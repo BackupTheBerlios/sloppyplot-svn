@@ -103,8 +103,10 @@ class Connector(object):
     # UI Stuff
 
     def create_widget(self):
-        raise RuntimeError("crete_widget() needs to be implemented.")
+        raise RuntimeError("create_widget() needs to be implemented.")
 
+    def create_renderer(self):
+        raise RuntimeError("create_renderer() needs to be implemented.")
 
 connectors = {}
 
@@ -148,6 +150,17 @@ class Unicode(Connector):
         widget.show_all()
 
         return self.widget
+
+    def create_renderer(self, model, index):
+        cell = gtk.CellRendererText()
+        cell.set_property('editable', True)
+        cell.connect('edited', self.on_edited_text, model, index)
+        return cell
+
+    def on_edited_text(self, cell, path, new_text, model, index):
+        new_text = self.prop.check(new_text)
+        model[path][index] = unicode(new_text) 
+        
         
     def on_focus_in_event(self, widget, event):
         self.last_value = widget.get_text()
@@ -514,12 +527,13 @@ class Boolean(Connector):
             value_dict = {}
         else:
             value_dict = {'None': None}
+            
         value_dict.update({'True': True, 'False': False})
-
+        self.values = value_dict.values()
+        
         model.clear()        
         for key, value in value_dict.iteritems():
             model.append((key, value))
-        self.values = value_dict.values()
         
         #
         # pack everything together
