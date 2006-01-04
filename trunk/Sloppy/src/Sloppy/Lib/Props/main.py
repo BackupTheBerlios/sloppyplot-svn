@@ -122,6 +122,13 @@ class VBMap(Validator):
         return True
 
 
+class VUndefined(Validator):
+    def check(self, value):
+        if value == Undefined:
+            return value
+        else:
+            raise ValueError("Undefined")
+
 class VNone(Validator):
 
     def check(self, value):
@@ -149,6 +156,8 @@ class VBoolean(Validator):
 class VString(Validator):
     def check(self, value):
         try:
+            if value is Undefined:
+                raise
             return str(value)
         except:
             raise TypeError("a string")
@@ -157,6 +166,8 @@ class VString(Validator):
 class VUnicode(Validator):
     def check(self, value):
         try:
+            if value is Undefined:
+                raise
             return unicode(value)
         except:
             raise TypeError("a unicode string")
@@ -331,6 +342,9 @@ class ValidatorList(Validator):
                 vlist.extend(i.validator.vlist)
                 is_mapping = is_mapping or i.validator.is_mapping
                 on_default = i.on_default
+            elif item == Undefined:
+                vlist.append(VUndefined())
+                on_default = Undefined
             elif inspect.isclass(item):
                 vlist.append(VInstance(item))
             else:
@@ -407,7 +421,7 @@ class Property:
 
     def check(self, value):
         try:
-            self.validator.check(value)
+            return self.validator.check(value)
         except Exception,msg:
             raise PropertyError("Property check failed: Value '%s' must be %s." %
                                 (value, str(msg)))

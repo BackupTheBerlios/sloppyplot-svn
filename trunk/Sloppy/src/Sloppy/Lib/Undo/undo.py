@@ -161,7 +161,8 @@ class UndoList( UserList.UserList, UndoInfo ):
                 info.execute(undolist=new_list)
         logger.debug("EOL")
         undolist.append(new_list.simplify())
-        undolist.describe(self.doc)
+        if isinstance(undolist, UndoList):
+            undolist.describe(self.doc)
 
     def simplify(self, preserve_list=False):
         """
