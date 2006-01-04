@@ -165,7 +165,7 @@ class Entry(Connector):
             return
         
         try:
-            self.prop.check(value, self.container, self.key)
+            self.prop.check(value)
         except (TypeError, ValueError):
             print "Entry Value is wrong, resetting." # TODO: user notice
             widget.set_text(self.last_value)
@@ -201,7 +201,7 @@ class Entry(Connector):
                 return None
             
         try:                    
-            return self.prop.check(value, self.container, self.key)
+            return self.prop.check(value)
         except:
             print "Entry Value is wrong, resetting." # TODO: user notice                    
             return None # TODO: what if the entry does not allow None?                            
@@ -434,7 +434,7 @@ class SpinButton(Connector):
         #
         try:
             prop = self.container.get_prop(self.key)
-            prop.check(Undefined, self.container, self.key)
+            prop.check(Undefined)
         except PropertyError:
             self.checkbutton = None
         else:
@@ -502,7 +502,7 @@ class SpinButton(Connector):
             return Undefined
 
         try:
-            return self.prop.check(self.spinbutton.get_value(), self.container, self.key)
+            return self.prop.check(self.spinbutton.get_value())
         except:
             raise ValueError("Invalid value %s in spinbutton." % self.spinbutton.get_value())
 

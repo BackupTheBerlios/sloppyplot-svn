@@ -217,7 +217,7 @@ class Layer(HasProperties, HasSignals):
     lines = List(Line, blurb="Lines")
     grid = Boolean(default=False, blurb="Grid", doc="Display a grid")
     visible = Boolean(reset=True, blurb="Visible")
-    legend = Instance(Legend, on_default=lambda o,k: Legend())
+    legend = Instance(Legend, on_default=lambda: Legend())
 
     x = FloatRange(0.0, 1.0, default=0.11)
     y = FloatRange(0.0, 1.0, default=0.125)
@@ -237,7 +237,7 @@ class Layer(HasProperties, HasSignals):
         range_step = Float(1.0)
         
     group_linestyle = Property(GroupLineStyle,                               
-                               on_default=lambda o,k:Layer.GroupLineStyle(),
+                               on_default=lambda:Layer.GroupLineStyle(),
                                blurb="Line Style")
 
 
@@ -251,7 +251,7 @@ class Layer(HasProperties, HasSignals):
         range_step = Float(1.0)
         
     group_linemarker = Property(GroupLineMarker,
-                                on_default=lambda o,k:Layer.GroupLineMarker(),
+                                on_default=lambda:Layer.GroupLineMarker(),
                                 blurb="Line Marker")
 
     
@@ -265,20 +265,20 @@ class Layer(HasProperties, HasSignals):
         range_step = Float(1.0)
         
     group_linewidth = Property(GroupLineWidth,
-                           on_default=lambda o,k:Layer.GroupLineWidth(),
+                           on_default=lambda:Layer.GroupLineWidth(),
                            blurb="Line Width")
 
     class GroupLineColor(HasProperties):
         type = Property(MAP['group_linecolor_type'], default=GROUP_TYPE_CYCLE)
         allow_override = Boolean(True)        
         value = Property(Line.color, on_default=Line.color.on_default)
-        cycle_list = List(Line.color, on_default=lambda o,k:['g','b','r'])
+        cycle_list = List(Line.color, on_default=lambda:['g','b','r'])
         range_start = Float(1.0)
         range_stop = Float(None)
         range_step = Float(1.0)
         
     group_linecolor = Property(GroupLineColor,
-                               on_default=lambda o,k:Layer.GroupLineColor(),
+                               on_default=lambda:Layer.GroupLineColor(),
                                blurb="Line Color")
 
 
@@ -286,8 +286,8 @@ class Layer(HasProperties, HasSignals):
     labels = List(TextLabel)
 
     # axes
-    xaxis = Instance(Axis, on_default=lambda o,k: Axis())
-    yaxis = Instance(Axis, on_default=lambda o,k: Axis())
+    xaxis = Instance(Axis, on_default=lambda: Axis())
+    yaxis = Instance(Axis, on_default=lambda: Axis())
     
     def get_axes(self):
         return {'x':self.xaxis, 'y':self.yaxis}
