@@ -81,7 +81,7 @@ class Connector(object):
     # Helper Functions
     
     def get_value(self):
-        return self.container.get_value(self.key, default=None)
+        return self.container.get_value(self.key)
     def set_value(self, value):
         if value != self.last_value:
             self.container.set_value(self.key, value)
@@ -296,7 +296,7 @@ class ComboBox(Connector):
         try:
             index = self.value_list.index(value)
         except:
-            raise ValueError("Connector for %s.%s failed to retrieve prop value '%s' in list of available values '%s'" % (self.container, self.key, self.get_value(), self.value_list))
+            raise ValueError("Connector for %s.%s failed to retrieve prop value '%s' in list of available values '%s'" % (self.container.__class__.__name__, self.key, self.get_value(), self.value_list))
 
         model = self.combobox.get_model()
         iter = model.get_iter((index,))
@@ -324,7 +324,7 @@ connectors['ComboBox'] = ComboBox
 
 class TrueFalseComboBox(ComboBox):
 
-    def create_widget(self, use_checkbutton=False):
+    def create_widget(self):
 
         #
         # create combobox
@@ -341,6 +341,14 @@ class TrueFalseComboBox(ComboBox):
 
         # fill combo
         model.clear()
+
+        try:
+            self.prop.check(Undefined)
+        except:
+            use_checkbutton = False
+        else:
+            use_checkbutton = True
+            
         if use_checkbutton is False:
             self.value_dict[Undefined] = Undefined
             self.value_list.append(Undefined)
@@ -421,7 +429,6 @@ class SpinButton(Connector):
         #
         self.spinbutton = gtk.SpinButton()
 
-
         #
         # create checkbutton, if Undefined is a valid value.
         #
@@ -475,27 +482,24 @@ class SpinButton(Connector):
         
     def check_in(self):
         value = self.get_value()
-        if value is not None:
-            value = float(value)        
+        if value is not Undefined:
+            value = float(value)
         
         if self.checkbutton is not None:
-            state = value is not None
+            state = value is not Undefined
             self.checkbutton.set_active(state)
             self.spinbutton.set_sensitive(state)
-        if value is not None:
+        if value is not Undefined:
             self.spinbutton.set_value(value)
 
         self.last_value = value
             
-
-
         
 
     def get_data(self):
         if (self.checkbutton is not None) and \
                (self.checkbutton.get_active() is not True):
-            return None
-
+            return Undefined
 
         try:
             return self.prop.check(self.spinbutton.get_value(), self.container, self.key)

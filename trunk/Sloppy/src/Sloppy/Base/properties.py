@@ -2,7 +2,7 @@
 
 from Sloppy.Lib.Props import *
 
-__all__ = ["RGBColor", "MarkerStyle"]
+__all__ = ["RGBColor", "MarkerStyle", "BooleanOrNone"]
 
     
 class VRGBColor(Validator):
@@ -85,4 +85,14 @@ class MarkerStyle(Property):
     def __init__(self, **kwargs):
         Property.__init__(self, self.permitted_values, **kwargs)
 
+    
+
+
+
+#------------------------------------------------------------------------------
+
+class BooleanOrNone(Property):
+    def __init__(self, default=Undefined, **kwargs):
+        Property.__init__(self, (VBoolean(),None), **kwargs)
+        
     

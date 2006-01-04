@@ -282,7 +282,12 @@ class Application(object, HasSignals):
             data['importer_key'] = eTemplate.get('importer_key')
             data['extensions'] = eTemplate.get('extensions')
             data['defaults'] = iohelper.read_dict(eTemplate, 'Defaults')
-            data['skip_options'] = eTemplate.get('skip_options')
+
+            def GET(key):
+                if eTemplate.has_key(key):
+                    data[key] = eTemplate.get(key)
+
+            GET('skip_options')
 
             logger.debug("Data is %s" % data)
             templates[key] = dataio.IOTemplate(**data)

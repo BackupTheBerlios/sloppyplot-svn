@@ -1,10 +1,33 @@
 
 
-( ) Any property: allow Undefined or not?
-    maybe as keyword parameter? But then it should be set to yes by default,
-    because the default default parameter is Undefined.
+( ) pwglade determines the widget type based on the _type_ of the
+    Property, e.g. Boolean.  Unfortunately I have decided not to allow
+    extra validators in pre-defined Properties, so it is not possible
+    to add 'None' as a valid value. I would need to do a
+
+      skip_options = Property(VBoolean(), None)
  
-    allow_undefined=True
+    instead and let pwglade scan through the validator list.
+
+    _OR_ I can create a new property class, BooleanOrNone, which is 
+    derived from Boolean.
+
+    _OR_ I would allow extra validators... NO!
+
+
+
+BEST SOLUTION:
+
+rewrite pwconnect from scratch.
+This would be a good opportunity to add two kind of widgets:
+
+ - stand-alone widgets
+ - wrapper for cell renderers
+
+The goal would be to construct a dialog for a certain HasProperties object,
+as well as to automatically construct a list dialog for its Properties.
+
+
 
 
 ( ) Group Properties...

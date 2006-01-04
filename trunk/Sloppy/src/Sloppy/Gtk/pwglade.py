@@ -46,6 +46,8 @@ import pwconnect
 
 
 from Sloppy.Lib.Props import *
+from Sloppy.Base.properties import *
+
 
 #------------------------------------------------------------------------------
 
@@ -156,7 +158,7 @@ def guess_connector_classname(prop):
 #         return "ComboBox"
 #     elif cdict.has_key('valid'):
 #         return "ComboBox"
-    if isinstance(prop, Boolean):
+    if isinstance(prop, (Boolean,BooleanOrNone)):
         return "TrueFalseComboBox"
         #return "CheckButton"
     elif isinstance(prop, IntegerRange):
