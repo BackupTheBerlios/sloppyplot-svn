@@ -407,17 +407,16 @@ class DatasetWindow( gtk.Window ):
         dialog = OptionsDialog(column.copy())
 
         try:
-            while True:
-                response = dialog.run()
-                if response == gtk.RESPONSE_ACCEPT:
-                    # check out data 
-                    new_column = dialog.check_out()
-                    changeset = column.create_changeset(new_column)
+            response = dialog.run()
+            if response == gtk.RESPONSE_ACCEPT:
+                # check out data 
+                new_column = dialog.check_out()
+                changeset = column.create_changeset(new_column)
 
-                    ul = UndoList().describe("Update Columns")
-                    uwrap.set(column, **changeset)
-                    uwrap.emit_last(table, 'update-columns', undolist=ul)
-                    self.project.journal.append(ul)
+                ul = UndoList().describe("Update Columns")
+                uwrap.set(column, **changeset)
+                uwrap.emit_last(table, 'update-columns', undolist=ul)
+                self.project.journal.append(ul)
         finally:
             dialog.destroy()
 

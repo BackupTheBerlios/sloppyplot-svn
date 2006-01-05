@@ -123,7 +123,11 @@ class Importer(dataio.Importer):
     
     delimiter = \
      Property(
-        [None,',', '\t',';', '\s*'],
+        VBMap({None: None,
+               ',': ',',
+               'Tab' : '\t',
+               ';': ';',
+               'whitespace': '\s*'}),
         blurb ="Delimiter",
         doc="Column delimiter that separates the columns"
         )
@@ -321,7 +325,7 @@ class Importer(dataio.Importer):
         fd.seek(rewind)
 
         # determine delimiter
-        delimiter = self.delimiter or self.custom_delimiter
+        delimiter = self.get_mvalue(delimiter) or self.custom_delimiter
         if delimiter is None:
             # determine from first non-comment line
             rewind = fd.tell()

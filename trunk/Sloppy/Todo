@@ -1,21 +1,20 @@
-_ODER_
 
-connector Unicode
+- Cell Renderers.  Maybe there are too many differences between widgets
+  and cell renderers and it would make sense to create a new class?
 
-  create_widget
-  create_renderer
+- Maybe leave the CellRenderer color for now and start with a
+  CellRendererCombo for mappings.
 
-und check_in(), check_out() überprüfen den Typ von self.widget!
+- Then proceed with a cell renderer for marker styles.  A graphical display
+  would be cool.
 
-
-
+- The 'common' properties should have a defined default value.  This way
+  it would be clear, that only if you use the 'Property', the default value
+  is undefined.
 
 ( ) Group Properties...
 
 ( ) Mapped Lists / Dictionaries
-
-
-
 
 
 

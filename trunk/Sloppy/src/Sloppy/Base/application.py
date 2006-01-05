@@ -284,8 +284,8 @@ class Application(object, HasSignals):
             data['defaults'] = iohelper.read_dict(eTemplate, 'Defaults')
 
             def GET(key):
-                if eTemplate.has_key(key):
-                    data[key] = eTemplate.get(key)
+                if eTemplate.attrib.has_key(key):
+                    data[key] = eTemplate.attrib.get(key)
 
             GET('skip_options')
 
