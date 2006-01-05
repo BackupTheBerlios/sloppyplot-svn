@@ -28,6 +28,10 @@ class Recipe(HasProperties):
     
 recipe = Recipe(name="Toast Hawaii", calories=512, difficulty="average")
 recipe.foodcolor=(0.0,1.0,0.3)
+print "--"
+print recipe.difficulty
+print recipe.difficulty_
+print "--"
 
 win = gtk.Window()
 

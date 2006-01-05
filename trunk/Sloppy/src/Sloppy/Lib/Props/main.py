@@ -507,12 +507,19 @@ class HasProperties(object):
     def __getattribute__(self, key):
         if key in ('_props','_values', '_mvalues'):
             return object.__getattribute__(self, key)
+
+        if not key.startswith('_') and key.endswith('_'):
+            mvalues = object.__getattribute__(self, '_mvalues')
+            key = key[:-1]
+            if mvalues.has_key(key):
+                return mvalues.get(key)           
+        
+        # TODO: why use Prop.get_value and not access the value directly?
+        props = object.__getattribute__(self, '_props')
+        if props.has_key(key):
+            return props[key].get_value(self, key)
         else:
-            props = object.__getattribute__(self, '_props')
-            if props.has_key(key):
-                return props[key].get_value(self, key)
-            else:
-                return object.__getattribute__(self, key)                       
+            return object.__getattribute__(self, key)                       
 
     #----------------------------------------------------------------------
     # Value Handling

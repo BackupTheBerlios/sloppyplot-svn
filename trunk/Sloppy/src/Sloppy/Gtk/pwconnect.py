@@ -124,6 +124,7 @@ class Unicode(Connector):
     """ Suitable for VUnicode. """
 
     def init(self):
+        self.model = None
         self.model_index = -1
         
     def create_widget(self):                      
@@ -164,8 +165,11 @@ class Unicode(Connector):
         
         cell = gtk.CellRendererText()
         cell.set_property('editable', True)
-        cell.connect('edited', self.on_edited_text, model, index)
+        cell.connect('edited', self.on_edited_text)
+
+        self.model = model
         self.model_index = index
+        
         self.widget = cell
         return self.widget
 
@@ -173,9 +177,9 @@ class Unicode(Connector):
         return {'text':self.model_index}
 
 
-    def on_edited_text(self, cell, path, new_text, model, index):
+    def on_edited_text(self, cell, path, new_text):
         new_text = self.prop.check(new_text)
-        model[path][index] = unicode(new_text) 
+        self.model[path][self.index] = unicode(new_text) 
         
         
     def on_focus_in_event(self, widget, event):
@@ -220,7 +224,7 @@ class Unicode(Connector):
             state = self.checkbutton.get_active()
             if state is False:
                 return None
-            
+
         try:
             return self.prop.check(value)
         except:

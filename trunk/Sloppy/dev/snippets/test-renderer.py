@@ -6,7 +6,7 @@ import gtk
 from Sloppy.Lib.Props import *
 from Sloppy.Lib.Undo import UndoList
 from Sloppy.Base.properties import *
-
+from Sloppy.Gtk.proprenderer import *
 
 
 class Recipe(HasProperties):
@@ -37,14 +37,15 @@ treeview = gtk.TreeView(my_model)
 
 clist = []
 index = 0
-for key in ['name','foodcolor']:#recipe.get_props().keys():
+for key in ['name']:#recipe.get_props().keys():
     column = gtk.TreeViewColumn(key)    
-    connector = new_connector(recipe, key)
-    connector.create_renderer(my_model, index)
+    cname = get_cname(recipe, key)
+    connector = renderers[cname](recipe, key)
+    connector.create(my_model, index)
     
     cell = connector.widget
     column.pack_start(cell)       
-    column.set_attributes(cell, **connector.get_renderer_attributes())
+    column.set_attributes(cell, **connector.get_attributes())
     treeview.append_column(column)
     
 ##    connector.check_in()    
@@ -52,7 +53,7 @@ for key in ['name','foodcolor']:#recipe.get_props().keys():
     index += 1
 
 # fill model
-my_model.append((recipe.name,recipe.foodcolor))
+my_model.append((recipe.name,))
 
 win.add(treeview)
 win.show_all()
