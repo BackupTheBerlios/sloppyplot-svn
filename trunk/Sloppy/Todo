@@ -1,4 +1,7 @@
 
+FOR 0.5.2:
+==========
+
 - Cell Renderers.  Maybe there are too many differences between widgets
   and cell renderers and it would make sense to create a new class?
 
@@ -8,106 +11,12 @@
 - Then proceed with a cell renderer for marker styles.  A graphical display
   would be cool.
 
-- The 'common' properties should have a defined default value.  This way
-  it would be clear, that only if you use the 'Property', the default value
-  is undefined.
+- Group Properties...
 
-( ) Group Properties...
-
-( ) Mapped Lists / Dictionaries
-
-
+- Mapped Lists / Dictionaries ? At least think about it and make a note.
 
 - to simplify the line dialog, we could have a button that determines
-  what is displayes:  show_style, show_contents, show_both
-
-
-HEY !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
-
-Having _two_ different values might be a good idea.  Then we don't
-need the distinction between default values anymore. We would have an
-internal value (3-tuple) and an external value (color string,
-rgb-tuple, whatever the user specified).
-
-
-------------------------
-I have a new idea for group properties, which would have
-a different user interface and would be 100% extensible, in
-case there ever were any new line properties:
-
-A Layer has a ListProperty called 'group_properties' or maybe just 'groups',
-where each list item is of type 'Group'.  There are subclasses of 'Group' 
-which represent the different uses of the group: 'GroupCycle', 'GroupFixed',
-'GroupRange', 'GroupFunction'.  Each Group has a function 'create_runner'
-which creates a 'GroupRunner' instance with the functions 'reset' and 'next'.
-
-So if a backend e.g. needs to use the color and would like to incorporate
-the group properties, it could do so:
-
-gp_color = layer.groups.new_runner(gp_color)
-for line in layer:
-    ...
-    color = gp_color.next()
-
-
-The idea of such a GroupRunner, which might also be called iterator, is 
-independent of the idea of just having 'groups'. The current advantage of the
-individual 'GroupLineColor', 'GroupLineStyle', ... is definitely, that we
-can individually define what is allowed and what is not.
-
-class GroupLineWidth(HasProperties):
-    type = Integer(mapping=MAP['group_type'], reset=GROUP_TYPE_FIXED)
-    allow_override = Boolean(reset=True)        
-    value = Property(Line.width.check, reset=Line.width.on_default)
-    cycle_list = List(Line.width.check)
-    range_start = Float(reset=1.0)
-    range_stop = Float(reset=None)
-    range_step = Float(reset=1.0)
-
-But on the other hand, we need to define all variables, even though
-the group type does not allow all types.
-
-LineWidth:
-  type = cycle,fixed,range
-  ...
- 
-
-The value is simple:
-  value = Property(prop.check, reset=prop.on_default)
-
-The cycle list as well:
-  cycle_list = List(prop.check)
-
-The range only makes sense if we have a numeric value and could actually be expressed as tuple:
-  range = Tuple(3, prop.check)
-  
-
-(I need to implement the Tuple Property, the Check is already there)
-
-In all three cases we could simply use a variable 'value':
-
-Group:
-  property_key  (e.g. 'color')
-  value (e.g. 'blue')
-
-the type is defined by the Group subclass.
-
-
-
-Some problems I see:
-- Saving and Loading
-
-- GroupFixed, ... are classes, so if I want to dynamically change
-  the checks for their properties, then I would need to introduce
-  dynamic typing, i.e. I need to change the Props of the instance.
-  
-
-
-
-
-
-FOR 0.5.2:
-==========
+  what it displays:  show_style, show_contents, show_both
 
 - show_all() is bad for group boxes, because it resizes the whole dialog.
 
@@ -121,18 +30,8 @@ FOR 0.5.2:
 
 (E) Make sure all the good properties work in gnuplot as well...
 
-
-
-
----------------------------
 (B) Metadata
     - display metadata, so that the import makes more sense.
-    - maybe allow to edit the regular expressions that lead to the import metadata?
-
-
-(C) little things
-    - allow comments for plots and datasets.
-    - pwconnect.create widget should not require use_checkbutton.
     
 (D) LayerWin and Toolbox
     - Fix Toolbox combo (is it broken?)
@@ -140,6 +39,27 @@ FOR 0.5.2:
       Add a combobox similar to the existing one with all the layers
       The existing layer tool should be put into a tab and could offer
       things to edit the layer.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 ------------------------------------------------------------------------------
@@ -154,11 +74,7 @@ DETAILS FOR 0.5.3:
 - re-implement some kind of gnuplot window or integrate that into the toolbox.
 
 
-
-
-------------------------------------------------------------------------------
-------------------------------------------------------------------------------
------
+-----------------------------------------------------------------------------
 ASCII Import:
 
 - If we always read the header, then the header could leave the file 
