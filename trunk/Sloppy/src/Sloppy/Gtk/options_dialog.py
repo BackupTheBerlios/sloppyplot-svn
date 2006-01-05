@@ -56,6 +56,8 @@ class OptionsDialog(gtk.Dialog):
         self.owner = owner
         include = owner.get('public_props', None)
         self.connectors = pwconnect.new_connectors(owner, include=include)
+        for c in self.connectors:
+            c.create_widget()
         if len(self.connectors) == 0:
             raise NoOptionsError
         

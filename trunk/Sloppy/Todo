@@ -1,31 +1,3 @@
-
-rewrite pwconnect from scratch.
-This would be a good opportunity to add two kind of widgets:
-
- - stand-alone widgets
- - wrapper for cell renderers
-
-The goal would be to construct a dialog for a certain HasProperties object,
-as well as to automatically construct a list dialog for its Properties.
-
-FINISHED:
-
-- Unicode (Entry widget), respects if None is a valid value
-- Range (SpinButton widget), for integers, respects if None is a valid value
-
-TODO:
-
-- String
-- RenderUnicode
-- RenderRange
-- RenderString
-
-- FloatRange (digits)
-- RGBColor
-- RenderFloatRange
-- RenderRGBColor
-
-
 _ODER_
 
 connector Unicode

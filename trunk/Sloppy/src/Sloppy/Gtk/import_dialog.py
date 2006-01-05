@@ -57,7 +57,9 @@ class ImportOptions(gtk.Dialog):
         #
         # set up connectors
         #
-        self.connectors = pwglade.construct_connectors(self.importer)            
+        self.connectors = pwconnect.new_connectors(self.importer)
+        for c in self.connectors:
+            c.create_widget()
         table_options = pwglade.construct_table(self.connectors)
         widget = uihelper.new_section("Import Options", table_options)
         self.vbox.pack_start(widget,False,True)

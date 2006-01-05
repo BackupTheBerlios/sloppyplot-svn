@@ -297,6 +297,8 @@ class LayerTab(AbstractTab):
         keys = ['title', 'visible', 'grid']
 
         clist = pwconnect.new_connectors(layer, include=keys)
+        for c in clist:
+            c.create_widget()
         table = pwglade.construct_table(clist)
         frame = uihelper.new_section("Layer", table)
         self.add(frame)
@@ -317,6 +319,8 @@ class LegendTab(AbstractTab):
         keys = ['label', 'position', 'visible', 'border', 'x', 'y']
         
         clist = pwconnect.new_connectors(legend, include=keys)
+        for c in clist:
+            c.create_widget()
         table = pwglade.construct_table(clist)
         frame = uihelper.new_section("Legend", table)
         self.add(frame)
@@ -339,6 +343,8 @@ class AxesTab(AbstractTab):
         self.clist = []
         for key, axis in axesdict.iteritems():
             connectors = pwconnect.new_connectors(axis, include=keys)
+            for c in connectors:
+                c.create_widget()
             table = pwglade.construct_table(connectors)
             frame = uihelper.new_section(key, table)
             self.pack_start(frame, False, True)
@@ -499,7 +505,7 @@ class LinesTreeView(gtk.TreeView):
         cell.connect('edited', self.on_edited_text, self.MODEL_LABEL, objects.Line.label)
         
         column.pack_start(cell)       
-        column.set_attributes(cell, text=self.MODEL_LABEL)        
+        column.set_attributes(cell, text=self.MODEL_LABEL)
         self.append_column(column)
 
 

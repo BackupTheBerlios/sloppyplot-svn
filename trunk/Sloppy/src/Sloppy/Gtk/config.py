@@ -235,6 +235,8 @@ class ImportTemplatesPage(gtk.VBox):
         clist2 = pwconnect.new_connectors(importer, include=importer.public_props)
         clist = clist1 + clist2
 
+        for c in clist:
+            c.create_widget()
         table = pwglade.construct_table(clist)
 
         if allow_edit is False:

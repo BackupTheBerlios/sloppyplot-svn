@@ -57,6 +57,7 @@ class Connector(object):
         self.key = key
         self.widget = None
         self.last_value = None
+        self.type = None        
         self.init()
 
     def init(self):
@@ -115,12 +116,19 @@ connectors = {}
 
 ###############################################################################
 
+(TYPE_RENDERER, TYPE_WIDGET) = range(2)
+
+
 class Unicode(Connector):
 
     """ Suitable for VUnicode. """
-    
-    def create_widget(self):                      
 
+    def init(self):
+        self.model_index = -1
+        
+    def create_widget(self):                      
+        self.type = TYPE_WIDGET
+        
         # create entry
         self.entry = gtk.Entry()
 
@@ -152,10 +160,18 @@ class Unicode(Connector):
         return self.widget
 
     def create_renderer(self, model, index):
+        self.type = TYPE_RENDERER
+        
         cell = gtk.CellRendererText()
         cell.set_property('editable', True)
         cell.connect('edited', self.on_edited_text, model, index)
-        return cell
+        self.model_index = index
+        self.widget = cell
+        return self.widget
+
+    def get_renderer_attributes(self):
+        return {'text':self.model_index}
+
 
     def on_edited_text(self, cell, path, new_text, model, index):
         new_text = self.prop.check(new_text)
@@ -390,12 +406,21 @@ connectors['Map'] = Map
 class RGBColor(Connector):
 
     def create_widget(self):
+        self.type = TYPE_WIDGET
+        
         self.colorbutton = gtk.ColorButton()
         self.widget = self.colorbutton
 
         widget = self.widget
         
         return self.widget
+
+    def create_renderer(self, model, index):
+        self.type = TYPE_RENDERER
+
+        cell = gtk.CellRenderer
+        return self.widget
+
     
     def to_gdk_color(self, color):
         return gtk.gdk.Color(int(color[0]*65535), int(color[1]*65535), int(color[2]*65535))
@@ -581,34 +606,32 @@ connectors['Boolean'] = Boolean
 
 ###############################################################################
 
-def new_connector(owner, key):
+def get_cname(owner, key):
     prop = owner.get_prop(key)
-    vlist = prop.validator.vlist
+    vlist = prop.validator.vlist    
+    while len(vlist) > 0:
+        v = vlist[0]
+        if isinstance(v, VMap):
+            return 'Map'
+        elif isinstance(v, (VUnicode,VInteger,VFloat,VString,VRegexp)):
+            return 'Unicode'
+        elif isinstance(v, VRange):
+            return'Range'
+        elif isinstance(v, VRGBColor):
+            return 'RGBColor'
+        elif isinstance(v, VChoice):
+            return 'Choice'
+        elif isinstance(v, VBoolean):
+            return 'Boolean'
+        vlist.pop(0)
 
-    def get_cname():
-        while len(vlist) > 0:
-            v = vlist[0]
-            if isinstance(v, VMap):
-                return 'Map'
-            elif isinstance(v, (VUnicode,VInteger,VFloat,VString,VRegexp)):
-                return 'Unicode'
-            elif isinstance(v, VRange):
-                return'Range'
-            elif isinstance(v, VRGBColor):
-                return 'RGBColor'
-            elif isinstance(v, VChoice):
-                return 'Choice'
-            elif isinstance(v, VBoolean):
-                return 'Boolean'
-            vlist.pop(0)
+    logger.warning("No connector found for property %s.%s." % (owner.__class__.__name__, key))
+    return 'Unicode'
 
-        logger.warning("No connector found for property %s.%s." % (owner.__class__.__name__, key))
-        return 'Unicode'
 
-    
-    cname = get_cname()
+def new_connector(owner, key):  
+    cname = get_cname(owner, key)
     connector = connectors[cname](owner, key)
-    connector.create_widget()
     return connector
 
 
@@ -618,5 +641,4 @@ def new_connectors(owner, include=None, exclude=None):
     for key in keys:
         clist.append(new_connector(owner, key))
     return clist
-                    
-    
+

@@ -65,7 +65,6 @@ from options_dialog import OptionsDialog, NoOptionsError
 from Sloppy.Lib.Undo import *
 
 import import_dialog
-import pwglade
 import config
 
 
