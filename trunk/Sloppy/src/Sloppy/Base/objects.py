@@ -28,7 +28,7 @@ from Sloppy.Base.properties import *
 
 from Sloppy.Lib.Signals import HasSignals
 from Sloppy.Lib.Undo import udict
-from Sloppy.Lib.Props import HasProperties, Property, List, Dictionary
+from Sloppy.Lib.Props import *
 from Sloppy.Lib.Props.common import *
 
 
@@ -131,11 +131,11 @@ class TextLabel(HasProperties):
     text = Unicode('', blurb="Displayed Text")
     x = Float(0.0, blurb="X-Position")
     y = Float(0.0, blurb="Y-Position")
-    system = Property(MAP['position_system'],
+    system = VP(MAP['position_system'],
                       blurb="Coordinate System")
-    valign = Property(MAP['position_valign'],
+    valign = VP(MAP['position_valign'],
                       blurb="Vertical Alignment")
-    halign = Property(MAP['position_halign'],
+    halign = VP(MAP['position_halign'],
                       blurb="Horizontal Aligment")
     
 
@@ -146,7 +146,7 @@ class Axis(HasProperties):
     start = Float(0.0, blurb='Start')
     end = Float(0.0, blurb='End')
 
-    scale = Property(PV['axis.scale'])
+    scale = VP(PV['axis.scale'])
     format = String('', blurb='Format')
 
     
@@ -156,7 +156,7 @@ class Line(HasProperties):
     label = Unicode()
     visible = Boolean(True)
     
-    style = Property(PV['line.style'])    
+    style = VP(PV['line.style'])    
     width = FloatRange(0,10, default=1)
     color = RGBColor('black')
 
@@ -165,13 +165,13 @@ class Line(HasProperties):
     marker_size = FloatRange(0,None,default=1)        
     
     # source stuff (soon deprecated)
-    cx = IntegerRange(0,None, default=0, blurb="x-column")
-    cy = IntegerRange(0,None, default=1, blurb="y-column")
-    row_first = IntegerRange(0,None)
-    row_last = IntegerRange(0,None)
-    #value_range = Property(transform=str)    
-    cxerr = IntegerRange(0,None)
-    cyerr = IntegerRange(0,None)
+    cx = VP(Integer, VRange(0,None), None, default=0, blurb="x-column")
+    cy = VP(Integer, VRange(0,None), None, default=1, blurb="y-column")
+    row_first = VP(Integer, VRange(0,None), None, default=None)
+    row_last = VP(Integer, VRange(0,None), None, default=None)
+    #value_range = VP(transform=str)    
+    cxerr = VP(Integer, VRange(0,None), None)
+    cyerr = VP(Integer, VRange(0,None), None)
     source = Instance(Dataset)
 
     def source_to_string(self):
@@ -205,14 +205,14 @@ class Legend(HasProperties):
     label = Unicode(doc='Legend Label')
     visible = Boolean(True)
     border = Boolean(False)
-    position = Property(PV['legend.position'])   
+    position = VP(PV['legend.position'])   
     x = FloatRange(0.0, 1.0, default=0.7)
     y = FloatRange(0.0, 1.0, default=0.0)
 
 
 
 class Layer(HasProperties, HasSignals):
-    type = Property(PV['layer.type'])
+    type = VP(PV['layer.type'])
     title = Unicode(blurb="Title")
     lines = List(Line, blurb="Lines")
     grid = Boolean(default=False, blurb="Grid", doc="Display a grid")
@@ -228,29 +228,29 @@ class Layer(HasProperties, HasSignals):
     # Group Properties
     #
     class GroupLineStyle(HasProperties):
-        type = Property(MAP['group_linestyle_type'], default=GROUP_TYPE_FIXED)
+        type = VP(MAP['group_linestyle_type'], default=GROUP_TYPE_FIXED)
         allow_override = Boolean(True)        
-        value = Property(Line.style, on_default=Line.style.on_default)
+        value = VP(Line.style, on_default=Line.style.on_default)
         cycle_list = List(Line.style)
-        range_start = Property(Float, None, default=1.0)
-        range_stop = Property(Float, None, default=None)
-        range_step = Property(Float, None, default=1.0)
+        range_start = VP(Float, None, default=1.0)
+        range_stop = VP(Float, None, default=None)
+        range_step = VP(Float, None, default=1.0)
         
-    group_linestyle = Property(GroupLineStyle,                               
+    group_linestyle = VP(GroupLineStyle,                               
                                on_default=lambda:Layer.GroupLineStyle(),
                                blurb="Line Style")
 
 
     class GroupLineMarker(HasProperties):
-        type = Property(MAP['group_linemarker_type'], default=GROUP_TYPE_FIXED)
+        type = VP(MAP['group_linemarker_type'], default=GROUP_TYPE_FIXED)
         allow_override = Boolean(True)        
-        value = Property(Line.marker, on_default=Line.marker.on_default)
+        value = VP(Line.marker, on_default=Line.marker.on_default)
         cycle_list = List(Line.marker)
-        range_start = Property(Float, None, default=1.0)
-        range_stop = Property(Float, None, default=None)
-        range_step = Property(Float, None, default=1.0)
+        range_start = VP(Float, None, default=1.0)
+        range_stop = VP(Float, None, default=None)
+        range_step = VP(Float, None, default=1.0)
         
-    group_linemarker = Property(GroupLineMarker,
+    group_linemarker = VP(GroupLineMarker,
                                 on_default=lambda:Layer.GroupLineMarker(),
                                 blurb="Line Marker")
 
@@ -258,26 +258,26 @@ class Layer(HasProperties, HasSignals):
     class GroupLineWidth(HasProperties):
         type = Integer(mapping=MAP['group_type'], default=GROUP_TYPE_FIXED)
         allow_override = Boolean(True)        
-        value = Property(Line.width, on_default=Line.width.on_default)
+        value = VP(Line.width, on_default=Line.width.on_default)
         cycle_list = List(Line.width)
-        range_start = Property(Float, None, default=1.0)
-        range_stop = Property(Float, None, default=None)
-        range_step = Property(Float, None, default=1.0)
+        range_start = VP(Float, None, default=1.0)
+        range_stop = VP(Float, None, default=None)
+        range_step = VP(Float, None, default=1.0)
         
-    group_linewidth = Property(GroupLineWidth,
+    group_linewidth = VP(GroupLineWidth,
                            on_default=lambda:Layer.GroupLineWidth(),
                            blurb="Line Width")
 
     class GroupLineColor(HasProperties):
-        type = Property(MAP['group_linecolor_type'], default=GROUP_TYPE_CYCLE)
+        type = VP(MAP['group_linecolor_type'], default=GROUP_TYPE_CYCLE)
         allow_override = Boolean(True)        
-        value = Property(Line.color, on_default=Line.color.on_default)
+        value = VP(Line.color, on_default=Line.color.on_default)
         cycle_list = List(Line.color, on_default=lambda:['g','b','r'])
-        range_start = Property(Float, None, default=1.0)
-        range_stop = Property(Float, None, default=None)
-        range_step = Property(Float, None, default=1.0)
+        range_start = VP(Float, None, default=1.0)
+        range_stop = VP(Float, None, default=None)
+        range_step = VP(Float, None, default=1.0)
         
-    group_linecolor = Property(GroupLineColor,
+    group_linecolor = VP(GroupLineColor,
                                on_default=lambda:Layer.GroupLineColor(),
                                blurb="Line Color")
 

@@ -51,10 +51,10 @@ class VArray(Validator):
         return value
 
 
-class Array(Property):
+class Array(VP):
 
     def __init__(self, rank=1, doc=None, blurb=None):
-        Property.__init__(self, VArray(rank), doc=doc, blurb=blurb)
+        VP.__init__(self, VArray(rank), doc=doc, blurb=blurb)
         self.rank = rank
 
         
@@ -63,7 +63,7 @@ class Column(HasProperties):
 
     key = Unicode()
     
-    designation = Property(['X','Y','XY','XERR', 'YERR', 'LABEL'])
+    designation = VP(['X','Y','XY','XERR', 'YERR', 'LABEL'])
     query = String()
     label = Unicode()
     data = Array(rank=1)

@@ -68,7 +68,7 @@ class Importer(dataio.Importer):
 
     # Header
     header_size = \
-     Property(
+     VP(
         Integer,
         VRange(0, None),
         default=None,
@@ -122,7 +122,7 @@ class Importer(dataio.Importer):
     # Other
     
     delimiter = \
-     Property(
+     VP(
         VBMap({None: None,
                ',': ',',
                'Tab' : '\t',
@@ -139,7 +139,7 @@ class Importer(dataio.Importer):
         )
     
     ncols = \
-     Property(
+     VP(
         Integer,
         VRange(0,None),
         default=None,
@@ -155,7 +155,7 @@ class Importer(dataio.Importer):
     labels = List()
     
     designations = \
-     Property(
+     VP(
         ['X', 'Y', 'X|Y', 'XY'],
         default='X|Y',        
         blurb="Designations",
@@ -163,7 +163,7 @@ class Importer(dataio.Importer):
         )
 
     typecodes = \
-     Property(list, basestring,
+     VP(list, basestring,
         default='d'
         )
 

@@ -227,7 +227,7 @@ class Backend(object, HasSignals):
 
     def get_line_label(self, line, table=None, cy=None):
         #:line.label:OK
-        label = line.rget('label')
+        label = line.label
         if label is None:
             if table is not None and cy is not None:
                 column = table.column(cy)
@@ -258,7 +258,7 @@ class Backend(object, HasSignals):
 
         # All options allow manual override if allow_override is true
         # and if the line specifies its own value.
-        if group.allow_override is True and container.rget(propname) is not None:
+        if group.allow_override is True and container.get_value(propname) is not None:
             return container.get(propname)
 
         type = group.type

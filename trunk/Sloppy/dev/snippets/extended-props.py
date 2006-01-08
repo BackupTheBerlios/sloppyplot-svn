@@ -32,7 +32,7 @@ class VRGBColor(Validator):
     is_mapping = True
 
     
-class RGBColor(Property):
+class RGBColor(VP):
     color_map = {
         'black' : (0.0, 0.0, 0.0),
         'blue' : (0.0, 0.0, 1.0),
@@ -41,14 +41,14 @@ class RGBColor(Property):
         }
     
     def __init__(self, default=Undefined, **kwargs):
-        Property.__init__(self, VRGBColor(),VMap(self.color_map),
+        VP.__init__(self, VRGBColor(),VMap(self.color_map),
                           default=default, **kwargs)                    
 #------------------------------------------------------------------------------
 
 
 class MySubclass:
-    def __init__(self, owner):
-        print "Owner is ", owner
+    def __init__(self):
+        print "Subclass initialized."
         
 class Line(HasProperties):
     color = RGBColor('black')
@@ -59,11 +59,11 @@ class Line(HasProperties):
     width = Integer(2)
     length = Float(default=4)
 
-    style = Property({'none':None,'solid':1,'dashed':2})
+    style = VP({'none':None,'solid':1,'dashed':2})
     colors = List(color) 
     history = Dictionary(keyword)
 
-    myline = Instance(MySubclass, on_default=lambda o: MySubclass(o))
+    myline = Instance(MySubclass, on_default=lambda: MySubclass())
     
 #..............................................................................    
 line = Line()

@@ -49,17 +49,17 @@ class XTerminal(Terminal):
    
 class PostscriptTerminal(Terminal, HasProperties):
 
-    mode = Property(\
+    mode = VP(\
       ['eps', 'landscape', 'portrait'],
       blurb="mode",
       doc="Output mode"
       )    
-    enhanced = Property(\
+    enhanced = VP(\
       ['enhanced', 'noenhanced'],
       blurb="PS mode",
       doc="Enable subscripts, superscripts, mixed fonts"
       )    
-    color = Property(\
+    color = VP(\
       ['color','monochrome'],
       blurb="color mode",
       doc="Color mode"
@@ -68,7 +68,7 @@ class PostscriptTerminal(Terminal, HasProperties):
       blurb="black text only",
       doc="all text in black, even in color mode"
       )
-    solid = Property(\
+    solid = VP(\
       ['solid', 'dashed'],
       blurb="Line style"
       )
@@ -82,10 +82,10 @@ class PostscriptTerminal(Terminal, HasProperties):
       blurb="line width",
       doc = "Scales all linewidths"
       )
-    duplexing = Property(\
+    duplexing = VP(\
       ['defaultplex', 'simplex', 'duplex']
       )
-    rounded = Property(\
+    rounded = VP(\
       ['rounded', 'butt'],
       blurb="Cap style",
       doc="Whether line caps and line joins should be rounded"

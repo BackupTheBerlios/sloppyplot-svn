@@ -311,11 +311,12 @@ class Backend( backend.Backend ):
             try:
                 return data[start:end]
             except IndexError:
-                backend.BackendError("Index range '%s'out of bounds!" % (start,end) )
+                backend.BackendError("Index range '%s'out of bounds!" % str((start,end)) )
 
         start, end = line.row_first, line.row_last
-        xdata = limit_data(xdata, start, end)
-        ydata = limit_data(ydata, start, end)
+        # SKIPPED
+#        xdata = limit_data(xdata, start, end)
+#        ydata = limit_data(ydata, start, end)
 
         line_index = layer.lines.index(line)
 
@@ -329,35 +330,39 @@ class Backend( backend.Backend ):
 
         #:line.marker
         #:layer.group_linemarker
-        marker = self.get_group_value(line, 'marker',
-                                       layer.group_linemarker, line_index)
-        global linemarker_mappings
-        try: marker = linemarker_mappings[marker]
-        except KeyError: marker = linemarker_mappings.values()[0]
+        #marker = self.get_group_value(line, 'marker',
+        #                               layer.group_linemarker, line_index)
+        #global linemarker_mappings
+        #try: marker = linemarker_mappings[marker]
+        #except KeyError: marker = linemarker_mappings.values()[0]
+        marker = linemarker_mappings.values()[0]
         
         #:line.width
         #:layer.group_linewidth
-        width = self.get_group_value(line, 'width',
-                                      layer.group_linewidth, line_index)
+        ##width = self.get_group_value(line, 'width',
+         ##                             layer.group_linewidth, line_index)
+        width = 2
         
         #:line.color
         #:layer.group_linecolor
-        color = self.get_group_value(line, 'color',
-                                      layer.group_linecolor, line_index)
+        ##color = self.get_group_value(line, 'color',
+        ##layer.group_linecolor, line_index)
+        color = 'black'
 
         #:line.marker_color
-        marker_color = line.marker_color
+        marker_color = line.marker_color_
 
         print "LINEWIDTH = ", width
         
         #--- PLOT LINE ---
-        l, = axes.plot( xdata, ydata,
-                        linewidth=width,
-                        linestyle=style,
-                        marker=marker,
-                        color=color,
-                        markerfacecolor=marker_color,
-                        markeredgecolor=marker_color)
+        print xdata, ydata, width, marker
+        l, = axes.plot( xdata, ydata )
+#                         linewidth=width,
+#                         linestyle=style,
+#                         marker=marker,
+#                         color=color,
+#                         markerfacecolor=marker_color,
+#                         markeredgecolor=marker_color)
 
         line_cache.append(l)
         omap[line] = l        

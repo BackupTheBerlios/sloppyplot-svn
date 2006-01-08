@@ -80,7 +80,7 @@ class Dataset(HasProperties, HasSignals):
     key = Keyword()
     label = Unicode()
     metadata = Dictionary(Unicode)
-    data = Property(Table, ArrayType, None)
+    data = VP(Table, ArrayType, None)
     
     def __init__(self, **kwargs):
         HasProperties.__init__(self, **kwargs)

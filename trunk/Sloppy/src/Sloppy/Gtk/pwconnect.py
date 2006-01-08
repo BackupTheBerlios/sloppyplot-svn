@@ -57,7 +57,6 @@ class Connector(object):
         self.key = key
         self.widget = None
         self.last_value = None
-        self.type = None        
         self.init()
 
     def init(self):
@@ -106,8 +105,6 @@ class Connector(object):
     def create_widget(self):
         raise RuntimeError("create_widget() needs to be implemented.")
 
-    def create_renderer(self):
-        raise RuntimeError("create_renderer() needs to be implemented.")
 
 connectors = {}
 
@@ -116,20 +113,11 @@ connectors = {}
 
 ###############################################################################
 
-(TYPE_RENDERER, TYPE_WIDGET) = range(2)
-
-
 class Unicode(Connector):
 
     """ Suitable for VUnicode. """
 
-    def init(self):
-        self.model = None
-        self.model_index = -1
-        
     def create_widget(self):                      
-        self.type = TYPE_WIDGET
-        
         # create entry
         self.entry = gtk.Entry()
 
@@ -160,28 +148,7 @@ class Unicode(Connector):
 
         return self.widget
 
-    def create_renderer(self, model, index):
-        self.type = TYPE_RENDERER
-        
-        cell = gtk.CellRendererText()
-        cell.set_property('editable', True)
-        cell.connect('edited', self.on_edited_text)
 
-        self.model = model
-        self.model_index = index
-        
-        self.widget = cell
-        return self.widget
-
-    def get_renderer_attributes(self):
-        return {'text':self.model_index}
-
-
-    def on_edited_text(self, cell, path, new_text):
-        new_text = self.prop.check(new_text)
-        self.model[path][self.index] = unicode(new_text) 
-        
-        
     def on_focus_in_event(self, widget, event):
         self.last_value = widget.get_text()
         

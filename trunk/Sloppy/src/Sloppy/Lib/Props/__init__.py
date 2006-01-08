@@ -45,4 +45,4 @@ License, or (at your option) any later version.
 
 from main import *
 from common import *
-
+from vprops import *

@@ -38,7 +38,7 @@ class Exporter(dataio.Exporter):
     author = "Niklas Volbers"
     blurb = "CSV (comma separated values)"
 
-    delimiter = Property(basestring, default='\t')
+    delimiter = VP(basestring, default='\t')
     
     def write_table_to_stream(self, fd, table=None):
         if not isinstance(table, Table):

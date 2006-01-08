@@ -86,8 +86,8 @@ class Importer(HasProperties):
 
     # Still experimental:
     # These two properties can be used to interact with the application
-    app = Property(object)
-    progress_indicator = Property(object)
+    app = VP(object)
+    progress_indicator = VP(object)
     
     def read_table_from_stream(self,fd):
         return None

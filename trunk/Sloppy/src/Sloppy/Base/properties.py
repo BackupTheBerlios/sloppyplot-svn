@@ -33,7 +33,7 @@ class VRGBColor(Validator):
     is_mapping = True
 
     
-class RGBColor(Property):
+class RGBColor(VP):
     color_map = {
         'g' : (1.0, 0.0, 0.0),
         'green' : (1.0, 0.0, 0.0),
@@ -48,14 +48,14 @@ class RGBColor(Property):
         }
     
     def __init__(self, default=Undefined, **kwargs):
-        Property.__init__(self, VRGBColor(), VMap(self.color_map),
+        VP.__init__(self, VRGBColor(), VMap(self.color_map),
                           default=default, **kwargs)                    
 
 
 #------------------------------------------------------------------------------
 # MarkerStyle
 
-class MarkerStyle(Property):
+class MarkerStyle(VP):
 
     permitted_values = [
         "None",
@@ -83,7 +83,7 @@ class MarkerStyle(Property):
         "steps"]
     
     def __init__(self, **kwargs):
-        Property.__init__(self, self.permitted_values, **kwargs)
+        VP.__init__(self, self.permitted_values, **kwargs)
 
     
 
@@ -91,8 +91,8 @@ class MarkerStyle(Property):
 
 #------------------------------------------------------------------------------
 
-class BooleanOrNone(Property):
+class BooleanOrNone(VP):
     def __init__(self, default=Undefined, **kwargs):
-        Property.__init__(self, (VBoolean(),None), **kwargs)
+        VP.__init__(self, (VBoolean(),None), **kwargs)
         
     
