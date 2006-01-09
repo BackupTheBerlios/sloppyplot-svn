@@ -46,7 +46,7 @@ class VProperty(Property):
         self.validator = construct_validator_list(*validators, **kwargs)
         self.on_default = self.validator.on_default
         
-    def set_value(self, value, owner, key):
+    def set_value(self, owner, key, value):
         try:
             if self.validator.is_mapping is False:
                 owner._values[key] = self.validator.check(value)
@@ -57,7 +57,7 @@ class VProperty(Property):
             raise PropertyError("Failed to set property '%s' of container '%s' to '%s': Value must be %s." %
                                 (key, owner.__class__.__name__, value, str(msg)))
 
-    def get_default(self):
+    def get_default(self, owner, key):
         return self.on_default()
 
     def check(self, value):

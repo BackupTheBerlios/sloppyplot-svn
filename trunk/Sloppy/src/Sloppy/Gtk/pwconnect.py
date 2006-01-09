@@ -33,7 +33,7 @@ import gtk
 import sys
 
 from Sloppy.Base import uwrap
-from Sloppy.Lib.Props.main import *
+from Sloppy.Lib.Props import *
 from Sloppy.Base.properties import *
 
 

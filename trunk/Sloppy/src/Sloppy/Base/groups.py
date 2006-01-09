@@ -130,61 +130,67 @@ class GroupRangeIter(GroupIter):
 
 
 
-class TestContainer(HasProperties):
-    an_int = Integer()
-    a_string = String()
+def test():
+    class TestContainer(HasProperties):
+        an_int = Integer()
+        a_string = String()
 
 
-tc = TestContainer(an_int=5, a_string="Niklas")
+    tc = TestContainer(an_int=5, a_string="Niklas")
 
-gf_int = GroupFixed(tc, 'an_int', value=3)
-gf_string = GroupFixed(tc, 'a_string')
+    gf_int = GroupFixed(tc, 'an_int', value=3)
+    gf_string = GroupFixed(tc, 'a_string')
 
-#gf_int.value = 'Annekatrin' # fails
-gf_string.value = 5 # o.k., converted to string
+    #gf_int.value = 'Annekatrin' # fails
+    gf_string.value = 5 # o.k., converted to string
 
-#gf_int.value = 5
-gf_string.value = "Annekatrin"
+    #gf_int.value = 5
+    gf_string.value = "Annekatrin"
 
-print gf_int.value
-print gf_string.value
+    print gf_int.value
+    print gf_string.value
 
-print gf_int.props.value
-##print gf_int.props.value.checks
-
-
-iter = gf_int.new_iter()
-print iter.current()
-print iter.advance()
-print iter.advance()
-print iter.advance()
-
-####
-gc_int = GroupCycle(tc, 'an_int')
-
-gc_int.values = [5,6,7]
-print gc_int.values
-
-#gc_int.values = [5,6,'Annekatrin'] # fails
-
-iter = gc_int.new_iter()
-print iter.current()
-print iter.advance()
-print iter.advance()
-print iter.advance()
+    print gf_int.props.value
+    ##print gf_int.props.value.checks
 
 
-####
-gr_int = GroupRange(tc, 'an_int')
-gr_int.start = 1
-gr_int.stop = 10
-gr_int.step = 2
+    iter = gf_int.new_iter()
+    print iter.current()
+    print iter.advance()
+    print iter.advance()
+    print iter.advance()
 
-iter = gr_int.new_iter()
-print iter.current()
-print iter.advance()
-print iter.advance()
-print iter.advance()
-print iter.advance()
-print iter.advance()
+    ####
+    gc_int = GroupCycle(tc, 'an_int')
 
+    gc_int.values = [5,6,7]
+    print gc_int.values
+
+    #gc_int.values = [5,6,'Annekatrin'] # fails
+
+    iter = gc_int.new_iter()
+    print iter.current()
+    print iter.advance()
+    print iter.advance()
+    print iter.advance()
+
+
+    ####
+    gr_int = GroupRange(tc, 'an_int')
+    gr_int.start = 1
+    gr_int.stop = 10
+    gr_int.step = 2
+
+    iter = gr_int.new_iter()
+    print iter.current()
+    print iter.advance()
+    print iter.advance()
+    print iter.advance()
+    print iter.advance()
+    print iter.advance()
+
+
+
+if __name__ == "__main__":
+    test()
+    

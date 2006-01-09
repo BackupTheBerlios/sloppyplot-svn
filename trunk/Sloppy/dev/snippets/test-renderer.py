@@ -11,18 +11,18 @@ from Sloppy.Gtk.proprenderer import *
 
 class Recipe(HasProperties):
     name = Unicode()
-    name_or_None = Property(Unicode, None)
-    calories = Property(VRange(0,None), None)
+    name_or_None = VP(Unicode, None)
+    calories = VP(VRange(0,None), None)
     # works with VBMap as well!
-    difficulty = Property({"easy":1, "average":2, "hard":3})
+    difficulty = VP({"easy":1, "average":2, "hard":3})
 
     weight = Float(default=214.32)
     foodcolor = RGBColor('black')
 
-    beverage = Property(["wine", "coke", "water"])
+    beverage = VP(["wine", "coke", "water"])
 
     is_delicious = Boolean(True)
-    is_recommended = Property(Boolean,None, default=True)
+    is_recommended = VP(Boolean,None, default=True)
 
     
     
@@ -32,12 +32,12 @@ recipe.foodcolor=(0.0,1.0,0.3)
 win = gtk.Window()
 
     
-my_model = gtk.ListStore(str)
+my_model = gtk.ListStore(str, object)
 treeview = gtk.TreeView(my_model)
 
 clist = []
 index = 0
-for key in ['name']:#recipe.get_props().keys():
+for key in ['name', 'beverage']:#recipe.get_props().keys():
     column = gtk.TreeViewColumn(key)    
     cname = get_cname(recipe, key)
     connector = renderers[cname](recipe, key)
@@ -53,7 +53,7 @@ for key in ['name']:#recipe.get_props().keys():
     index += 1
 
 # fill model
-my_model.append((recipe.name,))
+my_model.append((recipe.name,recipe.beverage))
 
 win.add(treeview)
 win.show_all()

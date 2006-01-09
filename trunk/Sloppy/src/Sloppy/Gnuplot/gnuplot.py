@@ -152,7 +152,6 @@ class Backend(backend.Backend):
         """Send string to gnuplot"""
 
         encoded_cmd = cmd.encode( self.encoding )
-        #encoded_cmd = cmd
         self.gpout.flush()
         self.sig_emit('gnuplot-send-cmd', cmd=cmd)
         self.gpwrite.write(encoded_cmd + "\n")
@@ -283,8 +282,8 @@ class Backend(backend.Backend):
             else: cmd.append('unset %slabel' % key)
 
             # axis range
-            start = axis.rget('start', '*')
-            end = axis.rget('end','*')
+            start = axis.get_value('start', '')
+            end = axis.get_value('end','*')
             cmd.append('set %srange [%s:%s]' % (key,start,end))
 
             # axis scale
@@ -305,6 +304,7 @@ class Backend(backend.Backend):
         # lines
         line_cache = []
         for line in layer.lines:
+            print "TRYING TO PLOT LINE"
             try:
                 if line.visible is False: continue
 
@@ -331,23 +331,21 @@ class Backend(backend.Backend):
 
                 #:line.style
                 #:layer.group_linestyle
-                style = self.get_group_value(line, 'style',
-                                              layer.group_linestyle, line_index)
+                style = 'solid'
 
                 #:line.marker
                 #:layer.group_linemarker
-                marker = self.get_group_value(line, 'marker',
-                                               layer.group_linemarker, line_index)
+                marker = 'points'
+                #marker = self.get_group_value(line, 'marker',
+                #                               layer.group_linemarker, line_index)
 
                 #:line.width
                 #:layer.group_linewidth
-                width = self.get_group_value(line, 'width',
-                                              layer.group_linewidth, line_index)
+                width = 1
 
                 #:line.color
                 #:layer.group_linecolor
-                color = self.get_group_value(line, 'color',
-                                              layer.group_linecolor, line_index)
+                color = 'b'
 
                 #
                 # with-clause
@@ -583,7 +581,7 @@ class Backend(backend.Backend):
             cd['multiplot-end'] = ["unset multiplot"]
             for layer in self.plot.layers:
                 # TODO: maybe add a command to the queue to clear cdict[layer]?
-                self.cdict[layer] = {} 
+                self.cdict[layer] = {}
                 self.update_layer(layer)
 
                 x, y, width, height = layer.x, layer.y, layer.width, layer.height                

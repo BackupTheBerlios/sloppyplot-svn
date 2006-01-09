@@ -72,10 +72,10 @@ class Property:
     def get_value(self, owner, key):
         return owner._values[key]
 
-    def set_value(self, value, owner, key):
+    def set_value(self, owner, key, value):
         owner._values[key] = value
 
-    def get_default(self):
+    def get_default(self, owner, key):
         return Undefined
        
         
@@ -97,9 +97,10 @@ class HasProperties(object):
         object.__setattr__(self, '_values', {})
         object.__setattr__(self, '_props', {})
         
-        # We need to init the Props of all classes that the object instance
-        # belongs to.  To give meaningful error messages, we reverse the
-        # order and define the base class Properties first.
+        # We need to init the Properties of all classes that the
+        # object instance belongs to.  To give meaningful error
+        # messages, we reverse the order and define the base class
+        # Properties first.        
         classlist = list(object.__getattribute__(self,'__class__').__mro__[:-1])
         classlist.reverse()
         
@@ -110,14 +111,12 @@ class HasProperties(object):
                     if self._props.has_key(key):
                         raise KeyError("%s defines Prop '%s', which has already been defined by a base class!" % (klass,key)  )
                     self._props[key] = prop
-                    #self._values[key] = Undefined
-                    #self._mvalues[key] = Undefined
                     
-                    kwvalue = kwargs.pop(key,None)
+                    kwvalue = kwargs.pop(key, None)
                     if kwvalue is not None:
-                        self.__setattr__(key,kwvalue)
+                        self.__setattr__(key, kwvalue)
                     else:
-                        default = prop.get_default()
+                        default = prop.get_default(self, key)
                         if default is not Undefined:  
                             self.set_value(key, default)
                         else:
@@ -140,7 +139,7 @@ class HasProperties(object):
         
         props = object.__getattribute__(self, '_props')
         if props.has_key(key):
-            props[key].set_value(value, self, key)
+            props[key].set_value(self, key, value)
         else:
             object.__setattr__(self, key, value)
     

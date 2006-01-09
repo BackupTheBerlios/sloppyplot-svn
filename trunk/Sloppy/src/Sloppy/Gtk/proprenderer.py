@@ -33,7 +33,7 @@ import gtk
 import sys
 
 from Sloppy.Base import uwrap
-from Sloppy.Lib.Props.main import *
+from Sloppy.Lib.Props import *
 from Sloppy.Base.properties import *
 
 
@@ -78,7 +78,7 @@ class RendererUnicode(Renderer):
 
         cell = gtk.CellRendererText()
         cell.set_property('editable', True)
-        cell.connect('edited', self.on_edited_text)
+        cell.connect('edited', self.on_edited)
         
         self.widget = cell
         return self.widget
@@ -87,13 +87,66 @@ class RendererUnicode(Renderer):
         return {'text':self.model_index}
 
 
-    def on_edited_text(self, cell, path, new_text):    
+    def on_edited(self, cell, path, new_text):    
         try:
             value = self.prop.check(new_text)
         except PropertyError:
             pass
         else:
             self.model[path][self.model_index] = unicode(value)
-        
+
+    def cell_data_func(self):
+        pass
+
+    # TODO: on_edited should set value
+    # TODO: and cell_data_func should display unicode(value)
+    
         
 renderers['Unicode'] = RendererUnicode
+
+
+
+class RendererChoice(Renderer):
+
+    """ Suitable for VChoice. """
+
+    def init(self):
+        self.model = None
+        self.model_index = -1
+
+    def create(self, model, index):
+        self.model = model
+        self.model_index = index
+
+        cell = gtk.CellRendererCombo()
+
+        # set up cell_model
+        prop = self.container.get_prop(self.key)
+        vchoices = [v for v in prop.validator.vlist if isinstance(v, VChoice)]
+        if len(vchoices) == 0:
+            raise TypeError("Property for connector 'Choice' has no choice validator!")
+        self.vchoice = vchoice = vchoices[0]
+
+        cell_model = gtk.ListStore(str, object)
+        for value in vchoice.values:
+            cell_model.append((unicode(value), value))
+                        
+        cell.set_property('text-column', 0)
+        cell.set_property('model', cell_model)
+
+        # make editable
+        cell.set_property('editable', True)
+        cell.connect('edited', self.on_edited)
+
+        self.widget = cell
+        return cell
+    
+    def get_attributes(self):
+        print "---", self.model_index
+        return {'text':self.model_index}
+
+    def on_edited(self, cell, path, new_text):
+        print "on_edited", new_text
+        self.model[path][self.model_index] = new_text
+        
+renderers['Choice'] = RendererChoice
