@@ -586,7 +586,7 @@ class Backend(backend.Backend):
 
                 x, y, width, height = layer.x, layer.y, layer.width, layer.height                
                 self.cdict[layer]['multiplot-start'] = \
-                 ["set origin %.2f,%.2f" % (x,y),
+                  ["set origin %.2f,%.2f" % (x,y),
                   "set size %.2f,%.2f" % (width, height)]                
         else:
             # Single plot!

@@ -322,8 +322,9 @@ class Backend( backend.Backend ):
 
         #:line.style
         #:layer.group_linestyle
-        style = self.get_group_value(line, 'style',
-                                      layer.group_linestyle, line_index)
+#        style = self.get_group_value(line, 'style',
+#                                      layer.group_linestyle, line_index)
+        style = 'solid'
         global linestyle_mappings
         try: style = linestyle_mappings[style]
         except KeyError: style = linestyle_mappings.values()[1]
@@ -341,7 +342,7 @@ class Backend( backend.Backend ):
         #:layer.group_linewidth
         ##width = self.get_group_value(line, 'width',
          ##                             layer.group_linewidth, line_index)
-        width = 2
+        width = 1
         
         #:line.color
         #:layer.group_linecolor

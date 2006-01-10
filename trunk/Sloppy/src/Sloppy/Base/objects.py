@@ -112,8 +112,8 @@ class TextLabel(HasProperties):
 class Axis(HasProperties):
     " A single axis for a plot. "
     label = Unicode('', blurb='Label')
-    start = Float(0.0, blurb='Start')
-    end = Float(0.0, blurb='End')
+    start = VP(Float, None, default=None, blurb='Start')
+    end = VP(Float, None, default=None, blurb='End')
 
     scale = VP(PV['axis.scale'])
     format = String('', blurb='Format')
