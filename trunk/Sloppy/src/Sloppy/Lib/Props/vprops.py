@@ -376,7 +376,7 @@ class RequireAll(ValidatorList):
 
 def construct_validator_list(*validators, **kwargs):
     if len(validators) == 0:
-        return RequireOne()
+        return RequireOne(**kwargs)
     elif len(validators) == 1 and isinstance(validators[0], ValidatorList):
             return validators[0] # TODO: what about **kwargs?
     else:
