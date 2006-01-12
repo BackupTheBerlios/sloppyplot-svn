@@ -80,11 +80,12 @@ class RendererUnicode(Renderer):
         cell.set_property('editable', True)
         cell.connect('edited', self.on_edited)
         
-        self.widget = cell
-        return self.widget
+        column = gtk.TreeViewColumn(self.key)
+        column.pack_start(cell)
+        column.set_attributes(cell, text=index)
 
-    def get_attributes(self):
-        return {'text':self.model_index}
+        self.column = column
+        return column
 
 
     def on_edited(self, cell, path, new_text):    
@@ -118,8 +119,6 @@ class RendererChoice(Renderer):
         self.model = model
         self.model_index = index
 
-        cell = gtk.CellRendererCombo()
-
         # set up cell_model
         prop = self.container.get_prop(self.key)
         vchoices = [v for v in prop.validator.vlist if isinstance(v, VChoice)]
@@ -130,7 +129,8 @@ class RendererChoice(Renderer):
         cell_model = gtk.ListStore(str, object)
         for value in vchoice.values:
             cell_model.append((unicode(value), value))
-                        
+
+        cell = gtk.CellRendererCombo()                        
         cell.set_property('text-column', 0)
         cell.set_property('model', cell_model)
 
@@ -138,15 +138,19 @@ class RendererChoice(Renderer):
         cell.set_property('editable', True)
         cell.connect('edited', self.on_edited)
 
-        self.widget = cell
-        return cell
-    
-    def get_attributes(self):
-        print "---", self.model_index
-        return {'text':self.model_index}
+        column = gtk.TreeViewColumn(self.key)
+        column.pack_start(cell)
+        column.set_attributes(cell, text=index)
+        # TODO: we get a warning here. Why?
+        print ">>> INDEX ", index, type(index)
+
+        self.column = column
+        return column
+
 
     def on_edited(self, cell, path, new_text):
         print "on_edited", new_text
         self.model[path][self.model_index] = new_text
+
         
 renderers['Choice'] = RendererChoice

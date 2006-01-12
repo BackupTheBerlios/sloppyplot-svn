@@ -44,6 +44,16 @@ FOR 0.5.2:
 
 - Bugreport: Changing the column order causes all values to become integers!
 
+- What data should be passed to the get function of a group object?
+  maybe the object that we are talking about, the property container?
+  
+  get(self, index, container, alternative,...)
+  
+  and if so: should some container objects have a property 'owner' which 
+  yields the parent?  Then of course we must make sure that this prop
+  is set whenever needed.
+
+
 
 === PART D - optional stuff ===
 
