@@ -125,7 +125,7 @@ class Line(HasProperties):
     label = Unicode()
     visible = Boolean(True)
     
-    style = VP(PV['line.style'])    
+    style = VP(PV['line.style'])
     width = FloatRange(0,10, default=1)
     color = RGBColor('black')
 
@@ -193,7 +193,26 @@ class Layer(HasProperties, HasSignals):
     width = FloatRange(0.0, 1.0, default=0.775)
     height = FloatRange(0.0, 1.0, default=0.79)
 
-    groups = List(Group)
+    group_linestyle = Group(Line.style,
+                            mode=MODE_CYCLE,                            
+                            cycle_list=PV['line.style'],
+                            allow_override=False)
+
+    group_linemarker = Group(Line.marker,
+                             mode=MODE_CONSTANT,                             
+                             constant_value='triangle up symbols',
+                             allow_override=False)
+
+    group_linewidth = Group(Line.width,
+                            mode=MODE_RANGE,
+                            range_start=1, range_step=2,
+                            allow_override=False)
+
+    group_linecolor = Group(Line.color,
+                            mode=MODE_CYCLE,
+                            cycle_list=PV['line.color'],
+                            allow_override=False)
+    
     labels = List(TextLabel)
 
     # axes
@@ -203,6 +222,8 @@ class Layer(HasProperties, HasSignals):
     def get_axes(self):
         return {'x':self.xaxis, 'y':self.yaxis}
     axes = property(get_axes)
+
+
 
     def __init__(self, **kwargs):
         HasProperties.__init__(self, **kwargs)

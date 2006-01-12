@@ -300,11 +300,12 @@ class Backend(backend.Backend):
         # updateinfo is ignored
         cd = self.cdict[layer]        
         queue = self.queue
-
+        
         # lines
-        line_cache = []
+        line_cache = []        
         for line in layer.lines:
-            print "TRYING TO PLOT LINE"
+            index = len(line_cache)
+            print "TRYING TO PLOT LINE #", index
             try:
                 if line.visible is False: continue
 
@@ -331,21 +332,19 @@ class Backend(backend.Backend):
 
                 #:line.style
                 #:layer.group_linestyle
-                style = 'solid'
+                style = layer.group_linestyle.get(index, line.style)
 
                 #:line.marker
                 #:layer.group_linemarker
-                marker = 'points'
-                #marker = self.get_group_value(line, 'marker',
-                #                               layer.group_linemarker, line_index)
-
+                marker = layer.group_linemarker.get(index, line.marker)
+                
                 #:line.width
-                #:layer.group_linewidth
-                width = 1
+                #:layer.group_linewidth                
+                width = layer.group_linewidth.get(index, line.width)
 
                 #:line.color
                 #:layer.group_linecolor
-                color = 'b'
+                color = layer.group_linecolor.get(index, line.color)
 
                 #
                 # with-clause
@@ -366,6 +365,10 @@ class Backend(backend.Backend):
                     with = ''
                     logger.error('line type "%s" not supported by this backend.' % type )
 
+
+                print "###################"
+                print with, "---", style
+                print "###################"
                 # line.marker
                 linemarker_mappings = \
                 {# 'None' is a special case treated below

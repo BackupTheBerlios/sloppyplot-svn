@@ -407,8 +407,10 @@ class ImportTemplatesPage(gtk.VBox):
         template = dataio.IOTemplate(importer_key='ASCII')
         template.defaults = source.defaults.copy()
 
-        # let user input key
-        key = self.input_key("New Template")
+        # Let user input key.
+        # TODO: We must make sure that the new key is unique!
+        key = 'New Template'            
+        key = self.input_key(key)
         if key is None:
             return        
 

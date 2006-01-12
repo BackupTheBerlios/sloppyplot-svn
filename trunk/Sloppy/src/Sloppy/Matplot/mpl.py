@@ -322,48 +322,41 @@ class Backend( backend.Backend ):
 
         #:line.style
         #:layer.group_linestyle
-#        style = self.get_group_value(line, 'style',
-#                                      layer.group_linestyle, line_index)
-        style = 'solid'
+        style = layer.group_linestyle.get(line_index, line.style)
+        print ">>> line style = ", style
         global linestyle_mappings
         try: style = linestyle_mappings[style]
         except KeyError: style = linestyle_mappings.values()[1]
 
         #:line.marker
         #:layer.group_linemarker
-        #marker = self.get_group_value(line, 'marker',
-        #                               layer.group_linemarker, line_index)
-        #global linemarker_mappings
-        #try: marker = linemarker_mappings[marker]
-        #except KeyError: marker = linemarker_mappings.values()[0]
-        marker = linemarker_mappings.values()[0]
+        marker = layer.group_linemarker.get(line_index, line.marker)
+
+        global linemarker_mappings
+        try: marker = linemarker_mappings[marker]
+        except KeyError: marker = linemarker_mappings.values()[0]
         
         #:line.width
         #:layer.group_linewidth
-        ##width = self.get_group_value(line, 'width',
-         ##                             layer.group_linewidth, line_index)
-        width = 1
+        width = layer.group_linewidth.get(line_index, line.width)
         
         #:line.color
         #:layer.group_linecolor
-        ##color = self.get_group_value(line, 'color',
-        ##layer.group_linecolor, line_index)
-        color = 'black'
+        color = layer.group_linecolor.get(line_index, line.color)
 
         #:line.marker_color
         marker_color = line.marker_color_
 
-        print "LINEWIDTH = ", width
         
         #--- PLOT LINE ---
         print xdata, ydata, width, marker
-        l, = axes.plot( xdata, ydata )
-#                         linewidth=width,
-#                         linestyle=style,
-#                         marker=marker,
-#                         color=color,
-#                         markerfacecolor=marker_color,
-#                         markeredgecolor=marker_color)
+        l, = axes.plot( xdata, ydata,
+                        linewidth=width,
+                        linestyle=style,
+                        marker=marker,
+                        color=color,
+                        markerfacecolor=marker_color,
+                        markeredgecolor=marker_color)
 
         line_cache.append(l)
         omap[line] = l        

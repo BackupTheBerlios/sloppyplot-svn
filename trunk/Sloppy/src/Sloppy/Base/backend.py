@@ -254,29 +254,6 @@ class Backend(object, HasSignals):
         return xdata, ydata
 
 
-    def get_group_value(self, container, propname, group, line_index):
-
-        # All options allow manual override if allow_override is true
-        # and if the line specifies its own value.
-        if group.allow_override is True and container.get_value(propname) is not None:
-            return container.get(propname)
-
-        type = group.type
-        if type == objects.GROUP_TYPE_CYCLE:
-            if len(group.cycle_list) > 0:
-                return group.cycle_list[line_index % len(group.cycle_list)]
-            else:
-                return None
-        elif type == objects.GROUP_TYPE_FIXED:
-            return group.value
-        elif type == objects.GROUP_TYPE_RANGE:
-            # TODO: this is just a hack
-            return group.range_start + group.range_step * line_index
-        else:
-            logger.error("Undefined type of group property: %s" % type)
-            return container.get(propname)
-
-
     #----------------------------------------------------------------------
     # Current Layer
 

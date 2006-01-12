@@ -2,6 +2,12 @@
 FOR 0.5.2:
 ==========
 
+
+=== PART A ===
+- Fix the new LayerWin, especially the Line section.
+  => generic class that generates a TreeView/ListView from a list
+     of Properties, using connectors.
+
 - Cell Renderers.  Maybe there are too many differences between widgets
   and cell renderers and it would make sense to create a new class?
 
@@ -15,32 +21,20 @@ FOR 0.5.2:
 
 - Then proceed with a cell renderer for marker styles.  A graphical display
   would be cool.
+-----------------------------
 
-
-
-
-- Group Properties...
-
-- Mapped Lists / Dictionaries ? At least think about it and make a note.
+=== PART B: nice additions ===
 
 - to simplify the line dialog, we could have a button that determines
   what it displays:  show_style, show_contents, show_both
 
 - show_all() is bad for group boxes, because it resizes the whole dialog.
 
-(A) Group Properties
-
-    - gui for cycle list... (=> listwizard?)
-
-   - backend: get_group_values. Either fix it.
-     Maybe we could have a runner object with a method
-     reset() and next().
-
-(E) Make sure all the good properties work in gnuplot as well...
-
-(B) Metadata
-    - display metadata, so that the import makes more sense.
+- display metadata, so that the import makes more sense.
     
+
+=== PART C: bugfix ===
+
 (D) LayerWin and Toolbox
     - Fix Toolbox combo (is it broken?)
     - Toolbox: 
@@ -51,6 +45,16 @@ FOR 0.5.2:
 - Bugreport: Changing the column order causes all values to become integers!
 
 
+=== PART D - optional stuff ===
+
+- Mapped Lists / Dictionaries ? At least think about it and make a note.
+
+
+
+
+
+---
+- Group Properties... [OK]
 
 
 
@@ -72,6 +76,8 @@ FOR 0.5.2:
 
 ------------------------------------------------------------------------------
 DETAILS FOR 0.5.3:
+
+- gui for cycle list... (=> listwizard?)
 
 == CUSTOM GNUPLOT EXPORT ==
 
