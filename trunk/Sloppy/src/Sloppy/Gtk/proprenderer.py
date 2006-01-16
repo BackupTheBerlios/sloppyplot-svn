@@ -45,9 +45,8 @@ class Renderer(object):
 
    
     def __init__(self, container, key):
-        self.container = container
-        self.key = key
         self.prop = container.get_prop(key)
+        self.key = key
 
         self.cell = None # TODO
 
@@ -97,15 +96,14 @@ renderers['Unicode'] = RendererUnicode
 
 #------------------------------------------------------------------------------
 
-class RendererMap(Renderer):
+class RendererChoice(Renderer):
 
     """ Suitable for VChoice, VMap, VBMap. """
 
     def create(self, model, index):
 
         # set up cell_model
-        prop = self.container.get_prop(self.key)
-        vchoices = [v for v in prop.validator.vlist if isinstance(v, (VChoice, VMap, VBMap))]
+        vchoices = [v for v in self.prop.validator.vlist if isinstance(v, (VChoice, VMap, VBMap))]
         if len(vchoices) == 0:
             raise TypeError("Property for renderer 'Map' has no fitting validator!")
         vchoice = vchoices[0]
@@ -115,7 +113,6 @@ class RendererMap(Renderer):
         # Note that currently VBMap is a subclass of VMap,
         # so it is also a VMap instance. 
         if isinstance(vchoice, (VBMap)):
-            print "VBMap"
             for key, value in vchoice.dict.iteritems():
                 cell_model.append((unicode(key), value))
         else: # VChoice, VMap

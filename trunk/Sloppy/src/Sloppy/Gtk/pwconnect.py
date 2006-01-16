@@ -369,7 +369,7 @@ class Choice(Connector):
 
         if isinstance(vchoice, VBMap):
             for key, value in vchoice.dict.iteritems():
-                model.append((unicode(key), key))
+                model.append((unicode(key), value))
         else: # VChoice, VMap
             for value in vchoice.values:
                 model.append((unicode(value), value))
@@ -386,11 +386,21 @@ class Choice(Connector):
     #----------------------------------------------------------------------
 
     def check_in(self):
-        value = self.container.get_mvalue(self.key)
-        values = self.vchoice.values
+        if isinstance(self.vchoice, VMap):
+            value = self.container.get_value(self.key)
+        else:
+            value = self.container.get_mvalue(self.key)
+            print "=====", value
         
         if value != Undefined:
+            print "OK", self.vchoice.is_mapping, self.vchoice.__class__.__name__
+            if self.vchoice.is_mapping is True:
+                print "value unmapped", value
+                value = self.prop.check(value)
+                print "value mapped", value
+            
             try:
+                values = self.vchoice.values                
                 index = values.index(value)
             except:
                 raise ValueError("Connector for %s.%s failed to retrieve prop value '%s' in list of available values '%s'" % (self.container.__class__.__name__, self.key, value, values))

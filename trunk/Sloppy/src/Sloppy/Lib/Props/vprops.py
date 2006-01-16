@@ -97,8 +97,6 @@ class VMap(Validator):
         except KeyError:
             raise ValueError("one of '%s'" % (self.values))
 
-    def is_mapping(self):
-        return True
 
     
 
@@ -123,8 +121,6 @@ class VBMap(VMap):
         except KeyError:
             raise ValueError("one of '%s' or '%s'" % (self.dict.keys(), self.dict.values()))
 
-    def is_mapping(self):
-        return True
 
 
 class VChoice(Validator):
