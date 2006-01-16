@@ -584,8 +584,6 @@ def get_cname(owner, key):
         v = vlist[0]
         if isinstance(v, VMap):
             return 'Map'
-        elif isinstance(v, (VUnicode,VInteger,VFloat,VString,VRegexp)):
-            return 'Unicode'
         elif isinstance(v, VRange):
             return'Range'
         elif isinstance(v, VRGBColor):
@@ -594,6 +592,9 @@ def get_cname(owner, key):
             return 'Choice'
         elif isinstance(v, VBoolean):
             return 'Boolean'
+        elif isinstance(v, (VUnicode,VInteger,VFloat,VString,VRegexp)):
+            return 'Unicode'
+        
         vlist.pop(0)
 
     logger.warning("No connector found for property %s.%s." % (owner.__class__.__name__, key))

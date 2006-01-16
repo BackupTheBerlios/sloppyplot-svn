@@ -31,13 +31,22 @@ recipe.foodcolor=(0.0,1.0,0.3)
 
 win = gtk.Window()
 
-    
-my_model = gtk.ListStore(str, object)
+
+
+
+keys = ['name', 'weight', 'beverage', 'is_delicious']
+
+args = []
+for key in keys:
+    cname = get_cname(recipe, key)
+    args.append( renderers[cname].type )
+
+my_model = gtk.ListStore(*args)    
 treeview = gtk.TreeView(my_model)
 
 clist = []
 index = 0
-for key in ['name', 'beverage']:
+for key in keys:
     column = gtk.TreeViewColumn(key)    
     cname = get_cname(recipe, key)
     connector = renderers[cname](recipe, key)
@@ -47,7 +56,13 @@ for key in ['name', 'beverage']:
     index += 1
 
 # fill model
-my_model.append((recipe.name,recipe.beverage))
+row = []
+for key in keys:
+    row.append( recipe.get_value(key) )
+my_model.append(row)
+
+
+
 
 win.add(treeview)
 win.show_all()

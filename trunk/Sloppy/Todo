@@ -4,23 +4,14 @@ FOR 0.5.2:
 
 
 === PART A ===
+
+- RendererMap (BMap)
+- RendererRange
+
 - Fix the new LayerWin, especially the Line section.
   => generic class that generates a TreeView/ListView from a list
      of Properties, using connectors.
 
-- Cell Renderers.  Maybe there are too many differences between widgets
-  and cell renderers and it would make sense to create a new class?
-
-  a cell renderer needs to connect signals:
-
-  on_edited -- check a value after it has been entered
-  on_cell_data_func -- convert a value to a meaningful value for display
-
-- Maybe leave the CellRenderer color for now and start with a
-  CellRendererCombo for mappings.
-
-- Then proceed with a cell renderer for marker styles.  A graphical display
-  would be cool.
 -----------------------------
 
 === PART B: nice additions ===
