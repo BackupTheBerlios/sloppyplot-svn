@@ -296,89 +296,9 @@ connectors['Range'] = Range
 
 ###############################################################################
 
-class Map(Connector):
-
-    """ Suitable for VMap and VBMap. """
-    
-    def init(self):
-        self.vmap = None
-        self.last_index = -1
-        
-    def create_widget(self):
-        # create combobox
-        self.combobox = gtk.ComboBox()
-
-        # create combobox model
-        combobox = self.combobox
-        model = gtk.ListStore(str, object)
-        combobox.set_model(model)
-        cell = gtk.CellRendererText()
-        combobox.pack_start(cell, True)
-        combobox.add_attribute(cell, 'text', 0)
-
-        # fill model
-        model.clear()
-
-        prop = self.container.get_prop(self.key)
-        vmaps = [v for v in prop.validator.vlist if isinstance(v, VMap)]
-        if len(vmaps) == 0:
-            raise TypeError("Property for connector 'Map' has no map validator!")
-        self.vmap = vmap = vmaps[0]        
-        if vmap is not None:
-            for key, value in vmap.dict.iteritems():
-                model.append((unicode(key), key))
-
-        # pack everything together
-        self.widget = gtk.HBox()
-
-        widget = self.widget
-        widget.pack_start(combobox,True,True)
-        widget.show_all()
-
-        return self.widget
-        
-    #----------------------------------------------------------------------
-
-    def check_in(self):
-        value = self.container.get_mvalue(self.key)
-        values = self.vmap.dict.values()
-        
-        if value != Undefined:
-            try:
-                index = values.index(value)
-            except:
-                raise ValueError("Connector for %s.%s failed to retrieve prop value '%s' in list of available values '%s'" % (self.container.__class__.__name__, self.key, value, values))
-
-            model = self.combobox.get_model()
-            iter = model.get_iter((index,))
-            self.combobox.set_active_iter(iter)
-            self.last_index = index
-            
-        self.last_value = value
-
-    
-    def get_data(self):
-        index = self.combobox.get_active()
-        if index == self.last_index:
-            return self.get_value()
-        elif index < 0:
-            return Undefined            
-        else:
-            model = self.combobox.get_model()
-            prop = self.container.get_prop(self.key)
-            return model[index][1]
-
-
-connectors['Map'] = Map
-
-
-###############################################################################
-
 class RGBColor(Connector):
 
-    def create_widget(self):
-        self.type = TYPE_WIDGET
-        
+    def create_widget(self):       
         self.colorbutton = gtk.ColorButton()
         self.widget = self.colorbutton
 
@@ -387,8 +307,6 @@ class RGBColor(Connector):
         return self.widget
 
     def create_renderer(self, model, index):
-        self.type = TYPE_RENDERER
-
         cell = gtk.CellRenderer
         return self.widget
 
@@ -422,7 +340,7 @@ connectors['RGBColor'] = RGBColor
 
 class Choice(Connector):
 
-    """ Suitable for VChoice. """
+    """ Suitable for VChoice, VMap, VBMap. """
     
     def init(self):
         self.vchoice = None
@@ -442,14 +360,19 @@ class Choice(Connector):
 
         # fill model
         prop = self.container.get_prop(self.key)
-        vchoices = [v for v in prop.validator.vlist if isinstance(v, VChoice)]
+        vchoices = [v for v in prop.validator.vlist if isinstance(v, (VChoice,VBMap,VMap))]
         if len(vchoices) == 0:
             raise TypeError("Property for connector 'Choice' has no choice validator!")
         self.vchoice = vchoice = vchoices[0]
-
+        
         model.clear()
-        for value in vchoice.values:
-            model.append((unicode(value), value))
+
+        if isinstance(vchoice, VBMap):
+            for key, value in vchoice.dict.iteritems():
+                model.append((unicode(key), key))
+        else: # VChoice, VMap
+            for value in vchoice.values:
+                model.append((unicode(value), value))
 
         # pack everything together
         self.widget = gtk.HBox()
@@ -463,7 +386,7 @@ class Choice(Connector):
     #----------------------------------------------------------------------
 
     def check_in(self):
-        value = self.container.get_value(self.key)
+        value = self.container.get_mvalue(self.key)
         values = self.vchoice.values
         
         if value != Undefined:
@@ -479,6 +402,7 @@ class Choice(Connector):
             
         self.last_value = value
 
+
     
     def get_data(self):
         index = self.combobox.get_active()
@@ -490,6 +414,7 @@ class Choice(Connector):
             model = self.combobox.get_model()
             prop = self.container.get_prop(self.key)
             return model[index][1]
+
 
 
 connectors['Choice'] = Choice
@@ -523,7 +448,7 @@ class Boolean(Connector):
             value_dict = {}
         else:
             value_dict = {'None': None}
-            
+
         value_dict.update({'True': True, 'False': False})
         self.values = value_dict.values()
         
@@ -582,13 +507,11 @@ def get_cname(owner, key):
     vlist = prop.validator.vlist    
     while len(vlist) > 0:
         v = vlist[0]
-        if isinstance(v, VMap):
-            return 'Map'
-        elif isinstance(v, VRange):
+        if isinstance(v, VRange):
             return'Range'
         elif isinstance(v, VRGBColor):
             return 'RGBColor'
-        elif isinstance(v, VChoice):
+        elif isinstance(v, (VChoice, VMap, VBMap)):
             return 'Choice'
         elif isinstance(v, VBoolean):
             return 'Boolean'

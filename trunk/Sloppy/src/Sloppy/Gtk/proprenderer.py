@@ -48,17 +48,11 @@ class Renderer(object):
         self.container = container
         self.key = key
         self.prop = container.get_prop(key)
-        self.cell = None
 
-        self.last_value = None
-
-        self.init()
-
-    def init(self):
-        pass
+        self.cell = None # TODO
 
     def create(self):
-        raise RuntimeError("create_renderer() needs to be implemented.")
+        raise RuntimeError("create() needs to be implemented.")
 
 renderers = {}
 
@@ -71,8 +65,6 @@ class RendererUnicode(Renderer):
 
     """ Suitable for VUnicode. """
 
-    type = object
-    
     def create(self, model, index):
         cell = gtk.CellRendererText()
         cell.set_property('editable', True)
@@ -80,9 +72,7 @@ class RendererUnicode(Renderer):
         
         column = gtk.TreeViewColumn(self.key)
         column.pack_start(cell)
-
         column.set_cell_data_func(cell, self.cell_data_func, index)
-        #column.set_attributes(cell, text=index)
 
         self.column = column
         return column
@@ -107,24 +97,31 @@ renderers['Unicode'] = RendererUnicode
 
 #------------------------------------------------------------------------------
 
-class RendererChoice(Renderer):
+class RendererMap(Renderer):
 
-    """ Suitable for VChoice. """
+    """ Suitable for VChoice, VMap, VBMap. """
 
-    type = object
-    
     def create(self, model, index):
 
         # set up cell_model
         prop = self.container.get_prop(self.key)
-        vchoices = [v for v in prop.validator.vlist if isinstance(v, VChoice)]
+        vchoices = [v for v in prop.validator.vlist if isinstance(v, (VChoice, VMap, VBMap))]
         if len(vchoices) == 0:
-            raise TypeError("Property for connector 'Choice' has no choice validator!")
-        self.vchoice = vchoice = vchoices[0]
+            raise TypeError("Property for renderer 'Map' has no fitting validator!")
+        vchoice = vchoices[0]
 
         cell_model = gtk.ListStore(str, object)
-        for value in vchoice.values:
-            cell_model.append((unicode(value), value))
+
+        # Note that currently VBMap is a subclass of VMap,
+        # so it is also a VMap instance. 
+        if isinstance(vchoice, (VBMap)):
+            print "VBMap"
+            for key, value in vchoice.dict.iteritems():
+                cell_model.append((unicode(key), value))
+        else: # VChoice, VMap
+            for value in vchoice.values:
+                cell_model.append((unicode(value), value))
+                      
 
         cell = gtk.CellRendererCombo()                        
         cell.set_property('text-column', 0)
@@ -136,7 +133,7 @@ class RendererChoice(Renderer):
 
         column = gtk.TreeViewColumn(self.key)
         column.pack_start(cell)
-        column.set_cell_data_func(cell, self.cell_data_func, index)
+        column.set_cell_data_func(cell, self.cell_data_func, (index, vchoice.is_mapping))
 
         self.column = column
         return column
@@ -150,9 +147,14 @@ class RendererChoice(Renderer):
         else:        
             model[path][index] = new_text
 
-    def cell_data_func(self, column, cell, model, iter, index):
+    def cell_data_func(self, column, cell, model, iter, user_data):
+        index, is_mapping = user_data
         value = model.get_value(iter, index)
-        cell.set_property('text', unicode(self.prop.check(value)))
+        if is_mapping is True:
+            value = self.prop.check(value)
+        else:
+            self.prop.check(value)
+        cell.set_property('text', unicode(value))
 
         
 renderers['Choice'] = RendererChoice
@@ -163,9 +165,7 @@ renderers['Choice'] = RendererChoice
 class RendererBoolean(Renderer):
 
     """ Suitable for VBoolean. """
-
-    type = object
-    
+   
     def create(self, model, index):
         cell = gtk.CellRendererToggle()
 
@@ -195,3 +195,4 @@ class RendererBoolean(Renderer):
             model[path][index] = value
 
 renderers['Boolean'] = RendererBoolean
+

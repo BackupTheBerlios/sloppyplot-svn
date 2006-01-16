@@ -16,6 +16,9 @@ class Recipe(HasProperties):
     # works with VBMap as well!
     difficulty = VP({"easy":1, "average":2, "hard":3})
 
+    rating = VP( VMap({'excellent': 0, 'ok': 1, 'bad': 2, 'awful': 3}),
+                 default='ok')
+    
     weight = Float(default=214.32)
     foodcolor = RGBColor('black')
 
@@ -34,14 +37,8 @@ win = gtk.Window()
 
 
 
-keys = ['name', 'weight', 'beverage', 'is_delicious']
-
-args = []
-for key in keys:
-    cname = get_cname(recipe, key)
-    args.append( renderers[cname].type )
-
-my_model = gtk.ListStore(*args)    
+keys = ['name', 'weight', 'beverage', 'is_delicious', 'difficulty', 'rating']
+my_model = gtk.ListStore(*([object]*len(keys)))    
 treeview = gtk.TreeView(my_model)
 
 clist = []

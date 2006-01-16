@@ -78,6 +78,7 @@ class Validator:
     is_mapping = False
 
 
+
 class VMap(Validator):
 
     """ Map the given value according to the dict. """
@@ -87,13 +88,14 @@ class VMap(Validator):
     def __init__(self, adict):
         if not isinstance(adict, dict):
             raise TypeError("Mapping for VMap validator must be a dictionary, not a %s" % type(adict))
-        self.dict = adict    
+        self.dict = adict
+        self.values = adict.keys()
 
     def check(self, value):
         try:
             return self.dict[value]
         except KeyError:
-            raise ValueError("one of '%s'" % (self.dict.keys()))
+            raise ValueError("one of '%s'" % (self.values))
 
     def is_mapping(self):
         return True
@@ -111,7 +113,7 @@ class VBMap(VMap):
         
     def __init__(self, adict):
         VMap.__init__(self, adict)
-        self.values = adict.values()        
+        self.values = adict.values()
 
     def check(self, value):
         if value in self.values:
@@ -123,6 +125,17 @@ class VBMap(VMap):
 
     def is_mapping(self):
         return True
+
+
+class VChoice(Validator):
+
+    def __init__(self, alist):
+        self.values = alist
+
+    def check(self, value):
+        if value in self.values:
+            return value
+        raise ValueError("one of %s" % str(self.values))
 
 
 
@@ -203,18 +216,7 @@ class VRegexp(Validator):
         except:
             pass
         
-        raise ValueError("a string matching the regular expression %s" % self.regexp)
-
-class VChoice(Validator):
-
-    def __init__(self, alist):
-        self.values = alist
-
-    def check(self, value):
-        if value in self.values:
-            return value
-        raise ValueError("one of %s" % str(self.values))
-        
+        raise ValueError("a string matching the regular expression %s" % self.regexp)      
 
       
 
@@ -359,8 +361,8 @@ class RequireOne(ValidatorList):
                 continue
             else:
                 return value
-        raise
-
+        raise       
+        
 
 class RequireAll(ValidatorList):
 

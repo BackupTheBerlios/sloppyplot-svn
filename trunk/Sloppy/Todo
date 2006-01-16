@@ -5,8 +5,17 @@ FOR 0.5.2:
 
 === PART A ===
 
-- RendererMap (BMap)
-- RendererRange
+- what about None values in CellRenderers ?
+  e.g. Line.label ?  
+
+- implement check_out for cell renderers?
+  check_in is not necessary.
+  check_out would mean to copy the data from the model back to
+  the corresponding containers.  The data is already converted,
+  so there is no additional conversion necessary.
+
+- Make sure that no Connector checks out Undefined.  Undefined does
+  not make sense.
 
 - Fix the new LayerWin, especially the Line section.
   => generic class that generates a TreeView/ListView from a list
