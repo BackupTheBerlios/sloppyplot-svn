@@ -80,6 +80,15 @@ class RendererUnicode(Renderer):
     def on_edited(self, cell, path, new_text, model, index):    
         try:
             value = self.prop.check(new_text)
+
+            try:
+                self.prop.check(None)
+            except PropertyError:
+                pass
+            else:
+                if value is None:
+                    value = ""
+                    
         except PropertyError:
             pass
         else:
@@ -87,7 +96,7 @@ class RendererUnicode(Renderer):
 
     def cell_data_func(self, column, cell, model, iter, index):
         value = model.get_value(iter, index)
-        cell.set_property('text', unicode(value))
+        cell.set_property('text', unicode(value or ""))
 
     
         
