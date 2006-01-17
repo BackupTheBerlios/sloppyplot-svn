@@ -98,25 +98,20 @@ renderers['Unicode'] = RendererUnicode
 
 class RendererChoice(Renderer):
 
-    """ Suitable for VChoice, VMap, VBMap. """
+    """ Suitable for VChoice. """
 
     def create(self, model, index):
 
         # set up cell_model
-        vchoices = [v for v in self.prop.validator.vlist if isinstance(v, (VChoice, VMap, VBMap))]
+        vchoices = [v for v in self.prop.validator.vlist if isinstance(v, VChoice)]
         if len(vchoices) == 0:
-            raise TypeError("Property for renderer 'Map' has no fitting validator!")
+            raise TypeError("Property for renderer 'RendererChoice' has no fitting validator!")
         vchoice = vchoices[0]
 
         cell_model = gtk.ListStore(str, object)
 
-        if isinstance(vchoice, (VBMap)):
-            for key, value in vchoice.dict.iteritems():
-                cell_model.append((unicode(key), value))
-        else: # VChoice, VMap
-            for value in vchoice.possible_values():
-                cell_model.append((unicode(value), value))
-                      
+        for key, value in vchoice.valuedict():
+            cell_model.append((unicode(key), value))                                  
 
         cell = gtk.CellRendererCombo()                        
         cell.set_property('text-column', 0)

@@ -28,7 +28,7 @@ from typed_containers import TypedList, TypedDict
 
 __all__ = ["VProperty", "VP",
            "Validator", "ValidatorList", "RequireOne", "RequireAll",
-           "VMap", "VBMap", "VBijectiveMap", "VChoice",
+           "VChoice", "VChoiceList", "VChoiceMap", 
            "VString", "VInteger", "VFloat", "VBoolean",
            "VRegexp", "VUnicode", "VList", "VDictionary", "VRange",
            "VInstance"]
@@ -197,75 +197,51 @@ class VInstance(Validator):
 
 
 
+
+#------------------------------------------------------------------------------
 class VChoice(Validator):
-
-    is_mapping = False
+    def get_value_list(self):
+        return []
     
-    def __init__(self, alist):
-        self.values = alist
 
-    def check(self, value):
-        if value in self.values:
-            return value
-        raise ValueError("one of %s" % str(self.values))
-
-    def possible_values(self):
-        return self.values
-
-
-class VMap(Validator):    
-
-    """ Map the given value according to the dict. """
-
-    is_mapping = True
-    
-    def __init__(self, adict):
-        if not isinstance(adict, dict):
-            raise TypeError("Mapping for VMap validator must be a dictionary, not a %s" % type(adict))
-        self.dict = adict
-        self.values = adict.keys()
-
-    def check(self, value):
-        try:
-            return self.dict[value]
-        except KeyError:
-            raise ValueError("one of '%s'" % (self.values))
-
-    def possible_values(self):
-        return self.values
+class VChoiceList(VChoice):
    
-
-class VBijectiveMap(Validator):
-
-    """
-    Map the given value according to the dict
-    _or_ accept the given value if it is in the dict's values.
-    """
-
-    is_mapping = True
-        
-    def __init__(self, adict):
-        if not isinstance(adict, dict):
-            raise TypeError("Mapping for VMap validator must be a dictionary, not a %s" % type(adict))
-        self.dict = adict
-        
-        self.values = adict.values()
+    def __init__(self, alist):
+        self._alist = alist
 
     def check(self, value):
-        if value in self.values:
+        if value in self._alist:
             return value
+        raise ValueError("one of %s" % str(self._alist))
+
+
+
+
+class VChoiceDict(VChoice):
+
+    is_mapping = True
+    
+    def __init__(self, adict, accept_values=False):
+        self._adict = adict
+        self._accept_values = accept_values
+
+    def check(self, value):
+        if self.accept_values is True and value in self._adict.values():
+            return value        
         try:
             return self.dict[value]
         except KeyError:
-            raise ValueError("one of '%s' or '%s'" % (self.dict.keys(), self.values))
+            if self._accept_values is True:
+                raise ValueError("one of '%s' or '%s'" % (self._adict.keys(), self._adict.values()))                
+            else:
+                raise ValueError("one of '%s'" % (self._adict.keys()))
 
     def possible_values(self):
-        print "Returning ", self.values + self.dict.keys()
-        return self.values + self.dict.keys()
+        if self._accept_values
+        return 
+#------------------------------------------------------------------------------
 
 
-VBMap = VBijectiveMap
-      
 
 class VList(Validator):
 

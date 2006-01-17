@@ -360,7 +360,9 @@ class Choice(Connector):
 
         # fill model
         prop = self.container.get_prop(self.key)
-        vchoices = [v for v in prop.validator.vlist if isinstance(v, (VChoice,VBMap,VMap))]
+        vchoices = [v for v in prop.validator.vlist if isinstance(v, VChoice)]
+
+        # TODO
         if len(vchoices) == 0:
             raise TypeError("Property for connector 'Choice' has no choice validator!")
         self.vchoice = vchoice = vchoices[0]
@@ -517,7 +519,7 @@ def get_cname(owner, key):
             return'Range'
         elif isinstance(v, VRGBColor):
             return 'RGBColor'
-        elif isinstance(v, (VChoice, VMap, VBMap)):
+        elif isinstance(v, VChoice):
             return 'Choice'
         elif isinstance(v, VBoolean):
             return 'Boolean'
