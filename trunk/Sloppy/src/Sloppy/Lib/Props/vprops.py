@@ -173,8 +173,6 @@ class VRange(Validator):
             raise ValueError("in the range [%s:%s]" % (self.min, self.max))
         return value
 
-#     def get_description(self):
-#         return "Valid range: %s:%s" % (self.min or "", self.max or "")
 
 
 class VInstance(Validator):
@@ -318,6 +316,6 @@ def construct_validator_list(*validators, **kwargs):
     if len(validators) == 0:
         return RequireOne(**kwargs)
     elif len(validators) == 1 and isinstance(validators[0], ValidatorList):
-            return validators[0] # TODO: what about **kwargs?
+        return validators[0].__class__(*validators[0].vlist, **kwargs)
     else:
         return RequireOne(*validators, **kwargs)
