@@ -28,9 +28,10 @@ from typed_containers import TypedList, TypedDict
 
 __all__ = ["VProperty", "VP",
            "Validator", "ValidatorList", "RequireOne", "RequireAll",
-           "VMap", "VBMap", "VString", "VInteger", "VFloat", "VBoolean",
+           "VMap", "VBMap", "VBijectiveMap", "VChoice",
+           "VString", "VInteger", "VFloat", "VBoolean",
            "VRegexp", "VUnicode", "VList", "VDictionary", "VRange",
-           "VInstance", "VChoice"]
+           "VInstance"]
 
 
 #------------------------------------------------------------------------------
@@ -77,61 +78,6 @@ VP = VProperty
 class Validator:
     is_mapping = False
 
-
-
-class VMap(Validator):
-
-    """ Map the given value according to the dict. """
-
-    is_mapping = True
-    
-    def __init__(self, adict):
-        if not isinstance(adict, dict):
-            raise TypeError("Mapping for VMap validator must be a dictionary, not a %s" % type(adict))
-        self.dict = adict
-        self.values = adict.keys()
-
-    def check(self, value):
-        try:
-            return self.dict[value]
-        except KeyError:
-            raise ValueError("one of '%s'" % (self.values))
-
-
-    
-
-class VBMap(VMap):
-
-    """
-    Map the given value according to the dict
-    _or_ accept the given value if it is in the dict's values.
-    """
-
-    is_mapping = True
-        
-    def __init__(self, adict):
-        VMap.__init__(self, adict)
-        self.values = adict.values()
-
-    def check(self, value):
-        if value in self.values:
-            return value
-        try:
-            return self.dict[value]
-        except KeyError:
-            raise ValueError("one of '%s' or '%s'" % (self.dict.keys(), self.dict.values()))
-
-
-
-class VChoice(Validator):
-
-    def __init__(self, alist):
-        self.values = alist
-
-    def check(self, value):
-        if value in self.values:
-            return value
-        raise ValueError("one of %s" % str(self.values))
 
 
 
@@ -214,48 +160,6 @@ class VRegexp(Validator):
         
         raise ValueError("a string matching the regular expression %s" % self.regexp)      
 
-      
-
-class VList(Validator):
-
-    def __init__(self, *validators):        
-        self.item_validator = construct_validator_list(*validators)
-
-    def check(self, value):
-        def check_item(v):
-            try:
-                return self.item_validator.check(v)
-            except Exception, msg:
-                raise PropertyError("Failed to set item in list property '%s' of container '%s' to '%s': Value must be %s." %
-                                    (key, owner.__class__.__name__, value, str(msg)))
-        if isinstance(value, TypedList):
-            value.check_item = check_item
-            return value
-        if isinstance(value, list):
-            return TypedList(check_item, value)
-        else:            
-            raise TypeError("a list")
-
-class VDictionary(Validator):
-
-    def __init__(self, *validators):
-        self.item_validator = construct_validator_list(*validators)
-
-    def check(self, value):
-        def check_item(v):
-            try:
-                return self.item_validator.check(v)
-            except:
-                raise ValueError("a dictionary")
-            
-        if isinstance(value, TypedDict):
-            value.check_item = check_item
-            return value
-        elif isinstance(value, dict):
-            return TypedDict(check_item, value)
-        else:            
-            raise TypeError("a dictionary")
-
     
 class VRange(Validator):
 
@@ -282,14 +186,128 @@ class VRange(Validator):
 
 class VInstance(Validator):
 
-    def __init__(self, _type):
-        self.type = _type
+    def __init__(self, _instance):
+        self.instance = _instance
 
     def check(self, value):
-        if isinstance(value, self.type):
+        if isinstance(value, self.instance):
             return value
         else:
-            raise TypeError("an instance of %s" % self.type)
+            raise InstanceError("an instance of %s" % self.instance)
+
+
+
+class VChoice(Validator):
+
+    is_mapping = False
+    
+    def __init__(self, alist):
+        self.values = alist
+
+    def check(self, value):
+        if value in self.values:
+            return value
+        raise ValueError("one of %s" % str(self.values))
+
+    def possible_values(self):
+        return self.values
+
+
+class VMap(Validator):    
+
+    """ Map the given value according to the dict. """
+
+    is_mapping = True
+    
+    def __init__(self, adict):
+        if not isinstance(adict, dict):
+            raise TypeError("Mapping for VMap validator must be a dictionary, not a %s" % type(adict))
+        self.dict = adict
+        self.values = adict.keys()
+
+    def check(self, value):
+        try:
+            return self.dict[value]
+        except KeyError:
+            raise ValueError("one of '%s'" % (self.values))
+
+    def possible_values(self):
+        return self.values
+   
+
+class VBijectiveMap(Validator):
+
+    """
+    Map the given value according to the dict
+    _or_ accept the given value if it is in the dict's values.
+    """
+
+    is_mapping = True
+        
+    def __init__(self, adict):
+        if not isinstance(adict, dict):
+            raise TypeError("Mapping for VMap validator must be a dictionary, not a %s" % type(adict))
+        self.dict = adict
+        
+        self.values = adict.values()
+
+    def check(self, value):
+        if value in self.values:
+            return value
+        try:
+            return self.dict[value]
+        except KeyError:
+            raise ValueError("one of '%s' or '%s'" % (self.dict.keys(), self.values))
+
+    def possible_values(self):
+        print "Returning ", self.values + self.dict.keys()
+        return self.values + self.dict.keys()
+
+
+VBMap = VBijectiveMap
+      
+
+class VList(Validator):
+
+    def __init__(self, *validators):        
+        self.item_validator = construct_validator_list(*validators)
+
+    def check(self, value):
+        def check_item(v):
+            try:
+                return self.item_validator.check(v)
+            except Exception, msg:
+                raise PropertyError("Failed to set item in list property '%s' of container '%s' to '%s': Value must be %s." %
+                                    (key, owner.__class__.__name__, value, str(msg)))
+        if isinstance(value, TypedList):
+            value.check_item = check_item
+            return value
+        if isinstance(value, list):
+            return TypedList(check_item, value)
+        else:            
+            raise TypeError("a list")
+
+
+class VDictionary(Validator):
+
+    def __init__(self, *validators):
+        self.item_validator = construct_validator_list(*validators)
+
+    def check(self, value):
+        def check_item(v):
+            try:
+                return self.item_validator.check(v)
+            except:
+                raise ValueError("a dictionary")
+            
+        if isinstance(value, TypedDict):
+            value.check_item = check_item
+            return value
+        elif isinstance(value, dict):
+            return TypedDict(check_item, value)
+        else:            
+            raise TypeError("a dictionary")
+
 
 
 #------------------------------------------------------------------------------

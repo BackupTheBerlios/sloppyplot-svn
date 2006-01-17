@@ -5,6 +5,9 @@ FOR 0.5.2:
 
 === PART A ===
 
+- why not remove the mapped values? It is too complicated for me,
+  I would say.
+
 - what about None values in CellRenderers ?
   e.g. Line.label ?  
 

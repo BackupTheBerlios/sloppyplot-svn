@@ -110,13 +110,11 @@ class RendererChoice(Renderer):
 
         cell_model = gtk.ListStore(str, object)
 
-        # Note that currently VBMap is a subclass of VMap,
-        # so it is also a VMap instance. 
         if isinstance(vchoice, (VBMap)):
             for key, value in vchoice.dict.iteritems():
                 cell_model.append((unicode(key), value))
         else: # VChoice, VMap
-            for value in vchoice.values:
+            for value in vchoice.possible_values():
                 cell_model.append((unicode(value), value))
                       
 
@@ -138,20 +136,18 @@ class RendererChoice(Renderer):
 
     def on_edited(self, cell, path, new_text, model, index):
         try:
-            value = self.prop.check(new_text)
+            user_value = new_text
+            real_value = self.prop.check(user_value)
         except PropertyError:
             pass
         else:        
-            model[path][index] = new_text
+            model[path][index] = user_value
 
     def cell_data_func(self, column, cell, model, iter, user_data):
         index, is_mapping = user_data
-        value = model.get_value(iter, index)
-        if is_mapping is True:
-            value = self.prop.check(value)
-        else:
-            self.prop.check(value)
-        cell.set_property('text', unicode(value))
+        user_value = model.get_value(iter, index)
+        self.prop.check(user_value)
+        cell.set_property('text', unicode(user_value))
 
         
 renderers['Choice'] = RendererChoice

@@ -371,7 +371,7 @@ class Choice(Connector):
             for key, value in vchoice.dict.iteritems():
                 model.append((unicode(key), value))
         else: # VChoice, VMap
-            for value in vchoice.values:
+            for value in vchoice.possible_values():
                 model.append((unicode(value), value))
 
         # pack everything together
@@ -386,31 +386,27 @@ class Choice(Connector):
     #----------------------------------------------------------------------
 
     def check_in(self):
-        if isinstance(self.vchoice, VMap):
-            value = self.container.get_value(self.key)
+        if isinstance(self.vchoice, VBMap):
+            user_value = self.container.get_value(self.key)
+            real_value = self.container.get_mvalue(self.key)
         else:
-            value = self.container.get_mvalue(self.key)
-            print "=====", value
-        
-        if value != Undefined:
-            print "OK", self.vchoice.is_mapping, self.vchoice.__class__.__name__
-            if self.vchoice.is_mapping is True:
-                print "value unmapped", value
-                value = self.prop.check(value)
-                print "value mapped", value
-            
+            real_value = user_value = self.container.get_value(self.key)
+                    
+        if real_value != Undefined:
+            print "Validator: ", self.vchoice.__class__.__name__
+
             try:
-                values = self.vchoice.values                
-                index = values.index(value)
+                values = self.vchoice.possible_values()
+                index = values.index(real_value)
             except:
-                raise ValueError("Connector for %s.%s failed to retrieve prop value '%s' in list of available values '%s'" % (self.container.__class__.__name__, self.key, value, values))
+                raise ValueError("Connector for %s.%s failed to retrieve prop value '%s' in list of available values '%s'" % (self.container.__class__.__name__, self.key, real_value, values))
 
             model = self.combobox.get_model()
             iter = model.get_iter((index,))
             self.combobox.set_active_iter(iter)
             self.last_index = index
             
-        self.last_value = value
+        self.last_value = user_value
 
 
     

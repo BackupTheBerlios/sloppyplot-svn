@@ -8,6 +8,7 @@ from Sloppy.Base.properties import *
 from Sloppy.Gtk.proprenderer import *
 
 
+    
 class Recipe(HasProperties):
     name = Unicode()
     name_or_None = VP(Unicode, None)
@@ -20,23 +21,44 @@ class Recipe(HasProperties):
     beverage = VP(["wine", "coke", "water"])
     is_delicious = Boolean(True)
     is_recommended = VP(Boolean,None, default=True)
+
+
+class CookBook(HasProperties):
+    recipelist = VProperty( VList(VInstance(Recipe)) )
    
-    
-recipes = [Recipe(name="Toast Hawaii", difficulty="average"),
-           Recipe(name="Salat Special", difficulty=3)]
+
+cookbook = CookBook()
+cookbook.recipelist = \
+                    [Recipe(name="Toast Hawaii", difficulty="average"),
+                     Recipe(name="Salat Special", difficulty=3)]
+
 
 #------------------------------------------------------------------------------
 
 class CRendererFactory:
 
-    def __init__(self, container):
-        # TODO: container is a class instance. What if this instance
-        # TODO: gets removed?  It would be good if a renderer was
-        # TODO: using the container that is located in its row.
-        self.container = container 
+    def __init__(self, listowner, listkey):
+        self.listowner = listowner 
+        self.listkey = listkey
+
+        prop = listowner.get_prop(listkey)
+        validators = [v for v in prop.validator.vlist if isinstance(v, VList)]
+        if len(validators) == 0:
+            raise TypeError("%s.%s must be a List.",
+                            (listowner.__class__.__name__, listkey))        
+        else:
+            vlist = validators[0]
+        item_validators = [v for v in vlist.item_validator.vlist if isinstance(v, VInstance)]
+        if len(item_validators) == 0:
+            raise TypeError("%s.%s must be limited to a certain class instance (VInstance)." %
+                            (listowner.__class__.__name__, listkey))
+        else:
+            self.container = item_validators[0].instance()
+        
         self.keys = []
         self.model = None
         self.treeview = None
+
 
 
     def add_keys(self, *keys):
@@ -67,30 +89,42 @@ class CRendererFactory:
         return self.treeview
 
 
-    def check_in(self, itemlist):
-        # fill model
+    def check_in(self):
+        itemlist = self.listowner.get_value(self.listkey)
         model = self.treeview.get_model()
         for item in itemlist:
             row = []
             for key in self.keys:
                 row.append( item.get_value(key) )
             model.append( [item] + row )
+
+        self.old_list = itemlist
         
 
     def check_out(self, undolist=[]):
-        # TODO: implement undolist
-        # TODO: We could also allow reordering of the list !
-        model = self.treeview.get_model()
+
+        def check_out_row(owner, iter, undolist=[]):
+            n = 1
+            adict = {}
+            for key in self.keys:
+                adict[key]=model.get_value(iter, n)
+                n += 1
+            adict['undolist'] = ul
+            uwrap.smart_set(owner, **adict)
+
+        new_list = []
+        model = self.treeview.get_model()        
         iter = model.get_iter_first()
         while iter is not None:
-            n = 1
-            owner = model.get_value(iter, 0)            
-            for key in self.keys:
-                value = model.get_value(iter, n)
-                owner.set_value(key, value)
-                n += 1
+            owner = model.get_value(iter, 0)
+            check_out_row(owner, iter, undolist=ul)
+            new_list.append(owner)
             iter = model.iter_next(iter)
-                
+        
+        if self.old_list != new_list:        
+            uwrap.set(self.listowner, listkey, new_list, undolist=ul)
+            self.old_list = new_list
+
 
 #------------------------------------------------------------------------------
 
@@ -134,10 +168,11 @@ class CWidgetFactory:
 
             
 #------------------------------------------------------------------------------
-factory = CRendererFactory(Recipe())
+factory = CRendererFactory(cookbook, 'recipelist')
 factory.add_keys(Recipe().get_keys())
 treeview = factory.create_treeview()
-factory.check_in(recipes)
+factory.check_in()
+#------------------------------------------------------------------------------
 
 win = gtk.Window()
 win.add(treeview)
@@ -152,15 +187,13 @@ def do_quit(udata, factory):
     
 win.connect("destroy", do_quit, factory)
 #------------------------------------------------------------------------------
-
-factory = CWidgetFactory(Recipe())
-factory.add_keys(Recipe().get_keys())
-vbox = factory.create_vbox()
-factory.check_in(recipes[0])
-
-win = gtk.Window()
-win.add(vbox)
-win.show_all()
-
+#factory = CWidgetFactory(Recipe())
+#factory.add_keys(Recipe().get_keys())
+#vbox = factory.create_vbox()
+#factory.check_in()
 #------------------------------------------------------------------------------
+#win = gtk.Window()
+#win.add(vbox)
+#win.show_all()
+
 gtk.main()
