@@ -110,8 +110,8 @@ class RendererChoice(Renderer):
 
         cell_model = gtk.ListStore(str, object)
 
-        for key, value in vchoice.valuedict():
-            cell_model.append((unicode(key), value))                                  
+        for value in vchoice.choices:
+            cell_model.append((unicode(value), value))
 
         cell = gtk.CellRendererCombo()                        
         cell.set_property('text-column', 0)
@@ -123,7 +123,7 @@ class RendererChoice(Renderer):
 
         column = gtk.TreeViewColumn(self.key)
         column.pack_start(cell)
-        column.set_cell_data_func(cell, self.cell_data_func, (index, vchoice.is_mapping))
+        column.set_cell_data_func(cell, self.cell_data_func, index)
 
         self.column = column
         return column
@@ -131,17 +131,13 @@ class RendererChoice(Renderer):
 
     def on_edited(self, cell, path, new_text, model, index):
         try:
-            user_value = new_text
-            real_value = self.prop.check(user_value)
+            model[path][index] = self.prop.check(new_text)            
         except PropertyError:
             pass
-        else:        
-            model[path][index] = user_value
 
-    def cell_data_func(self, column, cell, model, iter, user_data):
-        index, is_mapping = user_data
+
+    def cell_data_func(self, column, cell, model, iter, index):
         user_value = model.get_value(iter, index)
-        self.prop.check(user_value)
         cell.set_property('text', unicode(user_value))
 
         

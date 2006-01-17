@@ -340,7 +340,7 @@ connectors['RGBColor'] = RGBColor
 
 class Choice(Connector):
 
-    """ Suitable for VChoice, VMap, VBMap. """
+    """ Suitable for VChoice. """
     
     def init(self):
         self.vchoice = None
@@ -361,20 +361,13 @@ class Choice(Connector):
         # fill model
         prop = self.container.get_prop(self.key)
         vchoices = [v for v in prop.validator.vlist if isinstance(v, VChoice)]
-
-        # TODO
         if len(vchoices) == 0:
             raise TypeError("Property for connector 'Choice' has no choice validator!")
         self.vchoice = vchoice = vchoices[0]
         
         model.clear()
-
-        if isinstance(vchoice, VBMap):
-            for key, value in vchoice.dict.iteritems():
-                model.append((unicode(key), value))
-        else: # VChoice, VMap
-            for value in vchoice.possible_values():
-                model.append((unicode(value), value))
+        for value in vchoice.choices:
+            model.append((unicode(value), value))
 
         # pack everything together
         self.widget = gtk.HBox()
@@ -388,18 +381,11 @@ class Choice(Connector):
     #----------------------------------------------------------------------
 
     def check_in(self):
-        if isinstance(self.vchoice, VBMap):
-            user_value = self.container.get_value(self.key)
-            real_value = self.container.get_mvalue(self.key)
-        else:
-            real_value = user_value = self.container.get_value(self.key)
-                    
-        if real_value != Undefined:
-            print "Validator: ", self.vchoice.__class__.__name__
+        value = self.container.get_value(self.key)
 
+        if value != Undefined:
             try:
-                values = self.vchoice.possible_values()
-                index = values.index(real_value)
+                index = self.vchoice.choices.index(value)
             except:
                 raise ValueError("Connector for %s.%s failed to retrieve prop value '%s' in list of available values '%s'" % (self.container.__class__.__name__, self.key, real_value, values))
 
@@ -408,7 +394,7 @@ class Choice(Connector):
             self.combobox.set_active_iter(iter)
             self.last_index = index
             
-        self.last_value = user_value
+        self.last_value = value
 
 
     
@@ -422,7 +408,6 @@ class Choice(Connector):
             model = self.combobox.get_model()
             prop = self.container.get_prop(self.key)
             return model[index][1]
-
 
 
 connectors['Choice'] = Choice
@@ -517,8 +502,8 @@ def get_cname(owner, key):
         v = vlist[0]
         if isinstance(v, VRange):
             return'Range'
-        elif isinstance(v, VRGBColor):
-            return 'RGBColor'
+        #elif isinstance(v, VRGBColor):
+        #    return 'RGBColor'
         elif isinstance(v, VChoice):
             return 'Choice'
         elif isinstance(v, VBoolean):

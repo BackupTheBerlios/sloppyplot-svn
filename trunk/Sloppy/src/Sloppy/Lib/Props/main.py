@@ -93,7 +93,6 @@ class HasProperties(object):
     def __init__(self, **kwargs):
         
         # Initialize props and values dict
-        object.__setattr__(self, '_mvalues', {})
         object.__setattr__(self, '_values', {})
         object.__setattr__(self, '_props', {})
         
@@ -134,7 +133,7 @@ class HasProperties(object):
     #
     
     def __setattr__(self, key, value):
-        if key in ('props', '_props','_values', '_mvalues'):
+        if key in ('props', '_props','_values'):
             raise RuntimeError("Attribute '%s' cannot be altered for HasProperties objects." % key)
         
         props = object.__getattribute__(self, '_props')
@@ -146,12 +145,6 @@ class HasProperties(object):
     def __getattribute__(self, key):
         if key.startswith('_'):
             return object.__getattribute__(self, key)
-
-        if key.endswith('_'):
-            mvalues = object.__getattribute__(self, '_mvalues')
-            key = key[:-1]
-            if mvalues.has_key(key):
-                return mvalues.get(key)           
         
         props = object.__getattribute__(self, '_props')
         if props.has_key(key):
@@ -206,16 +199,6 @@ class HasProperties(object):
                 rv[key] = self.__getattribute__(key)
 
         return rv
-
-    # mapped values
-    
-    def get_mvalue(self, key):
-        mvalues = object.__getattribute__(self, '_mvalues')
-        if mvalues.has_key(key):
-            return mvalues.get(key)
-
-        return self.get_value(key)
-
     
 
     #----------------------------------------------------------------------

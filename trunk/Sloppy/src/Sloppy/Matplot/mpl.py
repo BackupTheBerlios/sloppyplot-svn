@@ -345,7 +345,7 @@ class Backend( backend.Backend ):
         color = layer.group_linecolor.get(line_index, line.color)
 
         #:line.marker_color
-        marker_color = line.marker_color_
+        marker_color = line.marker_color
 
         
         #--- PLOT LINE ---

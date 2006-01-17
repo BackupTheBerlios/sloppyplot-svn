@@ -28,8 +28,7 @@ from typed_containers import TypedList, TypedDict
 
 __all__ = ["VProperty", "VP",
            "Validator", "ValidatorList", "RequireOne", "RequireAll",
-           "VChoice", "VChoiceList", "VChoiceMap", 
-           "VString", "VInteger", "VFloat", "VBoolean",
+           "VChoice", "VString", "VInteger", "VFloat", "VBoolean",
            "VRegexp", "VUnicode", "VList", "VDictionary", "VRange",
            "VInstance"]
 
@@ -49,11 +48,7 @@ class VProperty(Property):
         
     def set_value(self, owner, key, value):
         try:
-            if self.validator.is_mapping is False:
-                owner._values[key] = self.validator.check(value)
-            else:
-                owner._values[key] = value
-                owner._mvalues[key] = self.validator.check(value)
+            owner._values[key] = self.validator.check(value)
         except Exception,msg:
             raise PropertyError("Failed to set property '%s' of container '%s' to '%s': Value must be %s." %
                                 (key, owner.__class__.__name__, value, str(msg)))
@@ -76,9 +71,7 @@ VP = VProperty
 #
 
 class Validator:
-    is_mapping = False
-
-
+    pass
 
 
 class VNone(Validator):
@@ -197,48 +190,18 @@ class VInstance(Validator):
 
 
 
-
-#------------------------------------------------------------------------------
 class VChoice(Validator):
-    def get_value_list(self):
-        return []
-    
-
-class VChoiceList(VChoice):
    
     def __init__(self, alist):
-        self._alist = alist
-
+        self.choices = alist
+        
     def check(self, value):
-        if value in self._alist:
+        if value in self.choices:
             return value
-        raise ValueError("one of %s" % str(self._alist))
+        raise ValueError("one of %s" % str(self.choices))
 
 
 
-
-class VChoiceDict(VChoice):
-
-    is_mapping = True
-    
-    def __init__(self, adict, accept_values=False):
-        self._adict = adict
-        self._accept_values = accept_values
-
-    def check(self, value):
-        if self.accept_values is True and value in self._adict.values():
-            return value        
-        try:
-            return self.dict[value]
-        except KeyError:
-            if self._accept_values is True:
-                raise ValueError("one of '%s' or '%s'" % (self._adict.keys(), self._adict.values()))                
-            else:
-                raise ValueError("one of '%s'" % (self._adict.keys()))
-
-    def possible_values(self):
-        if self._accept_values
-        return 
 #------------------------------------------------------------------------------
 
 
@@ -298,36 +261,22 @@ class ValidatorList(Validator):
 
         # init validators
         vlist = []
-        is_mapping = False
         for item in validators:
             if isinstance(item, Validator):
                 vlist.append(item)
-                is_mapping = is_mapping or item.is_mapping
             elif item is None:
                 vlist.append(VNone())
-                is_mapping = is_mapping or VNone.is_mapping
                 on_default = lambda: None
-            elif isinstance(item, dict):
-                # 1:1 mapping if there is only a map as validator
-                if len(validators) == 1:
-                    vlist.append(VBMap(item))
-                else:
-                    vlist.append(VMap(item))
-                is_mapping = True
-                if len(item) > 0:
-                    on_default = lambda: item.keys()[0]
             elif isinstance(item, (list,tuple)):
                 vlist.append(VChoice(list(item)))
                 if len(item) > 0:
                     on_default = lambda: item[0]
             elif isinstance(item, Property):
                 vlist.extend(item.validator.vlist)
-                is_mapping = is_mapping or item.validator.is_mapping
                 on_default = item.on_default
             elif issubclass(item, Property):
                 i = item()
                 vlist.extend(i.validator.vlist)
-                is_mapping = is_mapping or i.validator.is_mapping
                 on_default = i.on_default
             elif inspect.isclass(item):
                 vlist.append(VInstance(item))
@@ -336,7 +285,6 @@ class ValidatorList(Validator):
 
         self.on_default = on_default
         self.vlist = vlist
-        self.is_mapping = is_mapping
 
 class RequireOne(ValidatorList):
 

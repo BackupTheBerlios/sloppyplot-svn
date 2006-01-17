@@ -51,7 +51,7 @@ class FloatRange(VP):
             if min is not None:
                 default = min
             elif max is not None:
-                default = max            
+                default = max
         VP.__init__(self, RequireAll(VFloat(), VRange(min,max)),
                           default=default, **kwargs)
 

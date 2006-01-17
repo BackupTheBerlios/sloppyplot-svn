@@ -26,8 +26,7 @@ from Sloppy.Lib.Undo import UndoList, UndoInfo, NullUndo, ulist
 from Sloppy.Base import objects
 from Sloppy.Base import pdict, uwrap
 
-import config, pwglade, pwconnect, uihelper
-
+import config, pwglade, pwconnect, uihelper, widget_factory
 
 
 class LayerWindow(gtk.Window):
@@ -366,14 +365,20 @@ class LineTab(AbstractTab):
         #
         # Construct TreeView and ButtonBox
         #
-        self.treeview = LinesTreeView(app, layer)
+
+        #LinesTreeView(app, layer)
+
+        self.factory = widget_factory.CRendererFactory(layer, 'lines')
+        self.factory.add_keys(objects.Line().get_keys()) # TODO: replace with View
+        self.treeview = self.factory.create_treeview()
+        
         sw = uihelper.add_scrollbars(self.treeview)
         
         buttons = [
-            (gtk.STOCK_ADD, (lambda sender: self.treeview.insert_new())),
-            (gtk.STOCK_REMOVE, (lambda sender: self.treeview.remove_selection())),
-            (gtk.STOCK_GO_UP, (lambda sender: self.treeview.move_selection(-1))),
-            (gtk.STOCK_GO_DOWN, (lambda sender: self.treeview.move_selection(+1)))
+            #(gtk.STOCK_ADD, (lambda sender: self.treeview.insert_new())),
+            #(gtk.STOCK_REMOVE, (lambda sender: self.treeview.remove_selection())),
+            #(gtk.STOCK_GO_UP, (lambda sender: self.treeview.move_selection(-1))),
+            #(gtk.STOCK_GO_DOWN, (lambda sender: self.treeview.move_selection(+1)))
             ]        
         self.buttonbox = uihelper.construct_vbuttonbox(buttons, labels=False)
 
@@ -432,25 +437,24 @@ class LineTab(AbstractTab):
     #--- CHECK IN/CHECK OUT -----------------------------------------------
     
     def check_in(self):
-        self.treeview.check_in()
+        self.factory.check_in()
 
         for gb in self.gblist:
             gb.check_in()
 
             
     def check_out(self, undolist=[]):
-        # TOOD: make sure we are finished with editing the treeview
-        
-        self.treeview.check_out(undolist=undolist)
-
+        self.factory.check_out(undolist=undolist)
         for gb in self.gblist:
             gb.check_out(undolist=undolist)
         
 
 
+
+
         
 
-class LinesTreeView(gtk.TreeView):
+class OLD_LinesTreeView(gtk.TreeView):
 
     (MODEL_OBJECT,
      MODEL_VISIBLE,     

@@ -50,41 +50,9 @@ PV = {
 
     'line.color' : ['green', 'red', 'blue', 'black'],
     'line.marker_color' : ['green', 'red', 'blue', 'black'],
-    
-    }
-
-MAP = {
-
-'position_system' : {'data' : 0, 'graph': 1, 'screen': 2, 'display': 3},
-'position_valign' : {'center':0, 'top':1, 'bottom':2},
-'position_halign' : {'center':0, 'left':1, 'right': 2},
-
-'line.marker': {
-    "None" : None,
-    "points" : 0,
-    "pixels" : 1,
-    "circle symbols" : 2,
-    "triangle up symbols" : 3,
-    "triangle down symbols" : 4,
-    "triangle left symbols" : 5,
-    "triangle right symbols" : 6,
-    "square symbols" : 7,
-    "plus symbols" : 8,
-    "cross symbols" : 9,
-    "diamond symbols" : 10,
-    "thin diamond symbols" : 11,
-    "tripod down symbols" : 12,
-    "tripod up symbols" : 13,
-    "tripod left symbols" : 14,
-    "tripod right symbols" : 15,
-    "hexagon symbols" : 16,
-    "rotated hexagon symbols" : 17,
-    "pentagon symbols" : 18,
-    "vertical line symbols" : 19,
-    "horizontal line symbols" : 20,
-    "steps" : 21
-    },
-
+    'position_system' : ['data', 'graph', 'screen', 'display'],
+    'position_valign' : ['center', 'top','bottom'],
+    'position_halign' : ['center', 'left','right'],
 }
 
 
@@ -100,13 +68,9 @@ class TextLabel(HasProperties):
     text = Unicode('', blurb="Displayed Text")
     x = Float(0.0, blurb="X-Position")
     y = Float(0.0, blurb="Y-Position")
-    system = VP(MAP['position_system'],
-                      blurb="Coordinate System")
-    valign = VP(MAP['position_valign'],
-                      blurb="Vertical Alignment")
-    halign = VP(MAP['position_halign'],
-                      blurb="Horizontal Aligment")
-    
+    system = VP(PV['position_system'], blurb="Coordinate System")
+    valign = VP(PV['position_valign'], blurb="Vertical Alignment")
+    halign = VP(PV['position_halign'], blurb="Horizontal Aligment")    
 
 
 class Axis(HasProperties):
@@ -126,7 +90,7 @@ class Line(HasProperties):
     visible = Boolean(True)
     
     style = VP(PV['line.style'])
-    width = FloatRange(0,10, default=1)
+    width = FloatRange(0, 10, default=1)
     color = RGBColor('black')
 
     marker = MarkerStyle()

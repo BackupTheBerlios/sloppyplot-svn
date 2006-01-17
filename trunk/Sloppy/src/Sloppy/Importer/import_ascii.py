@@ -122,12 +122,7 @@ class Importer(dataio.Importer):
     # Other
     
     delimiter = \
-     VP(
-        VBMap({None: None,
-               ',': ',',
-               'Tab' : '\t',
-               ';': ';',
-               'whitespace': '\s*'}),
+    String(
         blurb ="Delimiter",
         doc="Column delimiter that separates the columns"
         )
