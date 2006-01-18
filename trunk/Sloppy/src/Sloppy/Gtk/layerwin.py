@@ -368,8 +368,13 @@ class LineTab(AbstractTab):
 
         #LinesTreeView(app, layer)
 
-        self.factory = widget_factory.CRendererFactory(layer, 'lines')
-        self.factory.add_keys(objects.Line().get_keys()) # TODO: replace with View
+        cell = gtk.CellRendererText()
+        source_column = gtk.TreeViewColumn('the source')
+        source_column.pack_start(cell)
+        
+        keys = ['label', 'style', 'width', 'source', 'cx', 'cy']
+        self.factory = widget_factory.CTreeViewFactory(layer, 'lines')
+        self.factory.add_columns(keys, source=source_column)
         self.treeview = self.factory.create_treeview()
         
         sw = uihelper.add_scrollbars(self.treeview)

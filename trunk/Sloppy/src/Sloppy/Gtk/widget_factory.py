@@ -27,7 +27,7 @@ from Sloppy.Lib.Undo import UndoList
 from Sloppy.Base.properties import *
 from Sloppy.Gtk.proprenderer import *
 
-class CRendererFactory:
+class CTreeViewFactory:
 
     def __init__(self, listowner, listkey):
         self.listowner = listowner 
@@ -46,21 +46,28 @@ class CRendererFactory:
                             (listowner.__class__.__name__, listkey))
         else:
             self.container = item_validators[0].instance()
-        
+
         self.keys = []
+        self.columns = {}
+        
         self.model = None
         self.treeview = None
 
 
 
-    def add_keys(self, *keys):
+    def add_columns(self, *keys, **kwargs):
         for key in keys:
             if isinstance(key, basestring):
-                self.keys.append(key)
+                self.keys = key
             elif isinstance(key, (list,tuple)):
                 self.keys.extend(key)
+            elif isinstance(key, dict):
+                self.columns.update(key)
             else:
-                raise TypeError("String or tuple required.")
+                raise TypeError("String, tuple or dict required.")
+
+        if len(kwargs) > 0:
+            self.add_columns(kwargs)
 
           
     def create_treeview(self):
@@ -68,13 +75,18 @@ class CRendererFactory:
         treeview = gtk.TreeView(model)        
 
         index = 1
-        print self.keys
         for key in self.keys:
-            column = gtk.TreeViewColumn(key)
-            cname = get_cname(self.container, key)
-            renderer = renderers[cname](self.container, key)
-            column = renderer.create(model, index)
-            treeview.append_column(column)    
+            if self.columns.has_key(key):
+                column = self.columns[key]
+            else:
+                column = gtk.TreeViewColumn(key)
+                cname = get_cname(self.container, key)
+                renderer = renderers[cname](self.container, key)
+                column = renderer.create(model, index)
+                self.columns[key] = column
+                
+            treeview.append_column(column)
+
             index += 1
             
         self.treeview = treeview

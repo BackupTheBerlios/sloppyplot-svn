@@ -32,8 +32,8 @@ cookbook.recipelist = [Recipe(name="Toast Hawaii", difficulty="average"),
 
 
 #------------------------------------------------------------------------------
-factory = CRendererFactory(cookbook, 'recipelist')
-factory.add_keys(Recipe().get_keys())
+factory = CTreeViewFactory(cookbook, 'recipelist')
+factory.add_columns(Recipe().get_keys())
 treeview = factory.create_treeview()
 factory.check_in()
 #------------------------------------------------------------------------------
