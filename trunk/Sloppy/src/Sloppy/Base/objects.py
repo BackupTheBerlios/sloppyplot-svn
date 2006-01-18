@@ -48,8 +48,7 @@ PV = {
     'line.style' : ["solid","dashed","dash-dot","dotted","steps","None"],
     'layer.type' : ['line2d', 'contour'],
 
-    'line.color' : ['green', 'red', 'blue', 'black'],
-    'line.marker_color' : ['green', 'red', 'blue', 'black'],
+    'color' : ['green', 'red', 'blue', 'black'],
     'position_system' : ['data', 'graph', 'screen', 'display'],
     'position_valign' : ['center', 'top','bottom'],
     'position_halign' : ['center', 'left','right'],
@@ -91,10 +90,10 @@ class Line(HasProperties):
     
     style = VP(PV['line.style'])
     width = FloatRange(0, 10, default=1)
-    color = RGBColor('black')
+    color = VP(PV['color'])
 
     marker = MarkerStyle()
-    marker_color = RGBColor('black')
+    marker_color = VP(PV['color'])
     marker_size = FloatRange(0,None,default=1)        
     
     # source stuff (soon deprecated)
@@ -105,30 +104,8 @@ class Line(HasProperties):
     #value_range = VP(transform=str)    
     cxerr = VP(Integer, VRange(0,None), None)
     cyerr = VP(Integer, VRange(0,None), None)
-    source = Instance(Dataset)
 
-    def source_to_string(self):
-
-        source = '"%s"' % source.key
-
-        if cx is Undefined and cy is Undefined:
-            using = None
-        else:
-            using = 'using %s:%s' % (cx or '*', cy or '*')
-
-        if row_first is Undefined and row_last is Undefined:
-            rows = None
-        else:
-            rows = 'rows %s:%s' % (row_first or '*', row_last or '*')
-            
-        return ' '.join((item for item in [source,using,rows] if item is not None))
-
-
-    def source_from_string(self, string):
-        # using regular expressions to parse the string
-        # TODO: this does not work yet
-        regexp = '(?P<source>\".*\"|[^ ]+)(\s+using\s+(?P<using>.+))?(\s+rows\s+(?P<rows>.+))?'
-        
+    source = VP(VInstance(Dataset), None, default=None)
         
 
 
@@ -160,22 +137,22 @@ class Layer(HasProperties, HasSignals):
     group_linestyle = Group(Line.style,
                             mode=MODE_CYCLE,                            
                             cycle_list=PV['line.style'],
-                            allow_override=False)
+                            allow_override=True)
 
     group_linemarker = Group(Line.marker,
                              mode=MODE_CONSTANT,                             
                              constant_value='triangle up symbols',
-                             allow_override=False)
+                             allow_override=True)
 
     group_linewidth = Group(Line.width,
                             mode=MODE_RANGE,
                             range_start=1, range_step=2,
-                            allow_override=False)
+                            allow_override=True)
 
     group_linecolor = Group(Line.color,
                             mode=MODE_CYCLE,
-                            cycle_list=PV['line.color'],
-                            allow_override=False)
+                            cycle_list=PV['color'],
+                            allow_override=True)
     
     labels = List(TextLabel)
 

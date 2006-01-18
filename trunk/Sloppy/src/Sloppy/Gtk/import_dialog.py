@@ -35,7 +35,7 @@ import gtk, gtk.glade
 import pango
 
 import uihelper
-import pwconnect, pwglade
+import widget_factory
 
 from Sloppy.Base import dataio
        
@@ -55,17 +55,15 @@ class ImportOptions(gtk.Dialog):
         self.importer = self.template.new_instance()
         
         #
-        # set up connectors
+        # set up widget factory
         #
-        self.connectors = pwconnect.new_connectors(self.importer)
-        for c in self.connectors:
-            c.create_widget()
-        table_options = pwglade.construct_table(self.connectors)
+        self.factory = widget_factory.CWidgetFactory(self.importer)
+        self.factory.add_keys(self.importer.public_props)
+        table_options = self.factory.create_table()
         widget = uihelper.new_section("Import Options", table_options)
         self.vbox.pack_start(widget,False,True)
+        self.factory.check_in()
 
-        for c in self.connectors:
-            c.check_in()
 
         #
         # add preview widget
@@ -85,8 +83,7 @@ class ImportOptions(gtk.Dialog):
         response = gtk.Dialog.run(self)
 
         if response == gtk.RESPONSE_ACCEPT:
-            for c in self.connectors:
-                c.check_out()            
+            self.factory.check_out()
 
         return response            
 

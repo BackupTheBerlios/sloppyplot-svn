@@ -27,7 +27,7 @@ Configuration dialog and widgets.
 import gtk
 from Sloppy.Base import dataio
 
-import uihelper, pwglade, pwconnect
+import uihelper, widget_factory
 from Sloppy.Lib.Props import Keyword
 
 
@@ -231,37 +231,46 @@ class ImportTemplatesPage(gtk.VBox):
                          (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
                           gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
 
-        clist1 = pwconnect.new_connectors(template, include=['blurb','extensions','skip_options'])
-        clist2 = pwconnect.new_connectors(importer, include=importer.public_props)
-        clist = clist1 + clist2
+        factorylist = []
 
-        for c in clist:
-            c.create_widget()
-        table = pwglade.construct_table(clist)
+        factory1 = widget_factory.CWidgetFactory(template)
+        factory1.add_keys('blurb','extensions','skip_options')
+        factorylist.append(factory1)
+        
+        factory2 = widget_factory.CWidgetFactory(importer)
+        factory2.add_keys(importer.public_props)
+        factorylist.append(factory2)        
+
+        table1 = factory1.create_table()
+        table2 = factory2.create_table()
+        
+        dlg.vbox.pack_start(table1, True, True)
+        dlg.vbox.pack_start(gtk.HSeparator(), False, True)
+        dlg.vbox.pack_start(table2, True, True)
+
+        for factory in factorylist:
+            factory.check_in()
 
         if allow_edit is False:
             notice = gtk.Label()
             notice.set_markup(DS['template_immutable'])
             dlg.vbox.pack_start(notice,False,True)
-            hseparator = gtk.HSeparator()
-            dlg.vbox.pack_start(hseparator,False,True)
-            for c in clist:
-                c.widget.set_sensitive(False)
+            dlg.vbox.pack_start(gtk.HSeparator(), False, True)
+            
+            for factory in factorylist:
+                for c in factory.clist:
+                    c.widget.set_sensitive(False)
 
-        dlg.vbox.pack_start(table,True,True)            
         dlg.show_all()
-
-        for c in clist:
-            c.check_in()
 
         try:
             response = dlg.run()
 
             if response == gtk.RESPONSE_ACCEPT:                
 
-                # check out                
-                for c in clist:
-                    c.check_out()
+                # check out
+                for factory in factorylist:
+                    factory.check_out()
 
                 # move importer data to template
                 values = importer.get_values(importer.public_props, default=None)

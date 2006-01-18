@@ -19,13 +19,15 @@
 # $Id$
 
 
-from Sloppy.Gtk.pwconnect import *
 import gtk
+import inspect
+
 
 from Sloppy.Lib.Props import *
 from Sloppy.Lib.Undo import UndoList
 from Sloppy.Base.properties import *
-from Sloppy.Gtk.proprenderer import *
+from Sloppy.Base import uwrap
+
 
 class CTreeViewFactory:
 
@@ -56,7 +58,7 @@ class CTreeViewFactory:
 
 
     def add_columns(self, *keys, **kwargs):
-        for key in keys:
+        for key in keys:            
             if isinstance(key, basestring):
                 self.keys = key
             elif isinstance(key, (list,tuple)):
@@ -69,22 +71,58 @@ class CTreeViewFactory:
         if len(kwargs) > 0:
             self.add_columns(kwargs)
 
-          
+
+    def show_columns(self, *keys):           
+        if len(keys) == 0:
+            keys = self.keys
+
+        for key in keys:
+            if key == '_all':
+                self.show_columns(*self.keys)
+            elif isinstance(key, (list,tuple)):
+                self.show_columns(*key)
+            else:                
+                self.columns[key].set_property('visible', True)
+
+    def hide_columns(self, *keys):
+        if len(keys) == 0:
+            keys = self.keys
+        
+        for key in keys:
+            if key == '_all':
+                self.show_columns(*self.keys)
+            elif isinstance(key, (list,tuple)):
+                self.show_columns(*key)
+            else:
+                self.columns[key].set_property('visible', False)
+        
+    def new_row(self, item):
+        row = []
+        for key in self.keys:
+            row.append( item.get_value(key) )
+        row.append(item)
+        return row
+
+ 
     def create_treeview(self):
         model = gtk.ListStore(*([object]*(len(self.keys) + 1)))    
         treeview = gtk.TreeView(model)        
 
-        index = 1
+        index = 0
         for key in self.keys:
             if self.columns.has_key(key):
-                column = self.columns[key]
+                obj = self.columns[key]
+                if inspect.isfunction(obj) or inspect.ismethod(obj):
+                    column = obj(model, index)                    
+                else:
+                    column = obj
             else:
                 column = gtk.TreeViewColumn(key)
                 cname = get_cname(self.container, key)
                 renderer = renderers[cname](self.container, key)
                 column = renderer.create(model, index)
-                self.columns[key] = column
-                
+
+            self.columns[key] = column                
             treeview.append_column(column)
 
             index += 1
@@ -127,14 +165,155 @@ class CTreeViewFactory:
             new_list.append(owner)
             iter = model.iter_next(iter)
 
-        print "new_list ", new_list
-        print "old_list ", self.old_list
-        
         if self.old_list != new_list:        
-            uwrap.set(self.listowner, listkey, new_list, undolist=ul)
+            uwrap.set(self.listowner, self.listkey, new_list, undolist=ul)
             self.old_list = new_list
 
         undolist.append(ul)
+
+###############################################################################
+
+
+class Renderer(object):
+
+   
+    def __init__(self, container, key):
+        self.prop = container.get_prop(key)
+        self.key = key
+
+        self.cell = None # TODO
+
+    def create(self):
+        raise RuntimeError("create() needs to be implemented.")
+
+
+
+class RendererUnicode(Renderer):
+
+    """ Suitable for VUnicode. """
+
+    def create(self, model, index):
+        cell = gtk.CellRendererText()
+        cell.set_property('editable', True)
+        cell.connect('edited', self.on_edited, model, index)
+        
+        column = gtk.TreeViewColumn(self.key)
+        column.pack_start(cell)
+        column.set_cell_data_func(cell, self.cell_data_func, index)
+
+        self.column = column
+        return column
+
+
+    def on_edited(self, cell, path, new_text, model, index):    
+        try:
+            value = self.prop.check(new_text)
+
+            try:
+                self.prop.check(None)
+            except PropertyError:
+                pass
+            else:
+                if value is None:
+                    value = ""
+                    
+        except PropertyError:
+            pass
+        else:
+            model[path][index] = value
+
+    def cell_data_func(self, column, cell, model, iter, index):
+        value = model.get_value(iter, index)
+        if value is None:
+            value = ""
+        cell.set_property('text', unicode(value))
+
+
+#------------------------------------------------------------------------------
+
+class RendererChoice(Renderer):
+
+    """ Suitable for VChoice. """
+
+    def create(self, model, index):
+
+        cell_model = self.new_cell_model()
+        
+        cell = gtk.CellRendererCombo()                        
+        cell.set_property('text-column', 0)
+        cell.set_property('model', cell_model)
+
+        # make editable
+        cell.set_property('editable', True)
+        cell.connect('edited', self.on_edited, model, index)
+
+        column = gtk.TreeViewColumn(self.key)
+        column.pack_start(cell)
+        column.set_cell_data_func(cell, self.cell_data_func, index)
+
+        self.column = column
+        return column
+
+    def new_cell_model(self):        
+        vchoices = [v for v in self.prop.validator.vlist if isinstance(v, VChoice)]
+        if len(vchoices) == 0:
+            raise TypeError("Property for renderer 'RendererChoice' has no fitting validator!")
+        vchoice = vchoices[0]
+
+        cell_model = gtk.ListStore(str, object)
+        for value in vchoice.choices:
+            cell_model.append((unicode(value), value))
+        return cell_model
+
+    def on_edited(self, cell, path, new_text, model, index):
+        try:
+            model[path][index] = self.prop.check(new_text)            
+        except PropertyError:
+            pass
+
+    def cell_data_func(self, column, cell, model, iter, index):
+        user_value = model.get_value(iter, index)
+        cell.set_property('text', unicode(user_value))
+
+
+#------------------------------------------------------------------------------
+
+class RendererBoolean(Renderer):
+
+    """ Suitable for VBoolean. """
+   
+    def create(self, model, index):
+        cell = gtk.CellRendererToggle()
+
+        cell.set_property('activatable', True)
+        cell.connect('toggled', self.on_toggled, model, index)
+
+        column = gtk.TreeViewColumn(self.key)
+        column.pack_start(cell)
+        column.set_cell_data_func(cell, self.cell_data_func, index)
+
+        self.column = column
+        return column
+
+
+    def cell_data_func(self, column, cell, model, iter, index):
+        value = model.get_value(iter, index)
+        cell.set_property('active', bool(self.prop.check(value)))
+
+
+    def on_toggled(self, cell, path, model, index):
+        value = not model[path][index]
+        try:
+            value = self.prop.check(value)
+        except PropertyError:
+            pass
+        else:        
+            model[path][index] = value
+
+renderers = {'Unicode': RendererUnicode,
+             'Choice': RendererChoice,
+             'Boolean': RendererBoolean}
+
 
 #------------------------------------------------------------------------------
 
@@ -152,18 +331,57 @@ class CWidgetFactory:
                 self.keys.extend(key)
             else:
                 raise TypeError("String or tuple required.")
-    
-    def create_vbox(self):
-        vbox = gtk.VBox()
 
+
+    def _create_connectors(self):
         clist = []
         for key in self.keys:
             connector = new_connector(self.container, key)
-            vbox.add(connector.create_widget())
+            connector.create_widget()
             clist.append(connector)
         self.clist = clist
 
+        
+    def create_vbox(self):
+        self._create_connectors()
+        
+        vbox = gtk.VBox()
+        for c in self.clist:
+            vbox.add(c.widget)
         return vbox
+
+    def create_table(self):
+        self._create_connectors()
+        
+        tw = gtk.Table(rows=len(self.keys), columns=2)
+        tooltips = gtk.Tooltips()
+
+        n = 0
+        for c in self.clist:
+            # widget
+            tw.attach(c.widget, 1,2,n,n+1,
+                      xoptions=gtk.EXPAND|gtk.FILL,
+                      yoptions=0, xpadding=5, ypadding=1)
+
+            # label (put into an event box to display the tooltip)
+            label = gtk.Label(c.prop.blurb or c.key)
+            label.set_alignment(0,0)
+            #label.set_justify(gtk.JUSTIFY_LEFT)
+            label.show()
+
+            ebox = gtk.EventBox()
+            ebox.add(label)
+            ebox.show()
+            if c.prop.doc is not None:
+                tooltips.set_tip(ebox, c.prop.doc)
+
+            tw.attach(ebox, 0,1,n,n+1,
+                      yoptions=0, xpadding=5, ypadding=1)
+
+            n += 1
+
+        return tw
+
 
     def check_in(self):
         for connector in self.clist:
@@ -171,6 +389,489 @@ class CWidgetFactory:
 
     def check_out(self, undolist=[]):
         ul = UndoList()    
-        for c in clist:
+        for c in self.clist:
             c.check_out(undolist=ul)
         undolist.append(ul)       
+
+
+
+###############################################################################
+
+class Connector(object):
+
+    """ Abstract base class for all wrappers.  
+    
+    Derived class must implement 'create_widget'.  Of course, for the
+    widget to be useful, it should also implement 'check_in' and
+    'check_out'.  The default 'check_out' method relies on 'get_data',
+    so it might make more sense to implement this instead.
+
+    """
+    
+    def __init__(self, container, key):
+        self.container = container
+        self.key = key
+        self.widget = None
+        self.last_value = None
+        self.init()
+
+    def init(self):
+        pass
+
+    #----------------------------------------------------------------------
+    # Helper Functions
+    
+    def get_value(self):
+        return self.container.get_value(self.key)
+    def set_value(self, value):
+        if value != self.last_value:
+            self.container.set_value(self.key, value)
+            self.last_value = value
+    def get_prop(self):
+        return self.container.get_prop(self.key)
+    prop = property(get_prop)
+
+    def set_container(self, container):
+        self.container = container
+
+    #----------------------------------------------------------------------
+    # Check In/Out
+    
+    def check_in(self):
+        " Retrieve value from container "
+        raise RuntimeError("check_in() needs to be implemented.")
+
+    def get_data(self):
+        """
+        Return checked value from widget, so it can be passed on to
+        the container.
+        """        
+        raise RuntimeError("get_data() needs to be implemented.")
+    
+    def check_out(self, undolist=[]):
+        " Set value in container "
+        new_value = self.get_data()
+        if new_value != self.last_value:
+            uwrap.smart_set(self.container, self.key, new_value, undolist=undolist)
+            self.last_value = new_value
+
+    #----------------------------------------------------------------------
+    # UI Stuff
+
+    def create_widget(self):
+        raise RuntimeError("create_widget() needs to be implemented.")
+
+
+
+
+class ConnectorUnicode(Connector):
+
+    """ Suitable for VUnicode. """
+
+    def create_widget(self):                      
+        # create entry
+        self.entry = gtk.Entry()
+
+        entry = self.entry        
+        entry.connect("focus-in-event", self.on_focus_in_event)
+        entry.connect("focus-out-event", self.on_focus_out_event)
+
+        # create checkbutton if requested
+        try:
+            prop = self.container.get_prop(self.key)
+            prop.check(None)
+        except PropertyError:
+            self.checkbutton = None            
+        else:
+            self.checkbutton = gtk.CheckButton()
+            self.checkbutton.connect("toggled",
+              (lambda sender: entry.set_sensitive(sender.get_active())))
+
+
+        # pack everything together
+        self.widget = gtk.HBox()
+
+        widget = self.widget
+        widget.pack_start(entry,True,True)
+        if self.checkbutton is not None:
+            widget.pack_start(self.checkbutton,False,True)                    
+        widget.show_all()
+
+        return self.widget
+
+
+    def on_focus_in_event(self, widget, event):
+        self.last_value = widget.get_text()
+        
+        
+    def on_focus_out_event(self, widget, event):
+        value = widget.get_text()
+        if value == self.last_value:
+            return
+        
+        try:
+            self.prop.check(value)
+        except (TypeError, ValueError):
+            widget.set_text(self.last_value)
+            
+
+    #----------------------------------------------------------------------
+
+    def check_in(self):
+        value = self.get_value()
+        if value is Undefined:
+            value = None
+            
+        if self.checkbutton is not None:
+            state = value is not None
+            self.checkbutton.set_active(state)
+            self.entry.set_sensitive(state)            
+        else:
+            if value is None:
+                value = ""
+            
+        if value is not None:
+            self.entry.set_text(unicode(value))
+        self.last_value = value
+
+
+    def get_data(self):
+        value = self.entry.get_text()
+
+        if self.checkbutton is not None:
+            state = self.checkbutton.get_active()
+            if state is False:
+                return None
+
+        try:
+            return self.prop.check(value)
+        except:
+            return self.last_value
+
+
+
+###############################################################################
+
+class ConnectorRange(Connector):
+
+    """ Suitable for VRange. """
+    
+    def create_widget(self):
+        # create spinbutton
+        self.spinbutton = gtk.SpinButton()
+
+        #
+        # create checkbutton, if None is a valid value.
+        #
+        try:
+            prop = self.container.get_prop(self.key)
+            prop.check(None)
+        except PropertyError:
+            self.checkbutton = None
+        else:
+            self.checkbutton = gtk.CheckButton()
+            self.checkbutton.connect("toggled",\
+              (lambda sender: self.spinbutton.set_sensitive(sender.get_active())))
+            
+        #
+        # pack everything together
+        #
+        self.widget = gtk.HBox()
+
+        widget = self.widget
+        widget.pack_start(self.spinbutton,True,True)
+        if self.checkbutton is not None:
+            widget.pack_start(self.checkbutton,False,True)
+        widget.show_all()
+
+
+        #
+        # set spinbutton values
+        #
+
+        sb = self.spinbutton
+        sb.set_numeric(True)
+
+        vranges = [v for v in self.prop.validator.vlist if isinstance(v, VRange)]
+        if len(vranges) > 0:
+            vrange = vranges[0]
+            lower,upper = vrange.min, vrange.max
+        else:
+            lower,upper = None,None
+
+        if lower is None:
+            lower = -sys.maxint
+
+        if upper is None:
+            upper = +sys.maxint
+
+        sb.set_range(float(lower), float(upper))
+        sb.set_increments(1,1)
+        sb.set_digits(0)
+
+        return self.widget
+    
+        
+    def check_in(self):
+        value = self.get_value()
+        if value is not None:
+            value = float(value)
+        
+        if self.checkbutton is not None:
+            state = value is not None
+            self.checkbutton.set_active(state)
+            self.spinbutton.set_sensitive(state)
+        if value is not None:
+            self.spinbutton.set_value(value)
+
+        self.last_value = value
+            
+        
+
+    def get_data(self):
+        if (self.checkbutton is not None) and \
+               (self.checkbutton.get_active() is not True):
+            return None
+
+        try:
+            return self.prop.check(self.spinbutton.get_value())
+        except:
+            raise ValueError("Invalid value %s in spinbutton." % self.spinbutton.get_value())
+
+
+###############################################################################
+
+class ConnectorRGBColor(Connector):
+
+    def create_widget(self):       
+        self.colorbutton = gtk.ColorButton()
+        self.widget = self.colorbutton
+
+        widget = self.widget
+        
+        return self.widget
+
+    def create_renderer(self, model, index):
+        cell = gtk.CellRenderer
+        return self.widget
+
+    
+    def to_gdk_color(self, color):
+        return gtk.gdk.Color(int(color[0]*65535), int(color[1]*65535), int(color[2]*65535))
+
+    def to_rgb(self, color):
+        return (color.red/65535.0, color.green/65535.0, color.blue/65535.0)
+
+    def get_data(self):
+        gdk_color = self.colorbutton.get_color()
+        print "Comparing ", gdk_color, self.last_value
+        if (gdk_color.red == self.last_value.red) and \
+               (gdk_color.blue == self.last_value.blue) and \
+               (gdk_color.green == self.last_value.green):
+            return self.container.get_mvalue(self.key)
+        
+        return self.to_rgb(gdk_color)
+
+    def check_in(self):
+        rgb_color = self.container.get_mvalue(self.key) or (0.0,0.0,0.0)
+        gdk_color = self.to_gdk_color(rgb_color)
+        self.colorbutton.set_color(gdk_color)
+        self.last_value = gdk_color
+
+
+
+###############################################################################
+
+class ConnectorChoice(Connector):
+
+    """ Suitable for VChoice. """
+    
+    def init(self):
+        self.vchoice = None
+        self.last_index = -1
+        
+    def create_widget(self):
+        # create combobox
+        self.combobox = gtk.ComboBox()
+
+        # create combobox model
+        combobox = self.combobox
+        model = gtk.ListStore(str, object)
+        combobox.set_model(model)
+        cell = gtk.CellRendererText()
+        combobox.pack_start(cell, True)
+        combobox.add_attribute(cell, 'text', 0)
+
+        # fill model
+        prop = self.container.get_prop(self.key)
+        vchoices = [v for v in prop.validator.vlist if isinstance(v, VChoice)]
+        if len(vchoices) == 0:
+            raise TypeError("Property for connector 'Choice' has no choice validator!")
+        self.vchoice = vchoice = vchoices[0]
+        
+        model.clear()
+        for value in vchoice.choices:
+            model.append((unicode(value), value))
+
+        # pack everything together
+        self.widget = gtk.HBox()
+
+        widget = self.widget
+        widget.pack_start(combobox,True,True)
+        widget.show_all()
+
+        return self.widget
+        
+    #----------------------------------------------------------------------
+
+    def check_in(self):
+        value = self.container.get_value(self.key)
+
+        if value != Undefined:
+            try:
+                index = self.vchoice.choices.index(value)
+            except:
+                raise ValueError("Connector for %s.%s failed to retrieve prop value '%s' in list of available values '%s'" % (self.container.__class__.__name__, self.key, real_value, values))
+
+            model = self.combobox.get_model()
+            iter = model.get_iter((index,))
+            self.combobox.set_active_iter(iter)
+            self.last_index = index
+            
+        self.last_value = value
+
+
+    
+    def get_data(self):
+        index = self.combobox.get_active()
+        if index == self.last_index:
+            return self.get_value()
+        elif index < 0:
+            return Undefined            
+        else:
+            model = self.combobox.get_model()
+            prop = self.container.get_prop(self.key)
+            return model[index][1]
+
+
+
+
+###############################################################################
+
+class ConnectorBoolean(Connector):
+
+    def init(self):
+        self.values = []
+        self.last_index = -1
+        
+    def create_widget(self):
+
+        # create combobox
+        self.combobox = gtk.ComboBox()
+
+        # create model
+        combobox = self.combobox        
+        model = gtk.ListStore(str, object)
+        combobox.set_model(model)
+        cell = gtk.CellRendererText()
+        combobox.pack_start(cell, True)
+        combobox.add_attribute(cell, 'text', 0)
+
+        # fill combo
+        try:
+            self.prop.check(None)
+        except:
+            value_dict = {}
+        else:
+            value_dict = {'None': None}
+
+        value_dict.update({'True': True, 'False': False})
+        self.values = value_dict.values()
+        
+        model.clear()        
+        for key, value in value_dict.iteritems():
+            model.append((key, value))
+        
+        #
+        # pack everything together
+        #
+        self.widget = gtk.HBox()
+
+        widget = self.widget
+        widget.pack_start(combobox,True,True)
+        widget.show_all()
+
+        return self.widget
+
+
+    def check_in(self):
+        value = self.get_value()
+
+        if value is not Undefined:            
+            index = self.values.index(value)
+
+            model = self.combobox.get_model()
+            iter = model.get_iter((index,))
+            self.combobox.set_active_iter(iter)
+        else:
+            index = -1
+            
+        self.last_value = value
+        self.last_index = index
+
+    def get_data(self):
+        index = self.combobox.get_active()
+        if index == self.last_index:
+            return self.get_value()
+        elif index < 0:
+            return Undefined            
+        else:
+            model = self.combobox.get_model()
+            prop = self.container.get_prop(self.key)
+            return model[index][1]
+
+        
+connectors ={'Choice': ConnectorChoice,
+             'RGBColor': ConnectorRGBColor,
+             'Range': ConnectorRange,
+             'Unicode': ConnectorUnicode,
+             'Boolean': ConnectorBoolean}
+
+
+
+###############################################################################
+
+def get_cname(owner, key):
+    prop = owner.get_prop(key)
+    vlist = prop.validator.vlist    
+    while len(vlist) > 0:
+        v = vlist[0]
+        if isinstance(v, VRange):
+            return'Range'
+        #elif isinstance(v, VRGBColor):
+        #    return 'RGBColor'
+        elif isinstance(v, VChoice):
+            return 'Choice'
+        elif isinstance(v, VBoolean):
+            return 'Boolean'
+        elif isinstance(v, (VUnicode,VInteger,VFloat,VString,VRegexp)):
+            return 'Unicode'
+        
+        vlist.pop(0)
+
+    logger.warning("No connector found for property %s.%s." % (owner.__class__.__name__, key))
+    return 'Unicode'
+
+
+def new_connector(owner, key):  
+    cname = get_cname(owner, key)
+    connector = connectors[cname](owner, key)
+    return connector
+
+
+def new_connectors(owner, include=None, exclude=None):
+    keys = owner.get_keys(include=include,exclude=exclude)
+    clist = []
+    for key in keys:
+        clist.append(new_connector(owner, key))
+    return clist

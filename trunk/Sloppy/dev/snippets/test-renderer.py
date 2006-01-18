@@ -52,11 +52,12 @@ win.connect("destroy", do_quit, factory)
 #------------------------------------------------------------------------------
 factory = CWidgetFactory(cookbook.recipelist[0])
 factory.add_keys(Recipe().get_keys())
-vbox = factory.create_vbox()
+#vbox = factory.create_vbox()
+table = factory.create_table()
 factory.check_in()
 #------------------------------------------------------------------------------
 win = gtk.Window()
-win.add(vbox)
+win.add(table)
 win.show_all()
 
 gtk.main()

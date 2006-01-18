@@ -71,6 +71,7 @@ class Importer(dataio.Importer):
      VP(
         Integer,
         VRange(0, None),
+        None,
         default=None,
         blurb="Header size",
         doc="Number of header lines"
@@ -89,8 +90,11 @@ class Importer(dataio.Importer):
         )
 
     header_keys_ln = \
-     IntegerRange(
-        0,None,
+      VP(
+        Integer,
+        VRange(0,None),
+        None,
+        default=None,
         blurb="Key line",
         doc="Number of the line that contains the column keys"
         )
@@ -137,6 +141,7 @@ class Importer(dataio.Importer):
      VP(
         Integer,
         VRange(0,None),
+        None,
         default=None,
         blurb="Columns",
         doc="Number of columns",

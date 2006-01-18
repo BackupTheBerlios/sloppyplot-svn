@@ -27,8 +27,7 @@ pygtk.require('2.0') # TBR
 
 import gtk, gobject
 
-
-import pwconnect, pwglade, uihelper
+import widget_factory, uihelper
 
 
 class NoOptionsError(Exception):
@@ -54,27 +53,24 @@ class OptionsDialog(gtk.Dialog):
 
 
         self.owner = owner
-        include = owner.get('public_props', None)
-        self.connectors = pwconnect.new_connectors(owner, include=include)
-        for c in self.connectors:
-            c.create_widget()
-        if len(self.connectors) == 0:
+
+        keys = owner.get('public_props', [])
+        if len(keys) == 0:
             raise NoOptionsError
-        
-        table = pwglade.construct_table(self.connectors)
+
+        self.factory = widget_factory.CWidgetFactory(owner)
+        self.factory.add_keys(keys)
+        table = self.factory.create_table()
         frame = uihelper.new_section(title, table)
         self.vbox.pack_start(frame, False, True)
         self.show_all()
 
         
     def check_in(self):
-        for c in self.connectors:
-            c.check_in()
+        self.factory.check_in()
 
-    def check_out(self):
-        for c in self.connectors:
-            c.check_out()
-        return self.owner
+    def check_out(self, undolist=[]):
+        self.factory.check_out(self, undolist=undolist)
            
     def run(self):
         self.check_in()

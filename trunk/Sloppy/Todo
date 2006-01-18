@@ -1,28 +1,11 @@
-
 FOR 0.5.2:
 ==========
 
-
 === PART A ===
 
-- why not remove the mapped values? It is too complicated for me,
-  I would say.
+- close matplotlib backend, then edit its plot again --> I think this will
+  cause an error because the backend has not been properly closed.
 
-- what about None values in CellRenderers ?
-  e.g. Line.label ?  
-
-- implement check_out for cell renderers?
-  check_in is not necessary.
-  check_out would mean to copy the data from the model back to
-  the corresponding containers.  The data is already converted,
-  so there is no additional conversion necessary.
-
-- Make sure that no Connector checks out Undefined.  Undefined does
-  not make sense.
-
-- Fix the new LayerWin, especially the Line section.
-  => generic class that generates a TreeView/ListView from a list
-     of Properties, using connectors.
 
 -----------------------------
 
@@ -30,6 +13,10 @@ FOR 0.5.2:
 
 - to simplify the line dialog, we could have a button that determines
   what it displays:  show_style, show_contents, show_both
+  => show_both !!!
+
+- when switching the view, we first should leave focus, because otherwise
+  you might see remnants from combo boxes
 
 - show_all() is bad for group boxes, because it resizes the whole dialog.
 
@@ -55,29 +42,6 @@ FOR 0.5.2:
   and if so: should some container objects have a property 'owner' which 
   yields the parent?  Then of course we must make sure that this prop
   is set whenever needed.
-
-
-
-=== PART D - optional stuff ===
-
-- Mapped Lists / Dictionaries ? At least think about it and make a note.
-
-
-
-
-
----
-- Group Properties... [OK]
-
-
-
-
-
-
-
-
-
-
 
 
 

@@ -26,7 +26,7 @@ from Sloppy.Lib.Undo import UndoList, UndoInfo, NullUndo, ulist
 from Sloppy.Base import objects
 from Sloppy.Base import pdict, uwrap
 
-import config, pwglade, pwconnect, uihelper, widget_factory
+import config, uihelper, widget_factory
 
 
 class LayerWindow(gtk.Window):
@@ -200,66 +200,67 @@ class GroupBox(gtk.HBox):
     def __init__(self, layer, propname):
 
         gtk.HBox.__init__(self)
-        
-        self.layer = layer
-        self.propname = propname        
-        self.prop = layer.get_prop(propname)
-        self.group = layer.get_value(propname)
-        
-        # create widgets and put them into a horizontal box
-        self.widget_allow_override = pwconnect.CheckButton(self.group,'allow_override')
-        self.widget_type = pwconnect.ComboBox(self.group, 'type')
-        self.widget_value = pwconnect.new_connector(self.group, 'value')
-        self.widget_range_start = pwconnect.SpinButton(self.group, 'range_start')
-        self.widget_range_stop = pwconnect.SpinButton(self.group, 'range_stop')
-        self.widget_range_step = pwconnect.SpinButton(self.group, 'range_step')        
-        self.widget_cycle_list = pwconnect.List(self.group, 'cycle_list')
-        
-        self.clist = [
-            self.widget_allow_override,            
-            self.widget_type,
-            self.widget_value,
-            self.widget_range_start,
-            self.widget_range_stop,
-            self.widget_range_step,
-            self.widget_cycle_list
-            ]
-        
-        # TODO: cycle_list        
 
-        for connector in self.clist:
-            connector.create_widget()
-            self.pack_start(connector.widget,False,True)
+        
+#         self.layer = layer
+#         self.propname = propname        
+#         self.prop = layer.get_prop(propname)
+#         self.group = layer.get_value(propname)
+        
+#         # create widgets and put them into a horizontal box
+#         self.widget_allow_override = pwconnect.CheckButton(self.group,'allow_override')
+#         self.widget_type = pwconnect.ComboBox(self.group, 'type')
+#         self.widget_value = pwconnect.new_connector(self.group, 'value')
+#         self.widget_range_start = pwconnect.SpinButton(self.group, 'range_start')
+#         self.widget_range_stop = pwconnect.SpinButton(self.group, 'range_stop')
+#         self.widget_range_step = pwconnect.SpinButton(self.group, 'range_step')        
+#         self.widget_cycle_list = pwconnect.List(self.group, 'cycle_list')
+        
+#         self.clist = [
+#             self.widget_allow_override,            
+#             self.widget_type,
+#             self.widget_value,
+#             self.widget_range_start,
+#             self.widget_range_stop,
+#             self.widget_range_step,
+#             self.widget_cycle_list
+#             ]
+        
+#         # TODO: cycle_list        
+
+#         for connector in self.clist:
+#             connector.create_widget()
+#             self.pack_start(connector.widget,False,True)
             
-        self.show_all()
+#         self.show_all()
 
-        # add special signals        
-        self.widget_type.combobox.connect('changed', self.on_type_changed)   
+#         # add special signals        
+#         self.widget_type.combobox.connect('changed', self.on_type_changed)   
     
         
-    def check_in(self):        
-        for container in self.clist:
-            container.check_in()
-        self.refresh_widget_visibility(self.group.type)
+#     def check_in(self):        
+#         for container in self.clist:
+#             container.check_in()
+#         self.refresh_widget_visibility(self.group.type)
         
-    def check_out(self, undolist=[]):
-        for container in self.clist:
-            container.check_out(undolist=undolist)
+#     def check_out(self, undolist=[]):
+#         for container in self.clist:
+#             container.check_out(undolist=undolist)
 
 
-    def on_type_changed(self, sender):
-        new_type = uihelper.get_active_combobox_item(sender, 1)
-        self.refresh_widget_visibility(new_type)
+#     def on_type_changed(self, sender):
+#         new_type = uihelper.get_active_combobox_item(sender, 1)
+#         self.refresh_widget_visibility(new_type)
 
-    def refresh_widget_visibility(self, new_type):
-        self.widget_value.widget.set_property('visible',
-                                              new_type==objects.GROUP_TYPE_FIXED)
+#     def refresh_widget_visibility(self, new_type):
+#         self.widget_value.widget.set_property('visible',
+#                                               new_type==objects.GROUP_TYPE_FIXED)
 
-        self.widget_range_start.widget.set_property('visible', new_type==objects.GROUP_TYPE_RANGE)
-        self.widget_range_stop.widget.set_property('visible', new_type==objects.GROUP_TYPE_RANGE)
-        self.widget_range_step.widget.set_property('visible', new_type==objects.GROUP_TYPE_RANGE) 
+#         self.widget_range_start.widget.set_property('visible', new_type==objects.GROUP_TYPE_RANGE)
+#         self.widget_range_stop.widget.set_property('visible', new_type==objects.GROUP_TYPE_RANGE)
+#         self.widget_range_step.widget.set_property('visible', new_type==objects.GROUP_TYPE_RANGE) 
         
-        self.widget_cycle_list.widget.set_property('visible', new_type==objects.GROUP_TYPE_CYCLE)        
+#         self.widget_cycle_list.widget.set_property('visible', new_type==objects.GROUP_TYPE_CYCLE)        
 
 
 ###############################################################################
@@ -273,16 +274,14 @@ class AbstractTab(gtk.VBox):
     def __init__(self, app):
         gtk.VBox.__init__(self)
         self.app = app
-        self.clist = []
+        self.factory = None
         
     def check_in(self):
-        for c in self.clist:
-            c.check_in()
+        self.factory.check_in()
 
     def check_out(self, undolist=[]):
         ul = UndoList().describe("Multiple actions")
-        for c in self.clist:
-            c.check_out(undolist=undolist)
+        self.factory.check_out(undolist=undolist)
         undolist.append(ul)
 
 
@@ -295,14 +294,12 @@ class LayerTab(AbstractTab):
 
         keys = ['title', 'visible', 'grid']
 
-        clist = pwconnect.new_connectors(layer, include=keys)
-        for c in clist:
-            c.create_widget()
-        table = pwglade.construct_table(clist)
+        self.factory = widget_factory.CWidgetFactory(layer)
+        self.factory.add_keys(keys)
+        table = self.factory.create_table()
         frame = uihelper.new_section("Layer", table)
         self.add(frame)
 
-        self.clist = clist
         self.layer = layer
         self.show_all()        
 
@@ -316,15 +313,11 @@ class LegendTab(AbstractTab):
         AbstractTab.__init__(self, app)
 
         keys = ['label', 'position', 'visible', 'border', 'x', 'y']
-        
-        clist = pwconnect.new_connectors(legend, include=keys)
-        for c in clist:
-            c.create_widget()
-        table = pwglade.construct_table(clist)
+        self.factory = widget_factory.CWidgetFactory(legend)
+        self.factory.add_keys(keys)
+        table = self.factory.create_table()
         frame = uihelper.new_section("Legend", table)
         self.add(frame)
-
-        self.clist = clist
 
         self.show_all()
 
@@ -339,18 +332,26 @@ class AxesTab(AbstractTab):
 
         keys = ['label', 'start', 'end', 'scale', 'format']
 
-        self.clist = []
+        self.factorylist = []
+        
         for key, axis in axesdict.iteritems():
-            connectors = pwconnect.new_connectors(axis, include=keys)
-            for c in connectors:
-                c.create_widget()
-            table = pwglade.construct_table(connectors)
+            factory = widget_factory.CWidgetFactory(axis)        
+            factory.add_keys(keys)          
+            table = factory.create_table()            
             frame = uihelper.new_section(key, table)
             self.pack_start(frame, False, True)
-            self.clist += connectors
+            self.factorylist.append(factory)
 
         self.axesdict = axesdict
         self.show_all()
+
+    def check_in(self):
+        for factory in self.factorylist:
+            factory.check_in()
+
+    def check_out(self, undolist=[]):
+        for factory in self.factorylist:
+            factory.check_out(undolist=undolist)
 
 
 
@@ -366,21 +367,27 @@ class LineTab(AbstractTab):
         # Construct TreeView and ButtonBox
         #
 
-        #LinesTreeView(app, layer)
-        
+        keys = ['label', 'style', 'width', 'source', 'cx', 'cy']                
         self.factory = widget_factory.CTreeViewFactory(layer, 'lines')
-        keys = ['label', 'style', 'width', 'source', 'cx', 'cy']        
-        source_column = self.create_source_column(index=keys.index('source'))
-        self.factory.add_columns(keys, source=source_column)        
+        self.factory.add_columns(keys, source=self.create_source_column)
         self.treeview = self.factory.create_treeview()
+        
+        # There are currently two views:
+        #  column_view = 0 shows all data-specific stuff
+        #  column_view = 1 shows all appearance-specific stuff
+        self.column_views = [ ['label', 'style', 'width'],
+                              ['label', 'source', 'cx', 'cy'] ]
+        self.column_view = 0
+        self.limit_columns()
         
         sw = uihelper.add_scrollbars(self.treeview)
         
         buttons = [
-            #(gtk.STOCK_ADD, (lambda sender: self.treeview.insert_new())),
-            #(gtk.STOCK_REMOVE, (lambda sender: self.treeview.remove_selection())),
-            #(gtk.STOCK_GO_UP, (lambda sender: self.treeview.move_selection(-1))),
-            #(gtk.STOCK_GO_DOWN, (lambda sender: self.treeview.move_selection(+1)))
+            (gtk.STOCK_REFRESH, self.on_toggle_view),
+            (gtk.STOCK_ADD, self.on_insert_new),
+            (gtk.STOCK_REMOVE, self.on_remove_selection),
+            (gtk.STOCK_GO_UP, self.on_move_selection, -1),
+            (gtk.STOCK_GO_DOWN, self.on_move_selection, +1),
             ]        
         self.buttonbox = uihelper.construct_vbuttonbox(buttons, labels=False)
 
@@ -388,7 +395,7 @@ class LineTab(AbstractTab):
         hbox.pack_start(sw, True, True)
         hbox.pack_start(self.buttonbox, False, True)
 
-        frame1 = uihelper.new_section('Lines', hbox)
+        frame1 = uihelper.new_section('Lines', hbox)        
         
         #
         # Construct Group Boxes
@@ -402,27 +409,27 @@ class LineTab(AbstractTab):
         # DISABLE GROUP BOXES RIGHT NOW!
         self.gblist = []
 
-        # Wrap group boxes into a table       
-        table = gtk.Table(rows=len(self.gblist), columns=3)
+#         # Wrap group boxes into a table       
+#         table = gtk.Table(rows=len(self.gblist), columns=3)
 
-        n = 0
-        for widget in self.gblist:
-            # label (put into an event box to display the tooltip)
-            label = gtk.Label(widget.prop.blurb or widget.propname)
-            ebox = gtk.EventBox()
-            ebox.add(label)
-            if widget.prop.doc is not None:
-                tooltips.set_tip(ebox, widget.prop.doc)
+#         n = 0
+#         for widget in self.gblist:
+#             # label (put into an event box to display the tooltip)
+#             label = gtk.Label(widget.prop.blurb or widget.propname)
+#             ebox = gtk.EventBox()
+#             ebox.add(label)
+#             if widget.prop.doc is not None:
+#                 tooltips.set_tip(ebox, widget.prop.doc)
             
-            table.attach(ebox, 0, 1, n, n+1,
-                         xoptions=gtk.FILL, yoptions=0,
-                         xpadding=5, ypadding=1)            
-            table.attach(widget, 1, 2, n, n+1,
-                         xoptions=gtk.EXPAND|gtk.FILL, yoptions=0,
-                         xpadding=5, ypadding=1)
-            n += 1       
+#             table.attach(ebox, 0, 1, n, n+1,
+#                          xoptions=gtk.FILL, yoptions=0,
+#                          xpadding=5, ypadding=1)            
+#             table.attach(widget, 1, 2, n, n+1,
+#                          xoptions=gtk.EXPAND|gtk.FILL, yoptions=0,
+#                          xpadding=5, ypadding=1)
+#             n += 1       
 
-        frame2 = uihelper.new_section('Group Properties', table)
+#         frame2 = uihelper.new_section('Group Properties', table)
 
         #
         # Put everything together!
@@ -435,35 +442,44 @@ class LineTab(AbstractTab):
         self.show_all()
 
 
-    def create_source_column(self, index):
+    def create_source_column(self, model, index):
         " Set up model with all available datasets. "
 
-        def on_edited(self, cell, path, new_text, index):
-            model = self.get_model()
-            model[path][index] = new_text
+        def cell_data_func(column, cell, model, iter, index):
+            dataset = model.get_value(iter, index)
+            if dataset is None:
+                cell.set_property('text', "")
+            else:
+                cell.set_property('text', unicode(dataset.key))
+            
+        def on_edited(cell, path, new_text, model, index):
+            if new_text == "":
+                ds = None
+            else:
+                ds = self.app.project.get_dataset(new_text)
 
-        dataset_model = gtk.ListStore(str)        
+            model[path][index] = ds
+
+        dataset_model = gtk.ListStore(object, str)        
         def refresh_dataset_model(sender, project, model):
             model.clear()
-            model.append(("",))
+            model.append((None, ""))
             for ds in self.app.project.datasets:
-                model.append( (ds.key,) )
+                model.append( (ds, ds.key) )
         refresh_dataset_model(self, self.app.project, dataset_model)
        
         cell = gtk.CellRendererCombo()
+        cell.set_property('text-column', 1)
         cell.set_property('editable', True)
-        cell.connect('edited', on_edited, index)
-        cell.set_property('text-column', 0)
+        cell.connect('edited', on_edited, model, index)
         cell.set_property('model', dataset_model)
-
+        
         column = gtk.TreeViewColumn('source')
         column.pack_start(cell)
-        column.set_attributes(cell, text=index)
-
+        column.set_cell_data_func(cell, cell_data_func, index)
         return column
         
         
-
     #--- CHECK IN/CHECK OUT -----------------------------------------------
     
     def check_in(self):
@@ -479,371 +495,19 @@ class LineTab(AbstractTab):
             gb.check_out(undolist=undolist)
         
 
-
-
-
-        
-
-class OLD_LinesTreeView(gtk.TreeView):
-
-    (MODEL_OBJECT,
-     MODEL_VISIBLE,     
-     MODEL_LABEL,
-     MODEL_WIDTH,
-     MODEL_COLOR,     
-     MODEL_STYLE,
-     MODEL_MARKER,
-     MODEL_MARKER_COLOR,
-     #
-     MODEL_SOURCE_KEY,
-     MODEL_CX,
-     MODEL_CY,
-     MODEL_ROW_FIRST,
-     MODEL_ROW_LAST,
-     MODEL_CXERR,
-     MODEL_CYERR
-     ) = range(15)
-
-    
-    def __init__(self, app, layer):
-
-        self.app = app
-        self.layer = layer
-        self.lines = layer.lines
-
-        # model: see MODEL_XXX
-        model = gtk.TreeStore(object, bool, str, str, str, str, str, str, str, str,
-                              str, str, str, str, str)
-        gtk.TreeView.__init__(self, model)
-        self.set_headers_visible(True)
-        self.get_selection().set_mode(gtk.SELECTION_MULTIPLE)
-        
-
-        # MODEL_VISIBLE
-        column = gtk.TreeViewColumn('visible')
-
-        cell = gtk.CellRendererToggle()
-        cell.set_property('activatable', True)
-        cell.connect('toggled', self.on_toggled_bool, self.MODEL_VISIBLE)
-        
-        column.pack_start(cell)        
-        column.set_attributes(cell, active=self.MODEL_VISIBLE)
-        self.append_column(column)
-        
-        
-        # MODEL_LABEL
-        column = gtk.TreeViewColumn('label')
-
-        cell = gtk.CellRendererText()
-        cell.set_property('editable', True)        
-        cell.connect('edited', self.on_edited_text, self.MODEL_LABEL, objects.Line.label)
-        
-        column.pack_start(cell)       
-        column.set_attributes(cell, text=self.MODEL_LABEL)
-        self.append_column(column)
-
-
-        # MODEL_WIDTH
-        column = gtk.TreeViewColumn('width')
-        
-        cell = gtk.CellRendererText()
-        cell.set_property('editable', True)
-        cell.connect('edited', self.on_edited_text, self.MODEL_WIDTH, objects.Line.width)
-        
-        column.pack_start(cell)
-        column.set_attributes(cell, text=self.MODEL_WIDTH)
-        self.append_column(column)
-
-
-        # MODEL_COLOR
-        column = gtk.TreeViewColumn('color')
-
-        # set up model with available colors and with an item _custom colors_
-        system_colors = [None] + objects.PV['line.color']
-        color_model = gtk.ListStore(str)
-        for color in system_colors:
-            color_model.append((color or "",))
-        
-        cell = gtk.CellRendererCombo()
-        cell.set_property('editable', True)
-        cell.connect('edited', self.on_edited_combo, self.MODEL_COLOR)
-        cell.set_property('text-column', 0)
-        cell.set_property('model', color_model)
-        
-        column.pack_start(cell)
-        column.set_attributes(cell, text=self.MODEL_COLOR)
-        self.append_column(column)
-        
-                              
-        # MODEL_STYLE
-        column = gtk.TreeViewColumn('style')
-        
-#         # set up model with all available line styles
-#         linestyle_model = gtk.ListStore(str)
-#         value_list = [None] + objects.Line.style.valid_values()
-#         for style in value_list:
-#             linestyle_model.append( (style or "",) )
-
-#         cell = gtk.CellRendererCombo()
-#         cell.set_property('editable', True)
-#         cell.connect('edited', self.on_edited_combo, self.MODEL_STYLE)
-#         cell.set_property('text-column', 0)
-#         cell.set_property('model', linestyle_model)
-
-#         column.pack_start(cell)
-#         column.set_attributes(cell, text=self.MODEL_STYLE)
-#         self.append_column(column)
-
-
-        # MODEL_MARKER
-        column = gtk.TreeViewColumn('marker')
-
-#         # set up model with all available markers
-#         marker_model = gtk.ListStore(str)
-#         value_list = [None] + objects.Line.marker.valid_values()
-#         for marker in value_list:
-#             marker_model.append( (marker or "",) )
-
-#         cell = gtk.CellRendererCombo()
-#         cell.set_property('editable', True)
-#         cell.connect('edited', self.on_edited_combo, self.MODEL_MARKER)
-#         cell.set_property('text-column', 0)
-#         cell.set_property('model', marker_model)
-
-#         column.pack_start(cell)
-#         column.set_attributes(cell, text=self.MODEL_MARKER)
-#         self.append_column(column)
-
-
-        # MODEL_MARKER_COLOR
-        column = gtk.TreeViewColumn('marker color')
-
-        # set up model with available colors and with an item _custom colors_
-        system_colors = [None] + objects.PV['line.marker_color']
-        color_model = gtk.ListStore(str)
-        for color in system_colors:
-            color_model.append((color or "",))
-        
-        cell = gtk.CellRendererCombo()
-        cell.set_property('editable', True)
-        cell.connect('edited', self.on_edited_combo, self.MODEL_MARKER_COLOR)
-        cell.set_property('text-column', 0)
-        cell.set_property('model', color_model)
-        
-        column.pack_start(cell)
-        column.set_attributes(cell, text=self.MODEL_MARKER_COLOR)
-        self.append_column(column)
-
-
-        # MODEL_SOURCE_KEY
-        column = gtk.TreeViewColumn('source')
-        
-        # set up model with all available datasets
-        dataset_model = gtk.ListStore(str)        
-        def refresh_dataset_model(sender, project, model):
-            model.clear()
-            model.append(("",))
-            for ds in self.app.project.datasets:
-                model.append( (ds.key,) )
-        refresh_dataset_model(self, self.app.project, dataset_model)
-       
-        cell = gtk.CellRendererCombo()
-        cell.set_property('editable', True)
-        cell.connect('edited', self.on_edited_combo, self.MODEL_SOURCE_KEY)
-        cell.set_property('text-column', 0)
-        cell.set_property('model', dataset_model)
-
-        column.pack_start(cell)
-        column.set_attributes(cell, text=self.MODEL_SOURCE_KEY)
-        self.append_column(column)
-
-        # MODEL_CX
-        column = gtk.TreeViewColumn('cx')
-        
-        cell = gtk.CellRendererText()
-        cell.set_property('editable', True)
-        cell.connect('edited', self.on_edited_text, self.MODEL_CX, objects.Line.cx)
-
-        column.pack_start(cell)
-        column.set_attributes(cell, text=self.MODEL_CX)
-        self.append_column(column)
-
-
-        # MODEL_CY
-        column = gtk.TreeViewColumn('cy')
-        
-        cell = gtk.CellRendererText()
-        cell.set_property('editable', True)
-        cell.connect('edited', self.on_edited_text, self.MODEL_CY, objects.Line.cy)
-
-        column.pack_start(cell)
-        column.set_attributes(cell, text=self.MODEL_CY)
-        self.append_column(column)
-
-
-        # MODEL_ROW_FIRST
-        column = gtk.TreeViewColumn('row_first')
-        
-        cell = gtk.CellRendererText()
-        cell.set_property('editable', True)
-        cell.connect('edited', self.on_edited_text, self.MODEL_ROW_FIRST, objects.Line.row_first)
-
-        column.pack_start(cell)
-        column.set_attributes(cell, text=self.MODEL_ROW_FIRST)
-        self.append_column(column)
-
-
-        # MODEL_ROW_LAST
-        column = gtk.TreeViewColumn('row_last')
-        
-        cell = gtk.CellRendererText()
-        cell.set_property('editable', True)
-        cell.connect('edited', self.on_edited_text, self.MODEL_ROW_LAST, objects.Line.row_last)
-
-        column.pack_start(cell)
-        column.set_attributes(cell, text=self.MODEL_ROW_LAST)
-        self.append_column(column)
-
-
-
-    def check_in(self):
-        model = self.get_model()
-        model.clear()
-
-        for line in self.lines:
-            model.append(None, self.model_row_from_line(line))
-
-
-    def check_out(self, undolist=[]):        
-
-        ul = UndoList().describe("Set Line Property")
-        
-        model = self.get_model()
-
-        def get_column(column, default=None):
-            """
-            Returns the value of the specified column from the model, or if
-            it is an empty string, returns the default value given.
-            """
-            rv = model.get_value(treeiter, column)
-            if isinstance(rv, basestring) and len(rv) == 0:
-                return default
-            else:
-                return rv
-
-        def check_out_line_from_iter(line, iter, undolist=[]):
-            # existing line
-            source_key = model.get_value(treeiter, self.MODEL_SOURCE_KEY)
-            if not source_key:
-                source = None
-            else:
-                source = self.app.project.get_dataset(source_key, default=None)
-
-            uwrap.smart_set(line,
-                            'visible', get_column(self.MODEL_VISIBLE),
-                            'label', get_column(self.MODEL_LABEL),
-                            'width', get_column(self.MODEL_WIDTH),
-                            'color', get_column(self.MODEL_COLOR),                                
-                            'style', get_column(self.MODEL_STYLE),
-                            'marker', get_column(self.MODEL_MARKER),
-                            'marker_color', get_column(self.MODEL_MARKER_COLOR),                                                                                               
-                            'source', source,
-                            'cx', get_column(self.MODEL_CX),
-                            'cy', get_column(self.MODEL_CY),
-                            'row_first', get_column(self.MODEL_ROW_FIRST),
-                            'row_last', get_column(self.MODEL_ROW_LAST),
-                            'cxerr', get_column(self.MODEL_CXERR),
-                            'cyerr', get_column(self.MODEL_CYERR),
-                            undolist=undolist)
-            
-            
-        new_list = []                
-        treeiter = model.get_iter_first()
-        while treeiter:
-            line = model.get_value(treeiter, self.MODEL_OBJECT)
-            check_out_line_from_iter(line, treeiter, undolist=ul)        
-            new_list.append(line)            
-            treeiter = model.iter_next(treeiter)
-
-        if self.layer.lines != new_list:
-            uwrap.set(self.layer, lines=new_list, undolist=ul)
-        
-        undolist.append(ul)
-        
-        
     #----------------------------------------------------------------------
-    # GUI Callbacks
+    # Callbacks
     #
-
-    def on_edited_text(self, cell, path, new_text, column, prop):
-        # check if the new_text is appropriate for the property       
-        try:
-            if new_text == "":
-                new_text = None
-            new_text = prop.check(new_text)
-        except (TypeError, ValueError):
-            raise # TESTING
-            print "Invalid value"
-        else:
-            if new_text is None:
-                new_text=""
-            self.get_model()[path][column] = str(new_text)
-
-    def on_toggled_bool(self, cell, path, column):
-        model = self.get_model()
-        model[path][column] = not model[path][column]
-        
-    def on_edited_combo(self, cell, path, new_text, column):
-        model = self.get_model()
-        model[path][column] = new_text
-
-
-
-
-    #------------------------------------------------------------------------------
-
-    def model_row_from_line(self, line):
-        if line.source is not None:
-            source_key = line.source.key
-        else:
-            source_key = ""
-            
-        return [line,
-                line.visible,
-                line.label or "",
-                line.get('width', None),
-                line.get('color', None),                                
-                line.get('style', None),
-                line.get('marker', None),
-                line.get('marker_color', None),                
-                source_key,
-                str(line.get('cx',"")),
-                str(line.get('cy',"")),
-                str(line.get('row_first',"")),
-                str(line.get('row_last',"")),                
-                str(line.get('cxerr',"")),
-                str(line.get('cyerr',""))
-                ]
-
-
-    def remove_selection(self):
-        selection = self.get_selection()
-        model, pathlist = selection.get_selected_rows()        
-        n = 0
-        for path in pathlist:
-            iter = model.get_iter((path[0] - n,))
-            model.remove(iter)
-            n += 1
-
-    def insert_new(self):
-        selection = self.get_selection()
+    
+    def on_insert_new(self, sender):
+        selection = self.treeview.get_selection()
         model, pathlist = selection.get_selected_rows()
 
         if model is None:
-            model = self.get_model()
+            model = self.treeview.get_model()
             
         if len(pathlist) > 0:
-            source_key = model.get_value(model.get_iter(pathlist[0]), self.MODEL_SOURCE_KEY)
+            source_key = model.get_value(model.get_iter(pathlist[0]), self.factory.keys.index('source'))
             source = self.app.project.get_dataset(source_key, default=None)
             sibling = model.get_iter(pathlist[-1])
         else:
@@ -851,15 +515,26 @@ class OLD_LinesTreeView(gtk.TreeView):
             sibling = None
 
         new_line = objects.Line(source=source)
-        iter = model.insert_after(None, sibling, self.model_row_from_line(new_line))
+        new_row = self.factory.new_row(new_line)
+        iter = model.insert_after(sibling, new_row)
 
         selection.unselect_all()
         selection.select_iter(iter)
 
 
-    def move_selection(self, direction):
-        (model, pathlist) = self.get_selection().get_selected_rows()
-        if model is None:
+    def on_remove_selection(self, sender):
+        selection = self.treeview.get_selection()
+        model, pathlist = selection.get_selected_rows()        
+        n = 0
+        for path in pathlist:
+            iter = model.get_iter((path[0] - n,))
+            model.remove(iter)
+            n += 1
+
+
+    def on_move_selection(self, sender, direction):
+        (model, pathlist) = self.treeview.get_selection().get_selected_rows()
+        if model is None or len(pathlist) == 0:
             return
 
         new_row = max(0, pathlist[0][0] + direction)
@@ -868,8 +543,17 @@ class OLD_LinesTreeView(gtk.TreeView):
 
         if second_iter is not None:
             model.swap(iter, second_iter)
-            self.grab_focus()
-        
+            self.treeview.grab_focus()
+
+
+    def on_toggle_view(self, sender):
+        self.column_view = (self.column_view+1) % len(self.column_views)
+        self.limit_columns()
+
+    def limit_columns(self):
+        keys = self.column_views[self.column_view]        
+        self.factory.hide_columns()
+        self.factory.show_columns(keys)
         
 
 
