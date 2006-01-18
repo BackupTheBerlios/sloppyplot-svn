@@ -367,14 +367,11 @@ class LineTab(AbstractTab):
         #
 
         #LinesTreeView(app, layer)
-
-        cell = gtk.CellRendererText()
-        source_column = gtk.TreeViewColumn('the source')
-        source_column.pack_start(cell)
         
-        keys = ['label', 'style', 'width', 'source', 'cx', 'cy']
         self.factory = widget_factory.CTreeViewFactory(layer, 'lines')
-        self.factory.add_columns(keys, source=source_column)
+        keys = ['label', 'style', 'width', 'source', 'cx', 'cy']        
+        source_column = self.create_source_column(index=keys.index('source'))
+        self.factory.add_columns(keys, source=source_column)        
         self.treeview = self.factory.create_treeview()
         
         sw = uihelper.add_scrollbars(self.treeview)
@@ -438,6 +435,34 @@ class LineTab(AbstractTab):
         self.show_all()
 
 
+    def create_source_column(self, index):
+        " Set up model with all available datasets. "
+
+        def on_edited(self, cell, path, new_text, index):
+            model = self.get_model()
+            model[path][index] = new_text
+
+        dataset_model = gtk.ListStore(str)        
+        def refresh_dataset_model(sender, project, model):
+            model.clear()
+            model.append(("",))
+            for ds in self.app.project.datasets:
+                model.append( (ds.key,) )
+        refresh_dataset_model(self, self.app.project, dataset_model)
+       
+        cell = gtk.CellRendererCombo()
+        cell.set_property('editable', True)
+        cell.connect('edited', on_edited, index)
+        cell.set_property('text-column', 0)
+        cell.set_property('model', dataset_model)
+
+        column = gtk.TreeViewColumn('source')
+        column.pack_start(cell)
+        column.set_attributes(cell, text=index)
+
+        return column
+        
+        
 
     #--- CHECK IN/CHECK OUT -----------------------------------------------
     

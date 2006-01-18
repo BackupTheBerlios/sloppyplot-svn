@@ -100,15 +100,17 @@ class CTreeViewFactory:
             row = []
             for key in self.keys:
                 row.append( item.get_value(key) )
-            model.append( [item] + row )
+            model.append( row + [item] )
 
         self.old_list = itemlist
         
 
     def check_out(self, undolist=[]):
 
+        ul = UndoList()
+        
         def check_out_row(owner, iter, undolist=[]):
-            n = 1
+            n = 0
             adict = {}
             for key in self.keys:
                 adict[key]=model.get_value(iter, n)
@@ -120,15 +122,19 @@ class CTreeViewFactory:
         model = self.treeview.get_model()        
         iter = model.get_iter_first()
         while iter is not None:
-            owner = model.get_value(iter, 0)
+            owner = model.get_value(iter, len(self.keys))
             check_out_row(owner, iter, undolist=ul)
             new_list.append(owner)
             iter = model.iter_next(iter)
+
+        print "new_list ", new_list
+        print "old_list ", self.old_list
         
         if self.old_list != new_list:        
             uwrap.set(self.listowner, listkey, new_list, undolist=ul)
             self.old_list = new_list
 
+        undolist.append(ul)
 
 #------------------------------------------------------------------------------
 

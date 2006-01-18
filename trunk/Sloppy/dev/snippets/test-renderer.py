@@ -44,9 +44,8 @@ win.show_all()
 
 def do_quit(udata, factory):
     factory.check_out()
-    print recipes[0].get_values()
-    print recipes[1].get_values()
-    
+    print cookbook.recipelist[0].get_values()
+    print cookbook.recipelist[1].get_values()    
     gtk.main_quit()
     
 win.connect("destroy", do_quit, factory)
