@@ -517,7 +517,8 @@ class LabelsTool(Tool):
         try:           
             response = dialog.run()
             if response == gtk.RESPONSE_ACCEPT:
-                return dialog.check_out()
+                dialog.check_out()
+                return dialog.owner
             else:
                 raise error.UserCancel
 
@@ -532,12 +533,13 @@ class LabelsTool(Tool):
         self.check_layer()
         
         (model, pathlist) = self.treeview.get_selection().get_selected_rows()
-        if model is None:
+        if model is None or len(pathlist) == 0:
             return
         project = self.get_data('project')
             
         label = model.get_value( model.get_iter(pathlist[0]), 0)
         new_label = self.edit(label.copy())
+        print "new label", new_label, label
         changeset = label.create_changeset(new_label)
         
         ul = UndoList().describe("Update label.")
@@ -550,6 +552,8 @@ class LabelsTool(Tool):
         logger.info("Updateinfo: documentation = %s" % ul.doc)
         project.journal.append(ul)
         logger.info("Journal text: %s" % project.journal.undo_text())
+
+        self.update_layer()
                 
 
     def on_new(self, sender):

@@ -54,7 +54,11 @@ class OptionsDialog(gtk.Dialog):
 
         self.owner = owner
 
-        keys = owner.get('public_props', [])
+        try:
+            keys = owner.public_props
+        except AttributeError:
+            keys = owner.get_keys()
+
         if len(keys) == 0:
             raise NoOptionsError
 
@@ -70,7 +74,7 @@ class OptionsDialog(gtk.Dialog):
         self.factory.check_in()
 
     def check_out(self, undolist=[]):
-        self.factory.check_out(self, undolist=undolist)
+        self.factory.check_out(undolist=undolist)
            
     def run(self):
         self.check_in()

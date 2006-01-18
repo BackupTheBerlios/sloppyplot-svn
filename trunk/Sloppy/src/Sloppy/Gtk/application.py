@@ -496,10 +496,6 @@ class GtkApplication(Application):
         #
         # request export options
         #
-        ##props = ['mode', 'enhanced', 'color', 'blacktext', 'solid',
-        ##         'dashlength', 'linewidth', 'duplexing', 'rounded', 'fontname',
-        ##         'fontsize', 'timestamp']          
-        
         dialog = OptionsDialog(PostscriptTerminal(),
                                title="Options Postscript Export",
                                parent=app.window)

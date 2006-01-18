@@ -1,24 +1,14 @@
 FOR 0.5.2:
 ==========
 
-=== PART A ===
-
-- close matplotlib backend, then edit its plot again --> I think this will
-  cause an error because the backend has not been properly closed.
-
-
------------------------------
-
 === PART B: nice additions ===
 
 - to simplify the line dialog, we could have a button that determines
   what it displays:  show_style, show_contents, show_both
-  => show_both !!!
+  => maybe show a combo box!
 
 - when switching the view, we first should leave focus, because otherwise
   you might see remnants from combo boxes
-
-- show_all() is bad for group boxes, because it resizes the whole dialog.
 
 - display metadata, so that the import makes more sense.
     
@@ -44,6 +34,8 @@ FOR 0.5.2:
   is set whenever needed.
 
 
+- close matplotlib backend, then edit its plot again --> I think this will
+  cause an error because the backend has not been properly closed.
 
 
 
@@ -55,6 +47,10 @@ FOR 0.5.2:
 DETAILS FOR 0.5.3:
 
 - gui for cycle list... (=> listwizard?)
+
+- show_all() is bad for group boxes, because it resizes the whole dialog.
+  => not important for now, because we might use a different group
+  implementation
 
 == CUSTOM GNUPLOT EXPORT ==
 

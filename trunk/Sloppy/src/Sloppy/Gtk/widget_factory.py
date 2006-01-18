@@ -330,7 +330,7 @@ class CWidgetFactory:
             elif isinstance(key, (list,tuple)):
                 self.keys.extend(key)
             else:
-                raise TypeError("String or tuple required.")
+                raise TypeError("String, list or tuple required.")
 
 
     def _create_connectors(self):

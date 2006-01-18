@@ -414,13 +414,13 @@ class Backend( backend.Backend ):
             logger.info("Label coordinates contains empty value. Skipped.")
             return None
 
-        if label.system == 0:
+        if label.system == 'data':
             transform = axes.transData
-        elif label.system == 1:
+        elif label.system == 'graph':
             transform = axes.transAxes
-        elif label.system == 2:
+        elif label.system == 'screen':
             transform = self.figure.transFigure
-        elif label.system == 3:
+        elif label.system == 'display':
             transform = matplotlib.transforms.identity_transform()
 
         return {'x': label.x, 'y': label.y, 'text' : label.text,
