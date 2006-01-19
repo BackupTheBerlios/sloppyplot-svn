@@ -22,21 +22,17 @@
 import pygtk # TBR
 pygtk.require('2.0') # TBR
 
-import gtk
-
 from Sloppy.Base.table import Table, Column
 from Sloppy.Base.dataset import Dataset
-
 from Sloppy.Base import uwrap, utable
-
 from Sloppy.Lib.Undo import UndoList, UndoInfo
 
 from Numeric import array, ArrayType, ones, zeros, arange, sin
 
 from tableview import TableView
-import uihelper
 
 from options_dialog import OptionsDialog
+import gtk, uihelper, widget_factory
 
 
 #------------------------------------------------------------------------------
@@ -424,6 +420,7 @@ class DatasetWindow( gtk.Window ):
 
     def cb_edit_columns(self, action):
         table = self.dataset.get_data()
+        
         dialog = ModifyTableDialog(table)
         try:
             response = dialog.run()
@@ -434,6 +431,9 @@ class DatasetWindow( gtk.Window ):
                 self.project.journal.append(ul)
         finally:
             dialog.destroy()
+
+        table = self.dataset.get_data()
+            
 
 
     def on_cursor_changed(self, tableview, contextid):
@@ -581,7 +581,6 @@ class TableColumnView(gtk.TreeView):
     def __init__(self, table):        
         gtk.TreeView.__init__(self)
         self.set_table(table)
-
         #
         # set up columns
         #
@@ -613,7 +612,7 @@ class TableColumnView(gtk.TreeView):
 
         for column in self.table.get_columns():
             new_column = column.copy(exclude=['data'])
-            model.append( (new_column,column) )            
+            model.append( (new_column,column) )
 
     def check_out(self, undolist=[]):
 
@@ -626,9 +625,11 @@ class TableColumnView(gtk.TreeView):
             column = model.get_value(iter, 0)
             old_column = model.get_value(iter, 1)
             if old_column is not None:
+                print "Reusing column", old_column.data
                 # => reuse existing table column data
                 column.data = old_column.data
             else:
+                print "New column"
                 # => new column
                 column.data = zeros((self.table.nrows,), 'f')
 

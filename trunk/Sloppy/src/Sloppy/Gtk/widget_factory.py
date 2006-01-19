@@ -117,7 +117,6 @@ class CTreeViewFactory:
                 else:
                     column = obj
             else:
-                column = gtk.TreeViewColumn(key)
                 cname = get_cname(self.container, key)
                 renderer = renderers[cname](self.container, key)
                 column = renderer.create(model, index)
@@ -187,6 +186,9 @@ class Renderer(object):
     def create(self):
         raise RuntimeError("create() needs to be implemented.")
 
+    def get_column_key(self):
+        key = self.prop.blurb or self.key
+        return key.replace('_', ' ')        
 
 
 class RendererUnicode(Renderer):
@@ -197,8 +199,8 @@ class RendererUnicode(Renderer):
         cell = gtk.CellRendererText()
         cell.set_property('editable', True)
         cell.connect('edited', self.on_edited, model, index)
-        
-        column = gtk.TreeViewColumn(self.key)
+
+        column = gtk.TreeViewColumn(self.get_column_key())
         column.pack_start(cell)
         column.set_cell_data_func(cell, self.cell_data_func, index)
 
@@ -247,8 +249,8 @@ class RendererChoice(Renderer):
         # make editable
         cell.set_property('editable', True)
         cell.connect('edited', self.on_edited, model, index)
-
-        column = gtk.TreeViewColumn(self.key)
+        
+        column = gtk.TreeViewColumn(self.get_column_key())
         column.pack_start(cell)
         column.set_cell_data_func(cell, self.cell_data_func, index)
 
@@ -289,7 +291,7 @@ class RendererBoolean(Renderer):
         cell.set_property('activatable', True)
         cell.connect('toggled', self.on_toggled, model, index)
 
-        column = gtk.TreeViewColumn(self.key)
+        column = gtk.TreeViewColumn(self.get_column_key())
         column.pack_start(cell)
         column.set_cell_data_func(cell, self.cell_data_func, index)
 
@@ -365,7 +367,7 @@ class CWidgetFactory:
                       yoptions=0, xpadding=5, ypadding=1)
 
             # label (put into an event box to display the tooltip)
-            label = gtk.Label(c.prop.blurb or c.key)
+            label = gtk.Label(c.get_widget_key())
             label.set_alignment(0,0)
             #label.set_justify(gtk.JUSTIFY_LEFT)
             label.show()
@@ -435,6 +437,10 @@ class Connector(object):
     def set_container(self, container):
         self.container = container
 
+    def get_widget_key(self):
+        key = self.prop.blurb or self.key
+        return key.replace('_', ' ')
+    
     #----------------------------------------------------------------------
     # Check In/Out
     

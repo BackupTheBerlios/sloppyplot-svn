@@ -120,7 +120,6 @@ class Toolbox(gtk.Window):
 
         self.set_project(project)
 
-
         # config data
         self.read_config()
         self.app.sig_connect("write-config", self.write_config)
@@ -234,11 +233,11 @@ class Toolbox(gtk.Window):
             # basic setup (for now)
             book = Dockbook()
             self.dock.add(book)            
-            lt = LabelsTool()
+            lt = LabelsTool(self.app)
             book.add(lt)        
-            lt = LayerTool()
+            lt = LayerTool(self.app)
             book.add(lt)
-            return
+            return        
 
         for eDockbook in eToolbox.findall('Dock/Dockbook'):
 
@@ -246,8 +245,8 @@ class Toolbox(gtk.Window):
             self.dock.add(book)
 
             for eDockable in eDockbook.findall('Dockable'):
-                try:
-                    tool = tools[eDockable.text]()
+                try:                    
+                    tool = tools[eDockable.text](self.app)
                     book.add(tool)
                     # TODO: size information is not used                    
                 except:
@@ -304,9 +303,10 @@ class Tool(Dockable):
     """
     
     
-    def __init__(self, label, stock_id):
+    def __init__(self, app, label, stock_id):
         Dockable.__init__(self, label, stock_id)
 
+        self.app = app
         self.backend = -1
         self.layer = -1
         self.backend_cblist = []
@@ -345,8 +345,8 @@ class Tool(Dockable):
 class LayerTool(Tool):
 
     
-    def __init__(self):
-        Tool.__init__(self, "Layers", gtk.STOCK_EDIT)
+    def __init__(self, app):
+        Tool.__init__(self, app, "Layers", gtk.STOCK_EDIT)
         
         # model: (object) = (layer object)
         model = gtk.ListStore(object)        
@@ -365,7 +365,7 @@ class LayerTool(Tool):
         column.set_cell_data_func(cell, render_label)
         
         treeview.append_column(column)
-        #treeview.connect("row-activated", (lambda a,b,c:self.on_edit(a)))
+        treeview.connect("row-activated", self.on_row_activated)
         treeview.connect("cursor-changed", self.on_cursor_changed)
         treeview.show()
         self.add(treeview)        
@@ -423,11 +423,18 @@ class LayerTool(Tool):
         else:
             self.treeview.get_selection().unselect_all()
 
+
     def on_cursor_changed(self, treeview):
         model, iter = treeview.get_selection().get_selected()
         layer = model.get_value(iter,0)
         if layer is not None:
             self.backend.layer = layer
+
+
+    def on_row_activated(self, treeview, *udata):
+        model, iter = treeview.get_selection().get_selected()
+        layer = model.get_value(iter, 0)               
+        self.app.edit_layer(self.backend.plot, layer)
         
 
 tools['LayerTool'] = LayerTool
@@ -437,8 +444,8 @@ tools['LayerTool'] = LayerTool
         
 class LabelsTool(Tool):
 
-    def __init__(self):
-        Tool.__init__(self,"Labels", gtk.STOCK_EDIT)
+    def __init__(self, app):
+        Tool.__init__(self, app, "Labels", gtk.STOCK_EDIT)
         self.set_size_request(-1,200)
        
         #

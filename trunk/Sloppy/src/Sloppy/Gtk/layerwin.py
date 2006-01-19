@@ -364,7 +364,7 @@ class LineTab(AbstractTab):
         # Construct TreeView and ButtonBox
         #
 
-        keys = ['label', 'style', 'width', 'source', 'cx', 'cy']                
+        keys = ['label', 'style', 'width', 'color', 'marker', 'marker_color', 'source', 'cx', 'cy', 'row_first', 'row_last']
         self.factory = widget_factory.CTreeViewFactory(layer, 'lines')
         self.factory.add_columns(keys, source=self.create_source_column)
         self.treeview = self.factory.create_treeview()
@@ -382,8 +382,8 @@ class LineTab(AbstractTab):
         self.key_combo = key_combo # for use in limit_columns()
         
         viewdict = {'all' : ['_all'],
-                    'style' : ['label', 'style', 'width'],
-                    'data' : ['label', 'source', 'cx', 'cy']}
+                    'style' : ['label', 'style', 'width', 'color', 'marker', 'marker_color'],
+                    'data' : ['label', 'source', 'cx', 'cy', 'row_first', 'row_last']}
         for key, alist in viewdict.iteritems():
             model.append((key, alist))
 

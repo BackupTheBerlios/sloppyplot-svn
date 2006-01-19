@@ -157,7 +157,7 @@ class Table(object, HasSignals):
         return self.columns[index]
     get_column = column
     
-    def set_columns(self, columns):
+    def set_columns(self, columns):        
         self._columns = columns
         self.update_cols()
         self.update_rows()
@@ -360,7 +360,7 @@ class Table(object, HasSignals):
         """
         self._ncols = len(self._columns)
         self._typecodes = map(lambda x: x.typecode(), self._columns)
-
+        
         # TODO: move to types.h
         type_map = {'d': float,
                     'f': float, # scipy.float32
