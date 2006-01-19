@@ -368,31 +368,49 @@ class LineTab(AbstractTab):
         self.factory = widget_factory.CTreeViewFactory(layer, 'lines')
         self.factory.add_columns(keys, source=self.create_source_column)
         self.treeview = self.factory.create_treeview()
-        
-        # There are currently two views:
-        #  column_view = 0 shows all data-specific stuff
-        #  column_view = 1 shows all appearance-specific stuff
-        self.column_views = [ ['label', 'style', 'width'],
-                              ['label', 'source', 'cx', 'cy'] ]
-        self.column_view = 0
-        self.limit_columns()
-        
         sw = uihelper.add_scrollbars(self.treeview)
+
+        #
+        # keybox = label + key_combo 
+        #
+        model = gtk.ListStore(str, object)
+        key_combo = gtk.ComboBox(model)
+        cell = gtk.CellRendererText()
+        key_combo.pack_start(cell, True)
+        key_combo.add_attribute(cell, 'text', 0)
+        key_combo.connect('changed', lambda cb: self.limit_columns())
+        self.key_combo = key_combo # for use in limit_columns()
         
-        buttons = [
-            (gtk.STOCK_REFRESH, self.on_toggle_view),
-            (gtk.STOCK_ADD, self.on_insert_new),
-            (gtk.STOCK_REMOVE, self.on_remove_selection),
-            (gtk.STOCK_GO_UP, self.on_move_selection, -1),
-            (gtk.STOCK_GO_DOWN, self.on_move_selection, +1),
-            ]        
-        self.buttonbox = uihelper.construct_vbuttonbox(buttons, labels=False)
+        viewdict = {'all' : ['_all'],
+                    'style' : ['label', 'style', 'width'],
+                    'data' : ['label', 'source', 'cx', 'cy']}
+        for key, alist in viewdict.iteritems():
+            model.append((key, alist))
 
-        hbox = gtk.HBox()
+        keybox = gtk.HBox(False, 5)
+        keybox.pack_start(gtk.Label("Display:"), False, False)
+        keybox.pack_start(key_combo, False, False)
+        keybox.pack_start(gtk.Label(), True, True)
+
+        self.key_combo.set_active(0)        
+        self.limit_columns()
+
+        
+        buttons = [(gtk.STOCK_ADD, self.on_insert_new),
+                   (gtk.STOCK_REMOVE, self.on_remove_selection),
+                   (gtk.STOCK_GO_UP, self.on_move_selection, -1),
+                   (gtk.STOCK_GO_DOWN, self.on_move_selection, +1)]        
+        buttonbox = uihelper.construct_vbuttonbox(buttons, labels=False)
+
+        hbox = gtk.HBox(False, 5)
         hbox.pack_start(sw, True, True)
-        hbox.pack_start(self.buttonbox, False, True)
+        hbox.pack_start(buttonbox, False, True)
 
-        frame1 = uihelper.new_section('Lines', hbox)        
+        vbox = gtk.VBox(False, 5)
+        vbox.pack_start(keybox, False, False)
+        vbox.pack_start(hbox)
+        
+        frame1 = uihelper.new_section('Lines', vbox)
         
         #
         # Construct Group Boxes
@@ -437,8 +455,8 @@ class LineTab(AbstractTab):
         #self.pack_start(frame2,False,True)
 
         self.show_all()
-
-
+            
+        
     def create_source_column(self, model, index):
         " Set up model with all available datasets. "
 
@@ -548,10 +566,12 @@ class LineTab(AbstractTab):
         self.limit_columns()
 
     def limit_columns(self):
-        keys = self.column_views[self.column_view]        
-        self.factory.hide_columns()
-        self.factory.show_columns(keys)
-        
+        model = self.key_combo.get_model()
+        index = self.key_combo.get_active()
+        if index > -1:
+            keys = model[index][1]
+            self.factory.hide_columns()
+            self.factory.show_columns(keys)                   
 
 
 

@@ -172,7 +172,7 @@ def construct_buttonbox(buttons, horizontal=True, labels=True,
 
     global SECTION_SPACING
     btnbox.set_spacing(SECTION_SPACING)
-    btnbox.set_border_width(SECTION_SPACING)
+#    btnbox.set_border_width(SECTION_SPACING)
 
     return btnbox
 

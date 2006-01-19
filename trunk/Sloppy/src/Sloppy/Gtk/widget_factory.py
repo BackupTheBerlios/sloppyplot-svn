@@ -134,6 +134,7 @@ class CTreeViewFactory:
     def check_in(self):
         itemlist = self.listowner.get_value(self.listkey)
         model = self.treeview.get_model()
+        model.clear()
         for item in itemlist:
             row = []
             for key in self.keys:
@@ -157,7 +158,7 @@ class CTreeViewFactory:
             uwrap.smart_set(owner, **adict)
 
         new_list = []
-        model = self.treeview.get_model()        
+        model = self.treeview.get_model()
         iter = model.get_iter_first()
         while iter is not None:
             owner = model.get_value(iter, len(self.keys))
