@@ -1,4 +1,10 @@
 
+- the rendererchoice needs to check if 'None' is an allowed value and
+  if so, it must add the appropriate entry in the list!!!
+  Otherwise we cannot test the group properties.
+  
+- maybe rewrite the columns dialog similar to the layerwin dialog ?
+
 ------------------------------------------------------------------------------
 DETAILS FOR 0.5.3:
 
