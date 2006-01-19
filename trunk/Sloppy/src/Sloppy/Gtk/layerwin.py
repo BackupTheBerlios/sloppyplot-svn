@@ -115,8 +115,6 @@ class LayerWindow(gtk.Window):
         self.show_all()
 
         # After we have shown everything, we check in.
-        # This is necessary for the GroupBox objects, because
-        # they hide elements depending on some values.
         for tab in self.tabdict.itervalues():
             tab.check_in()
 
@@ -342,7 +340,6 @@ class AxesTab(AbstractTab):
             self.pack_start(frame, False, True)
             self.factorylist.append(factory)
 
-        self.axesdict = axesdict
         self.show_all()
 
     def check_in(self):
