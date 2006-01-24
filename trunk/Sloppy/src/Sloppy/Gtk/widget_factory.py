@@ -28,7 +28,6 @@ from Sloppy.Lib.Undo import UndoList
 from Sloppy.Base.properties import *
 from Sloppy.Base import uwrap
 
-
 import logging
 logger = logging.getLogger('gtk.widget_factory')
 
@@ -270,6 +269,7 @@ class RendererChoice(Renderer):
         for value in vchoice.choices:
             if value is None: cell_model.append(('', None))
             else: cell_model.append((unicode(value), value))
+
         return cell_model
 
     def on_edited(self, cell, path, new_text, model, index):
@@ -278,7 +278,7 @@ class RendererChoice(Renderer):
         try:
             model[path][index] = self.prop.check(new_text)            
         except PropertyError:
-            pass
+            print "Could not set combo to value '%s', %s" % (new_text, type(new_text))
 
     def cell_data_func(self, column, cell, model, iter, index):
         user_value = model.get_value(iter, index)

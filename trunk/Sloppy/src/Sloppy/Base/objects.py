@@ -127,12 +127,12 @@ class Line(HasProperties):
     cy = VP(Integer, VRange(0,None), None, default=1, blurb="y")
     row_first = VP(RequireAll(Integer, VRange(0,None)), None, default=None, blurb="first row")
     row_last = VP(RequireAll(Integer, VRange(0,None)), None, default=None, blurb="last row")
+
     #value_range = VP(transform=str)    
     cxerr = VP(Integer, VRange(0,None), None)
     cyerr = VP(Integer, VRange(0,None), None)
 
-    source = VP(VInstance(Dataset), None, default=None)
-        
+    source = VP(VInstance(Dataset), None, default=None)    
 
 
 
@@ -160,30 +160,30 @@ class Layer(HasProperties, HasSignals):
     width = FloatRange(0.0, 1.0, default=0.775)
     height = FloatRange(0.0, 1.0, default=0.79)
 
-    group_linestyle = Group(Line.style,
-                            mode=MODE_CONSTANT,                            
-                            constant_value=PV['line.style'][0],
-                            allow_override=True)
+    group_style = Group(Line.style,
+                        mode=MODE_CONSTANT,                            
+                        constant_value=PV['line.style'][0],
+                        allow_override=True)
 
-    group_linemarker = Group(Line.marker,
-                             mode=MODE_CONSTANT,                             
-                             constant_value=PV['line.marker'][0],
-                             allow_override=True)
+    group_marker = Group(Line.marker,
+                         mode=MODE_CONSTANT,                             
+                         constant_value=PV['line.marker'][0],
+                         allow_override=True)
 
-    group_linewidth = Group(Line.width,
-                            mode=MODE_CONSTANT,
-                            constant_value=1.0,
-                            allow_override=True)
+    group_width = Group(Line.width,
+                        mode=MODE_CONSTANT,
+                        constant_value=1.0,
+                        allow_override=True)
 
-    group_linecolor = Group(Line.color,
-                            mode=MODE_CYCLE,
-                            cycle_list=PV['line.color'],
-                            allow_override=True)
+    group_color = Group(Line.color,
+                        mode=MODE_CYCLE,
+                        cycle_list=PV['line.color'],
+                        allow_override=True)
 
-    group_linemarkercolor = Group(Line.marker_color,
-                                  mode=MODE_CONSTANT,
-                                  constant_value=PV['line.marker_color'][0],
-                                  allow_override=True)
+    group_marker_color = Group(Line.marker_color,
+                               mode=MODE_CONSTANT,
+                               constant_value=PV['line.marker_color'][0],
+                               allow_override=True)
     
     labels = List(TextLabel)
 

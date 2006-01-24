@@ -57,7 +57,7 @@ class VProperty(Property):
         return self.on_default()
 
     def check(self, value):
-        try:
+        try:            
             return self.validator.check(value)
         except Exception,msg:
             raise PropertyError("Property check failed: Value '%s' must be %s." %
@@ -287,7 +287,7 @@ class ValidatorList(Validator):
 
 class RequireOne(ValidatorList):
 
-    def check(self, value):
+    def check(self, value):       
         if len(self.vlist) == 0:
             return value
         
@@ -303,7 +303,7 @@ class RequireOne(ValidatorList):
 
 class RequireAll(ValidatorList):
 
-    def check(self, value):       
+    def check(self, value):
         try:
             for validator in self.vlist:
                 value = validator.check(value)

@@ -325,33 +325,34 @@ class Backend( backend.Backend ):
         line_index = layer.lines.index(line)
 
         #:line.style
-        #:layer.group_linestyle
-        style = layer.group_linestyle.get(line_index, line.style)
+        #:layer.group_style
+        style = layer.group_style.get(line_index, line.style)
+
         global linestyle_mappings
         try: style = linestyle_mappings[style]
         except KeyError: style = linestyle_mappings.values()[1]
 
         #:line.marker
-        #:layer.group_linemarker
-        marker = layer.group_linemarker.get(line_index, line.marker)
+        #:layer.group_marker
+        marker = layer.group_marker.get(line_index, line.marker)
 
         global linemarker_mappings
         try: marker = linemarker_mappings[marker]
         except KeyError: marker = linemarker_mappings.values()[0]
         
         #:line.width
-        #:layer.group_linewidth
-        width = layer.group_linewidth.get(line_index, line.width)
+        #:layer.group_width
+        width = layer.group_width.get(line_index, line.width) or 1.0
         
         #:line.color
-        #:layer.group_linecolor
-        color = layer.group_linecolor.get(line_index, line.color)
+        #:layer.group_color
+        color = layer.group_color.get(line_index, line.color) or 'black'
 
         #:line.marker_color
-        marker_color = layer.group_linemarkercolor.get(line_index, line.marker_color)
+        marker_color = layer.group_marker_color.get(line_index, line.marker_color) or 'black'
 
         #:line.marker_siize
-        marker_size = line.marker_size
+        marker_size = line.marker_size or 1
         
         #--- PLOT LINE ---
         try:

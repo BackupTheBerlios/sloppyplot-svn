@@ -331,20 +331,20 @@ class Backend(backend.Backend):
                 line_index = layer.lines.index(line)
 
                 #:line.style
-                #:layer.group_linestyle
-                style = layer.group_linestyle.get(index, line.style)
+                #:layer.group_style
+                style = layer.group_style.get(index, line.style)
 
                 #:line.marker
-                #:layer.group_linemarker
-                marker = layer.group_linemarker.get(index, line.marker)
+                #:layer.group_marker
+                marker = layer.group_marker.get(index, line.marker)
                 
                 #:line.width
-                #:layer.group_linewidth                
-                width = layer.group_linewidth.get(index, line.width)
+                #:layer.group_width                
+                width = layer.group_width.get(index, line.width)
 
                 #:line.color
-                #:layer.group_linecolor
-                color = layer.group_linecolor.get(index, line.color)
+                #:layer.group_color
+                color = layer.group_color.get(index, line.color)
 
                 #
                 # with-clause

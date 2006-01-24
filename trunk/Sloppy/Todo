@@ -1,9 +1,15 @@
 
-- the rendererchoice needs to check if 'None' is an allowed value and
-  if so, it must add the appropriate entry in the list!!!
-  Otherwise we cannot test the group properties.
-  
 - maybe rewrite the columns dialog similar to the layerwin dialog ?
+
+- display metadata, so that the import makes more sense and so that we
+  have some new user visible feature.  We might access this from the 
+  project window by right-clicking on the dataset (-> View Metadata)
+
+- show ruler for matplotlib canvas ?
+
+- are group properties saved? I don't think so.
+
+- change Copyright notice to 2005-2006
 
 ------------------------------------------------------------------------------
 DETAILS FOR 0.5.3:
@@ -12,8 +18,6 @@ DETAILS FOR 0.5.3:
   you might see remnants from combo boxes
 
 - Bugreport: Changing the column order causes all values to become integers!
-
-- display metadata, so that the import makes more sense.
 
 - close matplotlib backend, then edit its plot again --> I think this will
   cause an error because the backend has not been properly closed.

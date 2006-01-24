@@ -866,7 +866,8 @@ def main(filename=None):
             logger.debug("Trying to load file %s" % filename)
             app.load_project(filename)
         except IOError:
-            app.set_project(Project())    
+            app.set_project(Project())
+                
     gtk.main()
 
     
