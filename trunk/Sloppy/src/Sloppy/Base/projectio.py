@@ -268,8 +268,7 @@ def toElement(project):
                         if v is not None:
                             eInfo = SubElement(eColumn, 'Info')
                             SIV(eInfo, 'key', k)
-                            eInfo.text = v
-                            print "INFO k,v", k, v
+                            eInfo.text = v                            
                 n += 1
                 
             
@@ -278,7 +277,7 @@ def toElement(project):
         else:
             raise RuntimeError("Invalid dataset", ds)
         
-        SIV(eData, 'key', ds.rget('key'))
+        SIV(eData, 'key', ds.get('key'))
         SIV(eData, 'fileformat', 'CSV' )
 
         # TODO: iohelper.write_dict, but then I need a transformation
@@ -293,10 +292,10 @@ def toElement(project):
     ePlots = SubElement(eProject, "Plots")
     for plot in project.plots:
         ePlot = SubElement(ePlots, plot.__class__.__name__)
-        SIV(ePlot, 'key', plot.rget('key'))
-        SIV(ePlot, 'title', plot.rget('title'))
+        SIV(ePlot, 'key', plot.get('key'))
+        SIV(ePlot, 'title', plot.get('title'))
 
-        comment = plot.rget('comment')
+        comment = plot.get('comment')
         if comment is not None:
             eComment = SubElement(ePlot, "comment")
             eComment.text = comment
@@ -353,11 +352,11 @@ def toElement(project):
                 # or add the temporary dataset to the project.
                 if line.source is not None:
                     if project.has_dataset(key=line.source.key):
-                        SIV(eLine, 'source', line.source.rget('key'))
+                        SIV(eLine, 'source', line.source.get('key'))
                     else:
                         logger.warn("Invalid line source. Skipped source.")
                 
-                attrs = line.get_values(['width','label','style','marker','visible', 'cx','cy','row_first','row_last','cxerr','cyerr','color','marker_color'],default=None)
+                attrs = line.get_values(['width','label','style','marker','visible', 'color','marker_color', 'marker_size', 'cx','cy','row_first','row_last','cxerr','cyerr'],default=None)
                 iohelper.set_attributes(eLine, attrs)
 
             # layer.labels
@@ -367,7 +366,7 @@ def toElement(project):
                     eLabel = SubElement(eLabels, "Label")
                     attrs = label.get_values(['x','y','system','valign','halign'],default=None)
                     iohelper.set_attributes(eLabel, attrs)
-                    eLabel.text = label.rget('text')
+                    eLabel.text = label.get('text')
 
     iohelper.beautify_element(eProject)
         

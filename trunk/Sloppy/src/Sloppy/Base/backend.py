@@ -253,6 +253,12 @@ class Backend(object, HasSignals):
 
         return xdata, ydata
 
+    def limit_data(self, data, start, end):
+        try:
+            return data[start:end]
+        except IndexError:
+            logger.error("Index range '%s'out of bounds!" % str((start,end)) )
+
 
     #----------------------------------------------------------------------
     # Current Layer

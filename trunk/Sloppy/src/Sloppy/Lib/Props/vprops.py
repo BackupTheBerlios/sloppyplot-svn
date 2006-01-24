@@ -43,7 +43,7 @@ class VProperty(Property):
     def __init__(self, *validators, **kwargs):
         self.blurb = kwargs.get('blurb', None)
         self.doc = kwargs.get('doc', None)
-        self.validator = construct_validator_list(*validators, **kwargs)
+        self.validator = construct_validator_list(*validators, **kwargs)        
         self.on_default = self.validator.on_default
         
     def set_value(self, owner, key, value):
@@ -283,6 +283,7 @@ class ValidatorList(Validator):
 
         self.on_default = on_default
         self.vlist = vlist
+
 
 class RequireOne(ValidatorList):
 

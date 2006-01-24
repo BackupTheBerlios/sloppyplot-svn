@@ -1,11 +1,10 @@
 
-from Sloppy.Gtk.pwconnect import *
 import gtk
 
 from Sloppy.Lib.Props import *
 from Sloppy.Lib.Undo import UndoList
 from Sloppy.Base.properties import *
-from Sloppy.Gtk.proprenderer import *
+
 from Sloppy.Gtk.widget_factory import *
 
     
@@ -21,6 +20,7 @@ class Recipe(HasProperties):
     is_delicious = Boolean(True)
     is_recommended = VP(Boolean,None, default=True)
 
+    width = VP( RequireAll(Float), None, default=None )
 
 class CookBook(HasProperties):
     recipelist = VProperty( VList(VInstance(Recipe)) )
@@ -37,6 +37,7 @@ factory.add_columns(Recipe().get_keys())
 treeview = factory.create_treeview()
 factory.check_in()
 #------------------------------------------------------------------------------
+
 
 win = gtk.Window()
 win.add(treeview)
@@ -59,5 +60,6 @@ factory.check_in()
 win = gtk.Window()
 win.add(table)
 win.show_all()
+
 
 gtk.main()

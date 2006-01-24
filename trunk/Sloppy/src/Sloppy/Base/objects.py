@@ -48,10 +48,36 @@ PV = {
     'line.style' : ["solid","dashed","dash-dot","dotted","steps","None"],
     'layer.type' : ['line2d', 'contour'],
 
-    'color' : ['green', 'red', 'blue', 'black'],
+    'line.color' : ['green', 'red', 'blue', 'black'],
+    'line.marker_color' : ['black', 'red', 'blue', 'green'],    
     'position_system' : ['data', 'graph', 'screen', 'display'],
     'position_valign' : ['center', 'top','bottom'],
     'position_halign' : ['center', 'left','right'],
+    'line.marker' : [
+        "None",
+        "points",
+        "pixels",
+        "circle symbols",
+        "triangle up symbols",
+        "triangle down symbols",
+        "triangle left symbols",
+        "triangle right symbols",
+        "square symbols",
+        "plus symbols",
+        "cross symbols",
+        "diamond symbols",
+        "thin diamond symbols",
+        "tripod down symbols",
+        "tripod up symbols",
+        "tripod left symbols",
+        "tripod right symbols",
+        "hexagon symbols",
+        "rotated hexagon symbols",
+        "pentagon symbols",
+        "vertical line symbols",
+        "horizontal line symbols"
+        "steps"]
+    
 }
 
 
@@ -88,19 +114,19 @@ class Line(HasProperties):
     label = Unicode()
     visible = Boolean(True)
     
-    style = VP(PV['line.style'])
-    width = FloatRange(0, 10, default=1)
-    color = VP(PV['color'])
+    style = VP([None] + PV['line.style'])
+    width = VP(RequireAll(Float, VRange(0, 10)), None, default=None)
+    color = VP([None] + PV['line.color'])
 
-    marker = MarkerStyle()
-    marker_color = VP(PV['color'])
+    marker = VP([None] + PV['line.marker'])
+    marker_color = VP([None] + PV['line.marker_color'])
     marker_size = FloatRange(0,None,default=1)        
     
     # source stuff (soon deprecated)
-    cx = VP(Integer, VRange(0,None), None, default=0, blurb="x-column")
-    cy = VP(Integer, VRange(0,None), None, default=1, blurb="y-column")
-    row_first = VP(Integer, VRange(0,None), None, default=None)
-    row_last = VP(Integer, VRange(0,None), None, default=None)
+    cx = VP(Integer, VRange(0,None), None, default=0, blurb="x")
+    cy = VP(Integer, VRange(0,None), None, default=1, blurb="y")
+    row_first = VP(RequireAll(Integer, VRange(0,None)), None, default=None, blurb="first row")
+    row_last = VP(RequireAll(Integer, VRange(0,None)), None, default=None, blurb="last row")
     #value_range = VP(transform=str)    
     cxerr = VP(Integer, VRange(0,None), None)
     cyerr = VP(Integer, VRange(0,None), None)
@@ -135,24 +161,29 @@ class Layer(HasProperties, HasSignals):
     height = FloatRange(0.0, 1.0, default=0.79)
 
     group_linestyle = Group(Line.style,
-                            mode=MODE_CYCLE,                            
-                            cycle_list=PV['line.style'],
+                            mode=MODE_CONSTANT,                            
+                            constant_value=PV['line.style'][0],
                             allow_override=True)
 
     group_linemarker = Group(Line.marker,
                              mode=MODE_CONSTANT,                             
-                             constant_value='triangle up symbols',
+                             constant_value=PV['line.marker'][0],
                              allow_override=True)
 
     group_linewidth = Group(Line.width,
-                            mode=MODE_RANGE,
-                            range_start=1, range_step=2,
+                            mode=MODE_CONSTANT,
+                            constant_value=1.0,
                             allow_override=True)
 
     group_linecolor = Group(Line.color,
                             mode=MODE_CYCLE,
-                            cycle_list=PV['color'],
+                            cycle_list=PV['line.color'],
                             allow_override=True)
+
+    group_linemarkercolor = Group(Line.marker_color,
+                                  mode=MODE_CONSTANT,
+                                  constant_value=PV['line.marker_color'][0],
+                                  allow_override=True)
     
     labels = List(TextLabel)
 

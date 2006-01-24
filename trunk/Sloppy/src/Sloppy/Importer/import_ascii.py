@@ -325,7 +325,7 @@ class Importer(dataio.Importer):
         fd.seek(rewind)
 
         # determine delimiter
-        delimiter = self.delimiter_ or self.custom_delimiter
+        delimiter = self.delimiter or self.custom_delimiter
         if delimiter is None:
             # determine from first non-comment line
             rewind = fd.tell()

@@ -29,6 +29,10 @@ from Sloppy.Base.properties import *
 from Sloppy.Base import uwrap
 
 
+import logging
+logger = logging.getLogger('gtk.widget_factory')
+
+
 class CTreeViewFactory:
 
     def __init__(self, listowner, listkey):
@@ -211,14 +215,13 @@ class RendererUnicode(Renderer):
     def on_edited(self, cell, path, new_text, model, index):    
         try:
             value = self.prop.check(new_text)
-
-            try:
-                self.prop.check(None)
-            except PropertyError:
-                pass
-            else:
-                if value is None:
-                    value = ""
+            
+            # If the property accepts None as valid value,
+            # then we interpret an empty value as None.
+            if len(new_text) == 0:
+                try: self.prop.check(None)
+                except PropertyError: pass
+                else: value = None
                     
         except PropertyError:
             pass
@@ -265,10 +268,13 @@ class RendererChoice(Renderer):
 
         cell_model = gtk.ListStore(str, object)
         for value in vchoice.choices:
-            cell_model.append((unicode(value), value))
+            if value is None: cell_model.append(('', None))
+            else: cell_model.append((unicode(value), value))
         return cell_model
 
     def on_edited(self, cell, path, new_text, model, index):
+        if len(new_text) == 0:
+            new_text = None
         try:
             model[path][index] = self.prop.check(new_text)            
         except PropertyError:
@@ -276,6 +282,7 @@ class RendererChoice(Renderer):
 
     def cell_data_func(self, column, cell, model, iter, index):
         user_value = model.get_value(iter, index)
+        if user_value is None: user_value = ""
         cell.set_property('text', unicode(user_value))
 
 
@@ -850,7 +857,7 @@ connectors ={'Choice': ConnectorChoice,
 
 def get_cname(owner, key):
     prop = owner.get_prop(key)
-    vlist = prop.validator.vlist    
+    vlist = prop.validator.vlist[:] # create copy of list, because we pop it!
     while len(vlist) > 0:
         v = vlist[0]
         if isinstance(v, VRange):
@@ -866,7 +873,7 @@ def get_cname(owner, key):
         
         vlist.pop(0)
 
-    logger.warning("No connector found for property %s.%s." % (owner.__class__.__name__, key))
+    logger.warning("No connector found for property %s.%s. Using default (Unicode)." % (owner.__class__.__name__, key))
     return 'Unicode'
 
 

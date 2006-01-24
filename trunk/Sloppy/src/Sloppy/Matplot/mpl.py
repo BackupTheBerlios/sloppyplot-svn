@@ -237,7 +237,7 @@ class Backend( backend.Backend ):
             start = axis.start
             end = axis.end
 
-            logger.debug("start = %s; end = %s" % (start, end))
+            #logger.debug("start = %s; end = %s" % (start, end))
             
             if key == 'x':
                 set_label = axes.set_xlabel
@@ -303,27 +303,30 @@ class Backend( backend.Backend ):
         ds = self.get_line_source(line)
         table = self.get_table(ds)
         cx, cy = self.get_column_indices(line)
-        xdata, ydata = self.get_table_data(table, cx, cy)
+        try:
+            xdata, ydata = self.get_table_data(table, cx, cy)
+        except backend.BackendError, msg:            
+            logger.error(msg)
+            omap[line] = None
+            return
+            
 
         #:line.row_first
         #:line.row_last
-        def limit_data(data, start, end):
-            try:
-                return data[start:end]
-            except IndexError:
-                backend.BackendError("Index range '%s'out of bounds!" % str((start,end)) )
-
-        start, end = line.row_first, line.row_last
-        # SKIPPED
-#        xdata = limit_data(xdata, start, end)
-#        ydata = limit_data(ydata, start, end)
+        start, end = line.row_first, line.row_last        
+        try:
+            xdata = self.limit_data(xdata, start, end)
+            ydata = self.limit_data(ydata, start, end)
+        except BackendError, msg:
+            logger.error("Error when plotting line #%d: %s" % (line_index, msg))
+            omap[line] = None
+            return
 
         line_index = layer.lines.index(line)
 
         #:line.style
         #:layer.group_linestyle
         style = layer.group_linestyle.get(line_index, line.style)
-        print ">>> line style = ", style
         global linestyle_mappings
         try: style = linestyle_mappings[style]
         except KeyError: style = linestyle_mappings.values()[1]
@@ -345,18 +348,25 @@ class Backend( backend.Backend ):
         color = layer.group_linecolor.get(line_index, line.color)
 
         #:line.marker_color
-        marker_color = line.marker_color
+        marker_color = layer.group_linemarkercolor.get(line_index, line.marker_color)
 
+        #:line.marker_siize
+        marker_size = line.marker_size
         
         #--- PLOT LINE ---
-        print xdata, ydata, width, marker
-        l, = axes.plot( xdata, ydata,
-                        linewidth=width,
-                        linestyle=style,
-                        marker=marker,
-                        color=color,
-                        markerfacecolor=marker_color,
-                        markeredgecolor=marker_color)
+        try:
+            l, = axes.plot( xdata, ydata,
+                            linewidth=width,
+                            linestyle=style,
+                            marker=marker,
+                            color=color,
+                            markerfacecolor=marker_color,
+                            markeredgecolor=marker_color,
+                            markersize=marker_size)
+        except Exception, msg:
+            logger.error("Error when plotting line %d: %s" % (line_index, msg))
+            omap[line] = None
+            return
 
         line_cache.append(l)
         omap[line] = l        
