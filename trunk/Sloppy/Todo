@@ -2,6 +2,25 @@
 TODO
 ----
 
+- Group Properties: if each get_xxx method needs exactly one property
+  to be defined, then we could arrange the widgets likewise: one button
+  per mode: fixed, cycle_list, range
+
+???
+class NumericalRange(HasProperties):
+    start = VP(Float, None)
+    end = VP(Float, None)
+    steps = VP(Float, default=1.0)
+
+  Axis has a NumericalRange
+
+  Line has a Range (row_first:row_last)
+
+- Range does not work properly. It is not the same as VP(Integer, VRange(...))
+  But strange enough, 1 -> 1.0, a is false, but -1 -> -1.0 ?
+  Seems that only the float check works!  So the first check of RequireAll
+  is taken.
+
 - are group properties saved? I don't think so.
 - gui for cycle list... (=> listwizard?)
 
@@ -16,42 +35,10 @@ TODO
   cause an error because the backend has not been properly closed.
 
 
-
-- What data should be passed to the get function of a group object?
-  maybe the object that we are talking about, the property container?
-  
-  get(self, index, container, alternative,...)
-  
-  and if so: should some container objects have a property 'owner' which 
-  yields the parent?  Then of course we must make sure that this prop
-  is set whenever needed.
-
- => sample 'custom function' implementation for group properties?
-
-
 - change Copyright notice to 2005-2006
 
------------------------------------------------------------------------------
-ASCII Import:
-
-- If we always read the header, then the header could leave the file 
-  descriptor at the first non-comment line?  There would be no need for
-  a tell or seek.
-
-- throw away trailing and leading whitespaces: string.strip(line)
-  where string is a module
-
-- another way to split up strings: separator.separate(line)
-  where separator is the separator
-
-- allow None items?
-  if null.count(string.strip(item)) > 0:
-     collist[index].add_element(None)
-
-- determine type: is int? is float? if neither, then assume string
-
-- super(ThisClass, self).__init__(args)  (without self)
-
+- implement sample get method for SIMS: color depending on label!
+  How to register plugin stuff?
 
 
 ------------------------------------------------------------------------------
@@ -301,6 +288,28 @@ Export:
 - Plot Templates.
 
 #----------------------------------------------------------------------
+
+
+-----------------------------------------------------------------------------
+ASCII Import:
+
+- If we always read the header, then the header could leave the file 
+  descriptor at the first non-comment line?  There would be no need for
+  a tell or seek.
+
+- throw away trailing and leading whitespaces: string.strip(line)
+  where string is a module
+
+- another way to split up strings: separator.separate(line)
+  where separator is the separator
+
+- allow None items?
+  if null.count(string.strip(item)) > 0:
+     collist[index].add_element(None)
+
+- determine type: is int? is float? if neither, then assume string
+
+- super(ThisClass, self).__init__(args)  (without self)
 
 
 #==============================================================================

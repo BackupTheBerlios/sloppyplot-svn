@@ -326,7 +326,7 @@ class Backend( backend.Backend ):
 
         #:line.style
         #:layer.group_style
-        style = layer.group_style.get(line_index, line.style)
+        style = layer.group_style.get(line, line_index, line.style)
 
         global linestyle_mappings
         try: style = linestyle_mappings[style]
@@ -334,7 +334,7 @@ class Backend( backend.Backend ):
 
         #:line.marker
         #:layer.group_marker
-        marker = layer.group_marker.get(line_index, line.marker)
+        marker = layer.group_marker.get(line, line_index, line.marker)
 
         global linemarker_mappings
         try: marker = linemarker_mappings[marker]
@@ -342,14 +342,14 @@ class Backend( backend.Backend ):
         
         #:line.width
         #:layer.group_width
-        width = layer.group_width.get(line_index, line.width) or 1.0
+        width = layer.group_width.get(line, line_index, line.width) or 1.0
         
         #:line.color
         #:layer.group_color
-        color = layer.group_color.get(line_index, line.color) or 'black'
+        color = layer.group_color.get(line, line_index, line.color) or 'black'
 
         #:line.marker_color
-        marker_color = layer.group_marker_color.get(line_index, line.marker_color) or 'black'
+        marker_color = layer.group_marker_color.get(line, line_index, line.marker_color) or 'black'
 
         #:line.marker_siize
         marker_size = line.marker_size or 1

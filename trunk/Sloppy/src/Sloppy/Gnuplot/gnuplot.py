@@ -332,19 +332,20 @@ class Backend(backend.Backend):
 
                 #:line.style
                 #:layer.group_style
-                style = layer.group_style.get(index, line.style)
+                style = layer.group_style.get(line, index, line.style)
 
                 #:line.marker
                 #:layer.group_marker
-                marker = layer.group_marker.get(index, line.marker)
+                marker = layer.group_marker.get(line, index, line.marker)
+                print "-------", marker
                 
                 #:line.width
                 #:layer.group_width                
-                width = layer.group_width.get(index, line.width)
+                width = layer.group_width.get(line, index, line.width)
 
                 #:line.color
                 #:layer.group_color
-                color = layer.group_color.get(index, line.color)
+                color = layer.group_color.get(line, index, line.color)
 
                 #
                 # with-clause

@@ -85,9 +85,9 @@ PV = {
 
 #------------------------------------------------------------------------------
 # BASE OBJECTS
-#
+# 
 
-                    
+    
 class TextLabel(HasProperties):
     " Single text label. "
     text = Unicode('', blurb="Displayed Text")
@@ -101,6 +101,7 @@ class TextLabel(HasProperties):
 class Axis(HasProperties):
     " A single axis for a plot. "
     label = VP(Unicode, None, blurb='Label')
+
     start = VP(Float, None, default=None, blurb='Start')
     end = VP(Float, None, default=None, blurb='End')
 
@@ -115,7 +116,7 @@ class Line(HasProperties):
     visible = Boolean(True)
     
     style = VP([None] + PV['line.style'])
-    width = VP(RequireAll(Float, VRange(0, 10)), None, default=None)
+    width = VP(FloatRange(VRange(0, 10)), None, default=None)
     color = VP([None] + PV['line.color'])
 
     marker = VP([None] + PV['line.marker'])

@@ -4,9 +4,14 @@ from Sloppy.Lib.Props import *
 
 (MODE_CONSTANT, MODE_CYCLE, MODE_RANGE, MODE_CUSTOM) = range(4)
 
+        
 class Group(HasProperties):
+    """
+
+    """
+    
     prop = VP(VInstance(VP),None)
-    allow_override = Boolean(True)    
+    allow_override = Boolean(True)
 
     mode = VP(range(4))
     
@@ -14,11 +19,13 @@ class Group(HasProperties):
 
     cycle_list = Property()    
 
+    # TODO: replace with tuple??? or Range???
+    # Range(min, max, steps) => but where should these be stored?
     range_start = Float(1)
     range_step = Float(1)
-    range_maxsteps = VP(Integer, None)    
+    range_maxsteps = VP(Integer, None)
 
-    on_custom = VP(default=lambda i:None)
+    on_custom = VP(default=lambda o,i:None)
 
     
     def __init__(self, prop, **kwargs):
@@ -31,34 +38,51 @@ class Group(HasProperties):
         self.props.cycle_list = List(self.prop)
 
         self.set_values(**kwargs)
-        
-        
-    def get_constant(self, index):
-        return self.constant_value
 
-    def get_cycle(self, index):
-        return self.cycle_list[ index % len(self.cycle_list) ]
 
-    def get_range(self, index):
-        if self.range_maxsteps is None:
-            return self.range_start + index * self.range_step
-        else:
-            return self.range_start + (index % self.range_maxsteps) * self.range_step
+    def get(self, obj, index, override_value=None, mode=None):
+        """ Return the group value for the object `obj` at position `index`.
 
-    def get_custom(self, index):
-        return self.on_custom(index)
+        `override_value` should be the value to use if the group allows an override.
+        Otherwise the group determines the value from the given `obj`, `index`
+        and `mode`.  If no mode is given, then the preset mode is used.
 
-    
-    def get(self, index, check_first=None, mode=None):
-        if check_first is not None and self.allow_override is True:
-            return check_first
+        TODO: It is not possible to specify an override value of None!
+        """
+
+        print "Get --", obj, index
+        print "Get ", override_value, override_value is not None
+        if override_value is not None and self.allow_override is True:
+            return override_value
         
         mapping = { MODE_CONSTANT: self.get_constant,
                     MODE_CYCLE: self.get_cycle,
                     MODE_RANGE: self.get_range,
                     MODE_CUSTOM: self.get_custom }
+
+        return mapping[mode or self.mode](obj, index)
+
+    #----------------------------------------------------------------------
+    # get method implementations
+    #
         
-        return mapping[mode or self.mode](index)
+    def get_constant(self, obj, index):
+        return self.constant_value
+
+    def get_cycle(self, obj, index):
+        return self.cycle_list[ index % len(self.cycle_list) ]
+
+    def get_range(self, obj, index):
+        if self.range_maxsteps is None:
+            return self.range_start + index * self.range_step
+        else:
+            return self.range_start + (index % self.range_maxsteps) * self.range_step
+
+    def get_custom(self, obj, index):
+        return self.on_custom(obj, index)
+
+
+
 
 
 
@@ -76,15 +100,15 @@ def test():
 
     tc.group_int.set_values(constant_value=7,
                             cycle_list=[5,3,1],
-                            range_start=10, 
-                            on_custom=lambda i:i**2)
+                            range_start = 10,
+                            on_custom=lambda obj,i:i**2)
 
     for i in range(5):
         print "i = ", i
-        print "  constant: ", tc.group_int.get_constant(i)
-        print "  cycle: ", tc.group_int.get_cycle(i)
-        print "  range: ", tc.group_int.get_range(i)
-        print "  custom: ", tc.group_int.get_custom(i)
+        print "  constant: ", tc.group_int.get_constant(tc, i)
+        print "  cycle: ", tc.group_int.get_cycle(tc, i)
+        print "  range: ", tc.group_int.get_range(tc, i)
+        print "  custom: ", tc.group_int.get_custom(tc, i)
         
 
 
