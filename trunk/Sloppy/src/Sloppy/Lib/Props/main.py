@@ -20,7 +20,7 @@
 
 
 
-__all__ = ["HasProperties", "Property", "PropertyError", "Undefined", "View"]
+__all__ = ["HasProperties", "Property", "PropertyError", "Undefined", "Keylist"]
 
 
 #------------------------------------------------------------------------------
@@ -249,11 +249,11 @@ HasProps = HasProperties
 
 
 #------------------------------------------------------------------------------
-# View
+# Keylist
 
-class View:
+class Keylist:
 
-    """ A View helps to define a set of keys of a certain
+    """ A Keylist helps to define a set of keys of a certain
     HasProperties object."""
 
 

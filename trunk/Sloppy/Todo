@@ -5,10 +5,12 @@ TODO
 - are group properties saved? I don't think so.
 - gui for cycle list... (=> listwizard?)
 
-- change Copyright notice to 2005-2006
-
 - when switching the view, we first should leave focus, because otherwise
   you might see remnants from combo boxes
+
+- if clicking on 'apply' or any other button in the layer window,
+  we need to apply all changes that are not yet active.  Maybe by
+  moving focus to the current button?
 
 - close matplotlib backend, then edit its plot again --> I think this will
   cause an error because the backend has not been properly closed.
@@ -27,6 +29,7 @@ TODO
  => sample 'custom function' implementation for group properties?
 
 
+- change Copyright notice to 2005-2006
 
 -----------------------------------------------------------------------------
 ASCII Import:
@@ -86,10 +89,6 @@ SWITCHING TO NUMPY
 BUGFIXES:
 
 - lock Sloppy Archive upon access
-
-- if clicking on 'apply' or any other button in the layer window,
-  we need to apply all changes that are not yet active.  Maybe by
-  moving focus to the current button?
 
 
 

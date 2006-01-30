@@ -52,8 +52,8 @@ class PropertyBrowser(gtk.TreeView):
                 # add item itself
                 iter = model.append(iter, (item, key, item.__class__.__name__))
 
-                if hasattr(item, 'browser_view'):
-                    keys = item.browser_view.keys(item)
+                if hasattr(item, 'browser_keylist'):
+                    keys = item.browser_keylist.keys(item)
                 else:
                     keys = item.get_keys()
                     

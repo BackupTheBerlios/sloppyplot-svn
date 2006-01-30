@@ -82,7 +82,7 @@ class Dataset(HasProperties, HasSignals):
     metadata = Dictionary(Unicode)
     data = VP(Table, ArrayType, None)
 
-    browser_view = View(exclude='data')
+    browser_keylist = Keylist(exclude='data')
     
     def __init__(self, **kwargs):
         HasProperties.__init__(self, **kwargs)
