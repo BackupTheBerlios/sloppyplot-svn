@@ -57,7 +57,9 @@ class FloatRange(VP):
 
 class Instance(VP):
     def __init__(self, type, default=Undefined, **kwargs):
+        print "Instance with kwargs", kwargs
         VP.__init__(self, VInstance(type), default=default, **kwargs)
+        print "==> ", self.on_default
 
 
 class List(VP):

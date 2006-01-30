@@ -100,7 +100,7 @@ class TextLabel(HasProperties):
 
 class Axis(HasProperties):
     " A single axis for a plot. "
-    label = Unicode('', blurb='Label')
+    label = VP(Unicode, None, blurb='Label')
     start = VP(Float, None, default=None, blurb='Start')
     end = VP(Float, None, default=None, blurb='End')
 
@@ -111,7 +111,7 @@ class Axis(HasProperties):
         
 class Line(HasProperties):
     " A single line or collection of points in a Plot. "
-    label = Unicode()
+    label = VP(Unicode, None)
     visible = Boolean(True)
     
     style = VP([None] + PV['line.style'])
@@ -138,7 +138,7 @@ class Line(HasProperties):
 
 class Legend(HasProperties):
     " Plot legend. "
-    label = Unicode(doc='Legend Label')
+    label = VP(Unicode, None, doc='Legend Label')
     visible = Boolean(True)
     border = Boolean(False)
     position = VP(PV['legend.position'])   
@@ -149,7 +149,7 @@ class Legend(HasProperties):
 
 class Layer(HasProperties, HasSignals):
     type = VP(PV['layer.type'])
-    title = Unicode(blurb="Title")
+    title = VP(Unicode, None, blurb="Title")
     lines = List(Line, blurb="Lines")
     grid = Boolean(default=False, blurb="Grid", doc="Display a grid")
     visible = Boolean(True, blurb="Visible")
@@ -213,10 +213,9 @@ class View(HasProperties):
 class Plot(HasProperties, HasSignals):
     key = Keyword(blurb="Key")
 
-    title = Unicode(blurb="Title")
+    title = VP(Unicode, None, blurb="Title")
     comment = Unicode(blurb="Comment")
     
-    legend = Instance(Legend)
     lines = List(Line)
     labels = List(TextLabel)
     layers = List(Layer, blurb="Layers")

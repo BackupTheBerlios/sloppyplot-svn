@@ -522,11 +522,14 @@ class ConnectorUnicode(Connector):
         value = widget.get_text()
         if value == self.last_value:
             return
-        
+
         try:
             self.prop.check(value)
-        except (TypeError, ValueError):
+        except PropertyError:
             widget.set_text(self.last_value)
+            
+                
+        return False
             
 
     #----------------------------------------------------------------------

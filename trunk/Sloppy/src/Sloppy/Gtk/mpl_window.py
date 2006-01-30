@@ -405,11 +405,13 @@ class MatplotlibWidget(gtk.VBox):
         # TODO: connect to plot's title    
 
         if plot is not None:
-            backend = self.project.request_backend('matplotlib', plot=plot)
-
+            backend = self.project.request_backend('matplotlib', plot=plot)           
             #backend.canvas.set_size_request(800, 600)
-            sw = uihelper.add_scrollbars(backend.canvas, viewport=True)
+            sw = uihelper.add_scrollbars(backend.canvas, viewport=True)            
             sw.show()
+
+            # TODO: add rulers
+            
             self.vbox.pack_start(sw)
         else:
             backend = None

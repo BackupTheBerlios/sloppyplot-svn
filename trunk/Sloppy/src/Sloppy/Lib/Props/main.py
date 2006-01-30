@@ -20,7 +20,7 @@
 
 
 
-__all__ = ["HasProperties", "Property", "PropertyError", "Undefined"]
+__all__ = ["HasProperties", "Property", "PropertyError", "Undefined", "View"]
 
 
 #------------------------------------------------------------------------------
@@ -246,3 +246,20 @@ class HasProperties(object):
 
 HasProps = HasProperties
 
+
+
+#------------------------------------------------------------------------------
+# View
+
+class View:
+
+    """ A View helps to define a set of keys of a certain
+    HasProperties object."""
+
+
+    def __init__(self, include=None, exclude=None):
+        self.include = include
+        self.exclude = exclude
+        
+    def keys(self, owner):
+        return owner.get_keys(include=self.include, exclude=self.exclude)

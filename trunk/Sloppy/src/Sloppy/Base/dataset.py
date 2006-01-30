@@ -81,6 +81,8 @@ class Dataset(HasProperties, HasSignals):
     label = Unicode()
     metadata = Dictionary(Unicode)
     data = VP(Table, ArrayType, None)
+
+    browser_view = View(exclude='data')
     
     def __init__(self, **kwargs):
         HasProperties.__init__(self, **kwargs)

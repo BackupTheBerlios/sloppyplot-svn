@@ -1,33 +1,19 @@
 
-- maybe rewrite the columns dialog similar to the layerwin dialog ?
-
-- display metadata, so that the import makes more sense and so that we
-  have some new user visible feature.  We might access this from the 
-  project window by right-clicking on the dataset (-> View Metadata)
-
-- show ruler for matplotlib canvas ?
+TODO
+----
 
 - are group properties saved? I don't think so.
+- gui for cycle list... (=> listwizard?)
 
 - change Copyright notice to 2005-2006
-
-------------------------------------------------------------------------------
-DETAILS FOR 0.5.3:
 
 - when switching the view, we first should leave focus, because otherwise
   you might see remnants from combo boxes
 
-- Bugreport: Changing the column order causes all values to become integers!
-
 - close matplotlib backend, then edit its plot again --> I think this will
   cause an error because the backend has not been properly closed.
 
-- switch to numpy and it's dtype. Actually I would like to get rid of all
-  the Column stuff.
 
-- rewrite tablewin
-
-- gui for cycle list... (=> listwizard?)
 
 - What data should be passed to the get function of a group object?
   maybe the object that we are talking about, the property container?
@@ -38,17 +24,8 @@ DETAILS FOR 0.5.3:
   yields the parent?  Then of course we must make sure that this prop
   is set whenever needed.
 
-- show_all() is bad for group boxes, because it resizes the whole dialog.
-  => not important for now, because we might use a different group
-  implementation
+ => sample 'custom function' implementation for group properties?
 
-== CUSTOM GNUPLOT EXPORT ==
-
-- allow to create a gnuplot export directory containing a gnuplot file
-  and the data files
-- allow to include arbitrary data at specific positions into the gnuplot.
-
-- re-implement some kind of gnuplot window or integrate that into the toolbox.
 
 
 -----------------------------------------------------------------------------
@@ -74,8 +51,29 @@ ASCII Import:
 
 
 
+------------------------------------------------------------------------------
+SWITCHING TO NUMPY
 
+- maybe rewrite the columns dialog similar to the layerwin dialog ?
+  => wait for change to numpy!
 
+- Bugreport: Changing the column order causes all values to become integers!
+
+- switch to numpy and it's dtype. Actually I would like to get rid of all
+  the Column stuff.
+
+- rewrite tablewin
+
+------------------------------------------------------------------------------
+== CUSTOM GNUPLOT EXPORT ==
+
+- allow to create a gnuplot export directory containing a gnuplot file
+  and the data files
+- allow to include arbitrary data at specific positions into the gnuplot.
+
+- re-implement some kind of gnuplot window or integrate that into the toolbox.
+
+------------------------------------------------------------------------------
 - What if we have two templates for the same extension?
 
   -> either ask the user what to do
@@ -102,6 +100,8 @@ BUGFIXES:
 
 PLANS FOR BEYOND:
 =================
+
+- show ruler for matplotlib canvas ?
 
 - column properties: column type (default 'f')
   => We need to replace the column properties dialog by a dialog

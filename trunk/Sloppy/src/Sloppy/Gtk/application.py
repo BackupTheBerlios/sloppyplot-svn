@@ -43,6 +43,7 @@ from gnuplot_window import GnuplotWindow
 from appwindow import AppWindow
 from mpl_window import MatplotlibWindow, MatplotlibWidget
 from layerwin import LayerWindow
+from dlg_property_browser import PropertyBrowserDialog
 
 import Sloppy
 from Sloppy.Base.application import Application
@@ -794,8 +795,15 @@ class GtkApplication(Application):
         finally:
             dlg.destroy()
 
-        return
-    
+
+    def on_action_ViewMetadata(self, action):
+        objects = self.window.treeview.get_selected_objects()
+        if len(objects) == 1:
+            dlg = PropertyBrowserDialog(objects[0])
+            try:
+                dlg.run()
+            finally:
+                dlg.destroy()
             
 
     #----------------------------------------------------------------------

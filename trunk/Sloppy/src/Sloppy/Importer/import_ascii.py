@@ -148,7 +148,7 @@ class Importer(dataio.Importer):
         )
 
 
-    table = Instance(Table)
+    table = VP(Instance(Table), None, default=None)
     
     keys = List()
 
@@ -326,7 +326,8 @@ class Importer(dataio.Importer):
 
         # determine delimiter
         delimiter = self.delimiter or self.custom_delimiter
-        if delimiter is None:
+        if delimiter is None or len(delimiter) == 0:
+            print "Auto-detect delimiter"
             # determine from first non-comment line
             rewind = fd.tell()
             line = fd.readline()
@@ -336,7 +337,7 @@ class Importer(dataio.Importer):
                 delimiter = '[\s\t]*'
             fd.seek(rewind)
 
-        logger.debug("determined delimiter: %s" % delimiter)
+        logger.debug("determined delimiter: '%s'" % delimiter)
         
         # If a table or a list of designations is given, then we will
         # skip the column count determination and the creation of a
@@ -421,6 +422,7 @@ class Importer(dataio.Importer):
         skipcount = 0
         row = fd.readline()        
         while len(row) > 0:
+
             # Split off comments using a regular expression.
             # This is a more robust solution than the former
             #  row = row.split('#')[0]
@@ -433,7 +435,8 @@ class Importer(dataio.Importer):
                 logger.error("Skipped row: %s" % row)
                 row = fd.readline()
                 continue
-            
+
+            #print "MATCHES", cr_split.split(row)
             matches = [match for match in cr_split.split(row) if len(match) > 0]
             #logger.debug("MATCHES = %s" % str(matches))
             if len(matches) == 0:

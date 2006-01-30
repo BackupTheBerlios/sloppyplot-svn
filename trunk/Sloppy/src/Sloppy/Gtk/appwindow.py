@@ -600,6 +600,7 @@ class AppWindow( gtk.Window ):
         ('DatasetImport', None, 'Import Dataset', '<control>I', 'Import a dataset', '_cb_import_dataset'),
         ('NewDataset', gtk.STOCK_ADD, 'New Dataset', None, 'Create a new dataset', '_cb_new_dataset'),
         ('ExperimentalPlot', None, 'Create Multiplot (EXPERIMENTAL!)', None, None, '_cb_experimental_plot'),
+        ('ViewMetadata', None, 'View Metadata', None, 'View Metadata', 'on_action_ViewMetadata'),
         #
         ('Preferences', gtk.STOCK_PREFERENCES, '_Preferences...', None, "Modify Preferences", 'on_action_Preferences'),
         ]
@@ -713,12 +714,14 @@ class AppWindow( gtk.Window ):
         <separator/>
         <menuitem action='Edit'/>
         <menuitem action='RenameItem'/>
+        <menuitem action='ViewMetadata'/>        
         <separator/>        
         <menuitem action='Delete'/>
       </popup>
       <popup name="popup_dataset">
         <menuitem action='Edit'/>
         <menuitem action='RenameItem'/>
+        <menuitem action='ViewMetadata'/>
         <separator/>      
         <menuitem action='DatasetToPlot'/>
         <menuitem action='DatasetAddToPlot'/>
