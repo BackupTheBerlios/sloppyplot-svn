@@ -81,6 +81,9 @@ TODO
 - change Copyright notice to 2005-2006
 - make sure all svn properties Head, Id are set
 
+    @copyright: 2000-2005 by Juergen Hermann <jh@web.de>
+    @license: GNU GPL, see COPYING for details.
+
 
 
 
