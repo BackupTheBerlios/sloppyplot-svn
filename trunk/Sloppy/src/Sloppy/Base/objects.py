@@ -116,7 +116,7 @@ class Line(HasProperties):
     visible = Boolean(True)
     
     style = VP([None] + PV['line.style'])
-    width = VP(FloatRange(VRange(0, 10)), None, default=None)
+    width = VP(FloatRange(0, 10), None, default=None)
     color = VP([None] + PV['line.color'])
 
     marker = VP([None] + PV['line.marker'])
@@ -124,14 +124,14 @@ class Line(HasProperties):
     marker_size = FloatRange(0,None,default=1)        
     
     # source stuff (soon deprecated)
-    cx = VP(Integer, VRange(0,None), None, default=0, blurb="x")
-    cy = VP(Integer, VRange(0,None), None, default=1, blurb="y")
-    row_first = VP(RequireAll(Integer, VRange(0,None)), None, default=None, blurb="first row")
-    row_last = VP(RequireAll(Integer, VRange(0,None)), None, default=None, blurb="last row")
+    cx = VP(IntegerRange(0,None), None, default=0, blurb="x")
+    cy = VP(IntegerRange(0,None), None, default=1, blurb="y")
+    row_first = VP(IntegerRange(0,None), None, default=None, blurb="first row")
+    row_last = VP(IntegerRange(0,None), None, default=None, blurb="last row")
 
     #value_range = VP(transform=str)    
-    cxerr = VP(Integer, VRange(0,None), None)
-    cyerr = VP(Integer, VRange(0,None), None)
+    cxerr = VP(IntegerRange(0,None), None)
+    cyerr = VP(IntegerRange(0,None), None)
 
     source = VP(VInstance(Dataset), None, default=None)    
 

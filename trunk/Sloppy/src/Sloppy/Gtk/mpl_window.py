@@ -405,14 +405,44 @@ class MatplotlibWidget(gtk.VBox):
         # TODO: connect to plot's title    
 
         if plot is not None:
-            backend = self.project.request_backend('matplotlib', plot=plot)           
-            #backend.canvas.set_size_request(800, 600)
-            sw = uihelper.add_scrollbars(backend.canvas, viewport=True)            
-            sw.show()
+            # TODO: set canvas size depending on outer settings, on dpi
+            # TODO: and zoom level
 
-            # TODO: add rulers
+            canvas_width, canvas_height = 800,600
+            backend = self.project.request_backend('matplotlib', plot=plot)           
+            backend.canvas.set_size_request(canvas_width, canvas_height)
+
+            # add rulers
+            hruler = gtk.HRuler()
+            hruler.set_metric(gtk.PIXELS)
+            hruler.set_range(0, canvas_width, 0, canvas_width)
+
+            vruler = gtk.VRuler()
+            vruler.set_metric(gtk.PIXELS) # gtk.INCHES, gtk.CENTIMETERS
+            vruler.set_range(0, canvas_height, 0, canvas_height)
+
+            # motion notification
+            def motion_notify(ruler, event):
+                return ruler.emit("motion_notify_event", event)
+            #backend.canvas.connect_object("motion_notify_event", motion_notify, ruler)
+
+            # put scrollbars around canvas
+            scrolled_window = gtk.ScrolledWindow()
+            scrolled_window.add_with_viewport(backend.canvas)
             
-            self.vbox.pack_start(sw)
+            # the layout is done using a table
+            layout = gtk.Table(rows=3, columns=2)
+            layout.attach(hruler, 1, 2, 0, 1, gtk.EXPAND|gtk.SHRINK|gtk.FILL, gtk.FILL)
+            layout.attach(vruler, 0, 1, 1, 2, gtk.FILL, gtk.EXPAND|gtk.SHRINK|gtk.FILL)
+            layout.attach(scrolled_window, 1, 2, 1, 2, gtk.EXPAND|gtk.FILL, gtk.EXPAND|gtk.FILL)
+
+            layout.show_all()
+            self.vbox.pack_start(layout)
+            
+            # add scrollbar
+            #sw = uihelper.add_scrollbars(backend.canvas, viewport=True)
+            #sw.show()            
+            #self.vbox.pack_start(sw)
         else:
             backend = None
            

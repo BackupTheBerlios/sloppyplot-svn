@@ -257,6 +257,14 @@ class ValidatorList(Validator):
         default = kwargs.get('default', Undefined)
         on_default = kwargs.get('on_default', lambda: default)
 
+        # helper function
+        def simplify_validator(validator):
+            " Simplify validator if it has a length of 1. "
+            if len(validator.vlist) == 1:
+                return validator.vlist[0]
+            else:
+                return validator
+        
         # init validators
         vlist = []
         for item in validators:
@@ -270,12 +278,12 @@ class ValidatorList(Validator):
                 if len(item) > 0:
                     on_default = lambda: item[0]
             elif isinstance(item, Property):
-                vlist.extend(item.validator.vlist)
+                vlist.append(simplify_validator(item.validator))                
                 on_default = item.on_default
             elif issubclass(item, Property):
-                i = item()
-                vlist.extend(i.validator.vlist)
-                on_default = i.on_default
+                item = item()
+                vlist.append(simplify_validator(item.validator))                
+                on_default = item.on_default
             elif inspect.isclass(item):
                 vlist.append(VInstance(item))
             else:
@@ -312,6 +320,18 @@ class RequireAll(ValidatorList):
             raise
 
         return value
+
+
+def _dump_validator(validator, indent=0):
+    " For debugging. "
+    print "  "*indent, validator.__class__.__name__
+    indent += 2
+    for v in validator.vlist:
+        if isinstance(v, ValidatorList):
+            dump(v, indent+2)
+        else:
+            print "  "*indent, v.__class__.__name__
+
 
 def construct_validator_list(*validators, **kwargs):
     if len(validators) == 0:

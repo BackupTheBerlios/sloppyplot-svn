@@ -6,7 +6,6 @@ TODO
   to be defined, then we could arrange the widgets likewise: one button
   per mode: fixed, cycle_list, range
 
-???
 class NumericalRange(HasProperties):
     start = VP(Float, None)
     end = VP(Float, None)
@@ -16,10 +15,7 @@ class NumericalRange(HasProperties):
 
   Line has a Range (row_first:row_last)
 
-- Range does not work properly. It is not the same as VP(Integer, VRange(...))
-  But strange enough, 1 -> 1.0, a is false, but -1 -> -1.0 ?
-  Seems that only the float check works!  So the first check of RequireAll
-  is taken.
+  Maybe other name instead of range ?
 
 - are group properties saved? I don't think so.
 - gui for cycle list... (=> listwizard?)
@@ -33,7 +29,6 @@ class NumericalRange(HasProperties):
 
 - close matplotlib backend, then edit its plot again --> I think this will
   cause an error because the backend has not been properly closed.
-
 
 - change Copyright notice to 2005-2006
 
@@ -352,3 +347,10 @@ examples for format
 %3.0em    1e+03
 %2.0f     100.00
 %L        3
+
+
+
+###############################################################################
+NOTES:
+
+- I am using gtk.*Ruler, but it might be deprecated in 3.0

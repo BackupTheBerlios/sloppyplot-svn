@@ -52,13 +52,13 @@ class Range(VP):
                           default=default, **kwargs)
 
         
-class IntegerRange(VP):
+class IntegerRange(Range):
     def __init__(self, min=None, max=None, default=Undefined, **kwargs):
-        VP.__init__(self, VInteger(), min=min, max=max, default=default, **kwargs)
+        Range.__init__(self, VInteger(), min=min, max=max, default=default, **kwargs)
 
-class FloatRange(VP):
+class FloatRange(Range):
     def __init__(self, min=None, max=None, default=Undefined, **kwargs):
-        VP.__init__(self, Float, min=min, max=max, default=default, **kwargs)
+        Range.__init__(self, VFloat(), min=min, max=max, default=default, **kwargs)
 
             
             
