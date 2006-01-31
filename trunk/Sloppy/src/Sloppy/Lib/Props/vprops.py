@@ -328,7 +328,7 @@ def _dump_validator(validator, indent=0):
     indent += 2
     for v in validator.vlist:
         if isinstance(v, ValidatorList):
-            dump(v, indent+2)
+            _dump_validator(v, indent+2)
         else:
             print "  "*indent, v.__class__.__name__
 
