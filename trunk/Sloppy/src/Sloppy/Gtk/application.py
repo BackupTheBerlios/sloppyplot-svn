@@ -43,7 +43,7 @@ from gnuplot_window import GnuplotWindow
 from appwindow import AppWindow
 from mpl_window import MatplotlibWindow, MatplotlibWidget
 from layerwin import LayerWindow
-from dlg_property_browser import PropertyBrowserDialog
+from property_browser import PropertyBrowserDialog
 
 import Sloppy
 from Sloppy.Base.application import Application

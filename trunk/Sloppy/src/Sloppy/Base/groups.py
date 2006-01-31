@@ -50,8 +50,6 @@ class Group(HasProperties):
         TODO: It is not possible to specify an override value of None!
         """
 
-        print "Get --", obj, index
-        print "Get ", override_value, override_value is not None
         if override_value is not None and self.allow_override is True:
             return override_value
         

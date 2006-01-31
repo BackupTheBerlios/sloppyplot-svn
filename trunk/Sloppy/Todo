@@ -2,23 +2,65 @@
 TODO
 ----
 
+=== NEW FEATURES ===
+
+(F1) Renderers and Connectors (for use in Group Properties)
+
+- Make CTreeFactory, CWidgetFactory similar in functionality, so that 
+  you can have the same comfort in adding widgets as in adding renderers.
+
+- Implement some kind of sub-connector: a connector that itself is a vbox
+  with other connectors (this is why I need a proper CWidgetFactory)
+  -> CLimits aka CInlineInstance
+  there might be a way to tell the widget_factory that the instance is supposed
+  to be displayed inline (=> a Keylist or view?)
+
+- gui for cycle list... (=> widget_factory)
+
+- RendererUnicodeReadOnly for non-implemented properties
+
+- Why can't I have get_keys() of HasProperties as classmethod?
+  It is risky to initiate a new instance just to get the names
+  of the keys.  I know that the problem is that the keys are collected
+  from the base classes, but maybe we could have a static alternative
+  that takes more time but collects this information on the fly?
+
+  Or maybe we can initiate the keys not in __init__ but in __new__ ?
+  Or is __new__ for the instance instantiation. I need some method
+  for the class instantiation!
+
+
+(F2) Implement Group Properties
+
 - Group Properties: if each get_xxx method needs exactly one property
   to be defined, then we could arrange the widgets likewise: one button
   per mode: fixed, cycle_list, range
 
-class NumericalRange(HasProperties):
-    start = VP(Float, None)
-    end = VP(Float, None)
-    steps = VP(Float, default=1.0)
-
-  Axis has a NumericalRange
-
-  Line has a Range (row_first:row_last)
-
-  Maybe other name instead of range ?
-
 - are group properties saved? I don't think so.
-- gui for cycle list... (=> listwizard?)
+
+- leave custom group properties away, maybe, because we would need to
+  add a plugin interface. [implement sample get method for SIMS: color depending on label!
+  How to register plugin stuff?]
+
+
+
+(F3) Implement ruler and zoom combo
+
+- canvas must have a fixed size!
+
+- if the canvas size changes, then we must readjust the ruler
+
+- if we scroll, the ruler should scroll as well!
+
+- when moving in the canvas (motion event), the ruler needs to be informed.
+
+- the units in the ruler must be settable in the preferences
+
+- add combo box for zoom: 25%, 50%, 75%, 100%, 200%, 400%, fit window, fit width
+
+
+
+=== BUGFIXES ===
 
 - when switching the view, we first should leave focus, because otherwise
   you might see remnants from combo boxes
@@ -30,10 +72,41 @@ class NumericalRange(HasProperties):
 - close matplotlib backend, then edit its plot again --> I think this will
   cause an error because the backend has not been properly closed.
 
-- change Copyright notice to 2005-2006
+- check if we really want to have None values for some object properties, e.g.
+  line.label, ...
 
-- implement sample get method for SIMS: color depending on label!
-  How to register plugin stuff?
+
+=== POLISH ===
+
+- change Copyright notice to 2005-2006
+- make sure all svn properties Head, Id are set
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 ------------------------------------------------------------------------------
@@ -81,8 +154,6 @@ BUGFIXES:
 
 PLANS FOR BEYOND:
 =================
-
-- show ruler for matplotlib canvas ?
 
 - column properties: column type (default 'f')
   => We need to replace the column properties dialog by a dialog

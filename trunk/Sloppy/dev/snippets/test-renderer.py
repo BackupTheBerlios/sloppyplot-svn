@@ -7,6 +7,13 @@ from Sloppy.Base.properties import *
 
 from Sloppy.Gtk.widget_factory import *
 
+
+
+class Limits(HasProperties):
+    start = VP(Float, None)
+    end = VP(Float, None)
+
+    
     
 class Recipe(HasProperties):
     name = Unicode()
@@ -21,6 +28,9 @@ class Recipe(HasProperties):
     is_recommended = VP(Boolean,None, default=True)
 
     width = VP( RequireAll(Float), None, default=None )
+
+    my_range = Instance(Limits, on_default=lambda: Limits(start=None,end=None))
+        
 
 class CookBook(HasProperties):
     recipelist = VProperty( VList(VInstance(Recipe)) )
@@ -52,7 +62,7 @@ def do_quit(udata, factory):
 win.connect("destroy", do_quit, factory)
 #------------------------------------------------------------------------------
 factory = CWidgetFactory(cookbook.recipelist[0])
-factory.add_keys(Recipe().get_keys())
+factory.add_keys(Recipe().get_keys())# my_range=create_range_widget
 #vbox = factory.create_vbox()
 table = factory.create_table()
 factory.check_in()

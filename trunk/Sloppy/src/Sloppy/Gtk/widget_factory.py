@@ -59,7 +59,6 @@ class CTreeViewFactory:
         self.treeview = None
 
 
-
     def add_columns(self, *keys, **kwargs):
         for key in keys:            
             if isinstance(key, basestring):
@@ -132,7 +131,7 @@ class CTreeViewFactory:
         self.treeview = treeview
         return self.treeview
 
-
+    
     def check_in(self):
         itemlist = self.listowner.get_value(self.listkey)
         model = self.treeview.get_model()
@@ -322,10 +321,13 @@ class RendererBoolean(Renderer):
 
 renderers = {'Unicode': RendererUnicode,
              'Choice': RendererChoice,
-             'Boolean': RendererBoolean}
+             'Boolean': RendererBoolean,
+             'Instance': RendererUnicode, # TODO
+             'Limits': RendererUnicode
+             }
 
 
-#------------------------------------------------------------------------------
+###############################################################################
 
 class CWidgetFactory:
 
@@ -386,13 +388,19 @@ class CWidgetFactory:
                 tooltips.set_tip(ebox, c.prop.doc)
 
             tw.attach(ebox, 0,1,n,n+1,
-                      yoptions=0, xpadding=5, ypadding=1)
+                      yoptions=0,
+                      xpadding=5, ypadding=1)
 
             n += 1
 
         return tw
 
 
+    def set_container(self, container):
+        self.container = container
+        for connector in self.clist:
+            connector.container = container
+            
     def check_in(self):
         for connector in self.clist:
             connector.check_in()
@@ -402,6 +410,7 @@ class CWidgetFactory:
         for c in self.clist:
             c.check_out(undolist=ul)
         undolist.append(ul)       
+
 
 
 
@@ -441,8 +450,6 @@ class Connector(object):
         return self.container.get_prop(self.key)
     prop = property(get_prop)
 
-    def set_container(self, container):
-        self.container = container
 
     def get_widget_key(self):
         key = self.prop.blurb or self.key
@@ -847,12 +854,88 @@ class ConnectorBoolean(Connector):
             prop = self.container.get_prop(self.key)
             return model[index][1]
 
+
+###############################################################################
+
+class ConnectorInstance(Connector):
+
+    def init(self):
+        self.data = None
+    
+    def create_widget(self):
+        # find VInstance
+        prop = self.container.get_prop(self.key)
+        vinstances = [v for v in prop.validator.vlist if isinstance(v, VInstance)]
+        if len(vinstances) == 0:
+            raise TypeError("Property for connector 'Instance' has no instance validator!")
+        self.vinstance = vinstance = vinstances[0]
+
+        # create button widget
+        button = gtk.Button()
+
+                            
+        self.widget = button
+        return self.widget
+
+    def check_in(self):        
+        value = self.get_value()
+
+        self.widget.set_label('%s' % (self.vinstance.instance.__name__))
+
+        self.data = value
+        self.last_value = value
+        
+    def get_data(self):
+        return self.data
+
+
+
+###############################################################################
+
+class ConnectorLimits(Connector):
+
+    def init(self):
+        self.data = None
+    
+    def create_widget(self):
+        # find VInstance
+        prop = self.container.get_prop(self.key)
+        vinstances = [v for v in prop.validator.vlist if isinstance(v, VInstance)]
+        if len(vinstances) == 0:
+            raise TypeError("Property for connector 'Instance' has no instance validator!")
+        self.vinstance = vinstance = vinstances[0]
+
+        # create vbox with connectors
+        vbox = gtk.VBox()
+
+        pseudo_instance = vinstance.instance()
+        keys = pseudo_instance.get_keys()
+        self.factory = CWidgetFactory(pseudo_instance)
+        self.factory.add_keys(keys)
+        self.widget = self.factory.create_table()
+      
+        return self.widget
+
+    def check_in(self):
+        value = self.get_value()
+
+        self.factory.set_container(value)
+        self.factory.check_in()        
+
+        self.data = value
+        self.last_value = value
+        
+    def get_data(self):
+        return self.data
+
         
 connectors ={'Choice': ConnectorChoice,
              'RGBColor': ConnectorRGBColor,
              'Range': ConnectorRange,
              'Unicode': ConnectorUnicode,
-             'Boolean': ConnectorBoolean}
+             'Boolean': ConnectorBoolean,
+             'Instance': ConnectorInstance,
+             'Limits': ConnectorLimits}
 
 
 
@@ -865,6 +948,11 @@ def get_cname(owner, key):
         v = vlist[0]
         if isinstance(v, VRange):
             return'Range'
+        elif isinstance(v, VInstance):
+            # TEMPORARY
+            if v.instance.__name__ == 'Limits':
+                return 'Limits'
+            return 'Instance'        
         #elif isinstance(v, VRGBColor):
         #    return 'RGBColor'
         elif isinstance(v, VChoice):
@@ -882,6 +970,8 @@ def get_cname(owner, key):
 
 def new_connector(owner, key):  
     cname = get_cname(owner, key)
+    if connectors.has_key(cname) is False:
+        cname = 'Unicode'
     connector = connectors[cname](owner, key)
     return connector
 
