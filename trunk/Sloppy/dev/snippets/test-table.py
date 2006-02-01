@@ -67,12 +67,12 @@ class TableProxy:
             # as expected by _insert.
             if len(cols) > 0:
                 first_item = cols[0]
-                if not isinstance(first_item, (list,tuple,numpy.ArrayType)):
+                if not isinstance(first_item, (list,tuple,numpy.ndarray)):
                     cols = [cols]
                     
             self._insert(cindex, cols, names)
 
-        elif isinstance(cols, numpy.ArrayType):
+        elif isinstance(cols, numpy.ndarray):
             # ... an array of void-type
             fields = cols.dtype.fields
             if fields is None:
