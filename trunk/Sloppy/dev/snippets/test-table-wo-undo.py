@@ -10,6 +10,7 @@ import numpy
 
 # TODO: change column type somehow _or_ replace column!!!
 
+from Sloppy.Lib.Undo import *
 
 
 class TableProxy:
@@ -195,41 +196,57 @@ class TableProxy:
 
     # Row Manipulation --------------------------------------------------------
 
-    def insert_n_rows(self, i, n=1):
+    def insert_n_rows(self, i, n=1, undolist=[]):
         """
         Insert `n` empty rows into each column at row `i`.
         """
-        self.insert_rows(i, rows=numpy.zeros((n,), dtype=self.array.dtype))
+        self.insert_rows(i, rows=numpy.zeros((n,), dtype=self.array.dtype), undolist=[])
 
-    def insert_rows(self, i, rows):
+    def insert_rows(self, i, rows, undolist=[]):
         """
         Insert the given `rows` (list of one-dimensional arrays) at row `i`.
         """
         self.array = numpy.concatenate([self.array[0:i], rows, self.array[i:]])
+        undolist.append(UndoInfo(self.delete_n_rows, i, len(rows), only_zeros=True))
 
-    def extend(self, n):
+    def extend(self, n, undolist=[]):
         """
         Add `n` rows to the end of all columns.
         """
-        self.insert_n_rows(len(self.array), n)
+        self.insert_n_rows(len(self.array), n, undolist=undolist)
 
-    def delete_n_rows(self, i, n=1):
+    def delete_n_rows(self, i, n=1, only_zeros=False, undolist=[]):
         """
         Delete `n` rows, starting at the row with the index `i`.
+        The keyword arg `only_zeros` is an internal argument needed
+        for better undo performance.              
         """
         n = min(len(self.array)-i, n)
-        self.array = numpy.concatenate([self.array[0:i], self.array[i+n:]])
 
-    def resize(self, nrows):
+        if only_zeros is True:
+            ui = UndoInfo(self.insert_n_rows, i, )
+        else:
+            undo_data = numpy.array(self.array[i:i+n])            
+            ui = UndoInfo(self.insert_rows, i, undo_data)
+            
+        self.array = numpy.concatenate([self.array[0:i], self.array[i+n:]])
+        undolist.append(ui)
+        
+        # TODO: return cut data ??
+
+    def resize(self, nrows, undolist=[]):
         """
         Resize array to given number of `nrows`.
         """
         current_nrows = self.array.shape[0]
         nrows = max(0, nrows)        
         if nrows < current_nrows:
-            self.delete_n_rows( nrows, current_nrows - nrows)
+            self.delete_n_rows( nrows, current_nrows - nrows, undolist=[])
         elif nrows > current_nrows:
-            self.insert_n_rows( current_nrows, nrows - current_nrows)
+            self.insert_n_rows( current_nrows, nrows - current_nrows, undolist=[])
+        else:
+            undolist.append(NullUndo())
+
             
     # Diagnostics -------------------------------------------------------------
 
