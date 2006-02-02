@@ -1,4 +1,23 @@
 
+
+- deprecate uwrap and put the set function into Undo library as uset.
+
+- deprecate utable, this will be put into table.py
+
+- use UndoInformation for changing the infos in Table object, i.e. use
+  ulist for operations on Table.infos
+
+- finish Undo implementation for column operations
+
+- TestSuites, TestCases, ... Yes, I do need this.
+
+
+
+Transition to numpy will definitely happen in this release !!!!
+
+
+
+
 TODO
 ----
 
