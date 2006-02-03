@@ -114,6 +114,7 @@ class Plugin:
                       'formats':['f4','f4']}
              )
         ds = Dataset(a)
+        ds.infos['col2'].designation = 'Y'
         ds.key = pdict.unique_key(project.datasets, "exp_ds")
 
 
@@ -128,6 +129,7 @@ class Plugin:
              )
           
         ds2 = Dataset(a)
+        ds2.infos['col4'].designation = 'Y'        
         ds2.key = pdict.unique_key(project.datasets, "exp_ds2")
 
         plot = Plot()

@@ -57,7 +57,8 @@ class DatasetModel(gtk.GenericTreeModel):
     def get_column_names(self):
         rv = []
         n = 0
-        for name, info in self.dataset.infos.iteritems():
+        for name in self.dataset.names:
+            info = self.dataset.get_info(name)
             rv.append("%d: %s (%s)\n%s" % (n, name, info.designation, info.label))
             n+=1
 

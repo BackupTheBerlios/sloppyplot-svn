@@ -331,25 +331,20 @@ class Project(HasProperties, HasSignals):
 
         lines = []
         for dataset in datasets:
-            dataset = self.get_dataset(dataset)
-            # TODO: dataset.get_table()
-            table = dataset.get_data()
-            if not isinstance(table, Table):
-                raise TypeError("Dataset %s has data, which is not a Table object, but %s" % (dataset, type(table)) )
-
             cx = None
             j = -1
-            for column in table.get_columns():
+            for name in dataset.names:
+                info = dataset.infos[name]
                 j += 1
                 if cx is None:
                     # skip if this is no X value
-                    if column.designation != 'X':
+                    if info.designation != 'X':
                         continue
                     else:
                         cx = j
                 else:
                     # skip if this is no Y value
-                    if column.designation != 'Y':
+                    if info.designation != 'Y':
                         continue
                     else:
                         lines.append( Line(source=dataset,

@@ -26,16 +26,11 @@ from Sloppy.Base import utils
 from Sloppy.Base.objects import Legend, Axis, Plot, Layer, Line, TextLabel
 from Sloppy.Base import pdict, iohelper
 from Sloppy.Base.dataio import exporter_registry, read_table_from_stream
-#from Sloppy.Base.table import Table, Column
 from Sloppy.Base import error
 
 from Sloppy.Lib.ElementTree.ElementTree import ElementTree, Element, SubElement, parse
 
 import tarfile, tempfile, os, shutil
-
-
-
-from Numeric import ArrayType
 
 
 #------------------------------------------------------------------------------
@@ -272,8 +267,6 @@ def toElement(project):
                 n += 1
                 
             
-        elif isinstance(ds.data, ArrayType): # TODO: untested
-            eData = SubElement(eDatasets, 'Array')
         else:
             raise RuntimeError("Invalid dataset", ds)
         
