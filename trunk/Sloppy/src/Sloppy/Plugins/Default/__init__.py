@@ -29,13 +29,15 @@ from Sloppy.Lib.Undo import UndoList, ulist
 
 from Sloppy.Gtk import plugin
 from Sloppy.Base import uwrap, pdict
-from Sloppy.Base.table import Table
 
 
 from Sloppy.Base.dataio import importer_registry
 from Sloppy.Base.dataset import Dataset
 from Sloppy.Base.objects import *
 from os.path import basename
+
+import numpy
+
 
 class Plugin:
 
@@ -102,17 +104,31 @@ class Plugin:
 
         ul = UndoList().describe("Experimental Plot")
 
-        ds = Dataset()
+        a = numpy.array(
+            [(1,1),
+             (2,4),
+             (3,9),
+             (4,16),
+             (5,25)],
+             dtype = {'names':['col1','col2'],
+                      'formats':['f4','f4']}
+             )
+        ds = Dataset(a)
         ds.key = pdict.unique_key(project.datasets, "exp_ds")
-        ds.data = Table(ncols=2, nrows=5)
-        ds.data[0] = [1,2,3,4,5]
-        ds.data[1] = [1,4,9,16,25]
 
-        ds2 = Dataset()
+
+        a = numpy.array(
+            [(10,12),
+             (11,14),
+             (13,-5),
+             (16,8),
+             (18,0)],
+             dtype = {'names':['col3','col4'],
+                      'formats':['f4','f4']}
+             )
+          
+        ds2 = Dataset(a)
         ds2.key = pdict.unique_key(project.datasets, "exp_ds2")
-        ds2.data = Table(ncols=2, nrows=4)
-        ds2.data[0] = [10,17,3,8]
-        ds2.data[1] = [1,89,48,1]
 
         plot = Plot()
         plot.key = pdict.unique_key(project.plots, "exp_plot")

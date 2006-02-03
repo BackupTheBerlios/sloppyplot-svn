@@ -21,10 +21,10 @@
 
 import os.path
 
-from Sloppy.Base.table import table_to_array, array_to_table, Table
+#from Sloppy.Base.table import table_to_array, array_to_table, Table
+from Sloppy.Base.dataset import Dataset
 from Sloppy.Lib.Props import *
 
-from Numeric import ArrayType
 
 
 #------------------------------------------------------------------------------
@@ -93,8 +93,9 @@ class Importer(HasProperties):
         return None
 
     def read_array_from_stream(self,fd):
-        tbl = self.read_table_from_stream(fd, **kwargs)
-        return table_to_array(tbl)
+        raise RuntimeError("Not implemented")
+    #tbl = self.read_table_from_stream(fd, **kwargs)
+     #   return table_to_array(tbl)
 
         
     def read_table_from_file(self,file):
@@ -131,19 +132,13 @@ class Exporter(HasProperties):
 
     filemode = '' # set to 'b' for binary objects
     
-    def write_table_to_stream(self, fd, tbl):
+    def write_dataset_to_stream(self, fd, tbl):
         pass
-
-    def write_array_to_stream(self, fd, a):
-        a = array_to_table(a)
-        self.write_table_to_stream(fd, tbl)
 
     
     def write_to_stream(self, fd, data):
-        if isinstance(data, ArrayType):
-            self.write_array_to_stream(fd, data)
-        elif isinstance(data, Table):
-            self.write_table_to_stream(fd, data)
+        if isinstance(data, Dataset):
+            self.write_dataset_to_stream(fd, data)
         else:
             raise TypeError("Unknown type of data.")
 

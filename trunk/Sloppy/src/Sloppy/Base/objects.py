@@ -22,7 +22,8 @@
 """
 Collection of all basic data objects used for SloppyPlot.
 """
- 
+
+from Sloppy.Base.tree import Node
 from Sloppy.Base.dataset import Dataset
 from Sloppy.Base.properties import *
 
@@ -30,8 +31,7 @@ from Sloppy.Lib.Signals import HasSignals
 from Sloppy.Lib.Undo import udict
 from Sloppy.Lib.Props import *
 
-from properties import *
-from groups import *
+from groups import Group, MODE_CONSTANT, MODE_CYCLE
 
 
 # ----------------------------------------------------------------------
@@ -211,8 +211,13 @@ class View(HasProperties):
     end = Float(blurb='End')
     
 
-class Plot(HasProperties, HasSignals):
-    key = Keyword(blurb="Key")
+
+###############################################################################
+
+
+class Plot(Node, HasProperties, HasSignals):
+
+    key = Keyword(blurb="Key") # TODO: remove this!
 
     title = VP(Unicode, None, blurb="Title")
     comment = Unicode(blurb="Comment")
@@ -230,8 +235,8 @@ class Plot(HasProperties, HasSignals):
     
 
     def __init__(self, *args, **kwargs):
-        HasProperties.__init__(self, *args, **kwargs)
-
+        HasProperties.__init__(self, *args, **kwargs)        
+        Node.__init__(self)
         HasSignals.__init__(self)
         self.sig_register("closed")
         self.sig_register("changed")

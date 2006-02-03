@@ -244,7 +244,7 @@ class Backend(backend.Backend):
             if ds.has_changes(change_counter):                              
                 filename = os.path.join(destdir, filename)
                 logger.debug('exporting "%s" to dir "%s"' % (ds, destdir))            
-                exporter.write_to_file(filename, ds.data)
+                exporter.write_to_file(filename, ds)
                 self.exports[source][1] = ds.change_counter
             else:
                 logger.info("Dataset has not changed and is not exported!")                           
@@ -310,7 +310,6 @@ class Backend(backend.Backend):
                 if line.visible is False: continue
 
                 ds = self.get_line_source(line)
-                table = self.get_table(ds)
                 cx, cy = self.get_column_indices(line)
                 
                 # mark source for export            
@@ -319,7 +318,7 @@ class Backend(backend.Backend):
                     continue
                 source = '"%s"' % filename
 
-                label = self.get_line_label(line, table=table, cy=cy)
+                label = self.get_line_label(line, dataset=ds, cy=cy)
                 if label is not None: title = 'title "%s"' % label
                 else: title = 'notitle'
 

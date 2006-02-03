@@ -16,53 +16,51 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-# $HeadURL$
-# $Id$
+# $HeadURL: svn+ssh://niklasv@svn.berlios.de/svnroot/repos/sloppyplot/trunk/Sloppy/src/Sloppy/Gtk/tableview.py $
+# $Id: tableview.py 431 2006-01-04 23:04:29Z niklasv $
 
+"""
+TreeView to display a Dataset.
+"""
 
 import pygtk # TBR
 pygtk.require('2.0') # TBR
 
 import gobject
 import gtk
-import pango
 
-from Sloppy.Base.table import Table
+from Sloppy.Base.dataset import Dataset, setup_test_dataset
 from Sloppy.Lib.Undo import UndoInfo, UndoList, NullUndo
 
+import numpy
 
-class TableModel(gtk.GenericTreeModel):
 
-    def __init__(self, table=None):
+class DatasetModel(gtk.GenericTreeModel):
+
+    def __init__(self, dataset=None):
         gtk.GenericTreeModel.__init__(self)
-        self.set_table(table)
+        self.set_dataset(dataset)
 
-    def set_table(self, table):
-
-        if not isinstance(table, Table):
-            raise TypeError("TableModel needs a Table, not a %s" % type(table))
-        
-        self.table = table
+    def set_dataset(self, dataset):
+        self.dataset = dataset
 
     #----------------------------------------------------------------------
     # The following are methods from gtk.GenericTreeViewModel that
     # need to be redefined. For a more thorough explanation, take a
     # look at the pygtk tutorial.
     # The model implementation is very straightforward:
-    #  iters are RowIterator objects
+    #  iters are row numbers
     #  path has the form (row,col)
     #   -> on_get_iter(path) returns path[0] = row number = iter
     #----------------------------------------------------------------------
 
-    def get_column_names(self):        
-        rv =  map(lambda col, n:
-                   "%d:\n%s (%s)\n%s" %
-                  (n,
-                   col.get('key', "unnamed"),
-                   col.get_value('designation'),
-                   col.get_value('label')
-                   ),
-                  self.table.columns, range(self.table.ncols))
+    def get_column_names(self):
+        rv = []
+        n = 0
+        for name, info in self.dataset.infos.iteritems():
+            rv.append("%d: %s (%s)\n%s" % (n, name, info.designation, info.label))
+            n+=1
+
         return rv
 
     def get_row_from_path(self, path):
@@ -73,27 +71,31 @@ class TableModel(gtk.GenericTreeModel):
         return gtk.TREE_MODEL_LIST_ONLY
 
     def on_get_n_columns(self):
-        return self.table.ncols
+        return self.dataset.ncols
 
-    def on_get_column_type(self,index):
-        return self.table.get_converter(index)
+    type_map = {numpy.float32: float,
+                numpy.string: str,
+                numpy.int16: int,
+                numpy.int32: int}        
+    def on_get_column_type(self,index):              
+        return self.type_map[self.dataset.get_column_type(index)]
 
     def on_get_iter(self, path):
-        return self.table.row(path[0])
+        return path[0]
 
     def on_get_path(self, iter):
-        return (iter.row,)
+        return (iter,)
 
     def on_get_value(self, iter, column):
         try:
-            return iter[column]
+            return self.dataset.get_value(column, iter)
         except IndexError:
             return None
 
     def on_iter_next(self, iter):
-        try:
-            return iter.next()
-        except StopIteration:
+        if iter+1 < self.dataset.nrows:
+            return iter+1
+        else:
             return None
 
     def on_iter_children(self, iter):
@@ -105,13 +107,13 @@ class TableModel(gtk.GenericTreeModel):
     def on_iter_n_children(self, iter):
         if iter is not None: 
             return 0
-        return self.table.rows
+        return self.dataset.rows
 
     def on_iter_nth_child(self, iter, n):
         if iter is not None:
             return None
         # ?
-        return self.table.row(n)
+        return n
 
     def on_iter_parent(self,child):
         return None
@@ -123,14 +125,14 @@ class TableModel(gtk.GenericTreeModel):
        
         row, col = path
         try:
-            value = self.table.convert(col, value)
+            value = self.on_get_column_type(col)(value)
         except:
             return
 
-        old_value = self.table.get_value(col, row)
+        old_value = self.dataset.get_value(col, row)
         
         if value != old_value:
-            self.table.set_value(col, row, value)
+            self.dataset.set_value(col, row, value)
             ui = UndoInfo(self.set_value, path, old_value).describe("Set cell value")
         else:
             ui = NullUndo()
@@ -140,35 +142,35 @@ class TableModel(gtk.GenericTreeModel):
         self.row_changed(path, self.get_iter(path))
         
 
-    def insert_row(self, path, data=None, undolist=[]):
+#     def insert_row(self, path, data=None, undolist=[]):
 
-        ul = UndoList().describe("Insert row")
-        if data is None:
-            self.table.insert_n_rows(path[0], 1)
-        else:
-            self.table.insert_rows(path[0], data)
-        ul.append( UndoInfo(self.delete_rows, [path]) )
-        self.row_inserted(path, self.get_iter(path))
+#         ul = UndoList().describe("Insert row")
+#         if data is None:
+#             self.table.insert_n_rows(path[0], 1)
+#         else:
+#             self.table.insert_rows(path[0], data)
+#         ul.append( UndoInfo(self.delete_rows, [path]) )
+#         self.row_inserted(path, self.get_iter(path))
 
-        undolist.append(UndoInfo(self.delete_rows, [path]))
+#         undolist.append(UndoInfo(self.delete_rows, [path]))
 
         
-    def delete_rows(self, pathlist, undolist=[]):
+#     def delete_rows(self, pathlist, undolist=[]):
 
-        ul = UndoList().describe("Delete rows")
-        deleted = 0
-        for path in pathlist:
-            real_row = path[0]-deleted
-            real_path = (real_row,)
-            old_data = self.table.delete_n_rows(real_row, 1)
-            ul.append( UndoInfo(self.insert_row, real_path, data=old_data) )
-            self.row_deleted(real_path)
-            deleted += 1
+#         ul = UndoList().describe("Delete rows")
+#         deleted = 0
+#         for path in pathlist:
+#             real_row = path[0]-deleted
+#             real_path = (real_row,)
+#             old_data = self.table.delete_n_rows(real_row, 1)
+#             ul.append( UndoInfo(self.insert_row, real_path, data=old_data) )
+#             self.row_deleted(real_path)
+#             deleted += 1
             
-        undolist.append(ul)
+#         undolist.append(ul)
 
 
-class TableView(gtk.TreeView):
+class DatasetView(gtk.TreeView):
 
     __gsignals__ = {
         'column-clicked' : (gobject.SIGNAL_RUN_FIRST,
@@ -177,7 +179,7 @@ class TableView(gtk.TreeView):
         }
 
     
-    def __init__(self, app, table=None, model=None):        
+    def __init__(self, app, dataset=None, model=None):        
         gtk.TreeView.__init__(self)
         self.set_headers_visible(True)
         self.set_headers_clickable(True)
@@ -187,8 +189,8 @@ class TableView(gtk.TreeView):
 
         self.app = app
         
-        if table is not None:
-            self.set_table(table)
+        if dataset is not None:
+            self.set_dataset(dataset)
         else:
             self.set_model(model)
 
@@ -263,15 +265,15 @@ class TableView(gtk.TreeView):
 
 
     #----------------------------------------------------------------------
-    # Table/Model
+    # Dataset/Model
     #
     
-    def set_table(self, table):
-        self.set_model( TableModel(table) )
+    def set_dataset(self, dataset):
+        self.set_model( DatasetModel(dataset) )
 
-    def get_table(self, table):
+    def get_dataset(self, dataset):
         if self.get_model() is not None:
-            return self.get_model().table
+            return self.get_model().dataset
         else:
             return None
         
@@ -281,4 +283,21 @@ class TableView(gtk.TreeView):
         #return self.get_columns().index(column) - 1
 
 
-gobject.type_register(TableView)
+
+###############################################################################
+
+if __name__ == "__main__":
+
+    win = gtk.Window()
+    win.connect("destroy", gtk.main_quit)
+
+    ds = setup_test_dataset()
+#    ds.remove(0)
+    ds.dump()
+    print ds.nrows
+
+    dsview = DatasetView(None,ds)
+    win.add(dsview)
+    
+    win.show_all()
+    gtk.main()

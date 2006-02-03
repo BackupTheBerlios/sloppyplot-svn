@@ -28,7 +28,6 @@ import logging, os
 
 from Sloppy.Lib.Signals import HasSignals
 
-from Sloppy.Base.table import Table
 from Sloppy.Base import objects
 
 
@@ -209,14 +208,11 @@ class Backend(object, HasSignals):
         else:
             return line.source
 
-    def get_table(self, source):
+    def get_array(self, source):
         if source.is_empty() is True:
             raise BackendError("No data for Line!")
 
-        table = source.get_data()
-        if not isinstance(table, Table):
-            raise BackendError("Gnuplot Backend currently only supports data of type Table, while this is of %s" % type(table))
-        return table
+        return source.get_array()
 
     def get_column_indices(self, line):
         #:line.cx
@@ -225,29 +221,29 @@ class Backend(object, HasSignals):
         else:
             return line.cx, line.cy
 
-    def get_line_label(self, line, table=None, cy=None):
+    def get_line_label(self, line, dataset=None, cy=None):
         #:line.label:OK
         label = line.label
         if label is None:
-            if table is not None and cy is not None:
-                column = table.column(cy)
-                label = column.label or column.key or line.label
+            if dataset is not None and cy is not None:
+                info = dataset.get_info(cy)
+                label = info.label or dataset.get_name(cy) or line.label
             else:
                 label = line.label
         return label
 
 
-    def get_table_data(self, table, cx, cy):
+    def get_dataset_data(self, dataset, cx, cy):
         #:line.cx
         try:
-            xdata = table[cx]
+            xdata = dataset.get_column(cx)
         except IndexError:
             raise BackendError("X-Index out of range (%s). Line skipped." % cx)
 
 
         #:line.cy
         try:
-            ydata = table[cy]
+            ydata = dataset.get_column(cy)
         except IndexError:
             raise BackendError("Y-Index out of range (%s). Line skipped." % cy)
 

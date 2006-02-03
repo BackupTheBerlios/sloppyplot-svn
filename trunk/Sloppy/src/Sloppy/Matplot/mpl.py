@@ -301,10 +301,9 @@ class Backend( backend.Backend ):
             return
 
         ds = self.get_line_source(line)
-        table = self.get_table(ds)
         cx, cy = self.get_column_indices(line)
         try:
-            xdata, ydata = self.get_table_data(table, cx, cy)
+            xdata, ydata = self.get_dataset_data(ds, cx, cy)
         except backend.BackendError, msg:            
             logger.error(msg)
             omap[line] = None
@@ -372,7 +371,7 @@ class Backend( backend.Backend ):
         line_cache.append(l)
         omap[line] = l        
 
-        label = self.get_line_label(line, table=table, cy=cy)
+        label = self.get_line_label(line, dataset=ds, cy=cy)
         if label is not None:
             l.set_label(label)
 

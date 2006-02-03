@@ -24,13 +24,11 @@ logger = logging.getLogger("exporter.export_ascii")
 
 import csv
 
-from Sloppy.Base.dataset import *
 from Sloppy.Base import dataio
-from Sloppy.Base.table import Table
 
 from Sloppy.Lib.Props import *
 
-
+import numpy
 
 class Exporter(dataio.Exporter):
 
@@ -40,13 +38,25 @@ class Exporter(dataio.Exporter):
 
     delimiter = VP(basestring, default='\t')
     
-    def write_table_to_stream(self, fd, table=None):
-        if not isinstance(table, Table):
-            logger.error("Table required.")
-        else:
-            table.get_columns()            
-            writer = csv.writer(fd, delimiter=self.delimiter)
-            writer.writerows(table.iterrows())
+    def write_dataset_to_stream(self, fd, dataset):
+        a = dataset.get_array()
+
+        type_map = {numpy.float32: "%f",
+                    numpy.int16: "%d",
+                    numpy.int32: "%d",
+                    numpy.string: '"%s"'}
+        
+        types  = [dataset.get_column_type(name) for name in dataset.names]
+        
+        exp = ''
+        for type in types:
+            exp += type_map[type]
+            exp += self.delimiter
+        exp += '\n'
+        
+        for row in a:
+            fd.write(exp % row.item())
+            
 
 
 #------------------------------------------------------------------------------

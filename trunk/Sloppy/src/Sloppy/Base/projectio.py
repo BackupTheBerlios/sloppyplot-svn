@@ -26,7 +26,7 @@ from Sloppy.Base import utils
 from Sloppy.Base.objects import Legend, Axis, Plot, Layer, Line, TextLabel
 from Sloppy.Base import pdict, iohelper
 from Sloppy.Base.dataio import exporter_registry, read_table_from_stream
-from Sloppy.Base.table import Table, Column
+#from Sloppy.Base.table import Table, Column
 from Sloppy.Base import error
 
 from Sloppy.Lib.ElementTree.ElementTree import ElementTree, Element, SubElement, parse
@@ -84,28 +84,28 @@ def new_dataset(spj, element):
     for eMetaitem in element.findall('Metadata/Metaitem'):
         key = eMetaitem.attrib['key']
         value = eMetaitem.text
-        ds.metadata[key] = unicode(value)
+        ds.node_info.metadata[key] = unicode(value)
 
-    # actual Table
-    if element.tag == 'Table':
+#     # actual Table
+#     if element.tag == 'Table':
 
-        # Extract additional column information.
-        # This information will be passed on to 'set_table_import',
-        # which will pass it on to the internal importer.        
-        column_props = list()
-        for i in range(ncols):
-            column_props.append(dict())
+#         # Extract additional column information.
+#         # This information will be passed on to 'set_table_import',
+#         # which will pass it on to the internal importer.        
+#         column_props = list()
+#         for i in range(ncols):
+#             column_props.append(dict())
         
-        for eColumn in element.findall('Column'):
-            n = int(eColumn.get('n'))
-            p = column_props[n]
-            for eInfo in eColumn.findall('Info'):
-                key = eInfo.get('key', None)
-                if key is not None:
-                    p[key] = unicode(eInfo.text)
+#         for eColumn in element.findall('Column'):
+#             n = int(eColumn.get('n'))
+#             p = column_props[n]
+#             for eInfo in eColumn.findall('Info'):
+#                 key = eInfo.get('key', None)
+#                 if key is not None:
+#                     p[key] = unicode(eInfo.text)
         
-        filename = os.path.join('datasets', utils.as_filename(ds.key))
-        ds.set_table_import(spj, filename, typecodes, column_props, fileformat)
+#         filename = os.path.join('datasets', utils.as_filename(ds.key))
+#         ds.set_table_import(spj, filename, typecodes, column_props, fileformat)
         
     
     return ds
@@ -284,7 +284,7 @@ def toElement(project):
         # TODO: of the file format: Metaitem -> Item
         if len(ds.metadata) > 0:
             eMetadata = SubElement(eData, "Metadata")
-            for k,v in ds.metadata.iteritems():
+            for k,v in ds.node_info.metadata.iteritems():
                 eMetaitem = SubElement(eMetadata, 'Metaitem')
                 eMetaitem.set('key', k)
                 eMetaitem.text = str(v)

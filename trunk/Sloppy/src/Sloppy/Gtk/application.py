@@ -38,7 +38,7 @@ from gidlethread import *
 import sys, glob, os.path, time
 from os.path import basename
 
-from tablewin import DatasetWindow
+from datawin import DatasetWindow
 from gnuplot_window import GnuplotWindow
 from appwindow import AppWindow
 from mpl_window import MatplotlibWindow, MatplotlibWidget
@@ -53,7 +53,6 @@ from Sloppy.Base.dataset import Dataset
 from Sloppy.Base.project import Project
 from Sloppy.Base.projectio import load_project, save_project, ParseError
 from Sloppy.Base.backend import BackendRegistry
-from Sloppy.Base.table import Table
 
 from Sloppy.Base import pdict, uwrap
 from Sloppy.Base.plugin import PluginRegistry

@@ -22,14 +22,7 @@
 import logging
 logger = logging.getLogger("exporter.export_ascii")
 
-import csv
-
-from Sloppy.Base.dataset import *
 from Sloppy.Base import dataio
-from Sloppy.Base.table import Table
-
-from Sloppy.Lib.Props import *
-
 
 
 class Exporter(dataio.Exporter):
@@ -37,17 +30,10 @@ class Exporter(dataio.Exporter):
     extensions = ['csv']
     author = "Niklas Volbers"
     blurb = "CSV (comma separated values)"
-
-    delimiter = VP(basestring, default='\t')
-    
-    def write_table_to_stream(self, fd, table=None):
-        if not isinstance(table, Table):
-            logger.error("Table required.")
-        else:
-            table.get_columns()            
-            writer = csv.writer(fd, delimiter=',')
-            writer.writerows(table.iterrows())
-
-
+   
+    def write_dataset_to_stream(self, fd, dataset):
+        e = dataio.exporter_registry['ASCII'](delimiter=',')
+        e.write_dataset_to_stream(fd, dataset)
+        
 #------------------------------------------------------------------------------
 dataio.exporter_registry["CSV"] = Exporter
