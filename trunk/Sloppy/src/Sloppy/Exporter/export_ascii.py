@@ -46,7 +46,7 @@ class Exporter(dataio.Exporter):
                     numpy.int32: "%d",
                     numpy.string: '"%s"'}
         
-        types  = [dataset.get_column_type(name) for name in dataset.names]
+        types  = [dataset.get_field_type(name) for name in dataset.names]
         
         exp = ''
         for type in types:

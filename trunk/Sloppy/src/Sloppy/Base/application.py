@@ -359,7 +359,7 @@ class Application(object, HasSignals):
             importer = template.new_instance()
             
             try:
-                tbl = importer.read_table_from_file(filename)
+                tbl = importer.read_dataset_from_file(filename)
             except dataio.ImportError, msg:
                 self.error_msg(msg)
                 continue

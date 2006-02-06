@@ -37,7 +37,7 @@ import numpy
 
 #------------------------------------------------------------------------------
 
-class ColumnInfo(HasProperties):
+class FieldInfo(HasProperties):
     label = Unicode()       
     designation = VP(['X','Y','XY','XERR', 'YERR', 'LABEL'])
     query = String()
@@ -56,7 +56,7 @@ class Dataset(Node, HasSignals):
 
         self.sig_register('closed')
         self.sig_register('notify')
-        self.sig_register('update-columns')
+        self.sig_register('update-fields')
         
         if array is None:
             array = numpy.array([(0.0,0.0)],
@@ -72,29 +72,29 @@ class Dataset(Node, HasSignals):
         return self._array[self.get_name(cindex)][row]
     
     def set_value(self, cindex, row, value, undolist=[]):
-        col = self.get_column(cindex)
+        col = self.get_field(cindex)
         old_value = col[row]
         col[row] = value
         undolist.append(UndoInfo(self.set_value, col, row, old_value))
 
 
-    # Column Access -----------------------------------------------------------
+    # Field Access -----------------------------------------------------------
     
-    def get_column(self, cindex):
-        " Return a copy of the column with the given name or index `cindex`. "
+    def get_field(self, cindex):
+        " Return a copy of the field with the given name or index `cindex`. "
         if isinstance(cindex, basestring):
-            return self.get_column_by_name(cindex)
+            return self.get_field_by_name(cindex)
         elif isinstance(cindex, int):
-            return self.get_column_by_index(cindex)
+            return self.get_field_by_index(cindex)
         else:
-            raise TypeError("Column must be specified using either a string or a column index.")
+            raise TypeError("Field must be specified using either a string or a field index.")
 
-    def get_column_by_index(self, index):
-        " Return a copy of the column with the given `index`. "
+    def get_field_by_index(self, index):
+        " Return a copy of the field with the given `index`. "
         return self.array[ self._array.dtype.fields[-1][index] ]
 
-    def get_column_by_name(self, name):
-        " Return a copy of the column with the given `name`. "        
+    def get_field_by_name(self, name):
+        " Return a copy of the field with the given `name`. "        
         return self.array[name]
 
     # Row Access -------------------------------------------------------------
@@ -102,7 +102,7 @@ class Dataset(Node, HasSignals):
     def get_row(self, i):
         return self.array[i]
         
-    # Column Manipulation -----------------------------------------------------
+    # Field Manipulation -----------------------------------------------------
 
 
     def append(self, cols):
@@ -143,7 +143,7 @@ class Dataset(Node, HasSignals):
     # TODO    
     def _insert(self, cindex, cols, names):
         """
-        Append a list of columns `cols` with a list of names `names`
+        Append a list of fields `cols` with a list of names `names`
         at position `cindex`. 
         """
         a = self._array
@@ -195,10 +195,10 @@ class Dataset(Node, HasSignals):
     # TODO
     def rearrange(self, order):
         """
-        Rearrangement of columns.
+        Rearrangement of fields.
 
         Uses _rearrange internally, but adds a check to make sure that
-        the number of columns is preserved.
+        the number of fields is preserved.
         """        
         # validity check 
         if len(order) != len(self._array.dtype.fields[-1]):
@@ -213,7 +213,7 @@ class Dataset(Node, HasSignals):
         
         # Create new descriptor and new infos.
         # The new infos are created because it is possible to
-        # specify less columns in the rearrangement.
+        # specify less fields in the rearrangement.
         descriptor = a.dtype.descr
         names = a.dtype.fields[-1]
 
@@ -234,13 +234,13 @@ class Dataset(Node, HasSignals):
 
         self._array = new_array
         self._infos = new_infos
-        self.sig_register('update-columns')        
+        self.sig_register('update-fields')        
         
         
     # TODO
     def rename(self, cindex, new_name):
         """
-        Rename the column with the name or index `cindex` to the new name.        
+        Rename the field with the name or index `cindex` to the new name.        
         """
         a = self._array
         old_name = self.get_name(cindex)
@@ -250,16 +250,16 @@ class Dataset(Node, HasSignals):
         del new[-1]
         a.dtype = numpy.dtype(new)
 
-        # keep column infos in sync
+        # keep field infos in sync
         self._infos[new_name] = self._infos[old_name]
         del self._infos[old_name]
-        self.sig_register('update-columns')        
+        self.sig_register('update-fields')        
 
 
     # TODO
     def remove(self, cindex, n=1):
         """
-        Remove n columns starting at column with name or index `cindex`.
+        Remove n fields starting at field with name or index `cindex`.
         """
         index = self.get_index(cindex)
         order = range(len(self._array.dtype.fields[-1]))
@@ -272,7 +272,7 @@ class Dataset(Node, HasSignals):
 
     def insert_n_rows(self, i, n=1, undolist=[]):
         """
-        Insert `n` empty rows into each column at row `i`.
+        Insert `n` empty rows into each field at row `i`.
         """
         self.insert_rows(i, rows=numpy.zeros((n,), dtype=self._array.dtype), undolist=[])
 
@@ -285,7 +285,7 @@ class Dataset(Node, HasSignals):
 
     def extend(self, n, undolist=[]):
         """
-        Add `n` rows to the end of all columns.
+        Add `n` rows to the end of all fields.
         """
         self.insert_n_rows(len(self._array), n, undolist=undolist)
 
@@ -345,7 +345,18 @@ class Dataset(Node, HasSignals):
         if self._array is None:
             raise NoData
         return self._array
-    array = property(get_array)
+
+    def set_array(self, array, infos={}, undolist=[]):
+        ui = UndoInfo(self.set_array, self._array, self._infos)
+
+        self._array = array
+        self._infos = infos
+        self.sig_emit('update-fields')
+        
+        undolist.append(ui)
+        
+    array = property(get_array, set_array)
+
             
     def get_nrows(self):
         return len(self._array)
@@ -357,17 +368,17 @@ class Dataset(Node, HasSignals):
     
     def get_info(self, cindex):
         """
-        Retrieve ColumnInfo object for column with name or index `cindex`.
+        Retrieve FieldInfo object for field with name or index `cindex`.
         If there is no such info, then the info is created.
         """
         name = self.get_name(cindex)
         if not self._infos.has_key(name):
-            self._infos[name] = ColumnInfo()
+            self._infos[name] = FieldInfo()
             
         return self._infos[name]
 
     def get_infos(self):
-        " Return a dictionary with all ColumnInfo objects. "
+        " Return a dictionary with all FieldInfo objects. "
         infos = {}
         for name in self.names:
             infos[name] = self.get_info(name)
@@ -375,21 +386,21 @@ class Dataset(Node, HasSignals):
     infos = property(get_infos)
 
     def get_index(self, cindex):
-        " Return index of column with given name or index `cindex`. "
+        " Return index of field with given name or index `cindex`. "
         if isinstance(cindex, int):
             return cindex
         elif isinstance(cindex, basestring):
             return self._array.dtype.fields[-1].index(cindex)
     
     def get_name(self, cindex):
-        " Return name of column with given name or index `cindex`. "
+        " Return name of field with given name or index `cindex`. "
         if isinstance(cindex, basestring):
             return cindex
         elif isinstance(cindex, int):
             return self._array.dtype.fields[-1][cindex]
 
     def get_names(self):
-        " Return a list of all column names. "
+        " Return a list of all field names. "
         return self.array.dtype.fields[-1]
     names = property(get_names)
 
@@ -435,13 +446,13 @@ class Dataset(Node, HasSignals):
 #             self._table_import = None
 #         return self.data
 
-#     def import_table(self, project, filename, typecodes, column_props, importer_key):
+#     def import_table(self, project, filename, typecodes, field_props, importer_key):
 #         dir = tempfile.mkdtemp('spj')
 #         name = os.path.join(dir, filename)
 #         project._archive.extract(filename, dir)
         
 #         try:
-#             table = read_table_from_file(name, importer_key, column_props=column_props)
+#             table = read_table_from_file(name, importer_key, field_props=field_props)
 #         finally:
 #             os.remove(name)
 #             os.rmdir(os.path.join(dir, 'datasets'))
@@ -454,7 +465,7 @@ class Dataset(Node, HasSignals):
 #         self._table_import = args
 
 
-    def get_column_type(self, cindex):
+    def get_field_type(self, cindex):
         name = self.get_name(cindex)
         return self.array.dtype.fields[name][0].type
          
@@ -472,7 +483,7 @@ def setup_test_dataset():
                        dtype = {'formats': ['S10', 'f4', 'f4'],
                                 'names': ['element', 'amu', 'abundance']})
 
-    # TODO: allow passing column information 
+    # TODO: allow passing field information 
 #    infos = designation='X', label='some data'
 #    designation='Y', label='some data'
 #    designation='Y', label='some data'
@@ -488,7 +499,7 @@ def test():
     ds.rearrange( [1,2,0] )
     ds.dump()
 
-    print "Remove first column"
+    print "Remove first field"
     ds.remove(0)
     ds.dump()
 
@@ -505,8 +516,8 @@ def test():
     ds.dump()
     raise SystemExit
 
-    # remove second column
-    c = ds.column(1)
+    # remove second field
+    c = ds.field(1)
     ds.remove(c)
     #print ds
 

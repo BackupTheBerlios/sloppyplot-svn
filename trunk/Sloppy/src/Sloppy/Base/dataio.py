@@ -72,8 +72,8 @@ class Importer(HasProperties):
     >>>     blurb = 'High Quality Table'
     >>>     author = 'Fridolin Smurf'
 
-    You must only implement the method `read_table_from_stream` which
-    constructs a new Table object from a given file descriptor.    
+    You must only implement the method `read_dataset_from_stream` which
+    constructs a new Dataset object from a given file descriptor.    
 
     Finally you must register your Importer class like this:
     
@@ -89,40 +89,20 @@ class Importer(HasProperties):
     app = VP(object)
     progress_indicator = VP(object)
     
-    def read_table_from_stream(self,fd):
+    def read_dataset_from_stream(self,fd):
         return None
-
-    def read_array_from_stream(self,fd):
-        raise RuntimeError("Not implemented")
-    #tbl = self.read_table_from_stream(fd, **kwargs)
-     #   return table_to_array(tbl)
-
         
-    def read_table_from_file(self,file):
+    def read_dataset_from_file(self,file):
         try:
             fd = open(file, 'r%s' % self.filemode)
         except IOError:
             raise ImportError("File not found %s" % file)
 
         try:
-            table = self.read_table_from_stream(fd)
+            table = self.read_dataset_from_stream(fd)
             if table.nrows == 0:
-                raise ImportError("File %s:\nResulting Table is empty!" % file )
+                raise ImportError("File %s:\nResulting Dataset is empty!" % file )
             return table
-        finally:
-            fd.close()
-
-    def read_array_from_file(self, file):
-        try:
-            fd = open(file, 'r%s' % self.filemode)
-        except:
-            raise ImportError("File not found %s" % file)
-
-        try:
-            array = self.read_array_from_stream(fd)
-            if len(array.shape == 0):
-                raise ImportError("Empty Array.")
-            return array        
         finally:
             fd.close()
 
@@ -191,22 +171,16 @@ class IOTemplate(HasProperties):
 #------------------------------------------------------------------------------
 # convenience methods
 
-def read_table_from_file(filename, importer_key='ASCII', **kwargs):
+def read_dataset_from_file(filename, importer_key='ASCII', **kwargs):
     global importer_registry
     importer = importer_registry[importer_key](**kwargs)
-    return importer.read_table_from_file(filename)
+    return importer.read_dataset_from_file(filename)
 
-def read_table_from_stream(fd, importer_key='ASCII', **kwargs):
+def read_dataset_from_stream(fd, importer_key='ASCII', **kwargs):
     global importer_registry
     importer = importer_registry[importer_key](**kwargs)
-    return importer.read_table_from_stream(fd)
+    return importer.read_dataset_from_stream(fd)
     
-
-def read_array_from_file(filename, importer_key='ASCII', **kwargs):
-    global importer_registry
-    importer = importer_registry[importer_key](**kwargs)
-    return importer.read_array_from_file(filename)
-
 
 def importer_template_from_filename(filename):
     """    

@@ -22,16 +22,31 @@
 import pygtk # TBR
 pygtk.require('2.0') # TBR
 
-from Sloppy.Base.dataset import Dataset
+from Sloppy.Base.dataset import Dataset, FieldInfo
 from Sloppy.Base import uwrap
 from Sloppy.Lib.Undo import UndoList, UndoInfo
 
-from numpy import array, ndarray, ones, zeros, arange, sin
+import numpy
 
 from dataview import DatasetView
 
 from options_dialog import OptionsDialog
 import gtk, uihelper, widget_factory
+
+
+def unique_key(adict, key):
+
+    """    
+    Return a valid key that is not yet in use in the dict based on the
+    proposal. 
+    """
+    
+    suggestion = key
+    counter = 1
+    while adict.has_key(suggestion):
+        suggestion = "%s_%02d" % (key, counter)
+        counter += 1        
+    return suggestion
 
 
 #------------------------------------------------------------------------------
@@ -54,7 +69,7 @@ class DatasetWindow( gtk.Window ):
         ('ColumnInsert', None, 'Insert Column before', None, 'Insert column just before this one', 'cb_column_insert'),
         ('ColumnInsertAfter', None, 'Insert Column after', None, 'Insert column after this one', 'cb_column_insert_after'),
         ('ColumnRemove', None, 'Remove Column', None, 'Remove this column', 'cb_column_remove'),
-        ('EditColumns', gtk.STOCK_EDIT, 'Edit Columns', '<control>E', '', 'cb_edit_columns'),
+        ('EditFields', gtk.STOCK_EDIT, 'Edit Fields', '<control>E', '', 'cb_edit_fields'),
         #
         ('AnalysisMenu', None, '_Analysis'),
         ('Interpolate', None, 'Interpolate data (EXPERIMENTAL)', None, 'Interpolate data (EXPERIMENTAL)', 'cb_interpolate')
@@ -64,7 +79,7 @@ class DatasetWindow( gtk.Window ):
          <ui>
            <menubar name='MainMenu'>
              <menu action='DatasetMenu'>
-               <menuitem action='EditColumns'/>
+               <menuitem action='EditFields'/>
                <separator/>
                <menuitem action='Close'/>
              </menu>
@@ -209,7 +224,7 @@ class DatasetWindow( gtk.Window ):
         self.cblist = []
 
         self.cblist += [
-            dataset.sig_connect('update-columns',
+            dataset.sig_connect('update-fields',
                             (lambda sender: self.dataview.setup_columns())),
             dataset.sig_connect('notify',
                             (lambda sender,*changeset: self.dataview.queue_draw())),
@@ -408,34 +423,27 @@ class DatasetWindow( gtk.Window ):
                 new_column = dialog.check_out()
                 changeset = column.create_changeset(new_column)
 
-                ul = UndoList().describe("Update Columns")
+                ul = UndoList().describe("Update Fields")
                 uwrap.set(column, **changeset)
-                uwrap.emit_last(table, 'update-columns', undolist=ul)
+                uwrap.emit_last(table, 'update-fields', undolist=ul)
                 self.project.journal.append(ul)
         finally:
             dialog.destroy()
 
 
 
-    def cb_edit_columns(self, action):
-        # TODO
-        return
-    
-        table = self.dataset.get_data()
-        
-        dialog = ModifyTableDialog(table)
+    def cb_edit_fields(self, action):
+        dialog = ModifyDatasetDialog(self.dataset)
         try:
             response = dialog.run()
             if response == gtk.RESPONSE_ACCEPT:
-                ul = UndoList().describe("Update Columns")
+                ul = UndoList().describe("Update Fields")
                 dialog.check_out(undolist=ul)
-                uwrap.emit_last(table, 'update-columns', undolist=ul)
+                uwrap.emit_last(self.dataset, 'update-fields', undolist=ul)
                 self.project.journal.append(ul)
         finally:
             dialog.destroy()
 
-        table = self.dataset.get_data()
-            
 
 
     def on_cursor_changed(self, dataview, contextid):
@@ -469,7 +477,7 @@ class DatasetWindow( gtk.Window ):
         steps = table.nrows * 3
         start, end = x[0], x[-1]
         stepwidth = (end - start) / steps
-        new_x = arange(start=start, stop=end+stepwidth, step=stepwidth)
+        new_x = numpy.arange(start=start, stop=end+stepwidth, step=stepwidth)
 
         new_table = Table(nrows=steps, ncols=2,
                           typecodes=[table.get_typecode(0),
@@ -550,7 +558,7 @@ class ColumnCalculator(gtk.Window):
     
         result = eval(expression,
                       {'__builtins__': {},
-                       'sin': sin},
+                       'sin': numpy.sin},
                       {'col' : col,
                        'cc' : self.colnr
                        }
@@ -560,7 +568,7 @@ class ColumnCalculator(gtk.Window):
         # We create an array from this by multiplying it with an array
         # that consists only of ones.
         if not isinstance(result, ArrayType):
-            o = ones( (table.nrows,), table[self.colnr].typecode() )
+            o = numpy.ones( (table.nrows,), table[self.colnr].typecode() )
             result = o * result
             print "-- result is not an array --"
             print "==> converted to array"
@@ -584,73 +592,95 @@ class ColumnCalculator(gtk.Window):
 
 
 
-class TableColumnView(gtk.TreeView):
+class FieldView(gtk.TreeView):
 
-    def __init__(self, table):        
+    """
+    fields = dictionary of FieldInfo instances.
+    """
+    
+    def __init__(self, dataset):        
         gtk.TreeView.__init__(self)
-        self.set_table(table)
-        #
-        # set up columns
-        #
+        self.set_dataset(dataset)
+
+        # set up first column
+        cell = gtk.CellRendererText()
+        column = gtk.TreeViewColumn('key', cell)
+        column.set_attributes(cell, text=0)
+        self.append_column(column)
+        
+        # set up other columns
         def add_column(key):
             cell = gtk.CellRendererText()            
             column = gtk.TreeViewColumn(key, cell)
             column.set_cell_data_func(cell, self.render_column_prop, key)
             self.append_column(column)
 
-        for key in ['key', 'label', 'designation']:
+        for key in ['label', 'designation']:
             add_column(key)
 
 
-    def set_table(self, table):
-        self.table = table
-
-        # set up model
-        if table is None:
-            return self.set_model(None)
-
-        # model := (new_column_object, old_column_object)
-        model = gtk.ListStore(object, object)
+    def set_dataset(self, dataset):
+        self.dataset = dataset
+        # model := (field key, FieldInfo, old_key)
+        model = gtk.ListStore(str, object, str)
         self.set_model(model)
+        
 
     def check_in(self):
-        # create copies of columns (except for the data)
+        # create copies of fields (except for the data)
         model = self.get_model()
         model.clear()
+        for name in self.dataset.names:
+            info = self.dataset.get_info(name)
+            model.append( (name, info.copy(), name) )
 
-        for column in self.table.get_columns():
-            new_column = column.copy(exclude=['data'])
-            model.append( (new_column,column) )
 
     def check_out(self, undolist=[]):
-
-        columns = list()
-            
+        old_infos = self.dataset.infos
+        dtype = self.dataset.array.dtype
+        old_names = dtype.fields[-1]
+        
         model = self.get_model()
         iter = model.get_iter_first()
         n = 0
+        
+        infos = {}
+        names = []
+        formats = []
+        transferdict = {}
+        
         while iter:
-            column = model.get_value(iter, 0)
-            old_column = model.get_value(iter, 1)
-            if old_column is not None:
-                print "Reusing column", old_column.data
-                # => reuse existing table column data
-                column.data = old_column.data
-            else:
-                print "New column"
-                # => new column
-                column.data = zeros((self.table.nrows,), 'f')
+            key = model.get_value(iter, 0)
+            info = model.get_value(iter, 1)
+            old_key = model.get_value(iter, 2)
 
-            columns.append(column)                
-            iter = model.iter_next(iter)            
-            n += 1
-    
-        utable.set_columns(self.table, columns, undolist=undolist)
+            if old_key in old_names:
+                # field existed before => mark for content transfer
+                transferdict[key] = self.dataset.get_field(old_key)
+                format = dtype.fields[old_key][0].str
+            else:
+                format = 'f4' # TODO: let user specify format
+
+            names.append(key)
+            formats.append(format)
+            infos[key] = info
+            
+            iter = model.iter_next(iter)
+
+        # instantiate new array from names and formats
+        array = numpy.zeros( (self.dataset.nrows,),
+                             dtype={'names':names, 'formats':formats})       
+        def transfer(dest, adict):
+            for key, data in adict.iteritems():
+                dest[key] = data            
+        transfer(array, transferdict)
+
+        self.dataset.set_array(array, infos, undolist=undolist)
         
         
     def render_column_prop(self, column, cell, model, iter, propkey):
-        column = model.get_value(iter, 0)
-        cell.set_property('text', column.get_value(propkey) or "")
+        info = model.get_value(iter, 1)
+        cell.set_property('text', info.get_value(propkey) or "")
 
 
 
@@ -659,17 +689,17 @@ class TableColumnView(gtk.TreeView):
 
 
 
-class ModifyTableDialog(gtk.Dialog):
+class ModifyDatasetDialog(gtk.Dialog):
 
     # This is actually something like a PW.
-    # We check in a table, keep the copy of the new values in memory
+    # We check in a dataset, keep the copy of the new values in memory
     # and if we like the changes, we check out the new values.
     
-    def __init__(self, table, parent=None):
+    def __init__(self, dataset, parent=None):
 
-        self.table = table
+        self.dataset = dataset
 
-        gtk.Dialog.__init__(self, "Modify Table", parent,
+        gtk.Dialog.__init__(self, "Modify Dataset", parent,
                             gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
                             (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
                              gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
@@ -691,16 +721,15 @@ class ModifyTableDialog(gtk.Dialog):
         btnbox.set_border_width(uihelper.SECTION_SPACING)
                 
                 
-        # cview = column view
-        cview = TableColumnView(table)
-        cview.connect( "row-activated", self.on_row_activated )
-        
-        self.cview = cview
+        # fview = column view
+        fview = FieldView(dataset)
+        fview.connect( "row-activated", self.on_row_activated )        
+        self.fview = fview
 
-        # put cview and btnbox next to each other into a hbox
+        # put fview and btnbox next to each other into a hbox
         hbox = gtk.HBox()
         hbox.set_spacing(5)
-        hbox.pack_start(cview, True, True)
+        hbox.pack_start(fview, True, True)
         hbox.pack_start(btnbox, False, True)
 
         self.vbox.add(hbox)
@@ -709,10 +738,11 @@ class ModifyTableDialog(gtk.Dialog):
 
 
     def check_out(self, undolist=[]):
-        self.cview.check_out(undolist=undolist)
+        self.fview.check_out(undolist=undolist)
+
         
     def run(self):
-        self.cview.check_in()
+        self.fview.check_in()
         return gtk.Dialog.run(self)
 
 
@@ -720,23 +750,23 @@ class ModifyTableDialog(gtk.Dialog):
     # BUTTON CALLBACKS
         
     def on_row_activated(self, treeview, *udata):
-        model, pathlist = self.cview.get_selection().get_selected_rows()
+        model, pathlist = self.fview.get_selection().get_selected_rows()
         if model is None:
             return
-        column = model.get_value( model.get_iter(pathlist[0]), 0)
+        info = model.get_value( model.get_iter(pathlist[0]), 1)
 
-        dialog = OptionsDialog(column)
+        dialog = OptionsDialog(info)
         try:
             response = dialog.run()
             if response == gtk.RESPONSE_ACCEPT:
                 dialog.check_out()                
         finally:
             dialog.destroy()
-        self.cview.grab_focus()
+        self.fview.grab_focus()
 
 
     def on_btn_move_clicked(self, button, direction):
-        (model, pathlist) = self.cview.get_selection().get_selected_rows()
+        (model, pathlist) = self.fview.get_selection().get_selected_rows()
         if model is None:
             return
 
@@ -746,22 +776,31 @@ class ModifyTableDialog(gtk.Dialog):
 
         if second_iter is not None:
             model.swap(iter, second_iter)
-            self.cview.grab_focus()
+            self.fview.grab_focus()
         
 
     def on_btn_add_clicked(self, button):        
-        selection = self.cview.get_selection()
+        selection = self.fview.get_selection()
         (model, iter) = selection.get_selected()
 
-        new_column = self.table.new_column(key='new_column')
-        iter = model.insert_after(iter, (new_column,None))
+        # create empty fields dictionary to determine key
+        fields = {}
+        i = model.get_iter_first()
+        while i is not None:
+            key = model.get_value(i,0)
+            fields[key] = ''
+            i = model.iter_next(i)
+        
+        new_info = FieldInfo()
+        new_key = unique_key(fields, 'new_field')
+        iter = model.insert_after(iter, (new_key, new_info, None))
         selection.select_iter(iter)
         
-        self.cview.grab_focus()
+        self.fview.grab_focus()
 
 
     def on_btn_remove_clicked(self, button):        
-        selection = self.cview.get_selection()
+        selection = self.fview.get_selection()
         (model, iter) = selection.get_selected()
         if iter is None:
             return
@@ -772,7 +811,7 @@ class ModifyTableDialog(gtk.Dialog):
         if new_iter is not None:
             selection.select_iter(new_iter)
         
-        self.cview.grab_focus()        
+        self.fview.grab_focus()        
         
 
 

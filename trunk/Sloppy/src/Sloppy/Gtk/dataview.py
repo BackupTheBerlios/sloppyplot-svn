@@ -78,8 +78,13 @@ class DatasetModel(gtk.GenericTreeModel):
                 numpy.string: str,
                 numpy.int16: int,
                 numpy.int32: int}        
-    def on_get_column_type(self,index):              
-        return self.type_map[self.dataset.get_column_type(index)]
+    def on_get_column_type(self,index):
+        try:
+            return self.type_map[self.dataset.get_field_type(index)]
+        except IndexError:
+            print "index error, %d, len %d" % (index, self.dataset.ncols)
+            self.dataset.dump()
+            return float
 
     def on_get_iter(self, path):
         return path[0]

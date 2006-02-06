@@ -1,11 +1,5 @@
 
-
-- deprecate uwrap and put the set function into Undo library as uset.
-
-- deprecate utable, this will be put into table.py
-
-- use UndoInformation for changing the infos in Table object, i.e. use
-  ulist for operations on Table.infos
+- allow to change field name and _type_ !
 
 - finish Undo implementation for column operations
 
@@ -15,6 +9,10 @@
 
 Transition to numpy will definitely happen in this release !!!!
 
+
+- I pass the app object around all the time.  Maybe I can just put it into
+  the application module and so we don't need to pass it around a thousand
+  times, especially in plugins?
 
 
 

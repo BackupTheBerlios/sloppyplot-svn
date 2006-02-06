@@ -23,11 +23,11 @@ import re
 
 from Sloppy.Base.dataset import Dataset
 from Sloppy.Base import dataio
-from Sloppy.Base.table import Table
 from Sloppy.Base.utils import encode_as_key
 
 from Sloppy.Lib.Props import *
 
+import numpy
 
 import logging
 logger = logging.getLogger('import.ascii')
@@ -148,7 +148,7 @@ class Importer(dataio.Importer):
         )
 
 
-    table = VP(Instance(Table), None, default=None)
+    dataset = VP(Instance(Dataset), None, default=None)
     
     keys = List()
 
@@ -189,24 +189,24 @@ class Importer(dataio.Importer):
     # Reading in Data
     #
     
-    def read_table_from_stream(self, fd):
+    def read_dataset_from_stream(self, fd):
 
         self.parse_header(fd)
         self.parse_body(fd)        
         logger.info("Finished reading ASCII file.")
 
-        # self.result_keys
-        if len(self.result_keys) > 0:
-            if len(self.result_keys) == len(self.table.columns):
-                logger.info("Setting column keys according to header.")
-                i = 0
-                for c in self.table.get_columns():
-                    c.key = self.result_keys[i]
-                    i+=1
-            else:
-                logger.warn("Number of column keys from header and number of read columns do not match!")
+#         # self.result_keys
+#         if len(self.result_keys) > 0:
+#             if len(self.result_keys) == self.dataset.ncols:
+#                 logger.info("Setting column keys according to header.")
+#                 i = 0
+#                 for name in self.dataset.names:
+#                     .key = self.result_keys[i]
+#                     i+=1
+#             else:
+#                 logger.warn("Number of column keys from header and number of read columns do not match!")
 
-        return self.table
+        return self.dataset
 
 
     def parse_header(self, fd):
@@ -339,10 +339,10 @@ class Importer(dataio.Importer):
 
         logger.debug("determined delimiter: '%s'" % delimiter)
         
-        # If a table or a list of designations is given, then we will
+        # If a dataset or a list of designations is given, then we will
         # skip the column count determination and the creation of a
-        # new table.
-        if self.table is None:
+        # new dataset.
+        if self.dataset is None:
             # determine optional arguments
             typecodes = self.typecodes
             ncols = self.ncols
@@ -366,33 +366,43 @@ class Importer(dataio.Importer):
                
                 fd.seek(rewind)
 
-            # create new Table
-            tbl = Table(nrows=self.growth_offset, ncols=ncols, typecodes=typecodes)
-        else:
-            tbl = self.table
+            # create new Dataset
+            names = []
+            for i in range(ncols):
+                names.append('col%d' % i)
 
-        
-        logger.debug("# of columns to be expected: %d" % tbl.ncols)
-
-        
-        # make sure existing Table has at least one entry.
-        if tbl.nrows == 0:
-            tbl.resize(1)
+            formats = []
+            for i in range(ncols):
+                formats.append('f4')
+                #formats.append(numpy.float32)
                 
-        iter = tbl.row(0)
-        converters = tbl.converters
+            dtype = numpy.dtype({'names': names, 'formats':formats})
+            a = numpy.zeros( (self.growth_offset,), dtype=dtype)
+            ds = Dataset(a)
+        else:
+            ds = self.dataset
+
+        
+        logger.debug("# of columns to be expected: %d" % ds.ncols)
+        raise SystemExit
+        
+        # make sure existing Dataset has at least one entry.
+        if ds.nrows == 0:
+            ds.resize(1)
+                
+        types = [ds.get_field_type(name) for name in ds.names]
 
         # assign column information from keyword arguments 'keys' & 'label'
         keys = self.keys
         labels = self.labels
         if keys:
             n = 0
-            for column in tbl.get_columns():
+            for column in ds.get_columns():
                 column.key = keys[n]
                 n +=1
         if labels:
             n = 0
-            for column in tbl.get_columns():
+            for column in ds.get_columns():
                 column.label = labels[n]
                 n += 1
 
@@ -403,14 +413,15 @@ class Importer(dataio.Importer):
         else:
             repeat_pattern = designations
             
-        while len(designations) < tbl.ncols:
+        while len(designations) < ds.ncols:
             designations += repeat_pattern
         logger.debug("Column designations: %s" % designations)
-        
-        n = 0
-        for column in tbl.get_columns():
-            column.designation = designations[n]
-            n += 1
+
+        # TODO: set designations
+        #n = 0
+        #for column in ds.get_columns():
+        #    column.designation = designations[n]
+        #    n += 1
         
         cr_split = re.compile(delimiter)
 
@@ -420,6 +431,7 @@ class Importer(dataio.Importer):
         #
         logger.debug("Start reading ASCII file.")
         skipcount = 0
+        rownr = 0
         row = fd.readline()        
         while len(row) > 0:
 
@@ -447,37 +459,36 @@ class Importer(dataio.Importer):
                     skipcount = 0
             else:
                 try:
-                    values = map(lambda x, c: c(x), matches, converters)
-                except ValueError, msg:
-                    #logger.warn("Skipped: %s (%s)" % (row,msg))
+                    values = map(lambda x, t: t(x), matches, types)
+                except ValueError, msg:                    
+                    logger.warn("Skipped: %s (%s)" % (row,msg))
                     row = fd.readline()
                     continue
                 except TypeError, msg:
-                    #logger.warn("Skipped: %s (%s)" % (row,msg))
+                    logger.warn("Skipped: %s (%s)" % (row,msg))
                     row = fd.readline()
                     continue
                 else:
                     #logger.info("Read %s" % values)
                     pass
-                    
-            
-                iter.set( values )
+
+                print "Setting row %d to %s" % (rownr, str(values))
+                ds[rownr] = values
 
                 # Move to next row.
-                # If this is the last row, then the Table is extended.
-                try:
-                    iter = iter.next()
-                except StopIteration:
-                    tbl.extend(tbl.ncols+self.growth_offset)
-                    iter = iter.next()
+                # If this is the last row, then the Dataset is extended.
+                if rownr+1 >= ds.nrows:
+                    ds.extend(ds.nrows+self.growth_offset)
+
+                rownr += 1
 
             row = fd.readline()
 
         # Resize dataset to real size, i.e. the number
         # of rows that have actually been read.
-        tbl.resize(nrows=iter.row)
+        ds.resize(nrows=rownr)
 
-        self.table = tbl
+        self.dataset = ds
 
 
 #------------------------------------------------------------------------------

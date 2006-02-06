@@ -25,7 +25,7 @@ from Sloppy.Base.project import Project
 from Sloppy.Base import utils
 from Sloppy.Base.objects import Legend, Axis, Plot, Layer, Line, TextLabel
 from Sloppy.Base import pdict, iohelper
-from Sloppy.Base.dataio import exporter_registry, read_table_from_stream
+from Sloppy.Base.dataio import exporter_registry, read_dataset_from_stream
 from Sloppy.Base import error
 
 from Sloppy.Lib.ElementTree.ElementTree import ElementTree, Element, SubElement, parse
