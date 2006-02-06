@@ -15,6 +15,16 @@ Transition to numpy will definitely happen in this release !!!!
   times, especially in plugins?
 
 
+- why did I introduce separate projects and datasets?
+
+I should change it to one dictionary:
+
+
+  project.root
+
+where root is a dictionary holding Node instances.
+
+
 
 TODO
 ----

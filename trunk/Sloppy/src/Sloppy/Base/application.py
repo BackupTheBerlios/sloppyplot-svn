@@ -44,9 +44,21 @@ import Sloppy
 from Sloppy import Plugins
 from Sloppy.Base.plugin import PluginRegistry
 
+__all__ = ['get_app', 'set_app', 'Application']
 
 #------------------------------------------------------------------------------
+_app = None
 
+def set_app(app):
+    global _app
+    _app = app
+    
+def get_app():
+    global _app
+    return _app
+
+
+#------------------------------------------------------------------------------
 class PathHandler:
     def __init__(self): self.p = {}
     def set(self, k,v): self.p[k] = v

@@ -226,13 +226,7 @@ class Plot(Node, HasProperties, HasSignals):
     labels = List(TextLabel)
     layers = List(Layer, blurb="Layers")
 
-    views = List(View, blurb="Views")
-
-#     # might be used to notify the user that this
-#     # has been edited, e.g. by displaying a star
-#     # in a treeview.
-#     edit_mark = pBoolean()
-    
+    views = List(View, blurb="Views")   
 
     def __init__(self, *args, **kwargs):
         HasProperties.__init__(self, *args, **kwargs)        

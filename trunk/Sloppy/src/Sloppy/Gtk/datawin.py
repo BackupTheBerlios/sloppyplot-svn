@@ -624,7 +624,19 @@ class FieldView(gtk.TreeView):
         # model := (field key, FieldInfo, old_key)
         model = gtk.ListStore(str, object, str)
         self.set_model(model)
+
+    def get_fields(self):
+        " Return list of fields in the treeview. "
+        model = self.get_model()
         
+        fields = {}
+        iter =model.get_iter_first()
+        while iter is not None:
+            key = model.get_value(iter,0)
+            value = model.get_value(iter, 1)
+            fields[key] = value
+            iter = model.iter_next(iter)
+        return fields        
 
     def check_in(self):
         # create copies of fields (except for the data)
@@ -753,8 +765,14 @@ class ModifyDatasetDialog(gtk.Dialog):
         model, pathlist = self.fview.get_selection().get_selected_rows()
         if model is None:
             return
-        info = model.get_value( model.get_iter(pathlist[0]), 1)
+        iter = model.get_iter(pathlist[0])
+        name = model.get_value(iter, 0)
+        info = model.get_value(iter, 1)
 
+        fields = self.fview.get_fields()
+        del fields[name]
+        # TODO: insert field for key into OptionsDialog
+        
         dialog = OptionsDialog(info)
         try:
             response = dialog.run()
@@ -782,16 +800,9 @@ class ModifyDatasetDialog(gtk.Dialog):
     def on_btn_add_clicked(self, button):        
         selection = self.fview.get_selection()
         (model, iter) = selection.get_selected()
-
-        # create empty fields dictionary to determine key
-        fields = {}
-        i = model.get_iter_first()
-        while i is not None:
-            key = model.get_value(i,0)
-            fields[key] = ''
-            i = model.iter_next(i)
         
         new_info = FieldInfo()
+        fields = self.fview.get_fields()        
         new_key = unique_key(fields, 'new_field')
         iter = model.insert_after(iter, (new_key, new_info, None))
         selection.select_iter(iter)

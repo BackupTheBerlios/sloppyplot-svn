@@ -46,7 +46,7 @@ from layerwin import LayerWindow
 from property_browser import PropertyBrowserDialog
 
 import Sloppy
-from Sloppy.Base.application import Application
+from Sloppy.Base.application import Application, set_app
 from Sloppy.Base import utils, error, config
 from Sloppy.Base.objects import Plot, Axis, Line, Layer, new_lineplot2d
 from Sloppy.Base.dataset import Dataset
@@ -798,7 +798,12 @@ class GtkApplication(Application):
     def on_action_ViewMetadata(self, action):
         objects = self.window.treeview.get_selected_objects()
         if len(objects) == 1:
-            dlg = PropertyBrowserDialog(objects[0])
+            obj = objects[0]
+            # distinguish between old-style object
+            # and new-style node.
+            if isinstance(obj, Dataset):
+                obj = obj.node_info
+            dlg = PropertyBrowserDialog(obj)
             try:
                 dlg.run()
             finally:
@@ -862,6 +867,7 @@ class GtkApplication(Application):
 def main(filename=None):
 
     app = GtkApplication()
+    set_app(app)
 
     if filename is None:
         app.set_project(Project())

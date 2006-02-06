@@ -30,7 +30,6 @@ from Sloppy.Lib.Undo import UndoList, ulist
 from Sloppy.Gtk import plugin
 from Sloppy.Base import uwrap, pdict
 
-
 from Sloppy.Base.dataio import importer_registry
 from Sloppy.Base.dataset import Dataset
 from Sloppy.Base.objects import *
