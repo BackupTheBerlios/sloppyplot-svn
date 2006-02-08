@@ -40,46 +40,35 @@ and it provides a multitude of basic functions to simplify typical
 operations, such as renaming, removing, inserting or rearranging
 columns, or insert and removing rows.
 
+You can have raw access to the array by using Dataset.data
+
 """
 
 import numpy
 from Sloppy.Lib.Undo import UndoList,UndoInfo,NullUndo
 
 
-# TODO: BIG FAT TODO :::
-# TODO: arraywrap might change the array, but the Dataset
-# TODO: will still have the old reference!!! What to do?
-# TODO: so maybe I have to use self.dataset.array in the wrapper?
+# The Dataset _is_ the wrapper!
 
-# TODO: the table could even have a reference to the Dataset and
-# TODO: make sure that the keys and their metadata are in sync.
-
-
-# TODO: table_to_array, array_to_table 
+# TODO: to_matrix, to_table ?
 
 # TODO: regression tests
 
 # TODO: change column type somehow _or_ replace column!!!
 
 
-# TODO: is_homogeneous, is_heterogeneous -- maybe there is a numpy
-# TODO: built_in for this.
-
-
 
 class Dataset:
 
     def __init__(self, _array):
-        # TODO: determine type: matrix or table
-        self.array = _array
-
+        self.data = _array
 
 
     # Item Access -------------------------------------------------------------
 
     def get_value(self, cindex, row):
         return self.col(cindex)[row]
-    
+
     def set_value(self, cindex, row, value, undolist=[]):
         col = self.col(cindex)
         old_value = col[row]
@@ -87,10 +76,21 @@ class Dataset:
         undolist.append(UndoInfo(self.set_value, col, row, old_value))
 
 
+    # Array Information -------------------------------------------------------
+
+    # OK
+    def is_homogeneous(self):
+        return len(self.data.dtype.descr) == 1
+
+    # OK
+    def is_heterogeneous(self):
+        return len(self.data.dtype.descr) != 1
+    
+
     # Column Access -----------------------------------------------------------
     
     def col(self, cindex):
-        " Return a copy of the column with the given name or index `cindex`. "
+        " Return the column with the given name or index `cindex`. "
         if isinstance(cindex, basestring):
             return self.get_column_by_name(cindex)
         elif isinstance(cindex, int):
@@ -100,25 +100,33 @@ class Dataset:
 
     def get_column_by_index(self, index):
         " Return a copy of the column with the given `index`. "
-        return self.array[ self.array.dtype.fields[-1][index] ]
+        if self.is_homogeneous() is True:
+            return self.data[:,index]
+        else:
+            return self.data[ self.data.dtype.fields[-1][index] ]            
+
 
     def get_column_by_name(self, name):
-        " Return a copy of the column with the given `name`. "        
-        return self.array[name]
+        " Return a copy of the column with the given `name`. "
+        if self.is_homogeneous():
+            raise TypeError("Column access by name is only valid for heterogeneous Datasets.")
+        return self.data[name]
 
     def index(self, cindex):
         " Return index of column with given name or index `cindex`. "
         if isinstance(cindex, int):
             return cindex
         elif isinstance(cindex, basestring):
-            return self.array.dtype.fields[-1].index(cindex)
+            return self.data.dtype.fields[-1].index(cindex)
 
     def name(self, cindex):
         " Return name of column with given name or index `cindex`. "
+        if self.is_homogeneous():
+            raise TypeError("Column access by name is only valid for heterogeneous Datasets.")        
         if isinstance(cindex, basestring):
             return cindex
         elif isinstance(cindex, int):
-            return self.array.dtype.fields[-1][cindex]
+            return self.data.dtype.fields[-1][cindex]
         
         
     # Column Manipulation -----------------------------------------------------
@@ -161,7 +169,7 @@ class Dataset:
         Append a list of columns `cols` with a list of names `names`
         at position `cindex`.
         """
-        a = self.array
+        a = self.data
         insert_at = self.index(cindex)
 
         descriptor = a.dtype.descr[:]
@@ -203,7 +211,7 @@ class Dataset:
             else:
                 b[name] = a[name]
         
-        self.array = b
+        self.data = b
 
 
     # TODO
@@ -215,7 +223,7 @@ class Dataset:
         the number of columns is preserved.
         """        
         # validity check 
-        if len(order) != len(self.array.dtype.fields[-1]):
+        if len(order) != len(self.data.dtype.fields[-1]):
             raise ValueError("Rearrange order must be of the same length as before.")
 
         self._rearrange(order)
@@ -223,7 +231,7 @@ class Dataset:
 
     # TODO
     def _rearrange(self, order):
-        a = self.array
+        a = self.data
         
         # create new descriptor
         descriptor = a.dtype.descr
@@ -240,14 +248,14 @@ class Dataset:
         for name in b.dtype.fields[-1]:
             b[name] = a[name]
 
-        self.array = b
+        self.data = b
         
     # TODO
     def rename(self, cindex, new_name):
         """
         Rename the given `cindex` to the new name.
         """
-        a = self.array
+        a = self.data
         old_name = self.name(cindex)
         new = dict(a.dtype.fields)
         new[new_name] = new[old_name]
@@ -262,7 +270,7 @@ class Dataset:
         Remove n columns starting at column with name or index `cindex`.
         """
         index = self.index(cindex)
-        order = range(len(self.array.dtype.fields[-1]))
+        order = range(len(self.data.dtype.fields[-1]))
         for i in range(n):
             order.pop(index)
         self._rearrange(order)
@@ -274,20 +282,20 @@ class Dataset:
         """
         Insert `n` empty rows into each column at row `i`.
         """
-        self.insert_rows(i, rows=numpy.zeros((n,), dtype=self.array.dtype), undolist=[])
+        self.insert_rows(i, rows=numpy.zeros((n,), dtype=self.data.dtype), undolist=[])
 
     def insert_rows(self, i, rows, undolist=[]):
         """
-        Insert the given `rows` (list of one-dimensional arrays) at row `i`.
+        Insert the given `rows` (list of arrays) at row `i`.
         """
-        self.array = numpy.concatenate([self.array[0:i], rows, self.array[i:]])
+        self.data = numpy.concatenate([self.data[0:i], rows, self.data[i:]])
         undolist.append(UndoInfo(self.delete_n_rows, i, len(rows), only_zeros=True))
 
     def extend(self, n, undolist=[]):
         """
         Add `n` rows to the end of all columns.
         """
-        self.insert_n_rows(len(self.array), n, undolist=undolist)
+        self.insert_n_rows(len(self.data), n, undolist=undolist)
 
     def delete_n_rows(self, i, n=1, only_zeros=False, undolist=[]):
         """
@@ -295,15 +303,15 @@ class Dataset:
         The keyword arg `only_zeros` is an internal argument needed
         for better undo performance.              
         """
-        n = min(len(self.array)-i, n)
+        n = min(len(self.data)-i, n)
 
         if only_zeros is True:
             ui = UndoInfo(self.insert_n_rows, i, )
         else:
-            undo_data = numpy.array(self.array[i:i+n])            
+            undo_data = numpy.array(self.data[i:i+n])            
             ui = UndoInfo(self.insert_rows, i, undo_data)
             
-        self.array = numpy.concatenate([self.array[0:i], self.array[i+n:]])
+        self.data = numpy.concatenate([self.data[0:i], self.data[i+n:]])
         undolist.append(ui)
         
         # TODO: return cut data ??
@@ -312,7 +320,7 @@ class Dataset:
         """
         Resize array to given number of `nrows`.
         """
-        current_nrows = self.array.shape[0]
+        current_nrows = self.data.shape[0]
         nrows = max(0, nrows)        
         if nrows < current_nrows:
             self.delete_n_rows( nrows, current_nrows - nrows, undolist=[])
@@ -328,7 +336,7 @@ class Dataset:
         """
         Diagnostic dump to stdout of the array.
         """
-        a = self.array
+        a = self.data
         print "-"*80
         fields = a.dtype.fields
         print "\t".join(fields[-1])
@@ -341,61 +349,67 @@ class Dataset:
 
 
 
-#------------------------------------------------------------------------------
 
+
+
+#------------------------------------------------------------------------------
 def test():
+
+    #
+    # heterogeneous array
+    #
     dtype = numpy.dtype( {'names': ['name', 'age', 'weight'],
                           'formats': ['U30', 'i2', numpy.float32]} )
-
     a = numpy.array( [(u'Bill', 31, 260),
                       ('Fred', 15, 135)], dtype=dtype )
 
-    dataset = Dataset(a)
+    ds = Dataset(a)
 
-    print dataset.col('name')
-    print dataset.col(1)
+    # column access
+    print ds.col('name')
+    print ds.col('age')
 
-    print dataset.array
+    print ds.col(1) # heterogeneous only
+    
+#     print dataset.rearrange( ['name','weight', 'age'] )
+#     dataset.dump()
 
-    print dataset.rearrange( ['name','weight', 'age'] )
-    dataset.dump()
-
-    col = dataset.col(1)
-    col = numpy.sin(dataset.col(1))
-    print col
-    dataset.dump()
-
-
-    dataset.array['weight'] = numpy.sin(dataset.array['weight'])
-    dataset.rename('weight', 'sin of weight')
-    dataset.dump()
+#     col = dataset.col(1)
+#     col = numpy.sin(dataset.col(1))
+#     print col
+#     dataset.dump()
 
 
-    # dataset.remove(1)
-    # dataset.dump()
-
-    # dataset.remove('age')
-    # dataset.dump()
+#     dataset.data['weight'] = numpy.sin(dataset.data['weight'])
+#     dataset.rename('weight', 'sin of weight')
+#     dataset.dump()
 
 
-    dataset.resize(3)
-    dataset.dump()
+#     # dataset.remove(1)
+#     # dataset.dump()
 
-    dataset.remove('name',2)
-    dataset.dump()
+#     # dataset.remove('age')
+#     # dataset.dump()
 
-    dataset.insert(1, [0.1,0.2,0.4], 'floaties')
-    dataset.dump()
 
-    print dataset.col(-1)
-    z = numpy.array( ['one', 'two', 'three'] )
-    dt = numpy.dtype( {'names':['age','numberasint'],
-                       'formats': ['U30', 'i2']} )
-    b = numpy.array([('one', 1),('two', 2),('three',3)], dtype=dt)
-    dataset.insert(1, b)
-    dataset.dump()
+#     dataset.resize(3)
+#     dataset.dump()
 
-    print a
+#     dataset.remove('name',2)
+#     dataset.dump()
+
+#     dataset.insert(1, [0.1,0.2,0.4], 'floaties')
+#     dataset.dump()
+
+#     print dataset.col(-1)
+#     z = numpy.array( ['one', 'two', 'three'] )
+#     dt = numpy.dtype( {'names':['age','numberasint'],
+#                        'formats': ['U30', 'i2']} )
+#     b = numpy.array([('one', 1),('two', 2),('three',3)], dtype=dt)
+#     dataset.insert(1, b)
+#     dataset.dump()
+
+#     print a
 
 
 

@@ -5,6 +5,9 @@
 
 - TestSuites, TestCases, ... Yes, I do need this.
 
+- in der Konstruktion von button boxes sollte das Einfügen eines 
+  zusätzlichen Abstands erlaubt sein, z.B. vor den Hoch- und Runter-
+  Knöpfen
 
 
 Transition to numpy will definitely happen in this release !!!!

@@ -412,30 +412,34 @@ class MatplotlibWidget(gtk.VBox):
             backend = self.project.request_backend('matplotlib', plot=plot)           
             backend.canvas.set_size_request(canvas_width, canvas_height)
 
-            # add rulers
-            hruler = gtk.HRuler()
-            hruler.set_metric(gtk.PIXELS)
-            hruler.set_range(0, canvas_width, 0, canvas_width)
+            # [NV] I disabled rulers again to get ready for the next release.
+            if False:
+                # add rulers
+                hruler = gtk.HRuler()
+                hruler.set_metric(gtk.PIXELS)
+                hruler.set_range(0, canvas_width, 0, canvas_width)
 
-            vruler = gtk.VRuler()
-            vruler.set_metric(gtk.PIXELS) # gtk.INCHES, gtk.CENTIMETERS
-            vruler.set_range(0, canvas_height, 0, canvas_height)
+                vruler = gtk.VRuler()
+                vruler.set_metric(gtk.PIXELS) # gtk.INCHES, gtk.CENTIMETERS
+                vruler.set_range(0, canvas_height, 0, canvas_height)
 
-            # motion notification
-            def motion_notify(ruler, event):
-                return ruler.emit("motion_notify_event", event)
-            #backend.canvas.connect_object("motion_notify_event", motion_notify, ruler)
+                # motion notification
+                def motion_notify(ruler, event):
+                    return ruler.emit("motion_notify_event", event)
+                #backend.canvas.connect_object("motion_notify_event", motion_notify, ruler)
 
-            # put scrollbars around canvas
-            scrolled_window = gtk.ScrolledWindow()
-            scrolled_window.add_with_viewport(backend.canvas)
+                # put scrollbars around canvas
+                scrolled_window = gtk.ScrolledWindow()
+                scrolled_window.add_with_viewport(backend.canvas)
             
-            # the layout is done using a table
-            layout = gtk.Table(rows=3, columns=2)
-            layout.attach(hruler, 1, 2, 0, 1, gtk.EXPAND|gtk.SHRINK|gtk.FILL, gtk.FILL)
-            layout.attach(vruler, 0, 1, 1, 2, gtk.FILL, gtk.EXPAND|gtk.SHRINK|gtk.FILL)
-            layout.attach(scrolled_window, 1, 2, 1, 2, gtk.EXPAND|gtk.FILL, gtk.EXPAND|gtk.FILL)
-
+                # the layout is done using a table
+                layout = gtk.Table(rows=3, columns=2)
+                layout.attach(hruler, 1, 2, 0, 1, gtk.EXPAND|gtk.SHRINK|gtk.FILL, gtk.FILL)
+                layout.attach(vruler, 0, 1, 1, 2, gtk.FILL, gtk.EXPAND|gtk.SHRINK|gtk.FILL)
+                layout.attach(scrolled_window, 1, 2, 1, 2, gtk.EXPAND|gtk.FILL, gtk.EXPAND|gtk.FILL)
+            else:
+                layout = backend.canvas
+                
             layout.show_all()
             self.vbox.pack_start(layout)
             
