@@ -92,17 +92,18 @@ class Importer(HasProperties):
     def read_dataset_from_stream(self,fd):
         return None
         
-    def read_dataset_from_file(self,file):
+    def read_dataset_from_file(self,filename):
         try:
-            fd = open(file, 'r%s' % self.filemode)
+            fd = open(filename, 'r%s' % self.filemode)
         except IOError:
-            raise ImportError("File not found %s" % file)
+            raise ImportError("File not found %s" % filename)
 
         try:
-            table = self.read_dataset_from_stream(fd)
-            if table.nrows == 0:
-                raise ImportError("File %s:\nResulting Dataset is empty!" % file )
-            return table
+            ds = self.read_dataset_from_stream(fd)
+            ds.node_info.metadata['_import_filename'] = unicode(filename)            
+            if ds.nrows == 0:
+                raise ImportError("File %s:\nResulting Dataset is empty!" % filename )
+            return ds
         finally:
             fd.close()
 

@@ -172,12 +172,6 @@ class Importer(dataio.Importer):
         10,None,
         default=100
         )
-
-
-    # results
-    result_metadata = Dictionary(Unicode)
-    result_keys = List(Keyword)
-    result_header_size = Integer()
     
     #----
     public_props = ['delimiter', 'custom_delimiter', 'ncols', 'header_size',
@@ -191,20 +185,13 @@ class Importer(dataio.Importer):
     
     def read_dataset_from_stream(self, fd):
 
+        if self.dataset is None:
+            self.dataset = Dataset()
+            self.dataset._array = None
+            
         self.parse_header(fd)
         self.parse_body(fd)        
         logger.info("Finished reading ASCII file.")
-
-#         # self.result_keys
-#         if len(self.result_keys) > 0:
-#             if len(self.result_keys) == self.dataset.ncols:
-#                 logger.info("Setting column keys according to header.")
-#                 i = 0
-#                 for name in self.dataset.names:
-#                     .key = self.result_keys[i]
-#                     i+=1
-#             else:
-#                 logger.warn("Number of column keys from header and number of read columns do not match!")
 
         return self.dataset
 
@@ -212,14 +199,10 @@ class Importer(dataio.Importer):
     def parse_header(self, fd):
         """
         Parse the header of the stream, i.e. the part with the result_metadata.
-
-        Fills the following variables:
-        - result_metadata
-        - result_keys
-        - result_header_size
+        The attribute self.dataset must be a valid Dataset.
         """
 
-        self.result_metadata = {}
+        metadata = {}
 
         # compile regular expressions
         def safe_compile(expression):
@@ -234,8 +217,8 @@ class Importer(dataio.Importer):
         cr_end = safe_compile(self.header_end_re)
         cr_metadata = safe_compile(self.header_metadata_re)
 
-        # function to extract result_metadata from header line
-        def parse_line(line, n):
+        # function to extract metadata from header line
+        def parse_line(line, n, metadata):
             if n == self.header_keys_ln:
                 # try to extract key names
                 m = cr_keytrim.match(line)
@@ -243,8 +226,8 @@ class Importer(dataio.Importer):
                     logger.info("Column keys could not be trimmed.")
                 else:
                     line = m.groupdict()['keys']
-                self.result_keys = [key for key in cr_keysplit.split(line)]
-                logger.info("Found column keys: %s", self.result_keys)
+                metadata['_import_keys'] = [key for key in cr_keysplit.split(line)]
+                logger.info("Found column keys: %s", metadata['_import_keys'])
 
             else:
                 # try to extract metadata
@@ -253,7 +236,7 @@ class Importer(dataio.Importer):
                     gd = m.groupdict()
                     k,v = gd['key'], gd['value']
                     logger.info("Found metadata: %s = %s" % (k,v) )
-                    self.result_metadata[k] = v
+                    metadata[k] = v
 
         #
         # Parsing the header:
@@ -271,7 +254,7 @@ class Importer(dataio.Importer):
         #      or can be the first non-header line. The var
         #      self.header_include indicates this.
 
-        self.result_metadata = {}
+        metadata = {}
         line = "--"
         n = 1 # current line
         header_size = self.header_size
@@ -279,7 +262,7 @@ class Importer(dataio.Importer):
             # skip header_size
             while header_size > 0 and len(line) > 0:
                 line = fd.readline()
-                parse_line(line,n)
+                parse_line(line,n, metadata)
                 header_size -= 1
                 n += 1
         else:
@@ -295,19 +278,22 @@ class Importer(dataio.Importer):
                     else:
                         n+=1
                     break
-                parse_line(line,n)
+                parse_line(line,n, metadata)
                 n += 1
 
-
-        self.result_header_size = n
-        logger.debug("End of header reached: %d lines", self.result_header_size)
-
+        metadata['_import_headersize'] = n
+        self.dataset.node_info.metadata.update(metadata)
         
 
     def parse_body(self, fd):
         """
         Parse the body of the stream, i.e. the data part.
+        The attribute self.dataset must be a valid Dataset.
+        However, if it does not contain an array, then an array
+        is constructed.
         """
+
+        ds = self.dataset
         
         # Used compiled regular expressions (cr_):
         #  cr_trim used to remove comments, linebreaks, whitespace, ...
@@ -327,7 +313,6 @@ class Importer(dataio.Importer):
         # determine delimiter
         delimiter = self.delimiter or self.custom_delimiter
         if delimiter is None or len(delimiter) == 0:
-            print "Auto-detect delimiter"
             # determine from first non-comment line
             rewind = fd.tell()
             line = fd.readline()
@@ -342,7 +327,7 @@ class Importer(dataio.Importer):
         # If a dataset or a list of designations is given, then we will
         # skip the column count determination and the creation of a
         # new dataset.
-        if self.dataset is None:
+        if ds._array == None:
             # determine optional arguments
             typecodes = self.typecodes
             ncols = self.ncols
@@ -366,10 +351,18 @@ class Importer(dataio.Importer):
                
                 fd.seek(rewind)
 
-            # create new Dataset
-            names = []
-            for i in range(ncols):
-                names.append('col%d' % i)
+            # create new array for Dataset
+
+            # column names 
+            hkeys = ds.node_info.metadata.get('_import_keys',[])
+            if len(hkeys) == ncols:
+                # either reuse header keys
+                names = hkeys
+            else:
+                # or construct new names
+                names = []
+                for i in range(ncols):
+                    names.append('col%d' % i)
 
             formats = []
             for i in range(ncols):
@@ -378,21 +371,37 @@ class Importer(dataio.Importer):
                 
             dtype = numpy.dtype({'names': names, 'formats':formats})
             a = numpy.zeros( (self.growth_offset,), dtype=dtype)
-            ds = Dataset(a)
-        else:
-            ds = self.dataset
-
-        
+            ds._array = a
+       
         logger.debug("# of columns to be expected: %d" % ds.ncols)
-        raise SystemExit
-        
+
         # make sure existing Dataset has at least one entry.
         if ds.nrows == 0:
             ds.resize(1)
-                
+
+        #
+        # set up type converters that convert the given values
+        # to the required field type
+        #                
         types = [ds.get_field_type(name) for name in ds.names]
 
+        # TODO: The following is a hack. We might need to ask
+        # TODO: if the given numpy types can be converted to a numpy-value
+        # TODO: by the type directly.
+        typemap = {numpy.float32 : float,
+                   numpy.float64: float,
+                   numpy.int8: int,
+                   numpy.int16: int,
+                   numpy.int32: int,
+                   numpy.int64: int,
+                   numpy.string: str
+                   #numpy.unicode: unicode #?
+                   }        
+        types = [typemap[t] for t in types]
+
+        #
         # assign column information from keyword arguments 'keys' & 'label'
+        #
         keys = self.keys
         labels = self.labels
         if keys:
@@ -438,9 +447,11 @@ class Importer(dataio.Importer):
             # Split off comments using a regular expression.
             # This is a more robust solution than the former
             #  row = row.split('#')[0]
+
             # TODO: Be careful when we have string fields, then a #
-            # might not be what it looks like -- it might be contained
-            # in quotes!
+            # TODO: might not be what it looks like -- it might be
+            # TODO: contained in quotes!
+            
             try:
                 row = cr_trim.match(row).groups()[0]
             except AttributeError:
@@ -448,7 +459,6 @@ class Importer(dataio.Importer):
                 row = fd.readline()
                 continue
 
-            #print "MATCHES", cr_split.split(row)
             matches = [match for match in cr_split.split(row) if len(match) > 0]
             #logger.debug("MATCHES = %s" % str(matches))
             if len(matches) == 0:
@@ -459,22 +469,22 @@ class Importer(dataio.Importer):
                     skipcount = 0
             else:
                 try:
-                    values = map(lambda x, t: t(x), matches, types)
+                    values = tuple(map(lambda x, t: t(x), matches, types))
                 except ValueError, msg:                    
-                    logger.warn("Skipped: %s (%s)" % (row,msg))
+                    #logger.warn("Skipped: %s (%s)" % (row,msg))
                     row = fd.readline()
                     continue
                 except TypeError, msg:
-                    logger.warn("Skipped: %s (%s)" % (row,msg))
+                    #logger.warn("Skipped: %s (%s)" % (row,msg))
                     row = fd.readline()
                     continue
                 else:
                     #logger.info("Read %s" % values)
                     pass
 
-                print "Setting row %d to %s" % (rownr, str(values))
-                ds[rownr] = values
-
+                #logger.debug("Setting row %d to %s" % (rownr, str(values)))
+                ds._array[rownr] = values
+                
                 # Move to next row.
                 # If this is the last row, then the Dataset is extended.
                 if rownr+1 >= ds.nrows:
@@ -487,8 +497,6 @@ class Importer(dataio.Importer):
         # Resize dataset to real size, i.e. the number
         # of rows that have actually been read.
         ds.resize(nrows=rownr)
-
-        self.dataset = ds
 
 
 #------------------------------------------------------------------------------

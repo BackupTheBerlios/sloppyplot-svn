@@ -66,6 +66,16 @@ class Dataset(Node, HasSignals):
         self._infos = {}
 
 
+    def set_array(self, array, infos={}, undolist=[]):
+        ui = UndoInfo(self.set_array, self._array, self._infos)
+
+        self._array = array
+        self._infos = infos
+        self.sig_emit('update-fields')
+        
+        undolist.append(ui)
+
+
     # Item Access -------------------------------------------------------------
 
     def get_value(self, cindex, row):
@@ -91,16 +101,17 @@ class Dataset(Node, HasSignals):
 
     def get_field_by_index(self, index):
         " Return a copy of the field with the given `index`. "
-        return self.array[ self._array.dtype.fields[-1][index] ]
+        return self._array[ self._array.dtype.fields[-1][index] ]
 
     def get_field_by_name(self, name):
         " Return a copy of the field with the given `name`. "        
-        return self.array[name]
+        return self._array[name]
 
     # Row Access -------------------------------------------------------------
 
     def get_row(self, i):
-        return self.array[i]
+        return self._array[i]
+
         
     # Field Manipulation -----------------------------------------------------
 
@@ -282,6 +293,7 @@ class Dataset(Node, HasSignals):
         """
         self._array = numpy.concatenate([self._array[0:i], rows, self._array[i:]])
         undolist.append(UndoInfo(self.delete_n_rows, i, len(rows), only_zeros=True))
+        return "new array => ", self._array
 
     def extend(self, n, undolist=[]):
         """
@@ -341,23 +353,6 @@ class Dataset(Node, HasSignals):
 
     # Information -------------------------------------------------------------
 
-    def get_array(self):
-        if self._array is None:
-            raise NoData
-        return self._array
-
-    def set_array(self, array, infos={}, undolist=[]):
-        ui = UndoInfo(self.set_array, self._array, self._infos)
-
-        self._array = array
-        self._infos = infos
-        self.sig_emit('update-fields')
-        
-        undolist.append(ui)
-        
-    array = property(get_array, set_array)
-
-            
     def get_nrows(self):
         return len(self._array)
     nrows = property(get_nrows)
@@ -401,10 +396,11 @@ class Dataset(Node, HasSignals):
 
     def get_names(self):
         " Return a list of all field names. "
-        return self.array.dtype.fields[-1]
+        return self._array.dtype.fields[-1]
     names = property(get_names)
 
-    
+
+   
     #######################################################################
     # Everything below this point is subject to dismissal
 
@@ -433,7 +429,7 @@ class Dataset(Node, HasSignals):
 
     def is_empty(self):
         " Returns True if the Dataset has no data or if that data is empty. "
-        return self.array is None or len(self.array) == 0
+        return self._array is None or len(self._array) == 0
         
     #----------------------------------------------------------------------
 
@@ -467,7 +463,7 @@ class Dataset(Node, HasSignals):
 
     def get_field_type(self, cindex):
         name = self.get_name(cindex)
-        return self.array.dtype.fields[name][0].type
+        return self._array.dtype.fields[name][0].type
          
 
 

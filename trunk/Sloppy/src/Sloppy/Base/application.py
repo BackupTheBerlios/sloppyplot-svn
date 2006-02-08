@@ -366,12 +366,10 @@ class Application(object, HasSignals):
         N = len(filenames)
         self.progress(0)        
         for filename in filenames:
-            self.status_msg("Importing %s" % filename)
-            
-            importer = template.new_instance()
-            
+            self.status_msg("Importing %s" % filename)                       
             try:
-                tbl = importer.read_dataset_from_file(filename)
+                importer = template.new_instance()                
+                ds = importer.read_dataset_from_file(filename)
             except dataio.ImportError, msg:
                 self.error_msg(msg)
                 continue
@@ -380,14 +378,10 @@ class Application(object, HasSignals):
                 continue
 
             root, ext = os.path.splitext(os.path.basename(filename))
-            filename = utils.encode_as_key(root)
-            ds = Dataset(key=filename, data=tbl, metadata=importer.result_metadata)
-            ds.metadata['Import-Source'] = unicode(filename)
+            ds.key = utils.encode_as_key(root)
 
             new_datasets.append(ds)
-
             n+=1
-
             self.progress(n/N)
 
         self.progress(100)

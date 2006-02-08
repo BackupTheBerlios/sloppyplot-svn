@@ -649,7 +649,7 @@ class FieldView(gtk.TreeView):
 
     def check_out(self, undolist=[]):
         old_infos = self.dataset.infos
-        dtype = self.dataset.array.dtype
+        dtype = self.dataset._array.dtype
         old_names = dtype.fields[-1]
         
         model = self.get_model()
