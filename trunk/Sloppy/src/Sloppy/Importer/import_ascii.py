@@ -130,13 +130,7 @@ class Importer(dataio.Importer):
         blurb ="Delimiter",
         doc="Column delimiter that separates the columns"
         )
-    
-    custom_delimiter = \
-     String(
-        blurb="Custom delimiter",
-        doc="Custom delimiter used if delimiter is None"
-        )
-    
+       
     ncols = \
      VP(
         Integer,
@@ -149,11 +143,7 @@ class Importer(dataio.Importer):
 
 
     dataset = VP(Instance(Dataset), None, default=None)
-    
-    keys = List()
-
-    labels = List()
-    
+      
     designations = \
      VP(
         ['X', 'Y', 'X|Y', 'XY'],
@@ -174,7 +164,7 @@ class Importer(dataio.Importer):
         )
     
     #----
-    public_props = ['delimiter', 'custom_delimiter', 'ncols', 'header_size',
+    public_props = ['delimiter', 'ncols', 'header_size',
                     'header_keys_ln', 'designations']
 
     
@@ -311,7 +301,7 @@ class Importer(dataio.Importer):
         fd.seek(rewind)
 
         # determine delimiter
-        delimiter = self.delimiter or self.custom_delimiter
+        delimiter = self.delimiter
         if delimiter is None or len(delimiter) == 0:
             # determine from first non-comment line
             rewind = fd.tell()
@@ -324,9 +314,8 @@ class Importer(dataio.Importer):
 
         logger.debug("determined delimiter: '%s'" % delimiter)
         
-        # If a dataset or a list of designations is given, then we will
-        # skip the column count determination and the creation of a
-        # new dataset.
+        # If the dataset does not contain an array, then we need
+        # to create one.    
         if ds._array == None:
             # determine optional arguments
             typecodes = self.typecodes
@@ -399,23 +388,14 @@ class Importer(dataio.Importer):
                    }        
         types = [typemap[t] for t in types]
 
-        #
-        # assign column information from keyword arguments 'keys' & 'label'
-        #
-        keys = self.keys
-        labels = self.labels
-        if keys:
-            n = 0
-            for column in ds.get_columns():
-                column.key = keys[n]
-                n +=1
-        if labels:
-            n = 0
-            for column in ds.get_columns():
-                column.label = labels[n]
-                n += 1
 
-        # designations
+        # Assign field designations.
+        # If there are more fields than designations, then
+        # the designation is extended to the desired length, e.g.
+        # for a dataset with 6 fields:
+        #   X   -> XXXXXX
+        #   XY  -> XYXYXY        
+        #   X|Y -> XYYYYY        
         designations = self.designations
         if designations.find('|') != -1:
             designations, repeat_pattern = designations.split('|')
@@ -426,19 +406,16 @@ class Importer(dataio.Importer):
             designations += repeat_pattern
         logger.debug("Column designations: %s" % designations)
 
-        # TODO: set designations
-        #n = 0
-        #for column in ds.get_columns():
-        #    column.designation = designations[n]
-        #    n += 1
-        
-        cr_split = re.compile(delimiter)
+        # set designations
+        for n in range(ds.ncols):
+            ds.get_info(n).designation = designations[n]
 
         
         #
         # read in file line by line
         #
         logger.debug("Start reading ASCII file.")
+        cr_split = re.compile(delimiter)
         skipcount = 0
         rownr = 0
         row = fd.readline()        
@@ -460,6 +437,7 @@ class Importer(dataio.Importer):
                 continue
 
             matches = [match for match in cr_split.split(row) if len(match) > 0]
+
             #logger.debug("MATCHES = %s" % str(matches))
             if len(matches) == 0:
                 skipcount += 1

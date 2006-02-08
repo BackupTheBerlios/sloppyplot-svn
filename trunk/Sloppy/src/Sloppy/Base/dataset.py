@@ -76,7 +76,7 @@ class Dataset(Node, HasSignals):
         undolist.append(ui)
 
 
-    # Item Access -------------------------------------------------------------
+    # Value Access ---------------------------------------------------------
 
     def get_value(self, cindex, row):
         return self._array[self.get_name(cindex)][row]
@@ -88,7 +88,7 @@ class Dataset(Node, HasSignals):
         undolist.append(UndoInfo(self.set_value, col, row, old_value))
 
 
-    # Field Access -----------------------------------------------------------
+    # Field Access ----------------------------------------------------------
     
     def get_field(self, cindex):
         " Return a copy of the field with the given name or index `cindex`. "
@@ -107,8 +107,9 @@ class Dataset(Node, HasSignals):
         " Return a copy of the field with the given `name`. "        
         return self._array[name]
 
-    # Row Access -------------------------------------------------------------
 
+    # Row Access -------------------------------------------------------------
+    
     def get_row(self, i):
         return self._array[i]
 
