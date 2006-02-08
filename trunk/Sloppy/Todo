@@ -1,4 +1,12 @@
 
+Importer:
+
+1. Use designations
+2. remove checkboxes from widgets....
+3. why do I need a custom delimiter anyway?
+4. recognize '-' as empty value --> But how should I handle it?
+
+----------------------------------------
 - allow to change field name and _type_ !
 
 - finish Undo implementation for column operations
