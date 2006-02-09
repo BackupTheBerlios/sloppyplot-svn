@@ -22,11 +22,9 @@
 import gtk
 
 from Sloppy.Lib.Undo import UndoList, UndoInfo, NullUndo, ulist
+from Sloppy.Base import objects, globals, pdict, uwrap
+from Sloppy.Gtk import config, uihelper, widget_factory
 
-from Sloppy.Base import objects
-from Sloppy.Base import pdict, uwrap
-
-import config, uihelper, widget_factory
 
 
 class LayerWindow(gtk.Window):
@@ -39,13 +37,12 @@ class LayerWindow(gtk.Window):
     
     """
     
-    def __init__(self, app, plot, layer, current_page=None):
+    def __init__(self, plot, layer, current_page=None):
         gtk.Window.__init__(self, gtk.WINDOW_TOPLEVEL)
         self.set_default_size(550, 500)
         self.set_title("[Edit Plot Layer]")
         
         self.plot = plot
-        self.app = app
         self.layer = layer       
 
         #
@@ -73,10 +70,10 @@ class LayerWindow(gtk.Window):
         nb.set_property('tab-pos', gtk.POS_LEFT)
         nb.connect("switch-page", on_switch_page, self.tab_label)
         
-        for tab in [LayerTab(app, layer),
-                    AxesTab(app, layer.axes),
-                    LegendTab(app, layer.legend),                    
-                    LineTab(app, layer)]:
+        for tab in [LayerTab(layer),
+                    AxesTab(layer.axes),
+                    LegendTab(layer.legend),                    
+                    LineTab(layer)]:
             nb.append_page(tab)
             nb.set_tab_label_text(tab, tab.title)
             self.tabdict[tab.title] = tab
@@ -143,7 +140,7 @@ class LayerWindow(gtk.Window):
         else:
             ul = NullUndo()
             
-        self.app.project.journal.add_undo(ul)
+        globals.app.project.journal.add_undo(ul)
         
         
     #----------------------------------------------------------------------
@@ -269,9 +266,8 @@ class GroupBox(gtk.HBox):
 
 class AbstractTab(gtk.VBox):
 
-    def __init__(self, app):
+    def __init__(self):
         gtk.VBox.__init__(self)
-        self.app = app
         self.factory = None
         
     def check_in(self):
@@ -287,8 +283,8 @@ class LayerTab(AbstractTab):
 
     title = "Layer"
 
-    def __init__(self, app, layer):
-        AbstractTab.__init__(self, app)        
+    def __init__(self, layer):
+        AbstractTab.__init__(self)        
 
         keys = ['title', 'visible', 'grid']
 
@@ -307,8 +303,8 @@ class LegendTab(AbstractTab):
 
     title = "Legend"
 
-    def __init__(self, app, legend):
-        AbstractTab.__init__(self, app)
+    def __init__(self, legend):
+        AbstractTab.__init__(self)
 
         keys = ['label', 'position', 'visible', 'border', 'x', 'y']
         self.factory = widget_factory.CWidgetFactory(legend)
@@ -325,8 +321,8 @@ class AxesTab(AbstractTab):
 
     title = "Axes"
     
-    def __init__(self, app, axesdict):
-        AbstractTab.__init__(self, app)
+    def __init__(self, axesdict):
+        AbstractTab.__init__(self)
 
         keys = ['label', 'start', 'end', 'scale', 'format']
 
@@ -356,8 +352,8 @@ class LineTab(AbstractTab):
 
     title = "Lines"
 
-    def __init__(self, app, layer):
-        AbstractTab.__init__(self, app)
+    def __init__(self, layer):
+        AbstractTab.__init__(self)
         self.layer = layer
 
         #
@@ -471,7 +467,7 @@ class LineTab(AbstractTab):
             if new_text == "":
                 ds = None
             else:
-                ds = self.app.project.get_dataset(new_text)
+                ds = globals.app.project.get_dataset(new_text)
 
             model[path][index] = ds
 
@@ -479,9 +475,9 @@ class LineTab(AbstractTab):
         def refresh_dataset_model(sender, project, model):
             model.clear()
             model.append((None, ""))
-            for ds in self.app.project.datasets:
+            for ds in globals.app.project.datasets:
                 model.append( (ds, ds.key) )
-        refresh_dataset_model(self, self.app.project, dataset_model)
+        refresh_dataset_model(self, globals.app.project, dataset_model)
        
         cell = gtk.CellRendererCombo()
         cell.set_property('text-column', 1)
@@ -523,7 +519,7 @@ class LineTab(AbstractTab):
             
         if len(pathlist) > 0:
             source_key = model.get_value(model.get_iter(pathlist[0]), self.factory.keys.index('source'))
-            source = self.app.project.get_dataset(source_key, default=None)
+            source = globals.app.project.get_dataset(source_key, default=None)
             sibling = model.get_iter(pathlist[-1])
         else:
             source = None

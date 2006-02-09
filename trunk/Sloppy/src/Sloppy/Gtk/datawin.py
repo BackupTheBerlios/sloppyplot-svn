@@ -20,7 +20,7 @@
 
 
 from Sloppy.Base.dataset import Dataset, FieldInfo
-from Sloppy.Base import uwrap
+from Sloppy.Base import uwrap, globals
 from Sloppy.Lib.Undo import UndoList, UndoInfo
 
 import gtk, numpy
@@ -106,11 +106,10 @@ class DatasetWindow( gtk.Window ):
             
     
         
-    def __init__(self, app, project, dataset=None):
+    def __init__(self, project, dataset=None):
         gtk.Window.__init__(self)
 	self.set_size_request(280,320)
         self.set_transient_for(app.window)
-        self.app = app
         
         self.cblist = []
 
@@ -124,8 +123,7 @@ class DatasetWindow( gtk.Window ):
         self.dataview = self._construct_dataview()
         sw = uihelper.add_scrollbars(self.dataview)
         sw.show()
-        
-        
+                
         hpaned = gtk.HPaned()
         hpaned.pack1( sw )
 #        hpaned.pack2( self._construct_metadata_widget() )

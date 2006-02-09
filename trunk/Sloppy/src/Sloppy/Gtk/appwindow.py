@@ -70,7 +70,7 @@ class AppWindow( gtk.Window ):
         self.toolbox = self._construct_toolbox()
 
         # and build ui
-        self.uimanager.add_ui_from_string(self.ui_string)
+        self.uimanager.add_ui_from_string(uidata.uistring_appwindow)
         self.add_accel_group(self.uimanager.get_accel_group())
         
         self._construct_menubar()

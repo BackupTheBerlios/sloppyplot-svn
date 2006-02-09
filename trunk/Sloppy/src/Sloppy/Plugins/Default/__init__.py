@@ -23,9 +23,14 @@
 Commonly used functions.
 """
 
+
+from Sloppy.Base.version import VERSION
+
 name = "Default"
-authors = ["Niklas Volbers"]
+authors = "Niklas Volbers"
 license = "GPLv2"
+blurb = "Core functions for SloppyPlot"
+version = VERSION
 
 
 from import_export import *

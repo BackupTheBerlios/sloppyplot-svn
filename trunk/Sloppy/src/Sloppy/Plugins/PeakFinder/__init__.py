@@ -19,13 +19,17 @@
 # $Id: __init__.py 5 2005-08-12 07:27:46Z niklasv $
 
 
+name = "PeakFinder"
+authors = "Niklas Volbers"
+license = "GPLv2"
+blurb = "Finding peaks in a very simple manner"
+version = "0.1"
+
+
 import logging
 logger = logging.getLogger('plugin.PeakFinder')
 
 from main import *
-
-name = "PeakFinder"
-
 
 try:
     import gtk    

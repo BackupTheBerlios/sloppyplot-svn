@@ -28,7 +28,7 @@ logger = logging.getLogger('gtk.application')
 import glob, os, sys
 import gtk, gobject, pango
 
-from Sloppy.Gtk import uihelper, gtkexcepthook, import_dialog, config, mpl
+from Sloppy.Gtk import uihelper, gtkexcepthook, import_dialog, preferences, mpl
 from Sloppy.Gtk.datawin import DatasetWindow
 from Sloppy.Gtk.gnuplot_window import GnuplotWindow
 from Sloppy.Gtk.appwindow import AppWindow
@@ -37,7 +37,7 @@ from Sloppy.Gtk.property_browser import PropertyBrowserDialog
 from Sloppy.Gtk.options_dialog import OptionsDialog, NoOptionsError
 
 from Sloppy.Base import \
-     utils, error, config, application, globals, pdict, uwrap, dataio
+     utils, error, application, globals, pdict, uwrap, dataio
 from Sloppy.Base.objects import Plot, Axis, Line, Layer, new_lineplot2d
 from Sloppy.Base.dataset import Dataset
 from Sloppy.Base.project import Project
@@ -327,7 +327,7 @@ class GtkApplication(application.Application):
         window = self.window.subwindow_match(
             (lambda win: isinstance(win, DatasetWindow) and (win.dataset == ds))) \
             or \
-            self.window.subwindow_add( DatasetWindow(self, self._project, ds) )
+            self.window.subwindow_add( DatasetWindow(self._project, ds) )
 	window.present()
 
 
@@ -346,7 +346,7 @@ class GtkApplication(application.Application):
                 logger.error("The plot to be edited has not even a single layer!")
                 return
             
-        win = LayerWindow(self, plot, layer, current_page=current_page)
+        win = LayerWindow(plot, layer, current_page=current_page)
         win.set_modal(True)
         win.present()
         
@@ -773,7 +773,7 @@ class GtkApplication(application.Application):
 
 
     def on_action_Preferences(self, action):
-        dlg = config.ConfigurationDialog()
+        dlg = preferences.ConfigurationDialog()
         try:
             dlg.run()
         finally:

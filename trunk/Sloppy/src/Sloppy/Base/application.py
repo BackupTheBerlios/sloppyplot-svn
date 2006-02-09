@@ -149,30 +149,36 @@ class Application(object, HasSignals):
         Each sub-directory with a file __init__.py is considered a
         plugin. Code inspired by the plugin code from the foopanel
         project.
+
+        A plugin needs to define the string attributes 'name',
+        'authors', 'blurb', 'version' and 'license'; otherwise it will
+        not be recognized properly.        
         """
+        
 
         logger.debug("Initializing plugins.")
         
         def init_plugin(pluginpath, plugin_name):            
             d = os.path.join(pluginpath, plugin_name)
-            if not os.path.isdir(d):
-                return False
-            if not "__init__.py" in os.listdir(d):
-                return False
+            if (not os.path.isdir(d)) or (not "__init__.py" in os.listdir(d)):
+                return
+            
             exec("import Sloppy.Plugins.%s as plugin" % plugin_name ) in locals()
+
+            for attr in ['name','authors','blurb','version','license']:
+                if not hasattr(plugin, attr):
+                    raise AttributeError("Plugin is lacking required attribute '%s'" % attr)
             self.plugins[plugin.name] = plugin
-        
+            logger.info("Plugin %s loaded." % item)        
 
-        # TODO: load all plugins from a Directory
-        for n in ['Default', 'Sims']:
-            try:
-                init_plugin(self.path.plugins, n)
-            except Exception, msg:
-                logger.error("Failed to load Plugin %s: %s" % (n, msg))
-            else:
-                logger.info("Plugin %s loaded." % n)
-
-        
+        # Currently only the system location for plugins is scanned.
+        # TODO: add place for user plugins
+        for path in [self.path.plugins]:
+            for item in os.listdir(path):
+                try:
+                    init_plugin(self.path.plugins, item)
+                except Exception, msg:
+                    logger.error("Failed to load Plugin %s: %s" % (item, msg))        
         
 
     #----------------------------------------------------------------------

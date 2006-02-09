@@ -1,6 +1,6 @@
 
 
-uistring_appwindow = 
+uistring_appwindow = \
 """
 <ui>
   <menubar name='MainMenu'>

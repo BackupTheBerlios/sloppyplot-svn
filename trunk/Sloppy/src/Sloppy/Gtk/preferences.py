@@ -25,7 +25,7 @@ Configuration dialog and widgets.
 
 
 import gtk
-from Sloppy.Base import dataio
+from Sloppy.Base import globals, dataio
 
 from Sloppy.Gtk import uihelper, widget_factory
 from Sloppy.Lib.Props import Keyword
@@ -73,10 +73,13 @@ class ConfigurationDialog(gtk.Dialog):
         nb.set_property('tab-pos', gtk.POS_LEFT)
         nb.connect("switch-page", on_switch_page, self.tab_label)
         
-        for page in [ImportTemplatesPage()]:
+        for page in [InformationPage(), ImportTemplatesPage(), PluginPage()]:
             nb.append_page(page)
             nb.set_tab_label_text(page, page.title)
-            page.check_in()        
+            # some pages show only information and
+            # might not provide a check_in.
+            if hasattr(page, 'check_in'): 
+                page.check_in()        
 
 
         #
@@ -91,7 +94,10 @@ class ConfigurationDialog(gtk.Dialog):
         response = gtk.Dialog.run(self)
         if response == gtk.RESPONSE_ACCEPT:
             for page in self.notebook.get_children():
-                page.check_out()
+                # some pages show only information and
+                # might not provide a check_out.
+                if hasattr(page, 'check_out'): 
+                    page.check_out()
         return response
 
 
@@ -202,7 +208,7 @@ class ImportTemplatesPage(gtk.VBox):
 
 
     def check_in(self):
-        for key,template in dataio.import_templates.iteritems():
+        for key,template in globals.import_templates.iteritems():
             if template.importer_key == 'ASCII':
                 self.model.append((key, template.copy()))
 
@@ -219,7 +225,7 @@ class ImportTemplatesPage(gtk.VBox):
 
             # Note that this is an application specific operation,
             # and there is no undo available for this.
-            dataio.import_templates = templates
+            globals.import_templates = templates
 
 
 
@@ -429,3 +435,61 @@ class ImportTemplatesPage(gtk.VBox):
         if response == gtk.RESPONSE_ACCEPT:
             new_item = (key, template)
             model.append(new_item)
+
+
+class PluginPage(gtk.VBox):
+
+    title = "Plugins"
+
+    def __init__(self):
+        gtk.VBox.__init__(self)
+
+        vbox = gtk.VBox()
+        vbox.set_spacing(uihelper.SECTION_SPACING)
+        vbox.set_border_width(uihelper.SECTION_SPACING)
+
+        #
+        # Create informational label
+        #
+        note = "Custom plugins are not yet supported. "
+        label = gtk.Label(note)
+
+        #
+        # Create TreeView with the Plugin Information
+        #
+        
+        # model: plugin object
+        model = gtk.ListStore(object)
+        for plugin in globals.app.plugins.itervalues():
+            model.append( (plugin,) )
+            
+        treeview = gtk.TreeView(model)
+
+        treeview.set_headers_visible(True)
+
+        def add_column(attr):
+            cell = gtk.CellRendererText()
+            column = gtk.TreeViewColumn(attr, cell)
+            column.set_cell_data_func(cell, self.cell_data_func, attr)
+            column.set_resizable(True)        
+            treeview.append_column(column)
+
+        for attr in ['name', 'blurb', 'authors']:
+            add_column(attr)
+
+        vbox.pack_start(label, False, True)
+        vbox.pack_start(treeview, True, True)        
+
+        frame = uihelper.new_section("Available Plugins", vbox)
+        self.add(frame)
+
+
+    def cell_data_func(self, column, cell, model, iter, attr):
+        """ Display the attribute plugin.attr """
+        plugin = model.get_value(iter, 0)
+        try:
+            value = plugin.__dict__[attr]
+        except KeyError:
+            value = ""
+        cell.set_property('text', value)
+        
