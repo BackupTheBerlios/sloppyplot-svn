@@ -20,8 +20,7 @@
 
 import os.path
 
-from Sloppy.Base import globals
-from Sloppy.Base import dataset
+from Sloppy.Base import globals, dataset
 from Sloppy.Lib.Props import *
 
 
@@ -175,15 +174,13 @@ def importer_template_from_filename(filename):
     """    
     Return a list of templates that matches the given filename based
     on the extension.
-    """
-    global import_templates
-    
+    """   
     path, ext = os.path.splitext(filename)
     if len(ext) > 1: ext = ext[1:].lower()
     else: return matches
 
     matches = []
-    for key, template in import_templates.iteritems():
+    for key, template in globals.import_templates.iteritems():
         if ext in template.extensions.split(','):
             matches.append(key)
 

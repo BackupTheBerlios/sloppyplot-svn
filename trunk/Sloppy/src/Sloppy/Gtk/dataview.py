@@ -23,9 +23,6 @@
 TreeView to display a Dataset.
 """
 
-import pygtk # TBR
-pygtk.require('2.0') # TBR
-
 import gtk, gobject, numpy
 
 from Sloppy.Base import globals
@@ -285,6 +282,13 @@ class DatasetView(gtk.TreeView):
         " Return index of the given column, not counting the first column. "
         return self.get_columns().index(column)
         #return self.get_columns().index(column) - 1
+
+
+
+# register only for pygtk < 2.8
+if gtk.pygtk_version[1] < 8:
+    gobject.type_register(DatasetView)
+
 
 
 

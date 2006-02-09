@@ -28,8 +28,8 @@ import gtk
 import logging
 logger = logging.getLogger('gtk.uihelper')
 
-import urllib
-import glob, os
+import urllib, glob, os
+
 
 SECTION_SPACING=8
 
@@ -134,6 +134,11 @@ def setup_test_window(widget):
     return win
 
 
+
+
+# Button Boxes ----------------------------------------------------------------
+
+
 def construct_buttonbox(buttons, horizontal=True, labels=True,
                         layout=gtk.BUTTONBOX_END):
     """
@@ -172,7 +177,6 @@ def construct_buttonbox(buttons, horizontal=True, labels=True,
 
     global SECTION_SPACING
     btnbox.set_spacing(SECTION_SPACING)
-#    btnbox.set_border_width(SECTION_SPACING)
 
     return btnbox
 
@@ -185,6 +189,10 @@ def construct_vbuttonbox(buttons, labels=True, layout=gtk.BUTTONBOX_START):
     return construct_buttonbox(buttons, horizontal=False,
                                labels=labels, layout=layout)
 
+
+
+
+#------------------------------------------------------------------------------
 
 def new_section(frame_title, child):
     """ Surround the given `child` widget by a frame with a given
@@ -213,7 +221,7 @@ def new_section(frame_title, child):
 
 
 def register_stock_icons(imgdir, prefix=""):
-    logger.debug("Trying to register png icons from dir '%s'" % imgdir)
+    logger.debug("Register png icons from dir '%s'" % imgdir)
     filelist = map(lambda fn: ("%s%s" % (prefix, fn.split(os.path.sep)[-1][:-4]), fn), \
                    glob.glob(os.path.join(imgdir,'*.png')))
 
@@ -222,7 +230,7 @@ def register_stock_icons(imgdir, prefix=""):
     for stock_id, file in filelist:
         # only load image files when our stock_id is not present
         if stock_id not in stock_ids:
-            logger.debug( "loading image '%s' as stock icon '%s'" % (file, stock_id) )
+            #logger.debug( "  [%s]" % stock_id )
             pixbuf = gtk.gdk.pixbuf_new_from_file(file)
             pixbuf = pixbuf.scale_simple(48,48,gtk.gdk.INTERP_BILINEAR)
             iconset = gtk.IconSet(pixbuf)

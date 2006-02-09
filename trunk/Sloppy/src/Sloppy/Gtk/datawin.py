@@ -19,9 +19,6 @@
 # $Id: tablewin.py 457 2006-01-19 20:45:02Z niklasv $
 
 
-import pygtk # TBR
-pygtk.require('2.0') # TBR
-
 from Sloppy.Base.dataset import Dataset, FieldInfo
 from Sloppy.Base import uwrap
 from Sloppy.Lib.Undo import UndoList, UndoInfo

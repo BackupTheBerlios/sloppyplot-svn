@@ -25,15 +25,10 @@
 import logging
 logger = logging.getLogger('gtk.application')
 
-import pygtk # TBR
-pygtk.require('2.0') # TBR
-
-import glob, os
+import glob, os, sys
 import gtk, gobject, pango
-import sys, glob, os.path
 
 from Sloppy.Gtk import uihelper, gtkexcepthook, import_dialog, config, mpl
-
 from Sloppy.Gtk.datawin import DatasetWindow
 from Sloppy.Gtk.gnuplot_window import GnuplotWindow
 from Sloppy.Gtk.appwindow import AppWindow
@@ -41,12 +36,12 @@ from Sloppy.Gtk.layerwin import LayerWindow
 from Sloppy.Gtk.property_browser import PropertyBrowserDialog
 from Sloppy.Gtk.options_dialog import OptionsDialog, NoOptionsError
 
-from Sloppy.Base import utils, error, config, application, globals
+from Sloppy.Base import \
+     utils, error, config, application, globals, pdict, uwrap, dataio
 from Sloppy.Base.objects import Plot, Axis, Line, Layer, new_lineplot2d
 from Sloppy.Base.dataset import Dataset
 from Sloppy.Base.project import Project
 from Sloppy.Base.projectio import load_project, save_project, ParseError
-from Sloppy.Base import pdict, uwrap, dataio
 
 from Sloppy.Gnuplot.terminal import PostscriptTerminal
 
@@ -72,12 +67,14 @@ class GtkApplication(application.Application):
         self.window = AppWindow()
         self._clipboard = gtk.Clipboard()  # not implemented yet
         self._current_plot = None
-
         self.path.icon_dir = os.path.join(self.path.base_dir, 'Gtk','Icons')
         self.register_stock()      
 
 
     def register_stock(self):
+        """
+        Register png images from the GTK icon directory as stock icons.
+        """
         uihelper.register_stock_icons(self.path.icon_dir, prefix='sloppy-')
 
         # register stock items
@@ -94,7 +91,12 @@ class GtkApplication(application.Application):
             factory.add(new_stock, icon_set)
             
 
+    # Plugin Handling ------------------------------------------------------
+    
     def init_plugins(self):
+        """
+        gtk_popup_actions
+        """
         application.Application.init_plugins(self)
 
         for plugin in self.plugins.itervalues():
@@ -193,7 +195,7 @@ class GtkApplication(application.Application):
                          gtk.STOCK_OPEN,
                          gtk.RESPONSE_OK))
             chooser.set_default_response(gtk.RESPONSE_OK)
-            chooser.set_current_folder( self.path.get('current_dir') )
+            chooser.set_current_folder(self.path.current_dir)
             chooser.set_select_multiple(False)
 
             filter = gtk.FileFilter()
@@ -208,7 +210,7 @@ class GtkApplication(application.Application):
             chooser.add_filter(filter)
             chooser.set_filter(filter) # default filter
 
-            shortcut_folder = self.path.get('example_dir')
+            shortcut_folder = self.path.example_dir
             if os.path.exists(shortcut_folder):
                 chooser.add_shortcut_folder( shortcut_folder )
 
@@ -240,7 +242,7 @@ class GtkApplication(application.Application):
                          gtk.STOCK_SAVE,
                          gtk.RESPONSE_OK))
             chooser.set_default_response(gtk.RESPONSE_OK)
-            chooser.set_current_folder( self.path.get('example_dir') )
+            chooser.set_current_folder( self.path.example_dir)
             chooser.set_select_multiple(False)
             chooser.set_filename(pj.filename or "unnamed.spj")
 
@@ -254,7 +256,7 @@ class GtkApplication(application.Application):
             chooser.add_filter(filter)
             chooser.set_filter(filter) # default filter
 
-            shortcut_folder = self.path.get('example_dir')
+            shortcut_folder = self.path.example_dir
             if os.path.exists(shortcut_folder):
                 chooser.add_shortcut_folder(shortcut_folder)
 
@@ -288,6 +290,9 @@ class GtkApplication(application.Application):
         except error.UserCancel:
             return
 
+
+
+
     # ----------------------------------------------------------------------
     # Callbacks
     #
@@ -295,8 +300,7 @@ class GtkApplication(application.Application):
     # delete-event/destroy/quit application
             
     def _cb_quit_application(self, action): self.quit()       
-
-    def _cb_project_close(self,widget=None):  self.close_project()
+    def _cb_project_close(self,widget=None):  self.set_project(None)
     def _cb_project_open(self,widget): self.load_project()
     def _cb_project_save(self,widget):   self.save_project()            
     def _cb_project_save_as(self,widget): self.save_project_as()                        
@@ -564,7 +568,7 @@ class GtkApplication(application.Application):
                      gtk.STOCK_OPEN,
                      gtk.RESPONSE_OK))
         chooser.set_default_response(gtk.RESPONSE_OK)
-        chooser.set_current_folder(self.path.get('current_dir'))
+        chooser.set_current_folder(self.path.current_dir)
         chooser.set_select_multiple(True)
 
         filter_keys = {} # used for reference later on
@@ -603,7 +607,7 @@ class GtkApplication(application.Application):
             
 
         # add shortcut folder to example path, if such exists
-        shortcut_folder = self.path.get('data_dir')
+        shortcut_folder = self.path.data_dir
         if os.path.exists(shortcut_folder):
             chooser.add_shortcut_folder(shortcut_folder)
 
@@ -671,7 +675,7 @@ class GtkApplication(application.Application):
 
         # try to determine template key if it is not given
         if template_key is None or template_key=='auto':
-            matches = globals.importer_template_from_filename(filenames[0])
+            matches = dataio.importer_template_from_filename(filenames[0])
             if len(matches) > 0:
                 template_key = matches[0]
             else:
@@ -704,10 +708,9 @@ class GtkApplication(application.Application):
         else:
             template = template_key
 
-        # The progress bar displays which file is currently being imported.
-        application.Application.import_datasets(self, project, filenames, template)
-                
 
+        p = self.plugins['Default']
+        p.import_datasets(project, filenames, template)             
 
 
     def _cb_new_dataset(self,widget):

@@ -18,22 +18,12 @@
 # $HeadURL: svn+ssh://svn.berlios.de/svnroot/repos/sloppyplot/trunk/Sloppy/src/Sloppy/Gtk/dock.py $
 # $Id: dock.py 137 2005-09-18 22:07:32Z niklasv $
 
-
-try:
-    import pygtk
-    pygtk.require('2.0')
-except ImportError:
-    pass
-
 import gtk
-
 
 from Sloppy.Base import uwrap, error, globals
 from Sloppy.Lib.Undo import ulist, UndoList
 from Sloppy.Lib.ElementTree.ElementTree import Element, SubElement
-
 from Sloppy.Gtk import uihelper, dock, options_dialog
-
 
 #------------------------------------------------------------------------------
 import logging

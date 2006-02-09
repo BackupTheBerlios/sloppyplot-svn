@@ -30,14 +30,6 @@ Dockable - a VBox that can be docked
 take a look at SVN revision 135.
 """
 
-
-
-try:
-    import pygtk
-    pygtk.require('2.0')
-except ImportError:
-    pass
-
 import gtk, gobject
 from Sloppy.Base import config
 
@@ -160,10 +152,11 @@ class Dockable( gtk.VBox ):
         return self.dockbook.tab_dnd_drag_drop(sender, context, x, y, timestamp)
 
         
+
+# register only for pygtk < 2.8
+if gtk.pygtk_version[1] < 8:
+    gobject.type_register(Dockable)        
         
-gobject.type_register(Dockable)
-
-
 
 
 
@@ -270,9 +263,9 @@ class Dockbook( gtk.Notebook ):
             self.set_current_page(-1)
         
             
-
-gobject.type_register(Dockbook)
-
+# register only for pygtk < 2.8
+if gtk.pygtk_version[1] < 8:
+    gobject.type_register(Dockbook)
 
 
 
@@ -429,13 +422,13 @@ class Dock( gtk.VBox ):
 
         return do_loop(self)    
 
-gobject.type_register(Dock)
+
+# register only for pygtk < 2.8
+if gtk.pygtk_version[1] < 8:
+    gobject.type_register(Dock)        
 
 
        
-
-#==============================================================================
-    
 #==============================================================================
 
 def test():

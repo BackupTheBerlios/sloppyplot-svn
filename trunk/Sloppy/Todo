@@ -1,60 +1,8 @@
-
-
-Plugins:
-
-- automatic plugin reading
-- do the same for importer!
-
-
      
-
-Importer:
-
-2. remove checkboxes from widgets....
-4. recognize '-' as empty value --> But how should I handle it?
-
-- omit DeprectationWarnings by adding a pygtk version check
-
-- Simplify debugging output for images
-
-- node_info => dictionary ... After all, this _is_ the metadata.
-  I think the reason for creating the NodeInfo was:
-  this way I could have a HasProperties class available. 
-  The dataset e.g. cannot be a child of HasProperties,
-  because there are name clashes (get_value, set_value)
-
-----------------------------------------
-- allow to change field name and _type_ !
-
-- finish Undo implementation for column operations
-  _OR_ put it back into utable (well, udataset) for 
-  performance reasons ? No! After all, no one forces
-  you to use the dataset functions -- these _are_ 
-  already wrappers; everthing can be achieved directly
-  by manipulating dataset._array.
-
-
-- TestSuites, TestCases, ... Yes, I do need this.
-
-- in der Konstruktion von button boxes sollte das Einfügen eines 
-  zusätzlichen Abstands erlaubt sein, z.B. vor den Hoch- und Runter-
-  Knöpfen
-
-
-Transition to numpy will definitely happen in this release !!!!
-
-
-- why did I introduce separate projects and datasets?
-
-I should change it to one dictionary:
-
-
-  project.root
-
-where root is a dictionary holding Node instances.
-
-
-
+- Importer: remove checkboxes from widgets....
+- Importer: recognize '-' as empty value --> But how should I handle it?
+- DatasetView: allow to change field name and _type_ !
+- Dataset: finish Undo implementation for column operations
 
 
 

@@ -306,29 +306,6 @@ class Project(HasProperties, HasSignals):
         self.sig_emit("notify::plots")
 
         return plot
-
-
-    # Node Handling -------------------------------------------------------
-
-    def remove_nodes(self, pathlist, undolist=None):
-        pass
-    
-    def remove_node(self, path, undolist=None):
-        self.remove_nodes([path], undolist=undolist)
-
-    def move_node(self, path, new_path, undolist=None):
-        " root/my_object "
-        # rename item
-        pass
-
-    def has_node(self, path):
-        return False
-
-    def get_node(self, path):
-        return None
-
-    def insert_node(self, path):
-        pass
     
     #----------------------------------------------------------------------
 

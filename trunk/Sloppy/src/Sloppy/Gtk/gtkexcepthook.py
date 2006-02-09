@@ -87,7 +87,7 @@ def _info(type, value, tb):
                                    message_format=msg)
         
         dialog.set_title(_("Bug Detected"))        
-        dialog.set_property("has-separator", False)
+        ##dialog.set_property("has-separator", False) # causes error
         dialog.vbox.get_children()[0].get_children()[1].get_children()[0].set_property("use-markup", True)
 
         dialog.add_button(_("Show Details"), 1)

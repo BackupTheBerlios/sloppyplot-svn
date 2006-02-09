@@ -22,19 +22,16 @@
 import logging
 logger = logging.getLogger('Gtk.gnuplot_window')
 
-
-import pygtk # TBR
-pygtk.require('2.0') # TBR
-
 import gtk, gobject
 import re, os.path
 
+from Sloppy.Lib.Undo import UndoInfo, UndoList, ulist
 from Sloppy.Base import uwrap
 from Sloppy.Base.objects import Axis
+from Sloppy.Gtk import uihelper
 
-from Sloppy.Lib.Undo import UndoInfo, UndoList, ulist
 
-import uihelper
+
 
 
 

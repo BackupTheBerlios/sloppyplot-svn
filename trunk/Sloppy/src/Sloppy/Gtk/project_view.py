@@ -18,10 +18,6 @@
 # $HeadURL$
 # $Id$
 
-
-import pygtk # TBR
-pygtk.require('2.0') # TBR
-
 import gtk, gobject
 import sys, glob, os.path
 
@@ -32,10 +28,9 @@ from Sloppy.Gtk import uihelper
 
 from Sloppy.Lib.Props.main import PropertyError
 
-#------------------------------------------------------------------------------
 import logging
 logger = logging.getLogger('Gtk.treeview')
-
+#------------------------------------------------------------------------------
 
 
 class ProjectTreeView( gtk.TreeView ):
@@ -116,29 +111,22 @@ class ProjectTreeView( gtk.TreeView ):
         model = self.main_model
         model.clear()
 
-        if not self._project:
+        if not self.project:
             return
 
-	logger.debug("self._project: %s" % object.__str__(self._project))
-	
         # add Plots
         def add_plot_object(plots, model, parent=None):            
-            for (key, plot) in pdict.iteritems( self._project.plots ):
+            for (key, plot) in pdict.iteritems( self.project.plots ):
                 iter = model.append(parent, [unicode(key), plot, 'sloppy-%s' % plot.__class__.__name__])
-            # TODO ?
-            # We might add Layers here
-        add_plot_object(self._project.plots, model)
+        add_plot_object(self.project.plots, model)
             
         # add Datasets
-        for (key, ds) in pdict.iteritems( self._project.datasets ):
+        for (key, ds) in pdict.iteritems( self.project.datasets ):
             model.append(None, [unicode(key), ds, 'sloppy-%s' % ds.__class__.__name__])
 
         self.collapse_all()
 
-    def get_project(self):
-        return self._project
-
-    def set_project(self,project):
+    def set_project(self, project):
         """
         Assign a project to the TreeView and repopulate the tree.  If
         no project is given, the TreeView will be empty.
@@ -148,17 +136,16 @@ class ProjectTreeView( gtk.TreeView ):
         else:
             self.set_property('sensitive',False)
             
-        self._project = project
-
+        self.project = project
         self.populate_treeview()
 
-        # TODO: remove old signals
+        # connect notify signals with update mechanism
         if self.project is not None:
-            self.project.sig_connect("notify::datasets", self.populate_treeview)
-            self.project.sig_connect("notify::plots", self.populate_treeview)
-            
-        
-    project = property(get_project,set_project)
+            def on_notify(self, sender):
+                self.populate_treeview()
+            project.sig_connect("notify::datasets", self.on_notify)
+            project.sig_connect("notify::plots", self.on_notify)
+
 
     # ----------------------------------------------------------------------
     # Render Functions
@@ -296,14 +283,23 @@ class ProjectTreeView( gtk.TreeView ):
     #
     
     def init_dragndrop(self):
-        " Set up drag 'n drop mechanism. "
+        """
+        Set up drag 'n drop mechanism.
+        """
         self.enable_model_drag_dest(self.dnd_targets, gtk.gdk.ACTION_DEFAULT)
         self.connect("drag_data_received", self.on_drag_data_received)
 
 
     def on_drag_data_received(self, sender, context,
                               x, y, selection, info, timestamp):
+        """
+        React on the drag of data onto the TreeView.
 
+        Currently, only 'text/uri-list' is supported: If is is a
+        single file with the extension '.spj', then the project is
+        loaded as new project.  In all other cases, we try to import
+        the given files.        
+        """
         if info == self.DND_TEXT_URI_LIST:
             uri = selection.data.strip()
             uri_splitted = uri.split()

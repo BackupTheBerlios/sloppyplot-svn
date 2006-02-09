@@ -74,13 +74,23 @@ class PathHandler:
 #------------------------------------------------------------------------------        
 class Application(object, HasSignals):
 
-    def __init__(self, project=None):
-	" 'project' may be a Project object or a filename. "
-        object.__init__(self)
+    """
+    The Application object manages all application-wide settings.
+    There is exactly one instance of this object. During initialization,
+    the Application object registers itself in globals.app, which
+    every package can access.
 
-        global app
-        app = self
-        
+    The Application is responsible for managing:
+      - pathes (app.path)
+      - plugins (app.plugins)
+      - templates (not yet accessible through the app, see globals)
+      - the current project
+    """
+    
+    def __init__(self):
+        object.__init__(self)
+        globals.app = self
+       
         # init signals
         HasSignals.__init__(self)
         self.sig_register('write-config')
@@ -89,7 +99,6 @@ class Application(object, HasSignals):
 
         # init path handler
         self.path = PathHandler()       
-        self.plugins = {}
         
         # init config file
         self.eConfig = config.read_configfile(self, self.path.config)
@@ -108,23 +117,18 @@ class Application(object, HasSignals):
         # init() is a good place for initialization of derived class
         self.init()
 
+        # Plugins need to be initialized after init(), because
+        # derived Application objects might associate advanced
+        # functionality with some plugins.
+        self.plugins = {}
+        self.init_plugins()
+
         # After everything is initialized, we can set up the project.
         self._project = None
-	if isinstance(project, basestring):
-	    try:
-		self.load_project(project)
-	    except IOError, msg:
-                logger.error("Failed to load project '%s'\nReason was:\n%s\nSetting up an empty project instead." % (project, msg))
-		self.set_project(Project())
-        else:
-            self.set_project(project)
-
-
-        self.init_plugins()
+        self.set_project(None)
         
         # welcome message
         self.status_msg("%s %s" % (version.NAME, version.VERSION))
-
 
 
     def quit(self):
@@ -139,45 +143,45 @@ class Application(object, HasSignals):
     # Plugin Handling -------------------------------------------------------
     
     def init_plugins(self):
-        # each sub-directory with a file __init__.py is considered a
-        # plugin. Code taken from foopanel project.
+        """
+        Init the plugins from the plugin directories.
 
-        def init_plugin(self, pluginpath, plugin_name):
-            print "Trying to load Plugin ", plugin_name
+        Each sub-directory with a file __init__.py is considered a
+        plugin. Code inspired by the plugin code from the foopanel
+        project.
+        """
 
+        logger.debug("Initializing plugins.")
+        
+        def init_plugin(pluginpath, plugin_name):            
             d = os.path.join(pluginpath, plugin_name)
             if not os.path.isdir(d):
                 return False
             if not "__init__.py" in os.listdir(d):
                 return False
-
-            try:
-                exec("import Sloppy.Plugins.%s as plugin" % plugin_name ) in locals()                
-            except Exception, msg:
-                logger.error("Failed to load Plugin %s: %s" % (plugin_name, msg))
-            else:
-                logger.info("Plugin %s loaded." % plugin_name)
-                self.plugins[plugin.name] = plugin
+            exec("import Sloppy.Plugins.%s as plugin" % plugin_name ) in locals()
+            self.plugins[plugin.name] = plugin
+        
 
         # TODO: load all plugins from a Directory
-        init_plugin(self.path.plugins, 'Default')
-        init_plugin(self.path.plugins'Sims')
-        
-        
-    # Internal -------------------------------------------------------------
+        for n in ['Default', 'Sims']:
+            try:
+                init_plugin(self.path.plugins, n)
+            except Exception, msg:
+                logger.error("Failed to load Plugin %s: %s" % (n, msg))
+            else:
+                logger.info("Plugin %s loaded." % n)
 
-    def _check_project(self):
-        if not self.project:
-            raise RuntimeError("No Project available")
-        else:
-            return self.project
+        
         
 
     #----------------------------------------------------------------------
     # PROJECT HANDLING
     
     def set_project(self, project, confirm=True):
-
+        """
+        Set the current project to the given 'project' object.
+        """
         has_changed = (id(self._project) != id(project))        
         if self._project is not None and has_changed:
             self._project.close()
@@ -197,6 +201,7 @@ class Application(object, HasSignals):
             self.sig_emit('notify::project', self._project)        
 
 
+
     # be careful when redefining get_project in derived classes -- it will
     # not work, because the property 'project' always refers to the method
     # in this class.
@@ -206,17 +211,18 @@ class Application(object, HasSignals):
 
 
     def new_project(self, confirm=True):
+        """
+        Create a fresh new Project.
+        """
         self.set_project(Project())
         return self.project
-    
-
-    # TODO: Hmmm. Maybe still put this into project.py ?
-    def close_project(self, confirm=True):
-        pj = self._check_project()
-        self.set_project(None)
 
 
     def save_project(self):
+        """
+        Save current project either under the current filename,
+        or if no such name is set, call save_project_as.
+        """
         if self.project is None:
             return None
         
@@ -231,8 +237,10 @@ class Application(object, HasSignals):
 
 
     def load_project(self, filename):
-        # load new project and if it is sucessfully loaded,
-        # detach the old project
+        """
+        Load new project from the file with the given 'filename'
+        and if it is sucessfully loaded, detach the old project.
+        """
         try:
             new_project = load_project(filename)
         except IOError, msg:
@@ -253,8 +261,15 @@ class Application(object, HasSignals):
                     self.recent_files.pop(-1)
                 self.sig_emit("update-recent-files")            
 
-    #----------------------------------------------------------------------
-    # MISC
+
+    def _check_project(self):
+        if not self.project:
+            raise RuntimeError("No Project available")
+        else:
+            return self.project
+
+
+    # Recent Files --------------------------------------------------------
 
     def clear_recent_files(self):
         self.recent_files = list()
@@ -280,6 +295,8 @@ class Application(object, HasSignals):
             eRecentFiles.append(eFile)
 
 
+    # Templates -----------------------------------------------------------
+    
     def read_templates(self):
         
         templates = {}
@@ -326,14 +343,7 @@ class Application(object, HasSignals):
                 
                 
 
-    def init_plugins(self):
-        pass
-
-    
-
-    #----------------------------------------------------------------------
-    # Simple user I/O
-    #
+    # Simple User I/O -----------------------------------------------------
 
     def ask_yes_no(self, msg):
         return True
@@ -351,56 +361,3 @@ class Application(object, HasSignals):
         print "%s%s" % ("#"*full, "-"*left)
 
 
-    #------------------------------------------------------------------------------
-    def import_datasets(self, project, filenames, template, undolist=None):
-
-        if undolist is None:
-            undolist = project.journal
-
-        if isinstance(template, basestring): # template key
-            template = globals.import_templates[template]
-
-        # To ensure a proper undo, the Datasets are imported one by one
-        # to a temporary dict.  When finished, they are added as a whole.
-        new_datasets = list()
-
-        n = 0.0
-        N = len(filenames)
-        self.progress(0)        
-        for filename in filenames:
-            self.status_msg("Importing %s" % filename)                       
-            try:
-                importer = template.new_instance()                
-                ds = importer.read_dataset_from_file(filename)
-            except dataio.ImportError, msg:
-                self.error_msg(msg)
-                continue
-            except error.UserCancel:
-                self.error_msg("Import aborted by user")
-                continue
-
-            root, ext = os.path.splitext(os.path.basename(filename))
-            ds.key = utils.encode_as_key(root)
-
-            new_datasets.append(ds)
-            n+=1
-            self.progress(n/N)
-
-        self.progress(100)
-
-        if len(new_datasets) > 0:
-            ul = UndoList()
-            if len(new_datasets) == 1:
-                ul.describe("Import Dataset")
-            else:
-                ul.describe("Import %d Datasets" % len(new_datasets) )
-                
-            project.add_datasets(new_datasets, undolist=ul)
-            undolist.append(ul)
-            #msg = "Import of %d datasets finished." % len(new_datasets)
-        else:
-            undolist.append(NullUndo())
-            #msg = "Nothing imported."
-
-        self.progress(-1)
-        #self.status_message(msg)

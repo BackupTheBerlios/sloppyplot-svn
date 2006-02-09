@@ -22,7 +22,7 @@
 import os, gtk
 
 from Sloppy.Gtk import uihelper, logwin, tools, mpl
-from Sloppy.Gtk import treeview as project_view
+from Sloppy.Gtk import project_view as project_view
 from Sloppy.Lib.ElementTree.ElementTree import Element, SubElement
 from Sloppy.Base import utils, error, version, config, globals
 from Sloppy.Base.objects import Plot

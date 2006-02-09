@@ -18,6 +18,7 @@
 # $HeadURL$
 # $Id$
 
+app=None
 
 # all registries contain classes, not instances!
 BackendRegistry = {}

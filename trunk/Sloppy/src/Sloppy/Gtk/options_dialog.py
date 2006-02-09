@@ -22,12 +22,9 @@
 import logging
 logger = logging.getLogger('gtk.importer_options_dlg')
 
-import pygtk # TBR
-pygtk.require('2.0') # TBR
-
 import gtk, gobject
 
-import widget_factory, uihelper
+from Sloppy.Gtk import widget_factory, uihelper
 
 
 class NoOptionsError(Exception):

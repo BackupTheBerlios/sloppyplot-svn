@@ -246,7 +246,6 @@ class MatplotlibWidget(gtk.VBox):
         ('ZoomOut', gtk.STOCK_ZOOM_OUT, '_Zoom Out', 'minus', 'Zoom', 'on_action_ZoomOut'),
         ('ZoomFit', gtk.STOCK_ZOOM_FIT, '_Zoom Fit', '0', 'Zoom', 'on_action_ZoomFit'),
         ('ZoomRect', gtk.STOCK_ZOOM_FIT, '_Zoom Rectangle', 'r', 'Zoom', 'on_action_ZoomRect'),
-        ('ToggleLogScaleY', None, 'Toggle Logarithmic Scale', 'l', 'Toggle Logscale', 'on_action_ToggleLogScaleY'),
         ('MoveAxes', None, 'Move Plot', 'm', '', 'on_action_MoveAxes'),
         ('DataCursor', None, 'Data Cursor (EXPERIMENTAL!)', 'c', '', 'on_action_DataCursor'),
         ('SelectLine', None, 'Select Line', 's', '', 'on_action_SelectLine'),
@@ -276,8 +275,6 @@ class MatplotlibWidget(gtk.VBox):
           <menuitem action='PeakFinder'/>
         </menu>        
         <menu action='DisplayMenu'>
-          <menuitem action='ToggleLogScaleY'/>
-          <separator/>
           <menuitem action='ZoomRect'/>
           <menuitem action='ZoomIn'/>
           <menuitem action='ZoomOut'/>
@@ -611,17 +608,6 @@ class MatplotlibWidget(gtk.VBox):
             region = self.calculate_zoom_region(axes, dx=-0.1, dy=-0.1)
             self.zoom_to_region(layer, region, undolist=globals.app.project.journal)
 
-              
-    # current layer: OK
-    def on_action_ToggleLogScaleY(self, action):
-        self.abort_selection()
-        
-        layer = self.backend.layer
-        if layer is not None:        
-            p = globals.app.plugins['Default']
-            p.toggle_logscale_y(self.plot, layer)
-
-        
     # current layer: OK
     def on_action_MoveAxes(self, action):
 
@@ -797,7 +783,10 @@ class MatplotlibWidget(gtk.VBox):
 
 
 #==============================================================================
-gobject.type_register(MatplotlibWidget)        
+
+# register only for pygtk < 2.8
+if gtk.pygtk_version[1] < 8:
+    gobject.type_register(MatplotlibWidget)        
         
 
 

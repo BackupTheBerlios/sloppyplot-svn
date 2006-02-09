@@ -25,12 +25,6 @@
 import logging
 logger = logging.getLogger('gtk.application')
 
-try:
-    import pygtk
-    pygtk.require('2.0')
-except ImportError:
-    pass
-
 import gtk, gtk.glade, pango
 
 from Sloppy.Gtk import uihelper, widget_factory
