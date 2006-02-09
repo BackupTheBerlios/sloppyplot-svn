@@ -618,7 +618,7 @@ class MatplotlibWidget(gtk.VBox):
         
         layer = self.backend.layer
         if layer is not None:        
-            p = globals.plugins['Default']
+            p = globals.app.plugins['Default']
             p.toggle_logscale_y(self.plot, layer)
 
         
@@ -766,7 +766,7 @@ class MatplotlibWidget(gtk.VBox):
 
         print "USING LINE ", line
 
-        p = globals.plugins['PeakFinder']
+        p = globals.app.plugins['PeakFinder']
         data = line.source.get_data()
 
         print
@@ -776,7 +776,7 @@ class MatplotlibWidget(gtk.VBox):
             print "  %f : %f" % (x,y)
         print
 
-        p = globals.plugins['PeakFinder::GTK::DialogBuilder']
+        p = globals.app.plugins['PeakFinder::GTK::DialogBuilder']
         dialog = p.new_dialog()
         dialog.run()
 

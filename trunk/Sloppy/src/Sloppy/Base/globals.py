@@ -19,10 +19,6 @@
 # $Id$
 
 
-app = None
-
-plugins = {}
-
 # all registries contain classes, not instances!
 BackendRegistry = {}
 

@@ -77,7 +77,9 @@ class Application(object, HasSignals):
     def __init__(self, project=None):
 	" 'project' may be a Project object or a filename. "
         object.__init__(self)
-        globals.app = self
+
+        global app
+        app = self
         
         # init signals
         HasSignals.__init__(self)
@@ -87,39 +89,13 @@ class Application(object, HasSignals):
 
         # init path handler
         self.path = PathHandler()       
-
+        self.plugins = {}
+        
         # init config file
         self.eConfig = config.read_configfile(self, self.path.config)
-
-        # set up plugins
-
-        # each sub-directory with a file __init__.py is considered a
-        # plugin. Code taken from foopanel project.
-
-        def init_plugin(pluginpath, plugin_name):
-            print "Trying to load Plugin ", plugin_name
-
-            d = os.path.join(pluginpath, plugin_name)
-            if not os.path.isdir(d):
-                return False
-            if not "__init__.py" in os.listdir(d):
-                return False
-
-            try:
-                exec("import Sloppy.Plugins.%s as plugin" % plugin_name ) in locals()                
-            except Exception, msg:
-                logger.error("Failed to load Plugin %s: %s" % (plugin_name, msg))
-            else:
-                logger.info("Plugin %s loaded." % plugin_name)
-                globals.plugins[plugin.name] = plugin
-            
-
-        # TODO: load all plugins from a Directory
-        init_plugin(self.path.plugins, 'Default')
-        init_plugin(self.path.plugins, 'Sims')
-        
+                   
         # init recent files
-        self.recent_files = list()
+        self.recent_files = []
         self.read_recentfiles()
         self.sig_connect("write-config",
                          (lambda sender: self.write_recentfiles()))
@@ -131,8 +107,8 @@ class Application(object, HasSignals):
 
         # init() is a good place for initialization of derived class
         self.init()
-        
-        # Set up the Project...
+
+        # After everything is initialized, we can set up the project.
         self._project = None
 	if isinstance(project, basestring):
 	    try:
@@ -143,7 +119,7 @@ class Application(object, HasSignals):
         else:
             self.set_project(project)
 
-        # useful for gtk.Application
+
         self.init_plugins()
         
         # welcome message
@@ -158,9 +134,37 @@ class Application(object, HasSignals):
         self.sig_emit("write-config")
         config.write_configfile(self.eConfig, self.path.config)
         
+
+
+    # Plugin Handling -------------------------------------------------------
+    
+    def init_plugins(self):
+        # each sub-directory with a file __init__.py is considered a
+        # plugin. Code taken from foopanel project.
+
+        def init_plugin(self, pluginpath, plugin_name):
+            print "Trying to load Plugin ", plugin_name
+
+            d = os.path.join(pluginpath, plugin_name)
+            if not os.path.isdir(d):
+                return False
+            if not "__init__.py" in os.listdir(d):
+                return False
+
+            try:
+                exec("import Sloppy.Plugins.%s as plugin" % plugin_name ) in locals()                
+            except Exception, msg:
+                logger.error("Failed to load Plugin %s: %s" % (plugin_name, msg))
+            else:
+                logger.info("Plugin %s loaded." % plugin_name)
+                self.plugins[plugin.name] = plugin
+
+        # TODO: load all plugins from a Directory
+        init_plugin(self.path.plugins, 'Default')
+        init_plugin(self.path.plugins'Sims')
         
-    #----------------------------------------------------------------------
-    # INTERNAL
+        
+    # Internal -------------------------------------------------------------
 
     def _check_project(self):
         if not self.project:

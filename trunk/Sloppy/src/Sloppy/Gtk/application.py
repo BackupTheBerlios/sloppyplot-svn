@@ -97,7 +97,7 @@ class GtkApplication(application.Application):
     def init_plugins(self):
         application.Application.init_plugins(self)
 
-        for plugin in globals.plugins.itervalues():
+        for plugin in self.plugins.itervalues():
 
             if hasattr(plugin, 'gtk_popup_actions'):
                 action_wrappers = plugin.gtk_popup_actions()                
@@ -737,7 +737,7 @@ class GtkApplication(application.Application):
 
     def _cb_experimental_plot(self, action):        
         pj = self._check_project()
-        plugin = globals.plugins['Default']
+        plugin = self.plugins['Default']
         plugin.add_experimental_plot(pj)
 
 
