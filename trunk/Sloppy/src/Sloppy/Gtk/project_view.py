@@ -143,8 +143,8 @@ class ProjectTreeView( gtk.TreeView ):
         if self.project is not None:
             def on_notify(self, sender):
                 self.populate_treeview()
-            project.sig_connect("notify::datasets", self.on_notify)
-            project.sig_connect("notify::plots", self.on_notify)
+            project.sig_connect("notify::datasets", on_notify)
+            project.sig_connect("notify::plots", on_notify)
 
 
     # ----------------------------------------------------------------------
@@ -181,7 +181,8 @@ class ProjectTreeView( gtk.TreeView ):
     # ----------------------------------------------------------------------
     # Filter
     # ----------------------------------------------------------------------
-    
+
+    # Stub for further development
     def cb_filter_toplevel(self,model,iter):
         """
         Don't allow project item
