@@ -38,7 +38,7 @@ class Exporter(dataio.Exporter):
     delimiter = VP(basestring, default='\t')
     
     def write_dataset_to_stream(self, fd, dataset):
-        a = dataset.get_array()
+        a = dataset._array
 
         type_map = {numpy.float32: "%f",
                     numpy.int16: "%d",
@@ -46,13 +46,9 @@ class Exporter(dataio.Exporter):
                     numpy.string: '"%s"'}
         
         types  = [dataset.get_field_type(name) for name in dataset.names]
-        
-        exp = ''
-        for type in types:
-            exp += type_map[type]
-            exp += self.delimiter
-        exp += '\n'
-        
+        types = [type_map[t] for t in types]
+        exp = self.delimiter.join(types) + '\n'
+
         for row in a:
             fd.write(exp % row.item())
             

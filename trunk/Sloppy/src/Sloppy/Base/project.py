@@ -65,6 +65,20 @@ SloppyPlot, you can extract the file from this archive by hand.
 
 class Project(HasProperties, HasSignals):
 
+    """
+    A Project contains the plots, datasets and all other information
+    that can be stored in the Project fileds (extension spj).
+
+    Developer's note: I always forget why I decided to make 'plots'
+      and 'datasets' lists and put the key into the objects, even
+      though it would be a lot easier to simply use a dictionary.
+      One of the reasons is that often I refer to a dataset or a plot
+      and it is very easy to get the key this way.
+      At some point I will simply change the lists to dictionaries
+      and make dataset.key and plot.key wrappers that retrieve
+      the key from the project.
+    """
+    
     label = Unicode()
     comment = Unicode()
 

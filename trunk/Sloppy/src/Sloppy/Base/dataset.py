@@ -466,7 +466,9 @@ class Dataset(Node, HasSignals):
         name = self.get_name(cindex)
         return self._array.dtype.fields[name][0].type
          
-
+    def get_field_dtype(self, cindex):
+        name = self.get_name(cindex)
+        return self._array.dtype.fields[name][0]
 
 
 

@@ -45,10 +45,6 @@ from Sloppy.Base.projectio import load_project, save_project, ParseError
 
 from Sloppy.Gnuplot.terminal import PostscriptTerminal
 
-from Sloppy.Lib.Undo import *
-
-
-
 
 #------------------------------------------------------------------------------
 # GtkApplication, the main object
@@ -244,7 +240,7 @@ class GtkApplication(application.Application):
             chooser.set_default_response(gtk.RESPONSE_OK)
             chooser.set_current_folder( self.path.example_dir)
             chooser.set_select_multiple(False)
-            chooser.set_filename(pj.filename or "unnamed.spj")
+            chooser.set_filename(os.path.abspath(pj.filename or "unnamed.spj"))
 
             major,minor,micro = gtk.pygtk_version
             if major > 1 and minor >= 8:

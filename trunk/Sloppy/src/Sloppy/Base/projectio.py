@@ -236,54 +236,64 @@ def toElement(project):
     eProject = Element("Project")
     eProject.attrib['version'] = FILEFORMAT
 
-    eDatasets = SubElement(eProject, "Datasets")
-    for ds in project.datasets:
-        if ds.get_data() is None:
-            raise RuntimeError("EMPTY DATASET '%s'" % ds.key)
-        
-        if isinstance(ds.data, Table):
-            tbl = ds.data
-            
-            eData = SubElement(eDatasets, 'Table')            
-            SIV(eData, 'ncols', tbl.ncols)
-            SIV(eData, 'typecodes', tbl.typecodes_as_string)
+    # Former notation
+    # Datasets
+    #   Table  (attribute typecodes)
+    #     Column
+    #       Info
+    #     Column
 
-            # We write all Column properties except for the
-            # key and the data to the element tree, so we don't
-            # need to put that information into the data file.
-            n = 0
-            for column in tbl.get_columns():
-                kw = column.get_values(exclude=['data'],default=None)
-                if len(kw) > 0:
-                    eColumn = SubElement(eData, 'Column')
-                    SIV(eColumn, 'n', n)
-                    for k,v in kw.iteritems():
-                        if v is not None:
-                            eInfo = SubElement(eColumn, 'Info')
-                            SIV(eInfo, 'key', k)
-                            eInfo.text = v                            
-                n += 1
-                
-            
-        else:
-            raise RuntimeError("Invalid dataset", ds)
+    # New notation
+    # Data
+    #   Dataset (typecodes gone)
+    #     Field
+    #       Attribute
+    #     Field
+
+    eData = SubElement(eProject, "Data")
+    for ds in project.datasets:
+        if ds._array is None:
+            logger.error("Empty Dataset: %s. NOT SAVED." % ds.key)
+            continue
         
-        SIV(eData, 'key', ds.get('key'))
+        eDataset = SubElement(eData, 'Dataset')
+        SIV(eDataset, 'ncols', ds.ncols)
+#        SIV(eDataset, 'nrows', ds.nrows)        
+
+        # All information about the Fields is stored in the
+        # element tree.  Only the actual data will later on be
+        # written to the archive.
+        for n in range(ds.ncols):
+            eField = SubElement(eDataset, 'Field')
+            SIV(eField, 'name', ds.get_name(n))
+            dt = ds.get_field_dtype(n)
+            SIV(eField, 'type', '%s%s' % (dt.kind, str(dt.itemsize)))
+            info = ds.get_info(n)
+            for k,v in info.get_values().iteritems():
+                if v is not None:
+                    eAttribute = SubElement(eField, 'Attribute')
+                    SIV(eAttribute, 'key', k)
+                    eAttribute.text = v
+
+        
+        SIV(eData, 'key', ds.key)
         SIV(eData, 'fileformat', 'CSV' )
 
-        # TODO: iohelper.write_dict, but then I need a transformation
-        # TODO: of the file format: Metaitem -> Item
-        if len(ds.metadata) > 0:
-            eMetadata = SubElement(eData, "Metadata")
-            for k,v in ds.node_info.metadata.iteritems():
-                eMetaitem = SubElement(eMetadata, 'Metaitem')
-                eMetaitem.set('key', k)
-                eMetaitem.text = str(v)
+        # write node information
+        
+#         # TODO: iohelper.write_dict, but then I need a transformation
+#         # TODO: of the file format: Metaitem -> Item
+#         if len(ds.metadata) > 0:
+#             eMetadata = SubElement(eData, "Metadata")
+#             for k,v in ds.node_info.metadata.iteritems():
+#                 eMetaitem = SubElement(eMetadata, 'Metaitem')
+#                 eMetaitem.set('key', k)
+#                 eMetaitem.text = str(v)
                        
     ePlots = SubElement(eProject, "Plots")
     for plot in project.plots:
         ePlot = SubElement(ePlots, plot.__class__.__name__)
-        SIV(ePlot, 'key', plot.get('key'))
+        SIV(ePlot, 'key', plot.key)
         SIV(ePlot, 'title', plot.get('title'))
 
         comment = plot.get('comment')
@@ -343,7 +353,7 @@ def toElement(project):
                 # or add the temporary dataset to the project.
                 if line.source is not None:
                     if project.has_dataset(key=line.source.key):
-                        SIV(eLine, 'source', line.source.get('key'))
+                        SIV(eLine, 'source', line.source.key)
                     else:
                         logger.warn("Invalid line source. Skipped source.")
                 
@@ -364,6 +374,12 @@ def toElement(project):
     return eProject
 
 
+
+
+
+
+
+#------------------------------------------------------------------------------
 
 def save_project(spj, filename=None, path=None):
     """
@@ -406,7 +422,7 @@ def save_project(spj, filename=None, path=None):
         for ds in spj.datasets:
             try:
                 dspath = os.path.join(dsdir, utils.as_filename(ds.key))
-                exporter_ascii.write_to_file(dspath, ds.data)
+                exporter_ascii.write_to_file(dspath, ds)
                 
             except AttributeError:
                 logger.error("Error while writing Dataset '%s'" % ds.key)
