@@ -704,9 +704,7 @@ class GtkApplication(application.Application):
         else:
             template = template_key
 
-
-        p = self.plugins['Default']
-        p.import_datasets(project, filenames, template)             
+        self.core.import_datasets(project, filenames, template)             
 
 
     def _cb_new_dataset(self,widget):
@@ -716,11 +714,11 @@ class GtkApplication(application.Application):
         self.edit_dataset(ds)        
 
 
-    def _cb_create_plot_from_datasets(self, widget):
+    def on_action_DatasetToPlot(self, action):
         pj = self._check_project()
         datasets = self.window.treeview.get_selected_datasets()
-        pj.create_plot_from_datasets(datasets)
-        
+        self.core.create_plot_from_datasets(pj, datasets)
+                     
 
     def _cb_add_datasets_to_plot(self, action):
         pj = self._check_project()
@@ -736,8 +734,7 @@ class GtkApplication(application.Application):
 
     def _cb_experimental_plot(self, action):        
         pj = self._check_project()
-        plugin = self.plugins['Default']
-        plugin.add_experimental_plot(pj)
+        self.core.add_experimental_plot(pj)
 
 
 

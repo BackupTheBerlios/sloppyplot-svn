@@ -96,24 +96,6 @@ TODO
 
 
 
-
-
-
-
-
-------------------------------------------------------------------------------
-SWITCHING TO NUMPY
-
-- maybe rewrite the columns dialog similar to the layerwin dialog ?
-  => wait for change to numpy!
-
-- Bugreport: Changing the column order causes all values to become integers!
-
-- switch to numpy and it's dtype. Actually I would like to get rid of all
-  the Column stuff.
-
-- rewrite tablewin
-
 ------------------------------------------------------------------------------
 == CUSTOM GNUPLOT EXPORT ==
 

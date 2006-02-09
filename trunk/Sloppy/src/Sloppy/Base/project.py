@@ -323,61 +323,6 @@ class Project(HasProperties, HasSignals):
     
     #----------------------------------------------------------------------
 
-    def create_plot_from_datasets(self, datasets, plot_label=None, undolist=None):
-        """
-        Creates a new plot from the list of given Datasets.
-        
-        >>> create_plot_from_datasets([ds1,ds2], 'my dataset')
-
-        The method tries to guess, which lines to use as X/Y pairs,
-        using the 'designation' given in the Dataset's tables.
-        
-        Returns the new plot.
-        """
-        if undolist is None:
-            undolist = self.journal
-        
-        if len(datasets) == 0: return
-        
-        if plot_label is None:
-	    plot_key = pdict.unique_key(self.plots, datasets[0].key)
-            plot_label = plot_key
-
-        lines = []
-        for dataset in datasets:
-            cx = None
-            j = -1
-            for name in dataset.names:
-                info = dataset.infos[name]
-                j += 1
-                if cx is None:
-                    # skip if this is no X value
-                    if info.designation != 'X':
-                        continue
-                    else:
-                        cx = j
-                else:
-                    # skip if this is no Y value
-                    if info.designation != 'Y':
-                        continue
-                    else:
-                        lines.append( Line(source=dataset,
-                                           cx=cx, cy=j) )
-                        cx = None
-
-        if len(lines) == 0:
-            logger.error("The Dataset contains no X/Y column pair.")
-            return
-            
-        layer = Layer(lines=lines)
-        plot = Plot(title=plot_label, key=plot_key, layers=[layer])
-
-        ui = UndoList().describe("Create Plot from Datasets")
-        self.add_plots( [plot], undolist=ui )
-        undolist.append(ui)   
-        
-        return plot
-
 
     def add_datasets_to_plot(self, datasets, plot, undolist=None):
         """

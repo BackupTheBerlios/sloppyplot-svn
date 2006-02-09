@@ -85,6 +85,17 @@ class Application(object, HasSignals):
       - plugins (app.plugins)
       - templates (not yet accessible through the app, see globals)
       - the current project
+
+    Since many important functions are only available in the 'core'
+    plugin, you can access it via application.core.
+
+    Application also provides a few simple functions for user inter-
+    action:
+      - ask_yes_no
+      - status_msg
+      - progress
+      
+    These should be overwritten in classes derived from Application.
     """
     
     def __init__(self):
@@ -169,7 +180,13 @@ class Application(object, HasSignals):
                 if not hasattr(plugin, attr):
                     raise AttributeError("Plugin is lacking required attribute '%s'" % attr)
             self.plugins[plugin.name] = plugin
-            logger.info("Plugin %s loaded." % item)        
+            logger.info("Plugin %s loaded." % item)
+
+            # the core plugin is special and deserves a little shortcut
+            # notation
+            if plugin.name == 'core':
+                self.core = plugin
+                
 
         # Currently only the system location for plugins is scanned.
         # TODO: add place for user plugins
@@ -179,7 +196,11 @@ class Application(object, HasSignals):
                     init_plugin(self.path.plugins, item)
                 except Exception, msg:
                     logger.error("Failed to load Plugin %s: %s" % (item, msg))        
-        
+
+        # If self.core is still undefined, then the required core
+        # plugin has not been found and we will raise an Error!
+        if not hasattr(self, 'core'):
+            raise SystemExit("Core plugin could not be found! Check your installation.")
 
     #----------------------------------------------------------------------
     # PROJECT HANDLING
