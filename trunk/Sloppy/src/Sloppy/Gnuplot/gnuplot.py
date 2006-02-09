@@ -31,12 +31,11 @@ import string, tempfile, os, shutil
 import logging
 logger = logging.getLogger('Gnuplot.gnuplot')
 
-from Sloppy.Base import objects
+from Sloppy.Base import objects, globals
 from Sloppy.Base.dataset import Dataset
-from Sloppy.Base.dataio import exporter_registry
 from Sloppy.Base import utils, backend
 
-from terminal import XTerminal, DumbTerminal, PostscriptTerminal
+from Sloppy.Gnuplot.terminal import XTerminal, DumbTerminal, PostscriptTerminal
 
 """
 Maybe it is even simpler!
@@ -229,7 +228,7 @@ class Backend(backend.Backend):
     def export_datasets(self):
         # Export Datasets to temporary directory, so that
         # gnuplot can access them.
-        exporter = exporter_registry['ASCII']()
+        exporter = globals.exporter_registry['ASCII']()
         
         destdir = self.tmpdir
         for (source, value) in self.exports.iteritems():
@@ -690,9 +689,9 @@ class BackendX11(Backend):
         Backend.__init__(self, *args, **kwargs)
 
 
-backend.BackendRegistry['gnuplot'] = Backend
-backend.BackendRegistry['gnuplot/dumb'] = BackendDumb
-backend.BackendRegistry['gnuplot/x11'] = BackendX11
+globals.BackendRegistry['gnuplot'] = Backend
+globals.BackendRegistry['gnuplot/dumb'] = BackendDumb
+globals.BackendRegistry['gnuplot/x11'] = BackendX11
 
 
 

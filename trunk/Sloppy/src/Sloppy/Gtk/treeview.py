@@ -27,8 +27,8 @@ import sys, glob, os.path
 
 from Sloppy.Base.objects import *
 from Sloppy.Base.dataset import *
-from Sloppy.Base import pdict, uwrap
-import uihelper
+from Sloppy.Base import pdict, uwrap, globals
+from Sloppy.Gtk import uihelper
 
 from Sloppy.Lib.Props.main import PropertyError
 
@@ -53,7 +53,7 @@ class ProjectTreeView( gtk.TreeView ):
     #  Initialization
     # ----------------------------------------------------------------------
     
-    def __init__(self, app, project=None):
+    def __init__(self, project=None):
        
         # init TreeView
         gtk.TreeView.__init__( self )
@@ -62,8 +62,6 @@ class ProjectTreeView( gtk.TreeView ):
 
         self.set_size_request(width=200, height=200)
 
-        self.app = app
-        
         # init everything
         self.init_model()
         self.init_view_columns()
@@ -284,7 +282,7 @@ class ProjectTreeView( gtk.TreeView ):
             elif isinstance(object, Plot):
                 self.project.rename_plot(object, new_text, undolist=ul)
         except PropertyError, msg:
-            self.app.error_msg(msg)
+            globals.app.error_msg(msg)
 
         if len(ul) > 0:
             self.project.journal.append(ul)        
@@ -321,9 +319,9 @@ class ProjectTreeView( gtk.TreeView ):
                 # Check if we have a single file and if this is a sloppy project
                 # then load it. Otherwise import the files!
                 if len(filenames) == 1 and filenames[0].endswith('.spj'):
-                    self.app.load_project(filenames[0])
+                    globals.app.load_project(filenames[0])
                 else:
-                    self.app.do_import(self.project, filenames)
+                    globals.app.do_import(self.project, filenames)
             finally:
                 context.finish(True,False,timestamp)
         else:

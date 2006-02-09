@@ -29,17 +29,13 @@ try:
 except ImportError:
     pass
 
-import gtk
-
+import gtk, inspect, matplotlib
+from matplotlib import * # maybe remove this?
 
 import logging
 logger = logging.getLogger('Backends.mpl')
 
-import inspect
 
-
-import matplotlib
-from matplotlib import *
 
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_gtk import FigureCanvasGTK as FigureCanvas
@@ -47,9 +43,7 @@ from matplotlib.backends.backend_gtk import FigureCanvasGTK as FigureCanvas
 
 from matplotlib.text import Text
 
-from Sloppy.Base import backend
-from Sloppy.Base import objects
-from Sloppy.Base import utils
+from Sloppy.Base import backend, objects, utils, globals
 from Sloppy.Base.dataset import Dataset
 
 
@@ -516,6 +510,6 @@ class BackendWithWindow(Backend):
         
 
 #------------------------------------------------------------------------------
-backend.BackendRegistry['matplotlib'] = Backend
-backend.BackendRegistry['matplotlib/w'] = BackendWithWindow
+globals.BackendRegistry['matplotlib'] = Backend
+globals.BackendRegistry['matplotlib/w'] = BackendWithWindow
 

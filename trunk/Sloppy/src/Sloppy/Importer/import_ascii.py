@@ -22,8 +22,7 @@
 import re
 
 from Sloppy.Base.dataset import Dataset
-from Sloppy.Base import dataio
-from Sloppy.Base.utils import encode_as_key
+from Sloppy.Base import dataio, globals
 
 from Sloppy.Lib.Props import *
 
@@ -143,7 +142,7 @@ class Importer(dataio.Importer):
 
 
     dataset = VP(Instance(Dataset), None, default=None)
-      
+
     designations = \
      VP(
         ['X', 'Y', 'X|Y', 'XY'],
@@ -184,7 +183,6 @@ class Importer(dataio.Importer):
         logger.info("Finished reading ASCII file.")
 
         return self.dataset
-
 
     def parse_header(self, fd):
         """
@@ -314,8 +312,6 @@ class Importer(dataio.Importer):
 
         logger.debug("determined delimiter: '%s'" % delimiter)
         
-        # If the dataset does not contain an array, then we need
-        # to create one.    
         if ds._array == None:
             # determine optional arguments
             typecodes = self.typecodes
@@ -357,7 +353,7 @@ class Importer(dataio.Importer):
             for i in range(ncols):
                 formats.append('f4')
                 #formats.append(numpy.float32)
-                
+
             dtype = numpy.dtype({'names': names, 'formats':formats})
             a = numpy.zeros( (self.growth_offset,), dtype=dtype)
             ds._array = a
@@ -409,7 +405,6 @@ class Importer(dataio.Importer):
         # set designations
         for n in range(ds.ncols):
             ds.get_info(n).designation = designations[n]
-
         
         #
         # read in file line by line
@@ -453,7 +448,7 @@ class Importer(dataio.Importer):
                     row = fd.readline()
                     continue
                 except TypeError, msg:
-                    #logger.warn("Skipped: %s (%s)" % (row,msg))
+                    logger.warn("Skipped: %s (%s)" % (row,msg))
                     row = fd.readline()
                     continue
                 else:
@@ -478,9 +473,9 @@ class Importer(dataio.Importer):
 
 
 #------------------------------------------------------------------------------
-dataio.importer_registry['ASCII'] = Importer
+globals.importer_registry['ASCII'] = Importer
 
-dataio.import_templates['ASCII'] = \
+globals.import_templates['ASCII'] = \
   dataio.IOTemplate(blurb="ASCII", extensions='dat,txt',
                     importer_key='ASCII', is_internal=True)
 

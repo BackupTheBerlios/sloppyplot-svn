@@ -27,15 +27,10 @@ import pygtk # TBR
 pygtk.require('2.0') # TBR
 
 import gtk, gobject
-
-import re
-import os.path
+import re, os.path
 
 from Sloppy.Base import uwrap
 from Sloppy.Base.objects import Axis
-from Sloppy.Base import error
-from Sloppy.Base.backend import BackendRegistry
-
 
 from Sloppy.Lib.Undo import UndoInfo, UndoList, ulist
 

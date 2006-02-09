@@ -19,15 +19,15 @@
 # $Id$
 
 
-from Sloppy.Base.plugin import PluginRegistry
+app = None
 
-import logging
-logger = logging.getLogger('plugin')
+plugins = {}
 
-try:
-    import pygsl
-except ImportError:
-    logger.error("Could not find pygsl. Plugin 'Pygsl' skipped.")
-else:
-    import main
+# all registries contain classes, not instances!
+BackendRegistry = {}
 
+importer_registry = {}
+import_templates = {}
+
+exporter_registry = {}
+export_templates = {}

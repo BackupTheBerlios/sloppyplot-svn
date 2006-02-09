@@ -26,13 +26,12 @@ TreeView to display a Dataset.
 import pygtk # TBR
 pygtk.require('2.0') # TBR
 
-import gobject
-import gtk
+import gtk, gobject, numpy
 
+from Sloppy.Base import globals
 from Sloppy.Base.dataset import Dataset, setup_test_dataset
 from Sloppy.Lib.Undo import UndoInfo, UndoList, NullUndo
 
-import numpy
 
 
 class DatasetModel(gtk.GenericTreeModel):
@@ -78,6 +77,7 @@ class DatasetModel(gtk.GenericTreeModel):
                 numpy.string: str,
                 numpy.int16: int,
                 numpy.int32: int}        
+
     def on_get_column_type(self,index):
         try:
             return self.type_map[self.dataset.get_field_type(index)]
@@ -185,16 +185,14 @@ class DatasetView(gtk.TreeView):
         }
 
     
-    def __init__(self, app, dataset=None, model=None):        
+    def __init__(self, dataset=None, model=None):        
         gtk.TreeView.__init__(self)
         self.set_headers_visible(True)
         self.set_headers_clickable(True)
         self.set_property("rules-hint", True)
         self.get_selection().set_mode(gtk.SELECTION_MULTIPLE)
         self.set_fixed_height_mode(True) # PYGTK 2.6
-
-        self.app = app
-        
+      
         if dataset is not None:
             self.set_dataset(dataset)
         else:
@@ -216,8 +214,8 @@ class DatasetView(gtk.TreeView):
 
         # For testing purposes, we might not have an Application object.
         # In this case, we will simply use a plain list as undo journal.
-        if self.app is not None:
-            journal = self.app.project.journal
+        if globals.app is not None:
+            journal = globals.app.project.journal
         else:
             journal = list()
 

@@ -38,12 +38,8 @@ try:
 except ImportError:
     pass
 
-import gtk
-import gobject
-
-
+import gtk, gobject
 from Sloppy.Base import config
-
 
 
 DockRegistry = []

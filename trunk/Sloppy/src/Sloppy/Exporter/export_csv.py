@@ -22,7 +22,7 @@
 import logging
 logger = logging.getLogger("exporter.export_ascii")
 
-from Sloppy.Base import dataio
+from Sloppy.Base import dataio, globals
 
 
 class Exporter(dataio.Exporter):
@@ -32,8 +32,8 @@ class Exporter(dataio.Exporter):
     blurb = "CSV (comma separated values)"
    
     def write_dataset_to_stream(self, fd, dataset):
-        e = dataio.exporter_registry['ASCII'](delimiter=',')
+        e = globals.exporter_registry['ASCII'](delimiter=',')
         e.write_dataset_to_stream(fd, dataset)
         
 #------------------------------------------------------------------------------
-dataio.exporter_registry["CSV"] = Exporter
+globals.exporter_registry["CSV"] = Exporter

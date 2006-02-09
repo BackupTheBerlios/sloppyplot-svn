@@ -19,21 +19,12 @@
 # $Id$
 
 
-import gtk
-import gobject
-
-import uihelper
-import mpl_selector
-
+import gtk, gobject
 from matplotlib.backends.backend_gtk import FileChooserDialog
 
-
-from Sloppy.Base import uwrap
-from Sloppy.Base.backend import BackendRegistry
-from Sloppy.Base.plugin import PluginRegistry
-
+import uihelper, mpl_selector
+from Sloppy.Base import uwrap, globals
 from Sloppy.Lib.Undo import UndoList, NullUndo, ulist
-
 
 
 
@@ -91,22 +82,21 @@ class MatplotlibWindow( gtk.Window ):
 
 
     
-    def __init__(self, app, project, plot):
+    def __init__(self, project, plot):
 
         gtk.Window.__init__(self)
         self.set_default_size(640,480)
 
         self.is_fullscreen = False
-        self.app = app
         self.disabled_groups = list()
         
-        self.mpl_widget = MatplotlibWidget(app, project, plot)
+        self.mpl_widget = MatplotlibWidget(project, plot)
         
         # set up ui manager
         self.uimanager = gtk.UIManager()        
        
         # add undo/redo ui from application window
-        ag = uihelper.get_action_group(self.app.window.uimanager, 'UndoRedo')
+        ag = uihelper.get_action_group(globals.app.window.uimanager, 'UndoRedo')
         self.uimanager.insert_action_group(ag,0)
         
         # add action group from window
@@ -114,7 +104,7 @@ class MatplotlibWindow( gtk.Window ):
             self.uimanager.insert_action_group(ag,0)
 
         # add action group for toolbox
-        toolbox = self.app.window.toolbox
+        toolbox = globals.app.window.toolbox
         def on_toggled(action, window):
             if action.get_active() is True:
                 window.show()
@@ -311,13 +301,11 @@ class MatplotlibWidget(gtk.VBox):
 
 
 
-    def __init__(self, app, project, plot):
+    def __init__(self, project, plot):
         gtk.VBox.__init__(self)
 
         self._current_selector = None
         
-        self.app = app
-
         self._construct_actiongroups()        
         self.statusbar = self._construct_statusbar()
         self.coords = self._construct_coords()
@@ -489,7 +477,7 @@ class MatplotlibWidget(gtk.VBox):
         self.backend.draw()
 
     def on_action_EditLayer(self, action):
-        self.app.edit_layer( self.plot, self.backend.layer )
+        globals.app.edit_layer( self.plot, self.backend.layer )
 
     #----------------------------------------------------------------------
 
@@ -599,7 +587,7 @@ class MatplotlibWidget(gtk.VBox):
         layer = self.backend.layer
         if layer is not None:
             region = (None,None,None,None)
-            self.zoom_to_region(layer, region, undolist=self.app.project.journal)
+            self.zoom_to_region(layer, region, undolist=globals.app.project.journal)
 
 
     # current layer: OK            
@@ -610,7 +598,7 @@ class MatplotlibWidget(gtk.VBox):
         if layer is not None:
             axes = self.backend.layer_to_axes[layer]
             region = self.calculate_zoom_region(axes)
-            self.zoom_to_region(layer, region, undolist=self.app.project.journal)
+            self.zoom_to_region(layer, region, undolist=globals.app.project.journal)
 
         
     # current layer: OK    
@@ -621,7 +609,7 @@ class MatplotlibWidget(gtk.VBox):
         if layer is not None:
             axes = self.backend.layer_to_axes[layer]
             region = self.calculate_zoom_region(axes, dx=-0.1, dy=-0.1)
-            self.zoom_to_region(layer, region, undolist=self.app.project.journal)
+            self.zoom_to_region(layer, region, undolist=globals.app.project.journal)
 
               
     # current layer: OK
@@ -630,7 +618,7 @@ class MatplotlibWidget(gtk.VBox):
         
         layer = self.backend.layer
         if layer is not None:        
-            p = self.app.plugins['Default']
+            p = globals.plugins['Default']
             p.toggle_logscale_y(self.plot, layer)
 
         
@@ -763,7 +751,7 @@ class MatplotlibWidget(gtk.VBox):
     def on_action_ExportViaGnuplot(self, action):
         self.abort_selection()
 
-        self.app.plot_postscript(self.project, self.plot)
+        globals.app.plot_postscript(self.project, self.plot)
         
 
     #
@@ -778,7 +766,7 @@ class MatplotlibWidget(gtk.VBox):
 
         print "USING LINE ", line
 
-        p = self.app.get_plugin('PeakFinder')
+        p = globals.plugins['PeakFinder']
         data = line.source.get_data()
 
         print
@@ -788,7 +776,7 @@ class MatplotlibWidget(gtk.VBox):
             print "  %f : %f" % (x,y)
         print
 
-        p = self.app.get_plugin('PeakFinder::GTK::DialogBuilder')
+        p = globals.plugins['PeakFinder::GTK::DialogBuilder']
         dialog = p.new_dialog()
         dialog.run()
 

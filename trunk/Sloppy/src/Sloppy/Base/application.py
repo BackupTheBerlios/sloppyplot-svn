@@ -21,8 +21,9 @@
 import logging
 logger = logging.getLogger('application')
 
+import os, glob
 
-import os
+import Sloppy
 
 from Sloppy.Lib.Undo import *
 from Sloppy.Lib.Signals import HasSignals
@@ -32,38 +33,42 @@ from Sloppy.Base.objects import Plot, Axis, Line, Layer, new_lineplot2d
 from Sloppy.Base.dataset import Dataset
 from Sloppy.Base.project import Project
 from Sloppy.Base.projectio import load_project, save_project, ParseError
-from Sloppy.Base.backend import BackendRegistry
-from Sloppy.Base.table import Table
-from Sloppy.Base import dataio, version
+from Sloppy.Base import \
+     uwrap, utils, iohelper, globals, config, error, dataio, version
 
-from Sloppy.Base import uwrap, utils, iohelper
-from Sloppy.Base import config, error
+
+#------------------------------------------------------------------------------
+# Path Handling
 
 import Sloppy
+from os.path import join, sep, curdir, expandvars, expanduser
 
-from Sloppy import Plugins
-from Sloppy.Base.plugin import PluginRegistry
-
-__all__ = ['get_app', 'set_app', 'Application']
-
-#------------------------------------------------------------------------------
-_app = None
-
-def set_app(app):
-    global _app
-    _app = app
-    
-def get_app():
-    global _app
-    return _app
-
-
-#------------------------------------------------------------------------------
 class PathHandler:
-    def __init__(self): self.p = {}
-    def set(self, k,v): self.p[k] = v
-    def bset(self, k1, k2, v): self.p[k1] = os.path.join(self.p[k2], v)
-    def get(self, k): return self.p[k]
+    def __init__(self):
+	# TODO: determine from sys.prefix somehow
+        internal_path = Sloppy.__path__[0]
+        
+        base_dir = internal_path
+        system_prefix_dir = join(sep, 'usr')
+        example_dir = join(sep,'usr','share','sloppyplot','Examples')
+        data_dir = join(example_dir, 'Data')
+        plugins = join(internal_path, 'Plugins')
+        logfile = join(sep,'var','tmp','sloppy','sloppyplot.log')
+        current_dir = curdir
+        
+        # determine config path
+        if os.environ.has_key('XDG_CONFIG_HOME'):
+            xdg_path = expandvars('${XDG_CONFIG_HOME}')
+            cfg_path = join(xdg_path, 'sloppyplot')
+        else:
+            home_path = expanduser('~')
+            cfg_path = join(home_path, '.config', 'sloppyplot')
+
+        config_dir = cfg_path
+        config = join(config_dir, 'config.xml')
+
+        self.__dict__.update(locals())
+
 
 
 #------------------------------------------------------------------------------        
@@ -72,7 +77,8 @@ class Application(object, HasSignals):
     def __init__(self, project=None):
 	" 'project' may be a Project object or a filename. "
         object.__init__(self)
-
+        globals.app = self
+        
         # init signals
         HasSignals.__init__(self)
         self.sig_register('write-config')
@@ -80,43 +86,43 @@ class Application(object, HasSignals):
         self.sig_register('update-recent-files')
 
         # init path handler
-        self.path = PathHandler()
-        internal_path = Sloppy.__path__[0]
-        self.path.set('base_dir', internal_path)
-	# TODO: determine from sys.prefix somehow
-	self.path.set('system_prefix_dir', os.path.join(os.path.sep, 'usr'))
-        self.path.set('example_dir', os.path.join(os.path.sep, 'usr', 'share', 'sloppyplot', 'Examples'))
-        self.path.bset('data_dir', 'example_dir', 'Data')
-        self.path.set('logfile', os.path.join(os.path.sep, 'var', 'tmp', 'sloppyplot.log'))
-        self.path.set('current_dir', os.path.curdir)
-        
-        # determine config path
-        if os.environ.has_key('XDG_CONFIG_HOME'):
-            xdg_path = os.path.expandvars('${XDG_CONFIG_HOME}')
-            cfg_path = os.path.join(xdg_path, 'sloppyplot')
-        else:
-            home_path = os.path.expanduser('~')
-            cfg_path = os.path.join(home_path, '.config', 'sloppyplot')
-
-        self.path.set('config_dir', cfg_path)
-        self.path.bset('config', 'config_dir', 'config.xml')  
+        self.path = PathHandler()       
 
         # init config file
-        self.eConfig = config.read_configfile(self, self.path.get('config'))
+        self.eConfig = config.read_configfile(self, self.path.config)
 
         # set up plugins
-        # initialization is done at then end (TODO: why?)
-        self.plugins = dict()
 
+        # each sub-directory with a file __init__.py is considered a
+        # plugin. Code taken from foopanel project.
+
+        def init_plugin(pluginpath, plugin_name):
+            print "Trying to load Plugin ", plugin_name
+
+            d = os.path.join(pluginpath, plugin_name)
+            if not os.path.isdir(d):
+                return False
+            if not "__init__.py" in os.listdir(d):
+                return False
+
+            try:
+                exec("import Sloppy.Plugins.%s as plugin" % plugin_name ) in locals()                
+            except Exception, msg:
+                logger.error("Failed to load Plugin %s: %s" % (plugin_name, msg))
+            else:
+                logger.info("Plugin %s loaded." % plugin_name)
+                globals.plugins[plugin.name] = plugin
+            
+
+        # TODO: load all plugins from a Directory
+        init_plugin(self.path.plugins, 'Default')
+        init_plugin(self.path.plugins, 'Sims')
+        
         # init recent files
         self.recent_files = list()
         self.read_recentfiles()
         self.sig_connect("write-config",
                          (lambda sender: self.write_recentfiles()))
-
-
-        # init i/o templates
-        app = self
 
         # read in existing templates
         self.read_templates()
@@ -137,17 +143,20 @@ class Application(object, HasSignals):
         else:
             self.set_project(project)
 
+        # useful for gtk.Application
         self.init_plugins()
-
+        
         # welcome message
         self.status_msg("%s %s" % (version.NAME, version.VERSION))
+
+
 
     def quit(self):
         self.set_project(None, confirm=True)
 
 	# inform all other objects to update the config file elements
         self.sig_emit("write-config")
-        config.write_configfile(self.eConfig, self.path.get('config'))
+        config.write_configfile(self.eConfig, self.path.config)
         
         
     #----------------------------------------------------------------------
@@ -238,22 +247,7 @@ class Application(object, HasSignals):
                 self.recent_files.insert(0, new_filename)
                 if len(self.recent_files) > 10:
                     self.recent_files.pop(-1)
-                self.sig_emit("update-recent-files")
-
-                
-    #----------------------------------------------------------------------
-    # PLUGIN HANDLING
-    
-    def init_plugins(self):
-        for key, plugin in PluginRegistry.iteritems():
-            self.plugins[key] = plugin(app=self)
-
-    def get_plugin(self, key):
-        try:
-            return self.plugins[key]
-        except KeyError:
-            raise RuntimeError("Requested plugin '%s' is not available." % key)
-        
+                self.sig_emit("update-recent-files")            
 
     #----------------------------------------------------------------------
     # MISC
@@ -304,7 +298,7 @@ class Application(object, HasSignals):
             logger.debug("Data is %s" % data)
             templates[key] = dataio.IOTemplate(**data)
 
-        dataio.import_templates.update(templates)
+        globals.import_templates.update(templates)
             
 
     def write_templates(self):
@@ -316,7 +310,7 @@ class Application(object, HasSignals):
         else:
             eTemplates.clear()            
                 
-        for key, tpl in dataio.import_templates.iteritems():
+        for key, tpl in globals.import_templates.iteritems():
             if tpl.is_internal is False:
                 logger.debug("Writing template %s" % key)
                 eTemplate = SubElement(eTemplates, 'ImportTemplate')               
@@ -328,6 +322,10 @@ class Application(object, HasSignals):
                 
                 
 
+    def init_plugins(self):
+        pass
+
+    
 
     #----------------------------------------------------------------------
     # Simple user I/O
@@ -356,7 +354,7 @@ class Application(object, HasSignals):
             undolist = project.journal
 
         if isinstance(template, basestring): # template key
-            template = dataio.import_templates[template]
+            template = globals.import_templates[template]
 
         # To ensure a proper undo, the Datasets are imported one by one
         # to a temporary dict.  When finished, they are added as a whole.

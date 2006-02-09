@@ -31,13 +31,10 @@ try:
 except ImportError:
     pass
 
-import gtk, gtk.glade
-import pango
+import gtk, gtk.glade, pango
 
-import uihelper
-import widget_factory
-
-from Sloppy.Base import dataio
+from Sloppy.Gtk import uihelper, widget_factory
+from Sloppy.Base import globals
        
         
 
@@ -51,7 +48,7 @@ class ImportOptions(gtk.Dialog):
         self.set_size_request(520,480)
 
         # create a new importer based on the template
-        self.template = dataio.import_templates[template_key]
+        self.template = globals.import_templates[template_key]
         self.importer = self.template.new_instance()
         
         #
@@ -127,7 +124,7 @@ class ImportOptions(gtk.Dialog):
         
 ##############################################################################
 def test1():
-    importer = dataio.importer_registry['ASCII']()
+    importer = globals.importer_registry['ASCII']()
     dlg = ImportDialog(importer, 'ASCII::pfc')
     dlg.run()
     

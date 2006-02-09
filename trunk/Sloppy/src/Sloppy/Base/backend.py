@@ -27,7 +27,6 @@ See documentation of the Backend class for details.
 import logging, os
 
 from Sloppy.Lib.Signals import HasSignals
-
 from Sloppy.Base import objects
 
 
@@ -289,8 +288,3 @@ class Backend(object, HasSignals):
     layer = property(get_layer, set_layer)            
 
 
-#------------------------------------------------------------------------------
-# BackendRegistry
-#
-
-BackendRegistry = {}

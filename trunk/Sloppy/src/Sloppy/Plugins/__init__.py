@@ -19,7 +19,6 @@
 # $Id$
 
 
-import Default
-import Sims
-import Pygsl
-import PeakFinder
+#
+# While this file is empty, it is still required.
+#

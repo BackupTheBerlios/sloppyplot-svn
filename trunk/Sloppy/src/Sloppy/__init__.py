@@ -1,6 +1,5 @@
 
-__all__ = ['Base','Filters','Lib', 'Plugins',
-           'importer_registry', 'exporter_registry',
+__all__ = ['Base','Filters','Lib', 'importer_registry', 'exporter_registry',
            'Cli']
 
 import logging
@@ -17,7 +16,6 @@ def init():
 	__all__.append('Matplot')
     except ImportError:
 	logger.warn("matplotlib not found.")
-	raise
 
 
     import Gnuplot

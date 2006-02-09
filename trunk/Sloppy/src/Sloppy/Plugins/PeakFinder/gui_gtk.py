@@ -1,14 +1,9 @@
 
-from Sloppy.Base.plugin import PluginRegistry
 from Sloppy.Lib.Props import *
 
 import main
-
 import gtk
 
-
-
-  
 
 class Dialog(gtk.Dialog):
 
@@ -39,22 +34,14 @@ class Dialog(gtk.Dialog):
         vbox.show()
         self.vbox.add(vbox)
 
-    
-class DialogBuilder(gtk.Dialog):
 
-    def __init__(self, app):
-        self.app = app
 
-    def new_dialog(self):
-        return Dialog()
-        
-
-    def run(self):
-        return gtk.Dialog.run(self)
+def gtk_new_dialog():
+    return Dialog()
 
     
 
-PluginRegistry["PeakFinder::GTK::DialogBuilder"] = DialogBuilder
+
 
         
 

@@ -33,11 +33,9 @@ from Sloppy.Lib.Props import *
 
 from Sloppy.Base.objects import Plot, Axis, Line, Layer, new_lineplot2d
 from Sloppy.Base.dataset import Dataset
-from Sloppy.Base.backend import Backend, BackendRegistry
-from Sloppy.Base.table import Table
-from Sloppy.Base.plugin import PluginRegistry
+from Sloppy.Base.backend import Backend
 
-from Sloppy.Base import pdict, uwrap, utils, error, tree
+from Sloppy.Base import pdict, uwrap, utils, error, tree, globals
 
 
 import logging
@@ -442,9 +440,6 @@ class Project(HasProperties, HasSignals):
         key = pdict.unique_key(self.datasets, key)
         ds = Dataset()
         pdict.setitem(self.datasets, key, ds)
-        ds.data = Table(nrows=1,ncols=2)
-        ds.data.column(0).designation = 'X'
-        ds.data.column(1).designation = 'Y'        
         self.sig_emit("notify::datasets")
 
         ui = UndoInfo(self.remove_objects, [ds], False)
@@ -514,7 +509,7 @@ class Project(HasProperties, HasSignals):
     def find_backends(self, key=None, plot=None):
         matches = self.backends
         if key is not None:
-            klass = BackendRegistry[key]
+            klass = globals.BackendRegistry[key]
             matches = [item for item in matches if isinstance(item, klass)]
         if plot is not None:
             matches = [item for item in matches if repr(item.plot) == repr(plot)]
@@ -525,7 +520,7 @@ class Project(HasProperties, HasSignals):
         if len(matches) > 0:
             return matches[0]
         else:
-            backend = BackendRegistry[key](project=self, plot=plot)            
+            backend = globals.BackendRegistry[key](project=self, plot=plot)            
             self.backends.append(backend)
             self.sig_emit('notify::backends')
             return backend
@@ -565,7 +560,7 @@ class Project(HasProperties, HasSignals):
 
 
     def list_backends(self, verbose=True):       
-        backends = BackendRegistry.find_instances(project=self)
+        backends = globals.BackendRegistry.find_instances(project=self)
             
         rv = ["Listing %d Backends:" % len(backends)]
         for backend in backends:

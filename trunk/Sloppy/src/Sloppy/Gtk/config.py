@@ -27,7 +27,7 @@ Configuration dialog and widgets.
 import gtk
 from Sloppy.Base import dataio
 
-import uihelper, widget_factory
+from Sloppy.Gtk import uihelper, widget_factory
 from Sloppy.Lib.Props import Keyword
 
 

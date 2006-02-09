@@ -26,12 +26,10 @@ from Sloppy.Base.dataset import Dataset, FieldInfo
 from Sloppy.Base import uwrap
 from Sloppy.Lib.Undo import UndoList, UndoInfo
 
-import numpy
+import gtk, numpy
 
-from dataview import DatasetView
-
-from options_dialog import OptionsDialog
-import gtk, uihelper, widget_factory
+from Sloppy.Gtk.options_dialog import OptionsDialog
+from Sloppy.Gtk import uihelper, widget_factory, dataview
 
 
 def unique_key(adict, key):
@@ -71,8 +69,7 @@ class DatasetWindow( gtk.Window ):
         ('ColumnRemove', None, 'Remove Column', None, 'Remove this column', 'cb_column_remove'),
         ('EditFields', gtk.STOCK_EDIT, 'Edit Fields', '<control>E', '', 'cb_edit_fields'),
         #
-        ('AnalysisMenu', None, '_Analysis'),
-        ('Interpolate', None, 'Interpolate data (EXPERIMENTAL)', None, 'Interpolate data (EXPERIMENTAL)', 'cb_interpolate')
+        ('AnalysisMenu', None, '_Analysis')
         ]
          
     ui = """
@@ -84,7 +81,6 @@ class DatasetWindow( gtk.Window ):
                <menuitem action='Close'/>
              </menu>
              <menu action='AnalysisMenu'>
-               <menuitem action='Interpolate'/>
              </menu>
            </menubar>              
            <toolbar name='Toolbar'>
@@ -185,13 +181,13 @@ class DatasetWindow( gtk.Window ):
         
 
     def _construct_dataview(self):        
-        dataview = DatasetView(self.app)
-        dataview.connect('button-press-event', self.cb_dataview_button_press_event)
+        view = dataview.DatasetView()
+        view.connect('button-press-event', self.cb_view_button_press_event)
         contextid = self.statusbar.get_context_id("coordinates")
-        dataview.connect('cursor-changed', self.on_cursor_changed, contextid)
-        dataview.connect('column-clicked', self.on_column_clicked)
-        dataview.show()
-        return dataview
+        view.connect('cursor-changed', self.on_cursor_changed, contextid)
+        view.connect('column-clicked', self.on_column_clicked)
+        view.show()
+        return view
 
     def _construct_metadata_widget(self):
         widget = gtk.Label('metadata')
@@ -461,44 +457,6 @@ class DatasetWindow( gtk.Window ):
 
         self.statusbar.pop(contextid)        
         self.statusbar.push (contextid, msg)
-
-
-    # JUST FOR TESTING
-    def cb_interpolate(self, action):
-        # TODO
-        return
-    
-        plugin = self.app.get_plugin('pygsl')
-        pygsl = plugin.pygsl
-        
-        table = self.dataset.get_data()
-        x, y = table[0], table[1]
-        
-        steps = table.nrows * 3
-        start, end = x[0], x[-1]
-        stepwidth = (end - start) / steps
-        new_x = numpy.arange(start=start, stop=end+stepwidth, step=stepwidth)
-
-        new_table = Table(nrows=steps, ncols=2,
-                          typecodes=[table.get_typecode(0),
-                                     table.get_typecode(1)])
-
-        sp = pygsl.spline.cspline(table.nrows)
-        sp.init(x, y)
-
-        iter = new_table.row(0)
-        for xi in new_x:
-            iter.set( (xi, sp.eval(xi)) )
-            try:
-                iter = iter.next()
-            except StopIteration:
-                print "Iteration stopped"
-            
-        # set new Dataset
-        self.project.datasets.append( Dataset(key="Niklas", data=new_table) )
-    
-        self.project.sig_emit('notify::datasets')
-        
         
 
 class ColumnCalculator(gtk.Window):

@@ -28,15 +28,11 @@ except ImportError:
 import gtk
 
 
-from Sloppy.Base import uwrap, error
-
+from Sloppy.Base import uwrap, error, globals
 from Sloppy.Lib.Undo import ulist, UndoList
 from Sloppy.Lib.ElementTree.ElementTree import Element, SubElement
 
-import uihelper
-
-from dock import *
-from options_dialog import OptionsDialog
+from Sloppy.Gtk import uihelper, dock, options_dialog
 
 
 #------------------------------------------------------------------------------
@@ -68,12 +64,10 @@ class Toolbox(gtk.Window):
     @ivar layer: currently active layer.
     """
 
-    def __init__(self, app, project=None):
+    def __init__(self, project=None):
         gtk.Window.__init__(self)
         self.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_UTILITY)
         
-        self.app = app
-
         self.project = project or -1
         self.project_cblist = []
         self.backend_cblist = []
@@ -101,7 +95,7 @@ class Toolbox(gtk.Window):
         self.combobox = combobox
 
         # create dock
-        self.dock = Dock()    
+        self.dock = dock.Dock()    
 
         # stuff combo and dock together
         vbox = gtk.VBox()
@@ -122,7 +116,7 @@ class Toolbox(gtk.Window):
 
         # config data
         self.read_config()
-        self.app.sig_connect("write-config", self.write_config)
+        globals.app.sig_connect("write-config", self.write_config)
 
         self.vbox.show_all()
                       
@@ -228,25 +222,25 @@ class Toolbox(gtk.Window):
     def read_config(self):
         global tools
        
-        eToolbox = self.app.eConfig.find('Toolbox')
+        eToolbox = globals.app.eConfig.find('Toolbox')
         if eToolbox is None:
             # basic setup (for now)
-            book = Dockbook()
+            book = dock.Dockbook()
             self.dock.add(book)            
-            lt = LabelsTool(self.app)
+            lt = LabelsTool()
             book.add(lt)        
-            lt = LayerTool(self.app)
+            lt = LayerTool()
             book.add(lt)
             return        
 
         for eDockbook in eToolbox.findall('Dock/Dockbook'):
 
-            book = Dockbook()
+            book = dock.Dockbook()
             self.dock.add(book)
 
             for eDockable in eDockbook.findall('Dockable'):
                 try:                    
-                    tool = tools[eDockable.text](self.app)
+                    tool = tools[eDockable.text]()
                     book.add(tool)
                     # TODO: size information is not used                    
                 except:
@@ -271,11 +265,11 @@ class Toolbox(gtk.Window):
             eToolbox.clear()
 
         # get information about dockables/dockbooks
-        eDock = config.SubElement(eToolbox, "Dock")
+        eDock = SubElement(eToolbox, "Dock")
         for dockbook in self.dock.dockbooks:
-            eDockbook = config.SubElement(eDock, "Dockbook")        
+            eDockbook = SubElement(eDock, "Dockbook")        
             for dockable in dockbook.get_children():
-                eDockable = config.SubElement(eDockbook, "Dockable")
+                eDockable = SubElement(eDockbook, "Dockable")
                 width, height = dockable.size_request()            
                 eDockable.attrib['width'] = str(width)
                 eDockable.attrib['height'] = str(height)
@@ -292,7 +286,7 @@ class Toolbox(gtk.Window):
 tools = {}
 
 
-class Tool(Dockable):
+class Tool(dock.Dockable):
 
     """
     Dockable base class for any tool that edits part of a Plot.
@@ -303,10 +297,9 @@ class Tool(Dockable):
     """
     
     
-    def __init__(self, app, label, stock_id):
-        Dockable.__init__(self, label, stock_id)
+    def __init__(self, label, stock_id):
+        dock.Dockable.__init__(self, label, stock_id)
 
-        self.app = app
         self.backend = -1
         self.layer = -1
         self.backend_cblist = []
@@ -345,8 +338,8 @@ class Tool(Dockable):
 class LayerTool(Tool):
 
     
-    def __init__(self, app):
-        Tool.__init__(self, app, "Layers", gtk.STOCK_EDIT)
+    def __init__(self):
+        Tool.__init__(self, "Layers", gtk.STOCK_EDIT)
         
         # model: (object) = (layer object)
         model = gtk.ListStore(object)        
@@ -434,7 +427,7 @@ class LayerTool(Tool):
     def on_row_activated(self, treeview, *udata):
         model, iter = treeview.get_selection().get_selected()
         layer = model.get_value(iter, 0)               
-        self.app.edit_layer(self.backend.plot, layer)
+        globals.app.edit_layer(self.backend.plot, layer)
         
 
 tools['LayerTool'] = LayerTool
@@ -444,8 +437,8 @@ tools['LayerTool'] = LayerTool
         
 class LabelsTool(Tool):
 
-    def __init__(self, app):
-        Tool.__init__(self, app, "Labels", gtk.STOCK_EDIT)
+    def __init__(self):
+        Tool.__init__(self, "Labels", gtk.STOCK_EDIT)
         self.set_size_request(-1,200)
        
         #
@@ -520,7 +513,7 @@ class LabelsTool(Tool):
 
 
     def edit(self, label):
-        dialog = OptionsDialog(label)
+        dialog = options_dialog.OptionsDialog(label)
         try:           
             response = dialog.run()
             if response == gtk.RESPONSE_ACCEPT:

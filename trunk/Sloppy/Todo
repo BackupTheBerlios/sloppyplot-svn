@@ -1,15 +1,38 @@
 
+
+Plugins:
+
+- automatic plugin reading
+- do the same for importer!
+
+
+- globals conflicts with the globals() name ?
+
 Importer:
 
-1. Use designations
 2. remove checkboxes from widgets....
-3. why do I need a custom delimiter anyway?
 4. recognize '-' as empty value --> But how should I handle it?
+
+- omit DeprectationWarnings by adding a pygtk version check
+
+- Simplify debugging output for images
+
+- node_info => dictionary ... After all, this _is_ the metadata.
+  I think the reason for creating the NodeInfo was:
+  this way I could have a HasProperties class available. 
+  The dataset e.g. cannot be a child of HasProperties,
+  because there are name clashes (get_value, set_value)
 
 ----------------------------------------
 - allow to change field name and _type_ !
 
 - finish Undo implementation for column operations
+  _OR_ put it back into utable (well, udataset) for 
+  performance reasons ? No! After all, no one forces
+  you to use the dataset functions -- these _are_ 
+  already wrappers; everthing can be achieved directly
+  by manipulating dataset._array.
+
 
 - TestSuites, TestCases, ... Yes, I do need this.
 
@@ -21,11 +44,6 @@ Importer:
 Transition to numpy will definitely happen in this release !!!!
 
 
-- I pass the app object around all the time.  Maybe I can just put it into
-  the application module and so we don't need to pass it around a thousand
-  times, especially in plugins?
-
-
 - why did I introduce separate projects and datasets?
 
 I should change it to one dictionary:
@@ -34,6 +52,9 @@ I should change it to one dictionary:
   project.root
 
 where root is a dictionary holding Node instances.
+
+
+
 
 
 
@@ -79,24 +100,6 @@ TODO
 - leave custom group properties away, maybe, because we would need to
   add a plugin interface. [implement sample get method for SIMS: color depending on label!
   How to register plugin stuff?]
-
-
-
-(F3) Implement ruler and zoom combo
-
-- canvas must have a fixed size!
-
-- if the canvas size changes, then we must readjust the ruler
-
-- if we scroll, the ruler should scroll as well!
-
-- when moving in the canvas (motion event), the ruler needs to be informed.
-
-- the units in the ruler must be settable in the preferences
-
-- add combo box for zoom: 25%, 50%, 75%, 100%, 200%, 400%, fit window, fit width
-
-
 
 === BUGFIXES ===
 
@@ -466,3 +469,8 @@ examples for format
 NOTES:
 
 - I am using gtk.*Ruler, but it might be deprecated in 3.0
+
+
+    # might be used to notify the user that this has been edited,
+    # e.g. by displaying a star in a treeview.    
+    edit_mark = Boolean()

@@ -18,11 +18,10 @@
 # $HeadURL$
 # $Id$
 
-
 import os.path
 
-#from Sloppy.Base.table import table_to_array, array_to_table, Table
-from Sloppy.Base.dataset import Dataset
+from Sloppy.Base import globals
+from Sloppy.Base import dataset
 from Sloppy.Lib.Props import *
 
 
@@ -75,10 +74,6 @@ class Importer(HasProperties):
     You must only implement the method `read_dataset_from_stream` which
     constructs a new Dataset object from a given file descriptor.    
 
-    Finally you must register your Importer class like this:
-    
-    >>> importer_registry.register('QTP', MyImporter)
-
     """
     
     author = "your name"       
@@ -93,6 +88,7 @@ class Importer(HasProperties):
         return None
         
     def read_dataset_from_file(self,filename):
+
         try:
             fd = open(filename, 'r%s' % self.filemode)
         except IOError:
@@ -118,7 +114,7 @@ class Exporter(HasProperties):
 
     
     def write_to_stream(self, fd, data):
-        if isinstance(data, Dataset):
+        if isinstance(data, dataset.Dataset):
             self.write_dataset_to_stream(fd, data)
         else:
             raise TypeError("Unknown type of data.")
@@ -132,12 +128,6 @@ class Exporter(HasProperties):
         
 
 #------------------------------------------------------------------------------
-importer_registry = {}
-import_templates = {}
-
-exporter_registry = {}
-export_templates = {}
-
 
 class IOTemplate(HasProperties):
 
@@ -164,7 +154,7 @@ class IOTemplate(HasProperties):
     
 
     def new_instance(self):
-        return importer_registry[self.importer_key](**self.defaults.data)
+        return globals.importer_registry[self.importer_key](**self.defaults.data)
 
 
 
@@ -173,13 +163,11 @@ class IOTemplate(HasProperties):
 # convenience methods
 
 def read_dataset_from_file(filename, importer_key='ASCII', **kwargs):
-    global importer_registry
-    importer = importer_registry[importer_key](**kwargs)
+    importer = globals.importer_registry[importer_key](**kwargs)
     return importer.read_dataset_from_file(filename)
 
 def read_dataset_from_stream(fd, importer_key='ASCII', **kwargs):
-    global importer_registry
-    importer = importer_registry[importer_key](**kwargs)
+    importer = globals.importer_registry[importer_key](**kwargs)
     return importer.read_dataset_from_stream(fd)
     
 

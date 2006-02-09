@@ -28,47 +28,30 @@ logger = logging.getLogger('gtk.application')
 import pygtk # TBR
 pygtk.require('2.0') # TBR
 
+import glob, os
 import gtk, gobject, pango
-import gtkexcepthook
+import sys, glob, os.path
 
-import uihelper
-from gidlethread import *
+from Sloppy.Gtk import uihelper, gtkexcepthook, import_dialog, config, mpl
 
+from Sloppy.Gtk.datawin import DatasetWindow
+from Sloppy.Gtk.gnuplot_window import GnuplotWindow
+from Sloppy.Gtk.appwindow import AppWindow
+from Sloppy.Gtk.layerwin import LayerWindow
+from Sloppy.Gtk.property_browser import PropertyBrowserDialog
+from Sloppy.Gtk.options_dialog import OptionsDialog, NoOptionsError
 
-import sys, glob, os.path, time
-from os.path import basename
-
-from datawin import DatasetWindow
-from gnuplot_window import GnuplotWindow
-from appwindow import AppWindow
-from mpl_window import MatplotlibWindow, MatplotlibWidget
-from layerwin import LayerWindow
-from property_browser import PropertyBrowserDialog
-
-import Sloppy
-from Sloppy.Base.application import Application, set_app
-from Sloppy.Base import utils, error, config
+from Sloppy.Base import utils, error, config, application, globals
 from Sloppy.Base.objects import Plot, Axis, Line, Layer, new_lineplot2d
 from Sloppy.Base.dataset import Dataset
 from Sloppy.Base.project import Project
 from Sloppy.Base.projectio import load_project, save_project, ParseError
-from Sloppy.Base.backend import BackendRegistry
-
-from Sloppy.Base import pdict, uwrap
-from Sloppy.Base.plugin import PluginRegistry
-
-from Sloppy.Base import dataio
+from Sloppy.Base import pdict, uwrap, dataio
 
 from Sloppy.Gnuplot.terminal import PostscriptTerminal
-from options_dialog import OptionsDialog, NoOptionsError
 
 from Sloppy.Lib.Undo import *
 
-import import_dialog
-import config
-
-
-import glob, os
 
 
 
@@ -76,7 +59,7 @@ import glob, os
 # GtkApplication, the main object
 #
 
-class GtkApplication(Application):
+class GtkApplication(application.Application):
     """    
     Application is a wrapper window for the ProjectTreeView which
     holds the information on the current project.  It adds a menu bar
@@ -86,18 +69,16 @@ class GtkApplication(Application):
     """
     
     def init(self):
-        #self.path.bset('icon_dir',  'system_prefix_dir', os.path.join('share', 'pixmaps', 'sloppyplot'))
-        
-        self.window = AppWindow(self)
+        self.window = AppWindow()
         self._clipboard = gtk.Clipboard()  # not implemented yet
         self._current_plot = None
 
-        self.path.bset('icon_dir', 'base_dir', os.path.join('Gtk','Icons'))
+        self.path.icon_dir = os.path.join(self.path.base_dir, 'Gtk','Icons')
         self.register_stock()      
 
 
     def register_stock(self):
-        uihelper.register_stock_icons(self.path.get('icon_dir'), prefix='sloppy-')
+        uihelper.register_stock_icons(self.path.icon_dir, prefix='sloppy-')
 
         # register stock items
         items = [('sloppy-rename', '_Rename', 0, 0, None)]
@@ -114,9 +95,9 @@ class GtkApplication(Application):
             
 
     def init_plugins(self):
-        Application.init_plugins(self)
+        application.Application.init_plugins(self)
 
-        for plugin in self.plugins.itervalues():
+        for plugin in globals.plugins.itervalues():
 
             if hasattr(plugin, 'gtk_popup_actions'):
                 action_wrappers = plugin.gtk_popup_actions()                
@@ -174,7 +155,7 @@ class GtkApplication(Application):
                     raise error.UserCancel
 
         # set new project
-        Application.set_project(self, project)
+        application.Application.set_project(self, project)
         self.window.treeview.set_project(project)
 
         # assign project label to window title
@@ -182,7 +163,7 @@ class GtkApplication(Application):
             title = project.filename or "<unnamed project>"
         else:
             title = "(no project)"
-        self.window.set_title(basename(title))
+        self.window.set_title(os.path.basename(title))
 
         if project is not None:
             project.journal.on_change = self.window._refresh_undo_redo
@@ -240,7 +221,7 @@ class GtkApplication(Application):
 
 
         if filename is not None:
-            Application.load_project(self, filename)
+            application.Application.load_project(self, filename)
                 
 
 
@@ -291,7 +272,7 @@ class GtkApplication(Application):
                 filename = filename + ".spj"
 
         self._project.filename = filename
-        self.window.set_title(basename(self._project.filename))
+        self.window.set_title(os.path.basename(self._project.filename))
         save_project(self._project)
         self._project.journal.clear()
 
@@ -302,7 +283,7 @@ class GtkApplication(Application):
     def quit(self):
         """ Quit Application and gtk main loop. """
         try:
-            Application.quit(self)
+            application.Application.quit(self)
             gtk.main_quit()
         except error.UserCancel:
             return
@@ -420,12 +401,12 @@ class GtkApplication(Application):
 
             # as window
             window = self.window.subwindow_match( \
-                (lambda win: isinstance(win, MatplotlibWindow) \
+                (lambda win: isinstance(win, mpl.MatplotlibWindow) \
                  and win.get_project() == self.project \
                  and win.get_plot() == plot) )
 
             if window is None:
-                window = MatplotlibWindow(self, project=self.project, plot=plot)
+                window = mpl.MatplotlibWindow(project=self.project, plot=plot)
                 ##window.set_transient_for(self.window)
                 self.window.subwindow_add(window)
                 # TESTING
@@ -556,10 +537,11 @@ class GtkApplication(Application):
         #
         # construct backend for output
         #
-        backend = BackendRegistry['gnuplot'](project=project,
-                                             plot=plot,
-                                             filename=filename,
-                                             terminal=terminal)
+        backend = globals.BackendRegistry['gnuplot'](
+            project=project,
+            plot=plot,
+            filename=filename,
+            terminal=terminal)
         try:
             backend.draw()
         finally:
@@ -603,7 +585,7 @@ class GtkApplication(Application):
         # Each item in importer_registry is a class derived from
         # dataio.Importer.  By using IOTemplate objects we can
         # customize the default values for these templates.
-        for (key, template) in dataio.import_templates.iteritems():
+        for (key, template) in globals.import_templates.iteritems():
             ext_list = template.extensions.split(',')
             if len(ext_list) == 0:
                 continue
@@ -637,7 +619,7 @@ class GtkApplication(Application):
         model = gtk.ListStore(str, str)
         # add 'Same as Filter' as first choice, then add all importers
         model.append( (None, "Auto") )
-        for key, template in dataio.import_templates.iteritems():
+        for key, template in globals.import_templates.iteritems():
                 model.append( (key, template.blurb) )
         
         combobox = gtk.ComboBox(model)
@@ -689,7 +671,7 @@ class GtkApplication(Application):
 
         # try to determine template key if it is not given
         if template_key is None or template_key=='auto':
-            matches = dataio.importer_template_from_filename(filenames[0])
+            matches = globals.importer_template_from_filename(filenames[0])
             if len(matches) > 0:
                 template_key = matches[0]
             else:
@@ -702,7 +684,7 @@ class GtkApplication(Application):
         # Note that if 'skip_option' is set in the template, then
         # there will be no user options dialog.
 
-        if dataio.import_templates[template_key].skip_options is False:
+        if globals.import_templates[template_key].skip_options is False:
             dialog = import_dialog.ImportOptions(template_key, previewfile=filenames[0])
             try:
                 result = dialog.run()
@@ -714,7 +696,7 @@ class GtkApplication(Application):
                     template.importer_key = dialog.template.importer_key
                     template.write_config = True
                     template.is_internal = True
-                    dataio.import_templates['recently used'] = template
+                    globals.import_templates['recently used'] = template
                 else:
                     return
             finally:
@@ -723,7 +705,7 @@ class GtkApplication(Application):
             template = template_key
 
         # The progress bar displays which file is currently being imported.
-        Application.import_datasets(self, project, filenames, template)
+        application.Application.import_datasets(self, project, filenames, template)
                 
 
 
@@ -755,7 +737,7 @@ class GtkApplication(Application):
 
     def _cb_experimental_plot(self, action):        
         pj = self._check_project()
-        plugin = self.plugins['Default']
+        plugin = globals.plugins['Default']
         plugin.add_experimental_plot(pj)
 
 
@@ -867,7 +849,6 @@ class GtkApplication(Application):
 def main(filename=None):
 
     app = GtkApplication()
-    set_app(app)
 
     if filename is None:
         app.set_project(Project())

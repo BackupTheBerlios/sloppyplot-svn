@@ -24,6 +24,9 @@ logger = logging.getLogger('plugin.PeakFinder')
 
 from main import *
 
+name = "PeakFinder"
+
+
 try:
     import gtk    
 except ImportError:

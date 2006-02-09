@@ -22,13 +22,12 @@
 import logging
 logger = logging.getLogger("exporter.export_ascii")
 
-import csv
-
-from Sloppy.Base import dataio
-
+from Sloppy.Base import dataio, globals
 from Sloppy.Lib.Props import *
 
 import numpy
+
+
 
 class Exporter(dataio.Exporter):
 
@@ -60,4 +59,4 @@ class Exporter(dataio.Exporter):
 
 
 #------------------------------------------------------------------------------
-dataio.exporter_registry["ASCII"] = Exporter
+globals.exporter_registry["ASCII"] = Exporter

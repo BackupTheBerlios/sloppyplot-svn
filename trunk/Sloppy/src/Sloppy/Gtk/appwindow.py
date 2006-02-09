@@ -19,53 +19,38 @@
 # $Id$
 
 
-import os
-import gtk
+import os, gtk
 
-from logwin import LogWindow
-from treeview import ProjectTreeView
-import uihelper
-
-import tools
-
-import Sloppy
-
-from Sloppy.Base import utils, error, version, config
+from Sloppy.Gtk import uihelper, logwin, tools, mpl
+from Sloppy.Gtk import treeview as project_view
+from Sloppy.Lib.ElementTree.ElementTree import Element, SubElement
+from Sloppy.Base import utils, error, version, config, globals
 from Sloppy.Base.objects import Plot
 from Sloppy.Base.dataset import Dataset
-from Sloppy.Base.backend import BackendRegistry
 
-from Sloppy.Gtk.mpl_window import MatplotlibWidget
-
-from Sloppy.Lib.ElementTree.ElementTree import Element, SubElement
-
-
-#------------------------------------------------------------------------------
 import logging
 logger = logging.getLogger('Gtk.appwindow')
 
-
-
+#------------------------------------------------------------------------------
 
 class AppWindow( gtk.Window ):
 
-    def __init__(self, app):
+    def __init__(self):
         gtk.Window.__init__(self, gtk.WINDOW_TOPLEVEL)
 
-        self.app = app
 	self._windows = list() # keeps track of all subwindows
 
         self._windowlist_merge_id = None
         self._recentfiles_merge_id = None
 
-        self.app.sig_connect("write-config", self.write_appwindow_config)
+        globals.app.sig_connect("write-config", self.write_appwindow_config)
 
         # restore position
         self.set_gravity(gtk.gdk.GRAVITY_NORTH_WEST)
         self.move(0,0)        
 
         # TODO: read config data
-        eWindow = app.eConfig.find('AppWindow')
+        eWindow = globals.app.eConfig.find('AppWindow')
         if eWindow is not None:
             try:
                 x = int(eWindow.attrib['width'])
@@ -77,8 +62,8 @@ class AppWindow( gtk.Window ):
         icon = self.render_icon('sloppy-Plot', gtk.ICON_SIZE_BUTTON)
         self.set_icon(icon)
 
-        self.connect("delete-event", (lambda sender, event: app.quit()))
-        #self.connect("destroy", (lambda sender: app.quit()))
+        self.connect("delete-event", (lambda sender, event: globals.app.quit()))
+        #self.connect("destroy", (lambda sender: globals.app.quit()))
 
         self.uimanager = self._construct_uimanager()
         self._construct_logwindow()
@@ -128,19 +113,19 @@ class AppWindow( gtk.Window ):
 
 
         self._refresh_windowlist()
-        self.app.sig_connect("update-recent-files", (lambda sender: self._refresh_recentfiles()))
+        globals.app.sig_connect("update-recent-files", (lambda sender: self._refresh_recentfiles()))
 
     def _construct_uimanager(self):
 
         uim = gtk.UIManager()
         
-        uihelper.add_actions(uim, "Application", self.actions_application, self.app)
+        uihelper.add_actions(uim, "Application", self.actions_application, globals.app)
         uihelper.add_actions(uim, "AppWin", self.actions_appwin, self)
-        uihelper.add_actions(uim, "Matplotlib", self.actions_matplotlib, self.app)
-        uihelper.add_actions(uim, "Gnuplot", self.actions_gnuplot, self.app)
-        uihelper.add_actions(uim, "Debug", self.actions_debug, self.app)
-        uihelper.add_actions(uim, "UndoRedo", self.actions_undoredo, self.app)
-        uihelper.add_actions(uim, "RecentFiles", self.actions_recentfiles, self.app)
+        uihelper.add_actions(uim, "Matplotlib", self.actions_matplotlib, globals.app)
+        uihelper.add_actions(uim, "Gnuplot", self.actions_gnuplot, globals.app)
+        uihelper.add_actions(uim, "Debug", self.actions_debug, globals.app)
+        uihelper.add_actions(uim, "UndoRedo", self.actions_undoredo, globals.app)
+        uihelper.add_actions(uim, "RecentFiles", self.actions_recentfiles, globals.app)
 
         return uim
         
@@ -162,21 +147,21 @@ class AppWindow( gtk.Window ):
         return toolbar
 
     def _construct_treeview(self):       
-        treeview = ProjectTreeView(self.app)
-        treeview.connect( "row-activated", self._cb_row_activated )
-        treeview.connect( "button-press-event", self._cb_button_pressed )
-        treeview.connect( "popup-menu", self.popup_menu, 3, 0 )
-        treeview.show()
+        tv = project_view.ProjectTreeView()
+        tv.connect( "row-activated", self._cb_row_activated )
+        tv.connect( "button-press-event", self._cb_button_pressed )
+        tv.connect( "popup-menu", self.popup_menu, 3, 0 )
+        tv.show()
 
-        # the treeview is put into a scrolled window
-        treeview_window = gtk.ScrolledWindow()
-        treeview_window.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
-        treeview_window.add(treeview)
-        treeview_window.show()
+        # the tv is put into a scrolled window
+        tv_window = gtk.ScrolledWindow()
+        tv_window.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
+        tv_window.add(tv)
+        tv_window.show()
 
-        self.treeview = treeview
-        self.treeview_window = treeview_window
-        return (treeview, treeview_window)
+        self.treeview = tv
+        self.treeview_window = tv_window
+        return (tv, tv_window)
 
         
     def _construct_statusbar(self):
@@ -196,7 +181,7 @@ class AppWindow( gtk.Window ):
 
     def _construct_toolbox(self):
 
-        window = tools.Toolbox(self.app, None)
+        window = tools.Toolbox(None)
         window.set_transient_for(self)
         window.set_destroy_with_parent(True)
         window.hide()
@@ -215,7 +200,7 @@ class AppWindow( gtk.Window ):
 
         def on_notify_project(sender, project, toolwin):
             toolwin.set_project(project)
-        self.app.sig_connect('notify::project', on_notify_project, window)
+        globals.app.sig_connect('notify::project', on_notify_project, window)
         
         return window
 
@@ -227,7 +212,7 @@ class AppWindow( gtk.Window ):
 
         # logwindow is hidden by default. See _construct_uimanager if
         # you want to change this default
-        logwindow = LogWindow()
+        logwindow = logwin.LogWindow()
         logwindow.set_transient_for(self)
         logwindow.set_destroy_with_parent(True)
         logwindow.hide()
@@ -252,7 +237,7 @@ class AppWindow( gtk.Window ):
 
     def _refresh_undo_redo(self,*args):
         
-        project = self.app.project
+        project = globals.app.project
 
         #
         # undo/redo only makes sense, if there is a project
@@ -314,9 +299,9 @@ class AppWindow( gtk.Window ):
         # if a redo is available, then we should display it, otherwise
         # we will check the undo.
         if redo_state is True:
-            self.app.status_msg("Finished: Reverted %s" % project.journal.redo_text())
+            globals.app.status_msg("Finished: Reverted %s" % project.journal.redo_text())
         elif undo_state is True:
-            self.app.status_msg("Finished: %s" % project.journal.undo_text())
+            globals.app.status_msg("Finished: %s" % project.journal.undo_text())
 
             
         
@@ -371,11 +356,11 @@ class AppWindow( gtk.Window ):
         ui = ""
         n = 0
         ag = gtk.ActionGroup('DynamicRecentFiles')
-        for file in self.app.recent_files:
+        for file in globals.app.recent_files:
             key = 'recent_files_%d' % n
             action = gtk.Action(key, '%d: %s' % (n, os.path.basename(file)), None, None)
             action.connect('activate',
-                           (lambda sender, filename: self.app.load_project(filename)),
+                           (lambda sender, filename: globals.app.load_project(filename)),
                            file)
             ag.add_action(action)
             
@@ -433,7 +418,7 @@ class AppWindow( gtk.Window ):
         try:
             widgets = self.plotbook.get_children()
             return [widget for widget in widgets \
-                    if isinstance(widget, MatplotlibWidget) \
+                    if isinstance(widget, mpl.MatplotlibWidget) \
                     and widget.project == project \
                     and widget.plot == plot][0]
         except IndexError:
@@ -473,9 +458,9 @@ class AppWindow( gtk.Window ):
         """
         (plots, datasets) = widget.get_selected_plds()
         for plot in plots:
-            self.app.plot(plot)
+            globals.app.plot(plot)
         for ds in datasets:
-            self.app.edit_dataset(ds)
+            globals.app.edit_dataset(ds)
 
         
     def _cb_button_pressed(self, widget, event):
@@ -549,7 +534,7 @@ class AppWindow( gtk.Window ):
         #dialog.set_artists(["Artists"])
         #dialog.set_translator_credits("Whoever translated")
         #dialog.set_log_icon_name("SloppyPlot")
-        path = os.path.join(self.app.path.get('icon_dir'), "Plot.png")
+        path = os.path.join(globals.app.path.icon_dir, "Plot.png")
         logo = gtk.gdk.pixbuf_new_from_file(path)
         dialog.set_logo(logo)
 
