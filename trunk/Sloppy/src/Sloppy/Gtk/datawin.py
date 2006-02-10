@@ -61,7 +61,7 @@ class DatasetWindow( gtk.Window ):
         #
         ('ColumnProperties', None, 'Edit column properties...', None, 'Edit column properties...', 'cb_column_properties'),
         ('ColumnCalculate', None, 'Calculate column data...', None, 'Calculate column data...', 'cb_column_calculate'),
-        ('ColumnInsert', None, 'Insert Column before', None, 'Insert column just before this one', 'cb_column_insert'),
+        ('ColumnInsert', None, 'Insert Column before', None, 'Insert column just before this one', 'on_action_ColumnInsert'),
         ('ColumnInsertAfter', None, 'Insert Column after', None, 'Insert column after this one', 'cb_column_insert_after'),
         ('ColumnRemove', None, 'Remove Column', None, 'Remove this column', 'cb_column_remove'),
         ('EditFields', gtk.STOCK_EDIT, 'Edit Fields', '<control>E', '', 'cb_edit_fields'),
@@ -327,6 +327,14 @@ class DatasetWindow( gtk.Window ):
         #cc = ColumnCalculator(self.project, self.dataset, colnr)        
         #cc.show()
 
+    def on_action_ColumnInsert(self, action):
+        rownr, colnr, column_object = self.popup_info
+        ul = UndoList().describe("Insert column")
+        self.dataset.insert(colnr, 1, undolist=ul)
+        uwrap.emit_last(self.dataset, 'notify')
+        self.project.journal.append(ul)
+        
+        
     def cb_column_insert(self, action):
         # TODO
         pass
@@ -352,7 +360,6 @@ class DatasetWindow( gtk.Window ):
     
 
     def insert_column(self, table, index, column, undolist=[]):
-        # TODO
         pass
         #table.insert(index, column)
         #self.dataset.notify_change()        

@@ -116,11 +116,11 @@ class Dataset(tree.Node, HasSignals):
     # Field Manipulation -----------------------------------------------------
 
 
-    def append(self, cols):
-        self.insert(self.ncols-1, cols)
+    def append(self, cols, undolist=[]):
+        self.insert(self.ncols-1, cols, undolist=undolist)
                     
-    # TODO
-    def insert(self, cindex, cols, names=[]):
+    # TODO: undolist
+    def insert(self, cindex, cols, names=[], undolist=[]):
         # make sure names is a list of names, not a single name
         if not isinstance(names, (list,tuple)):
             names = [names]
@@ -130,8 +130,9 @@ class Dataset(tree.Node, HasSignals):
             # ...an integer, then we create so many empty columns of float32
             n = cols
 
-            names = utils.unique_names(['C']*n, self.names)
+            names = ['C']*n
             cols = [numpy.zeros((self.nrows,), numpy.float32)]*n
+            print "inserting ", names, cols
             self._insert(cindex, cols, names)
                 
         elif isinstance(cols, (list,tuple)):
@@ -166,25 +167,31 @@ class Dataset(tree.Node, HasSignals):
         Append a list of fields `cols` with a list of names `names`
         at position `cindex`. 
         """
+
+        # TODO: This is a mess right now.
+        
         a = self._array
         insert_at = self.get_index(cindex)
-       
-        names = [n or 'C' for n in names]
-        new_names = a.dtype.fields[-1][:]
-        new_names = new_names[:insert_at] \
-                    + utils.unique_names(names, new_names) \
-                    + new_names[insert_at:]
 
+        old_names = a.dtype.fields[-1]
+        names = utils.unique_names(names, old_names)[n or 'C' for n in names]
+        names = old_names[:insert_at] + names + new_names[insert_at:]
+
+        print "names", names
         descriptor = a.dtype.descr[:]
         for index in range(len(cols)):
             # make sure we have an array
             col = cols[index]
             if isinstance(col, (list,tuple)):
                 col = cols[index] = numpy.array(col)
-            descriptor.insert(insert_at + index, (new_names[index], col.dtype.str))
+
+            j = insert_at+index
+            descriptor.insert(j, (names[j], col.dtype.str))
 
         # create new array
-        new_descriptor = [descriptor[new_names.index(name)] for name in new_names]
+        new_descriptor = [descriptor[new_names.index(name)] for name in names]
+
+        print new_descriptor
         new_array = numpy.zeros(a.shape, dtype=numpy.dtype(new_descriptor))
 
         # fill new array with data
