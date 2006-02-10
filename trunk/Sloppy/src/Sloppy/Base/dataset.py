@@ -21,8 +21,7 @@
 
 import logging
 
-from Sloppy.Base.tree import Node
-from Sloppy.Base.error import NoData
+from Sloppy.Base import tree, utils
 
 from Sloppy.Lib.Signals import HasSignals
 from Sloppy.Lib.Undo import UndoInfo, UndoList, NullUndo
@@ -39,14 +38,14 @@ import numpy
 
 class FieldInfo(HasProperties):
     label = Unicode()       
-    designation = VP(['X','Y','XY','XERR', 'YERR', 'LABEL'])
+    designation = VP(['X','Y','XERR', 'YERR', 'LABEL', None])
     query = String()
 
 
-class Dataset(Node, HasSignals):
+class Dataset(tree.Node, HasSignals):
     
     def __init__(self, array=None):
-        Node.__init__(self)
+        tree.Node.__init__(self)
         HasSignals.__init__(self)
        
         self.key = "" # TODO: should be moved to parent object!    
@@ -60,7 +59,7 @@ class Dataset(Node, HasSignals):
         
         if array is None:
             array = numpy.array([(0.0,0.0)],
-                                dtype={'names':['col1','col2'],
+                                dtype={'names':utils.unique_names(['C']*2, []),
                                        'formats':['f4','f4']})                   
         self._array = array
         self._infos = {}
@@ -118,7 +117,7 @@ class Dataset(Node, HasSignals):
 
 
     def append(self, cols):
-        self.insert(cindex, self.get_ncols() - 1)
+        self.insert(self.ncols-1, cols)
                     
     # TODO
     def insert(self, cindex, cols, names=[]):
@@ -127,7 +126,15 @@ class Dataset(Node, HasSignals):
             names = [names]
         
         # cols might be ...
-        if isinstance(cols, (list,tuple)):
+        if isinstance(cols, int):
+            # ...an integer, then we create so many empty columns of float32
+            n = cols
+
+            names = utils.unique_names(['C']*n, self.names)
+            cols = [numpy.zeros((self.nrows,), numpy.float32)]*n
+            self._insert(cindex, cols, names)
+                
+        elif isinstance(cols, (list,tuple)):
             # ...a list of 1-d arrays or of lists
 
             # This wraps scalar lists like [1,2,3] to the form [[1,2,3]]
@@ -141,6 +148,7 @@ class Dataset(Node, HasSignals):
 
         elif isinstance(cols, numpy.ndarray):
             # ... an array of void-type
+            
             fields = cols.dtype.fields
             if fields is None:
                 if len(names) == 0:
@@ -150,8 +158,8 @@ class Dataset(Node, HasSignals):
                 if len(names) == 0:
                     names = fields[-1]
                 self._insert(cindex, [cols[name] for name in fields[-1]], names)
-                
-            
+        else:
+            raise TypeError("cols is invalid.")
     # TODO    
     def _insert(self, cindex, cols, names):
         """
@@ -160,37 +168,23 @@ class Dataset(Node, HasSignals):
         """
         a = self._array
         insert_at = self.get_index(cindex)
+       
+        names = [n or 'C' for n in names]
+        new_names = a.dtype.fields[-1][:]
+        new_names = new_names[:insert_at] \
+                    + utils.unique_names(names, new_names) \
+                    + new_names[insert_at:]
 
         descriptor = a.dtype.descr[:]
-        new_names = a.dtype.fields[-1]
-
         for index in range(len(cols)):
             # make sure we have an array
             col = cols[index]
             if isinstance(col, (list,tuple)):
                 col = cols[index] = numpy.array(col)
-
-            # Make sure we have a unique name.
-            # If we have no name, suggest C%d where %d is the index.
-            # If the name is already in use, replace the numeric suffix
-            # until the name is unique.
-            name = names[index] or 'C%d' % index
-            j = index                                        
-            while (not name) or (name in new_names):
-                rpos = name.rfind(str(j))
-                if rpos == -1:
-                    name += str(j+1)
-                else:
-                    name = name[:rpos] + str(j+1)
-                j += 1
-            names[index] = name
-
-            new_names.insert(insert_at + index, name)
-            descriptor.insert(insert_at + index, (name, col.dtype.str))
-
+            descriptor.insert(insert_at + index, (new_names[index], col.dtype.str))
 
         # create new array
-        new_descriptor = [descriptor[new_names.index(name)] for name in new_names]        
+        new_descriptor = [descriptor[new_names.index(name)] for name in new_names]
         new_array = numpy.zeros(a.shape, dtype=numpy.dtype(new_descriptor))
 
         # fill new array with data

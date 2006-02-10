@@ -1,6 +1,6 @@
 
 from Sloppy.Lib.Undo import UndoList, ulist
-from Sloppy.Base import globals, dataio
+from Sloppy.Base import globals, dataio, utils, error
 import os.path
 
 

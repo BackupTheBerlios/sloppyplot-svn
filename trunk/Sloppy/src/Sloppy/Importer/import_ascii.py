@@ -373,6 +373,7 @@ class Importer(dataio.Importer):
         # TODO: The following is a hack. We might need to ask
         # TODO: if the given numpy types can be converted to a numpy-value
         # TODO: by the type directly.
+       
         typemap = {numpy.float32 : float,
                    numpy.float64: float,
                    numpy.int8: int,
@@ -442,13 +443,16 @@ class Importer(dataio.Importer):
                     skipcount = 0
             else:
                 try:
+                    # before the string is converted to a number, we
+                    # convert all '-' occurences to numpy.nan
+                    matches = [(m,numpy.nan)[m=='-'] for m in matches]
                     values = tuple(map(lambda x, t: t(x), matches, types))
                 except ValueError, msg:                    
                     #logger.warn("Skipped: %s (%s)" % (row,msg))
                     row = fd.readline()
                     continue
                 except TypeError, msg:
-                    logger.warn("Skipped: %s (%s)" % (row,msg))
+                    #logger.warn("Skipped: %s (%s)" % (row,msg))
                     row = fd.readline()
                     continue
                 else:

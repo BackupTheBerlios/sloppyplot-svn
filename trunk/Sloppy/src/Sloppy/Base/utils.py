@@ -19,7 +19,7 @@
 # $Id$
 
  
-from Sloppy.Base.objects import *
+#from Sloppy.Base.objects import *
 
 
 import os.path
@@ -74,3 +74,39 @@ def as_filename(key):
     if not isinstance(key, basestring):
         raise TypeError("construct_filename: 'key' must be a valid string, but it is of %s" % type(key))
     return "%s.dat" % key
+
+
+def unique_names(names, old_names):
+    """
+    Return a list of names that are not contained in old_names.
+
+    If you have a list of existing names ('old_names') and each name
+    has to be unique, then it is difficult to add new names to this
+    list. Every time you have to check if the name already exists,
+    and if so, you have to change the name to a new, unique name.
+
+    This is basically what this helper function does.
+
+    >>> names = ['col1', 'col2', 'a', 'col1']
+    >>> old_names = ['Niklas', 'col1', 'col2']
+    >>> unique_names(names, old_names)
+    ['col1_1', 'col2_1', 'a', 'col1_2']
+
+    It is also possible to specify a single name for 'name'.
+    """
+    rv = []
+    for name in list(names):
+        j = 1
+        while (name in old_names) or (name in rv):
+            rpos = name.rfind('_%d' % j)
+            if rpos == -1:
+                name = '%s_%d' % (name, j+1)
+            else:
+                name = name[:rpos+1] + str(j+1)
+            j+=1
+        rv.append(name)
+    return rv
+
+
+if __name__ == "__main__":
+    print unique_names( ['C']*5, ['C'] )

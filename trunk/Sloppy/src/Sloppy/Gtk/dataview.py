@@ -55,7 +55,11 @@ class DatasetModel(gtk.GenericTreeModel):
         n = 0
         for name in self.dataset.names:
             info = self.dataset.get_info(name)
-            rv.append("%d: %s (%s)\n%s" % (n, name, info.designation, info.label))
+            if info.designation is not None:
+                designation = "(%s)" % info.designation
+            else:
+                designation = ""
+            rv.append("%d: %s %s\n%s" % (n, name, designation, info.label))
             n+=1
 
         return rv
@@ -75,14 +79,9 @@ class DatasetModel(gtk.GenericTreeModel):
                 numpy.int16: int,
                 numpy.int32: int}        
 
-    def on_get_column_type(self,index):
-        try:
-            return self.type_map[self.dataset.get_field_type(index)]
-        except IndexError:
-            print "index error, %d, len %d" % (index, self.dataset.ncols)
-            self.dataset.dump()
-            return float
-
+    def on_get_column_type(self, index):
+        return str
+    
     def on_get_iter(self, path):
         return path[0]
 
@@ -91,7 +90,11 @@ class DatasetModel(gtk.GenericTreeModel):
 
     def on_get_value(self, iter, column):
         try:
-            return self.dataset.get_value(column, iter)
+            v = self.dataset.get_value(column, iter)
+            if numpy.isnan(v):
+                return "-"
+            else:
+                return v
         except IndexError:
             return None
 
@@ -125,12 +128,18 @@ class DatasetModel(gtk.GenericTreeModel):
     # -- data manipulation --
 
     def set_value(self, path, value, undolist=[]):
-       
+
         row, col = path
-        try:
-            value = self.on_get_column_type(col)(value)
-        except:
-            return
+
+        if value == '-':
+            value = numpy.nan
+        else:
+            try:
+                converter = self.type_map[self.dataset.get_field_type(col)]
+                value = converter(value)
+            except Exception, msg:
+                print "Not ok: ", msg
+                return
 
         old_value = self.dataset.get_value(col, row)
         

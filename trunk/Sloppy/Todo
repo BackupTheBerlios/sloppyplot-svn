@@ -1,10 +1,11 @@
      
 - Importer: remove checkboxes from widgets....
-- Importer: recognize '-' as empty value --> But how should I handle it?
 - DatasetView: allow to change field name and _type_ !
 - Dataset: finish Undo implementation for column operations
+- Allow to specify format for column view
+   (e.g. %2.3f for floats)
 
-
+- right clicking on point in dataset: goto dataset _OR_ goto Y-Value in dataset!
 
 TODO
 ----

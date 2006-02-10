@@ -26,7 +26,7 @@ from Sloppy.Lib.Undo import UndoList, UndoInfo
 import gtk, numpy
 
 from Sloppy.Gtk.options_dialog import OptionsDialog
-from Sloppy.Gtk import uihelper, widget_factory, dataview
+from Sloppy.Gtk import uihelper, widget_factory, dataview, uidata
 
 
 def unique_key(adict, key):
@@ -66,50 +66,23 @@ class DatasetWindow( gtk.Window ):
         ('ColumnRemove', None, 'Remove Column', None, 'Remove this column', 'cb_column_remove'),
         ('EditFields', gtk.STOCK_EDIT, 'Edit Fields', '<control>E', '', 'cb_edit_fields'),
         #
+        ('DesignationMenu', None, 'Set Designation'),
+        ('DesignationX', None, 'X', None, None, 'on_action_DesignationX'),
+        ('DesignationY', None, 'Y', None, None, 'on_action_DesignationY'),
+        ('DesignationXErr', None, 'XErr', None, None, 'on_action_DesignationXErr'),
+        ('DesignationYErr', None, 'XErr', None, None, 'on_action_DesignationYErr'),
+        ('DesignationLabel', None, 'Label', None, None, 'on_action_DesignationLabel'),
+        ('DesignationDisregard', None, 'Disregard', None, None, 'on_action_DesignationDisregard'),        
+        #
         ('AnalysisMenu', None, '_Analysis')
         ]
-         
-    ui = """
-         <ui>
-           <menubar name='MainMenu'>
-             <menu action='DatasetMenu'>
-               <menuitem action='EditFields'/>
-               <separator/>
-               <menuitem action='Close'/>
-             </menu>
-             <menu action='AnalysisMenu'>
-             </menu>
-           </menubar>              
-           <toolbar name='Toolbar'>
-             <toolitem action='EditColumns'/>           
-             <separator/>
-             <toolitem action='RowInsert'/>
-             <toolitem action='RowAppend'/>
-             <separator/>
-             <toolitem action='RowRemove'/>
-             <separator/>
-           </toolbar>
-           <popup name='popup_column'>
-             <menuitem action='ColumnProperties'/>
-             <menuitem action='ColumnCalculate'/>
-             <separator/>             
-             <menuitem action='ColumnInsertAfter'/>                          
-             <menuitem action='ColumnInsert'/>
-             <menuitem action='ColumnRemove'/>
-             <separator/>
-             <menuitem action='RowInsert'/>
-             <menuitem action='RowAppend'/>
-             <menuitem action='RowRemove'/>             
-           </popup>
-         </ui>
-         """
-            
-    
+
+    ui = uidata.uistring_datawin         
         
     def __init__(self, project, dataset=None):
         gtk.Window.__init__(self)
 	self.set_size_request(280,320)
-        self.set_transient_for(app.window)
+        self.set_transient_for(globals.app.window)
         
         self.cblist = []
 
@@ -321,7 +294,7 @@ class DatasetWindow( gtk.Window ):
 
 
 
-    def cb_dataview_button_press_event(self, treeview, event):
+    def cb_view_button_press_event(self, treeview, event):
         if event.button == 3:
             x = int(event.x)
             y = int(event.y)
@@ -452,6 +425,25 @@ class DatasetWindow( gtk.Window ):
 
         self.statusbar.pop(contextid)        
         self.statusbar.push (contextid, msg)
+
+
+    # Setting the Column's designation ------------------------------------
+
+    def _set_designation(self, d):
+        rownr, colnr, column_object = self.popup_info
+        info = self.dataset.get_info(colnr)
+        ul = UndoList().describe("Change designation")        
+        uwrap.set(info, designation=d, undolist=ul)
+        uwrap.emit_last(self.dataset, 'update-fields', undolist=ul)
+        self.project.journal.append(ul)
+    
+    def on_action_DesignationX(self, action): self._set_designation('X')
+    def on_action_DesignationY(self, action): self._set_designation('Y')
+    def on_action_DesignationXErr(self, action): self._set_designation('XERR')
+    def on_action_DesignationYErr(self, action): self._set_designation('YERR')
+    def on_action_DesignationLabel(self, action): self._set_designation('LABEL')
+    def on_action_DesignationDisregard(self, action): self._set_designation(None)
+
         
 
 class ColumnCalculator(gtk.Window):

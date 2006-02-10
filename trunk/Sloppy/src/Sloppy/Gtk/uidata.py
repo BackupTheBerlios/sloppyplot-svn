@@ -99,3 +99,52 @@ uistring_appwindow = \
   </popup>
 </ui>
 """
+
+
+uistring_datawin = \
+"""
+ <ui>
+   <menubar name='MainMenu'>
+     <menu action='DatasetMenu'>
+       <menuitem action='EditFields'/>
+       <separator/>
+       <menuitem action='Close'/>
+     </menu>
+     <menu action='AnalysisMenu'>
+     </menu>
+   </menubar>              
+   <toolbar name='Toolbar'>
+     <toolitem action='EditColumns'/>           
+     <separator/>
+     <toolitem action='RowInsert'/>
+     <toolitem action='RowAppend'/>
+     <separator/>
+     <toolitem action='RowRemove'/>
+     <separator/>
+   </toolbar>
+   <popup name='popup_column'>
+     <menuitem action='ColumnProperties'/>
+     <menu action='DesignationMenu'>
+       <menuitem action='DesignationX'/>
+       <menuitem action='DesignationY'/>
+       <separator/>
+       <menuitem action='DesignationXErr'/>
+       <menuitem action='DesignationYErr'/>                    
+       <separator/>
+       <menuitem action='DesignationLabel'/>
+       <menuitem action='DesignationDisregard'/>
+     </menu>     
+     <separator/>
+     <menuitem action='ColumnCalculate'/>
+     <separator/>
+     <menuitem action='ColumnInsertAfter'/>                          
+     <menuitem action='ColumnInsert'/>
+     <menuitem action='ColumnRemove'/>
+     <separator/>
+     <menuitem action='RowInsert'/>
+     <menuitem action='RowAppend'/>
+     <menuitem action='RowRemove'/>
+     <separator/>
+   </popup>
+ </ui>
+ """
