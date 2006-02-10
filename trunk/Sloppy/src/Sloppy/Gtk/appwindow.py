@@ -587,7 +587,7 @@ class AppWindow( gtk.Window ):
         ('ExperimentalPlot', None, 'Create Multiplot (EXPERIMENTAL!)', None, None, '_cb_experimental_plot'),
         ('ViewMetadata', None, 'View Metadata', None, 'View Metadata', 'on_action_ViewMetadata'),
         #
-        ('Preferences', gtk.STOCK_PREFERENCES, '_Preferences...', None, "Modify Preferences", 'on_action_Preferences'),
+        ('Preferences', gtk.STOCK_PREFERENCES, '_Preferences...', '<control>P', "Modify Preferences", 'on_action_Preferences'),
         ]
 
     actions_appwin = [        

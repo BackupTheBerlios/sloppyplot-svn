@@ -32,14 +32,15 @@ URL="http://sloppyplot.berlios.de"
 VERSION="0.5.1"
 VERSION= VERSION+".SVN $Rev$".replace("Rev: ","").replace(" $","")
 
-DESCRIPTION = "A scientific plotting tool"
+DESCRIPTION = "Plotting for the scientific workplace."
 LONG_DESCRIPTION="""\
-A scientific plotting tool that currently only
-supports 2d plots.  The plots and their data are
-stored in a single file, keeping the scientific
-workspace a little more uncluttered.
+A scientific plotting tool that supports 2d plots. \
+The plots and their data are stored in a single file, \
+keeping the scientific workspace a little more uncluttered. \
 
 A postscript export using gnuplot is available.
+
+For more information, see 'http://sloppyplot.berlios.de'.
 """
 
 

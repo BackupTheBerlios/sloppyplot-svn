@@ -25,7 +25,7 @@ Configuration dialog and widgets.
 
 
 import gtk
-from Sloppy.Base import globals, dataio
+from Sloppy.Base import globals, dataio, version
 
 from Sloppy.Gtk import uihelper, widget_factory
 from Sloppy.Lib.Props import Keyword
@@ -41,7 +41,7 @@ class ConfigurationDialog(gtk.Dialog):
 
     def __init__(self):
 
-        gtk.Dialog.__init__(self, "Configuration", None,
+        gtk.Dialog.__init__(self, "Preferences", None,
                             gtk.DIALOG_MODAL|gtk.DIALOG_DESTROY_WITH_PARENT,
                             (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
                              gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
@@ -81,6 +81,8 @@ class ConfigurationDialog(gtk.Dialog):
             if hasattr(page, 'check_in'): 
                 page.check_in()        
 
+        # TODO: This does not work
+        nb.set_current_page(0)
 
         #
         # put everything together
@@ -119,14 +121,21 @@ class InformationPage(gtk.VBox):
         vbox = gtk.VBox()
         vbox.set_spacing(uihelper.SECTION_SPACING)
         vbox.set_border_width(uihelper.SECTION_SPACING)
+
+        label = gtk.Label("SloppyPlot - %s" % version.DESCRIPTION )
+        label.set_alignment(0.0,0.0)
+        vbox.pack_start(label,False,True)
         
-        label = gtk.Label("Version: xxx")
+        label = gtk.Label("Version: %s" % version.VERSION )
         label.set_alignment(0.0,0.0)
         vbox.pack_start(label,False,True)
 
-        label = gtk.Label("Whatever: yyy")
-        label.set_alignment(0.0,0.0)
-        vbox.pack_start(label,False,True)        
+        description = gtk.TextView()
+        description.set_property('editable', False)
+        description.set_property('cursor-visible', False)
+        
+        description.get_buffer().set_text(version.LONG_DESCRIPTION)
+        vbox.pack_start(description,False,True)
 
         frame = uihelper.new_section("About SloppyPlot", vbox)
         self.add(frame)
@@ -203,7 +212,8 @@ class ImportTemplatesPage(gtk.VBox):
         hbox.pack_start(sw,True,True)
         hbox.pack_start(btnbox,False,True)
         
-        self.pack_start(hbox,True,True)
+        frame = uihelper.new_section("Import Templates", hbox)
+        self.add(frame)
         self.show_all()
 
 
@@ -474,7 +484,7 @@ class PluginPage(gtk.VBox):
             column.set_resizable(True)        
             treeview.append_column(column)
 
-        for attr in ['name', 'blurb', 'authors']:
+        for attr in ['name', 'blurb']:
             add_column(attr)
 
         vbox.pack_start(label, False, True)
