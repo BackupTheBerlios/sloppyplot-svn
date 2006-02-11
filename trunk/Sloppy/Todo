@@ -10,6 +10,41 @@ Dataset._insert is broken...
 
 - right clicking on point in dataset: goto dataset _OR_ goto Y-Value in dataset!
 
+
+
+#----------------------------------------------------------------------
+
+    # I guess these access things should go into the main object, i.e.
+    # into the tree object ???
+    
+#     def get_data(self):
+#         if self._table_import is not None:
+#             self.import_table(*self._table_import)
+#             self._table_import = None
+#         return self.data
+
+#     def import_table(self, project, filename, typecodes, field_props, importer_key):
+#         dir = tempfile.mkdtemp('spj')
+#         name = os.path.join(dir, filename)
+#         project._archive.extract(filename, dir)
+        
+#         try:
+#             table = read_table_from_file(name, importer_key, field_props=field_props)
+#         finally:
+#             os.remove(name)
+#             os.rmdir(os.path.join(dir, 'datasets'))
+#             os.rmdir(dir)
+        
+#         self.data = table
+        
+        
+#     def set_table_import(self, *args):
+#         self._table_import = args
+
+
+
+
+
 TODO
 ----
 

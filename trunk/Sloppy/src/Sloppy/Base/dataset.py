@@ -27,27 +27,33 @@ from Sloppy.Lib.Signals import HasSignals
 from Sloppy.Lib.Undo import UndoInfo, UndoList, NullUndo
 from Sloppy.Lib.Props import HasProperties, String, Unicode, VP
 
-
 import numpy
 
-##import tempfile, os
-##from Sloppy.Base.dataio import read_table_from_stream, read_table_from_file
 
 
 #------------------------------------------------------------------------------
 
-class FieldInfo(HasProperties):
-    label = Unicode()       
-    designation = VP(['X','Y','XERR', 'YERR', 'LABEL', None])
-    query = String()
-
-
 class Dataset(tree.Node, HasSignals):
+
+    """
+    A Dataset contains an array with the data and some additional
+    meta-data, which is stored in the attribute 'node_info'.
+
+    The array can either be a homogeneous or a heterogeneous numpy
+    array. In both cases, only two-dimensional arrays are supported
+    (rank 2).
+
+    Each Dataset implementation provides a set of basic functions for
+    the array manipulation, so that basic plotting and manipulation
+    functions can use any kind of Dataset.    
+    """
+    
     
     def __init__(self, array=None):
         tree.Node.__init__(self)
         HasSignals.__init__(self)
        
+        # TBR
         self.key = "" # TODO: should be moved to parent object!    
         self.change_counter = 0
         self.__is_valid = True
@@ -56,15 +62,226 @@ class Dataset(tree.Node, HasSignals):
         self.sig_register('closed')
         self.sig_register('notify')
         self.sig_register('update-fields')
-        
+
+        self._array = None
         if array is None:
-            array = numpy.array([(0.0,0.0)],
-                                dtype={'names':utils.unique_names(['C']*2, []),
-                                       'formats':['f4','f4']})                   
-        self._array = array
-        self._infos = {}
+            array = self.get_default_array()
+        self.set_array(array)
+
+    def revert_change(self, undolist=[]):
+        self.change_counter -= 1
+        self.sig_emit('notify')
+        undolist.append( UndoInfo(self.notify_change).describe("Notify") )
+        
+    def notify_change(self, undolist=[]):
+        self.change_counter += 1
+        self.sig_emit('notify')        
+        undolist.append( UndoInfo(self.revert_change).describe("Notify") )
+
+    def has_changes(self, counter):
+        return self.change_counter != counter
+
+    def close(self):
+        self.sig_emit('closed')        
+        self.data = None
+
+    def detach(self):
+        self.sig_emit('closed')                
+
+    def is_empty(self):
+        " Returns True if the Dataset has no data or if that data is empty. "
+        return self._array is None or len(self._array) == 0
 
 
+    #----------------------------------------------------------------------
+    # Any derived classes needs to implement the following functions,
+    # that provide some basic functionality for arrays of rank 2.
+    #
+
+    def get_array(self):
+        " Return internal array. "
+        return self._array
+    
+    def set_array(self, array):
+        " Set internal array. "
+        raise RuntimeError("not implemented")
+
+    def new_array(self, rows, cols):
+        " Return a new array of the given dimensions. "
+        raise RuntimeError("not implemented")
+    
+    def get_default_array(self):
+        " Return array that is supposed to be used if no array is given. "
+        raise RuntimeError("not implemented")
+    
+    def get_value(self, row, col):
+        " Get value with specifed row and column index. "
+        raise RuntimeError("not implemented")
+    
+    def set_value(self, row, col, value):
+        " Set value with specifed row and column index to given value. "
+        raise RuntimeError("not implemented")
+
+    def get_row(self, row):
+        " Return row vector with given index. "
+        return self._array[i]
+    
+    def get_column(self, col):
+        " Return column vector with given index. "
+        raise RuntimeError("not implemented")
+
+    # if you redefine get_nrows in derived classes,
+    # please redefine 'nrows = property(get_nrows)' as well.
+    def get_nrows(self): return len(self._array)
+    nrows = property(get_nrows)
+
+    # if you redefine get_ncols in derived classes,
+    # please redefine 'ncols = property(get_ncols)' as well.    
+    def get_ncols(self): raise RuntimeError("not implemented")
+    ncols = property(get_ncols)
+
+    def get_column_type(self, col):
+        raise RuntimeError("not implemented")
+
+    pytypemap = {numpy.float32 : float,
+                numpy.float64: float,
+                numpy.int8: int,
+                numpy.int16: int,
+                numpy.int32: int,
+                numpy.int64: int,
+                numpy.string: str
+                #numpy.unicode: unicode #?
+                }   
+    def get_column_pytype(self, col):
+        " return python type corresponding to the numpy type of the field. "
+        # TODO: The following is a hack. We might need to ask
+        # TODO: if the given numpy types can be converted to a numpy-value
+        # TODO: by the type directly.
+        return self._ptypemap[self.get_column_type(col)]
+    
+    def dump(self):
+        " Diagnostic dump to stdout of the array. "
+        print "Dataset (%s)" % self.__class__.__name__
+        print self._array
+        print
+        
+    # Row Manipulation ----------------------------------------------------    
+
+    def resize(self, nrows, undolist=[]):
+        " Resize array to given number of `nrows`. "        
+        current_nrows = self.nrows
+        nrows = max(0, nrows)
+        if nrows < current_nrows:
+            self.delete_n_rows(nrows, current_nrows - nrows, undolist=[])
+        elif nrows > self.nrows:
+            self.insert_n_rows(current_nrows, nrows - current_nrows, undolist=[])
+        else:
+            undolist.append(NullUndo())        
+
+    def extend(self, n, undolist=[]):
+        " Add `n` rows to the end of all fields. "
+        self.resize(self.nrows+n, undolist=undolist)
+
+    def insert_n_rows(self, row, n=1, undolist=[]):
+        " Insert `n` empty rows at the given row index. "
+        self.insert_rows(row, rows=numpy.zeros((n,), dtype=self._array.dtype), undolist=[])
+
+    def insert_rows(self, i, rows, undolist=[]):
+        " Insert the given `rows` (list of one-dimensional arrays) at row `i`. "
+        raise RuntimeError("not implemented")
+
+    def delete_n_rows(self, row, n=1, only_zeros=False, undolist=[]):
+        """
+        Delete `n` rows, starting at the row with the index `row`.
+        The keyword arg `only_zeros` is an internal argument needed
+        for better undo performance.              
+        """
+        n = min(self.nrows-row, n)
+        if only_zeros is True:
+            ui = UndoInfo(self.insert_n_rows, row, )
+        else:
+            undo_data = numpy.array(self._array[row:row+n])            
+            ui = UndoInfo(self.insert_rows, row, undo_data)
+            
+        self._array = numpy.concatenate([self._array[0:row], self._array[row+n:]])
+        undolist.append(ui)
+
+
+    # Column Manipulation ---------------------------------------------------------
+    
+    def rearrange(self, order, undolist=[]):
+        """ Rearrange Dataset columns.
+        
+        The list 'order' is a valid permutation of the column indices.
+        """
+        # Uses _rearrange internally, but adds a check to make sure that
+        # the number of fields is preserved.
+        if len(order) != self.ncols:
+            raise ValueError("Rearrange order must be of the same length as before.")
+        self._rearrange(order, undolist=[])
+    
+    def _rearrange(self, order, undolist=[]):        
+        raise RuntimeError("not implemented")
+
+    def remove_column(self, col, undolist=[]):
+        " Remove a single column at specified index. "
+        self.remove_columns(col, 1, undolist=[])
+        
+    def remove_columns(self, col, n=1, undolist=[]):
+        " Remove 'n' columns starting at column with specified index. "
+        index = self.get_index(col)
+        order = range(self.ncols)
+        for i in range(n):
+            order.pop(index)
+        self._rearrange(order, undolist=[])
+
+    def append_columns(self, array, undolist=[]):
+        " Append the given array to the Dataset array. "        
+        self.insert_columns(self.ncols-1, array, undolist=undolist)
+
+    def insert_columns(self, col, array, undolist=[]):
+        """ Insert the given 'array' at specified index 'col'.        
+
+        This high-level function accepts not only arrays, but
+        also lists/tuples or an integer representing a number
+        of empty columns.        
+        """
+        if isinstance(array, int):
+            array = self.new_array(rows=self.nrows, cols=array)
+        elif isinstance(array, (list, tuple)):
+            array = self.new_array_from_list(array)
+
+        self._insert_columns(col, array, undolist=undolist)
+
+    def _insert_columns(self, col, array, undolist=[]):
+        raise RuntimeError("not implemented")
+
+
+
+###############################################################################
+class Table(Dataset):
+    
+    """
+    A Dataset with a heterogeneous array.
+
+    A Dataset 'column' is mapped to the field of such an heterogeneous array.
+    Each field has an Info object which stores additional information
+    about it.
+    """
+
+    class Info(HasProperties):
+        label = Unicode()       
+        designation = VP(['X','Y','XERR', 'YERR', 'LABEL', None])
+        query = String()
+
+
+    def __init__(self, array=None):
+        self._infos = {}        
+        Dataset.__init__(self, array)
+
+
+    # Array ---------------------------------------------------------------
+    
     def set_array(self, array, infos={}, undolist=[]):
         ui = UndoInfo(self.set_array, self._array, self._infos)
 
@@ -74,6 +291,12 @@ class Dataset(tree.Node, HasSignals):
         
         undolist.append(ui)
 
+    def new_array(self, rows, cols, names=None, formats=None):
+        raise RuntimeError("Not implemented")
+
+    def get_default_array(self):
+        return numpy.array([(0.0,0.0)], dtype='f4,f4')
+
 
     # Value Access ---------------------------------------------------------
 
@@ -81,153 +304,52 @@ class Dataset(tree.Node, HasSignals):
         return self._array[self.get_name(cindex)][row]
     
     def set_value(self, cindex, row, value, undolist=[]):
+        self._array[row][cindex]
         col = self.get_field(cindex)
         old_value = col[row]
         col[row] = value
         undolist.append(UndoInfo(self.set_value, col, row, old_value))
 
 
-    # Field Access ----------------------------------------------------------
-    
-    def get_field(self, cindex):
-        " Return a copy of the field with the given name or index `cindex`. "
-        if isinstance(cindex, basestring):
-            return self.get_field_by_name(cindex)
-        elif isinstance(cindex, int):
-            return self.get_field_by_index(cindex)
-        else:
-            raise TypeError("Field must be specified using either a string or a field index.")
+    # for get_column, see get_field
 
-    def get_field_by_index(self, index):
-        " Return a copy of the field with the given `index`. "
-        return self._array[ self._array.dtype.fields[-1][index] ]
+    def get_ncols(self): return len(self._array.dtype.fields) - 1
+    ncols = property(get_ncols)
 
-    def get_field_by_name(self, name):
-        " Return a copy of the field with the given `name`. "        
-        return self._array[name]
+    def get_column_type(self, cindex):
+        name = self.get_name(cindex)
+        return self._array.dtype.fields[name][0].type
 
 
-    # Row Access -------------------------------------------------------------
-    
-    def get_row(self, i):
-        return self._array[i]
+    def dump(self):
+        print "Dataset (%s)" % self.__class__.__name__
+        print
+        fields = self._array.dtype.fields
+        print "\t".join(fields[-1])
+        print "\t".join([str(fields[key][0]) for key in fields[-1]])
+        print
+        for row in self._array:
+            print "\t".join(str(item) for item in row.item())
+        print
 
-        
-    # Field Manipulation -----------------------------------------------------
+
+    # Row Manipulation ----------------------------------------------------
+
+    def insert_rows(self, i, rows, undolist=[]):        
+        self._array = numpy.concatenate([self._array[0:i], rows, self._array[i:]])
+        undolist.append(UndoInfo(self.delete_n_rows, i, len(rows), only_zeros=True))
 
 
-    def append(self, cols, undolist=[]):
-        self.insert(self.ncols-1, cols, undolist=undolist)
-                    
+    # Column Manipulation ---------------------------------------------------------
+
     # TODO: undolist
-    def insert(self, cindex, cols, names=[], undolist=[]):
-        # make sure names is a list of names, not a single name
-        if not isinstance(names, (list,tuple)):
-            names = [names]
-        
-        # cols might be ...
-        if isinstance(cols, int):
-            # ...an integer, then we create so many empty columns of float32
-            n = cols
-
-            names = ['C']*n
-            cols = [numpy.zeros((self.nrows,), numpy.float32)]*n
-            print "inserting ", names, cols
-            self._insert(cindex, cols, names)
-                
-        elif isinstance(cols, (list,tuple)):
-            # ...a list of 1-d arrays or of lists
-
-            # This wraps scalar lists like [1,2,3] to the form [[1,2,3]]
-            # as expected by _insert.
-            if len(cols) > 0:
-                first_item = cols[0]
-                if not isinstance(first_item, (list,tuple,numpy.ndarray)):
-                    cols = [cols]
-                    
-            self._insert(cindex, cols, names)
-
-        elif isinstance(cols, numpy.ndarray):
-            # ... an array of void-type
-            
-            fields = cols.dtype.fields
-            if fields is None:
-                if len(names) == 0:
-                    names = [''] * len(cols)
-                self._insert(cindex, [cols[i] for i in range(len(cols))], names)
-            else:
-                if len(names) == 0:
-                    names = fields[-1]
-                self._insert(cindex, [cols[name] for name in fields[-1]], names)
-        else:
-            raise TypeError("cols is invalid.")
-    # TODO    
-    def _insert(self, cindex, cols, names):
-        """
-        Append a list of fields `cols` with a list of names `names`
-        at position `cindex`. 
-        """
-
-        # TODO: This is a mess right now.
-        
-        a = self._array
-        insert_at = self.get_index(cindex)
-
-        old_names = a.dtype.fields[-1]
-        names = utils.unique_names(names, old_names)[n or 'C' for n in names]
-        names = old_names[:insert_at] + names + new_names[insert_at:]
-
-        print "names", names
-        descriptor = a.dtype.descr[:]
-        for index in range(len(cols)):
-            # make sure we have an array
-            col = cols[index]
-            if isinstance(col, (list,tuple)):
-                col = cols[index] = numpy.array(col)
-
-            j = insert_at+index
-            descriptor.insert(j, (names[j], col.dtype.str))
-
-        # create new array
-        new_descriptor = [descriptor[new_names.index(name)] for name in names]
-
-        print new_descriptor
-        new_array = numpy.zeros(a.shape, dtype=numpy.dtype(new_descriptor))
-
-        # fill new array with data
-        for name in new_array.dtype.fields[-1]:
-            if name in names:
-                new_array[name] = cols[names.index(name)]
-            else:
-                new_array[name] = a[name]
-        
-        self._array = new_array
-        
-
-
-    # TODO
-    def rearrange(self, order):
-        """
-        Rearrangement of fields.
-
-        Uses _rearrange internally, but adds a check to make sure that
-        the number of fields is preserved.
-        """        
-        # validity check 
-        if len(order) != len(self._array.dtype.fields[-1]):
-            raise ValueError("Rearrange order must be of the same length as before.")
-
-        self._rearrange(order)
-
-
-    # TODO
-    def _rearrange(self, order):
+    def _rearrange(self, order, undolist=[]):
         a = self._array
         
         # Create new descriptor and new infos.
         # The new infos are created because it is possible to
         # specify less fields in the rearrangement.
-        descriptor = a.dtype.descr
+        descriptor = a.dtype.arrdescr
         names = a.dtype.fields[-1]
 
         new_infos = {}
@@ -247,135 +369,82 @@ class Dataset(tree.Node, HasSignals):
 
         self._array = new_array
         self._infos = new_infos
-        self.sig_register('update-fields')        
-        
-        
-    # TODO
-    def rename(self, cindex, new_name):
-        """
-        Rename the field with the name or index `cindex` to the new name.        
-        """
-        a = self._array
-        old_name = self.get_name(cindex)
-        new = dict(a.dtype.fields)
-        new[new_name] = new[old_name]
-        del new[old_name]
-        del new[-1]
-        a.dtype = numpy.dtype(new)
-
-        # keep field infos in sync
-        self._infos[new_name] = self._infos[old_name]
-        del self._infos[old_name]
-        self.sig_register('update-fields')        
+        self.sig_emit('update-fields')
 
 
-    # TODO
-    def remove(self, cindex, n=1):
-        """
-        Remove n fields starting at field with name or index `cindex`.
-        """
-        index = self.get_index(cindex)
-        order = range(len(self._array.dtype.fields[-1]))
-        for i in range(n):
-            order.pop(index)
-        self._rearrange(order)
-        
+    # TODO: undolist
+    def _insert_columns(self, col, array, undolist=[]):        
+        col = self.get_index(col)
 
-    # Row Manipulation --------------------------------------------------------
+        # We merge in the description of the new array into the
+        # existing array 'self.array'. Unfortunately we must
+        # make sure that each new added field has a unique name.
+        names = self._array.dtype.fields[-1]        
+        descriptor = self.array.dtype.arrdescr[:]
+        i = 0
+        for name,typecode in array.dtype.arrdescr:
+            new_name = utils.unique_names([name], names)
+            descriptor.insert(i, (new_name, typecode))
+            i+=1
 
-    def insert_n_rows(self, i, n=1, undolist=[]):
-        """
-        Insert `n` empty rows into each field at row `i`.
-        """
-        self.insert_rows(i, rows=numpy.zeros((n,), dtype=self._array.dtype), undolist=[])
-
-    def insert_rows(self, i, rows, undolist=[]):
-        """
-        Insert the given `rows` (list of one-dimensional arrays) at row `i`.
-        """
-        self._array = numpy.concatenate([self._array[0:i], rows, self._array[i:]])
-        undolist.append(UndoInfo(self.delete_n_rows, i, len(rows), only_zeros=True))
-        return "new array => ", self._array
-
-    def extend(self, n, undolist=[]):
-        """
-        Add `n` rows to the end of all fields.
-        """
-        self.insert_n_rows(len(self._array), n, undolist=undolist)
-
-    def delete_n_rows(self, i, n=1, only_zeros=False, undolist=[]):
-        """
-        Delete `n` rows, starting at the row with the index `i`.
-        The keyword arg `only_zeros` is an internal argument needed
-        for better undo performance.              
-        """
-        n = min(len(self._array)-i, n)
-
-        if only_zeros is True:
-            ui = UndoInfo(self.insert_n_rows, i, )
-        else:
-            undo_data = numpy.array(self._array[i:i+n])            
-            ui = UndoInfo(self.insert_rows, i, undo_data)
-            
-        self._array = numpy.concatenate([self._array[0:i], self._array[i+n:]])
-        undolist.append(ui)
-        
-        # TODO: return cut data ??
-
-    def resize(self, nrows, undolist=[]):
-        """
-        Resize array to given number of `nrows`.
-        """
-        current_nrows = self._array.shape[0]
-        nrows = max(0, nrows)        
-        if nrows < current_nrows:
-            self.delete_n_rows( nrows, current_nrows - nrows, undolist=[])
-        elif nrows > current_nrows:
-            self.insert_n_rows( current_nrows, nrows - current_nrows, undolist=[])
-        else:
-            undolist.append(NullUndo())
-
-            
-    # Diagnostics -------------------------------------------------------------
-
-    def dump(self):
-        """
-        Diagnostic dump to stdout of the array.
-        """
-        a = self._array
+        print "new descriptor looks like this:"
+        print descriptor
         print
-        fields = a.dtype.fields
-        print "\t".join(fields[-1])
-        print "\t".join([str(fields[key][0]) for key in fields[-1]])
+        new_array = numpy.zeros(a.shape, dtype=numpy.dtype(new_descriptor))
+
+        # fill new array with data
+        array_names = array.dtype.fields[-1]
+        for name in new_array.dtype.fields[-1]:
+            if name in array_names:
+                new_array[name] = array[name]
+            else:
+                new_array[name] = self._array[name]
+
+        print "new array looks like this:"
+        print new_array
         print
-        for row in a:
-            print "\t".join(str(item) for item in row.item())
-        print
-
-
-    # Information -------------------------------------------------------------
-
-    def get_nrows(self):
-        return len(self._array)
-    nrows = property(get_nrows)
-
-    def get_ncols(self):
-        return len(self._array.dtype.fields) - 1
-    ncols = property(get_ncols)
+        
+        self._array = new_array
+        
     
+
+    #----------------------------------------------------------------------
+    # SPECIFIC TO TABLE OBJECTS
+    
+    def get_field(self, cindex):
+        " Return a copy of the field with the given name or index `cindex`. "
+        if isinstance(cindex, basestring):
+            return self.get_field_by_name(cindex)
+        elif isinstance(cindex, int):
+            return self.get_field_by_index(cindex)
+        else:
+            raise TypeError("Field must be specified using either a string or a field index.")
+
+    get_column = get_field
+
+    
+    def get_field_by_index(self, index):
+        " Return a copy of the field with the given `index`. "
+        return self._array[ self._array.dtype.fields[-1][index] ]
+
+    def get_field_by_name(self, name):
+        " Return a copy of the field with the given `name`. "        
+        return self._array[name]
+    
+
     def get_info(self, cindex):
         """
-        Retrieve FieldInfo object for field with name or index `cindex`.
+        Retrieve Info object for field with name or index `cindex`.
         If there is no such info, then the info is created.
         """
         name = self.get_name(cindex)
         if not self._infos.has_key(name):
-            self._infos[name] = FieldInfo()
+            self._infos[name] = Table.Info()
             
         return self._infos[name]
 
     def get_infos(self):
-        " Return a dictionary with all FieldInfo objects. "
+        " Return a dictionary with all Info objects. "
         infos = {}
         for name in self.names:
             infos[name] = self.get_info(name)
@@ -401,81 +470,37 @@ class Dataset(tree.Node, HasSignals):
         return self._array.dtype.fields[-1]
     names = property(get_names)
 
-
-   
-    #######################################################################
-    # Everything below this point is subject to dismissal
-
-    #----------------------------------------------------------------------
-    def revert_change(self, undolist=[]):
-        self.change_counter -= 1
-        self.sig_emit('notify')
-        undolist.append( UndoInfo(self.notify_change).describe("Notify") )
-        
-    def notify_change(self, undolist=[]):
-        self.change_counter += 1
-        self.sig_emit('notify')        
-        undolist.append( UndoInfo(self.revert_change).describe("Notify") )
-
-    def has_changes(self, counter):
-        return self.change_counter != counter
-
-    #----------------------------------------------------------------------
-        
-    def close(self):
-        self.sig_emit('closed')        
-        self.data = None
-
-    def detach(self):
-        self.sig_emit('closed')                
-
-    def is_empty(self):
-        " Returns True if the Dataset has no data or if that data is empty. "
-        return self._array is None or len(self._array) == 0
-        
-    #----------------------------------------------------------------------
-
-    # I guess these access things should go into the main object, i.e.
-    # into the tree object ???
-    
-#     def get_data(self):
-#         if self._table_import is not None:
-#             self.import_table(*self._table_import)
-#             self._table_import = None
-#         return self.data
-
-#     def import_table(self, project, filename, typecodes, field_props, importer_key):
-#         dir = tempfile.mkdtemp('spj')
-#         name = os.path.join(dir, filename)
-#         project._archive.extract(filename, dir)
-        
-#         try:
-#             table = read_table_from_file(name, importer_key, field_props=field_props)
-#         finally:
-#             os.remove(name)
-#             os.rmdir(os.path.join(dir, 'datasets'))
-#             os.rmdir(dir)
-        
-#         self.data = table
-        
-        
-#     def set_table_import(self, *args):
-#         self._table_import = args
-
-
-    def get_field_type(self, cindex):
-        name = self.get_name(cindex)
-        return self._array.dtype.fields[name][0].type
          
-    def get_field_dtype(self, cindex):
+    def get_column_dtype(self, cindex):
         name = self.get_name(cindex)
         return self._array.dtype.fields[name][0]
 
+    def rename(self, cindex, new_name):
+        """
+        Rename the field with the name or index `cindex` to the new name.        
+        """
+        a = self._array
+        old_name = self.get_name(cindex)
+        new = dict(a.dtype.fields)
+        new[new_name] = new[old_name]
+        del new[old_name]
+        del new[-1]
+        a.dtype = numpy.dtype(new)
 
+        # keep field infos in sync
+        self._infos[new_name] = self._infos[old_name]
+        del self._infos[old_name]
+        self.sig_register('update-fields')        
+
+    
+
+
+
+   
 
 ###############################################################################
 
-def setup_test_dataset():
+def setup_test_table():
 
     a = numpy.array( [ ('Li-I', 7.0, 92.2),                       
                        ('Na', 22.9, 100.0),
@@ -488,11 +513,11 @@ def setup_test_dataset():
 #    designation='Y', label='some data'
 #    designation='Y', label='some data'
 
-    return Dataset(a)
+    return Table(a)
 
     
 def test():
-    ds = setup_test_dataset()
+    ds = setup_test_table()
     ds.dump()
     
     print "Rearranging"
@@ -500,7 +525,7 @@ def test():
     ds.dump()
 
     print "Remove first field"
-    ds.remove(0)
+    ds.remove_column(0)
     ds.dump()
 
     print "Resizing the Table to 10 rows"

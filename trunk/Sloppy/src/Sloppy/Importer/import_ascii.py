@@ -354,6 +354,14 @@ class Importer(dataio.Importer):
                 formats.append('f4')
                 #formats.append(numpy.float32)
 
+            # TODO: the array should be created by the dataset,
+            # TODO: not by this function. This way, the dataset
+            # TODO: could ignore the formats and return a homogeneous
+            # TODO: array. After all, we don't want to write two
+            # TODO: import functions!
+
+            # ds.new_array(shape=(self.growth_offset,),
+            #              names=names, formats=formats)
             dtype = numpy.dtype({'names': names, 'formats':formats})
             a = numpy.zeros( (self.growth_offset,), dtype=dtype)
             ds._array = a
@@ -368,23 +376,7 @@ class Importer(dataio.Importer):
         # set up type converters that convert the given values
         # to the required field type
         #                
-        types = [ds.get_field_type(name) for name in ds.names]
-
-        # TODO: The following is a hack. We might need to ask
-        # TODO: if the given numpy types can be converted to a numpy-value
-        # TODO: by the type directly.
-       
-        typemap = {numpy.float32 : float,
-                   numpy.float64: float,
-                   numpy.int8: int,
-                   numpy.int16: int,
-                   numpy.int32: int,
-                   numpy.int64: int,
-                   numpy.string: str
-                   #numpy.unicode: unicode #?
-                   }        
-        types = [typemap[t] for t in types]
-
+        types = [ds.get_field_ptype(name) for name in ds.names]
 
         # Assign field designations.
         # If there are more fields than designations, then
