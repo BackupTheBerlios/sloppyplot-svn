@@ -1,17 +1,21 @@
 
 
-Dataset._insert is broken...
+- Table: undolist for the two functions
+- Table: new_array, new_array_from_list
+- Dataset: regression tests
+- Dataview: only use functions from Dataset
+- importer ASCII: only use Dataset functions
+- TEST EVERYTHING
+- exporter
+- projectio: import_from_table stuff.
 
+#------------------------------------------------------------------------------
 - Importer: remove checkboxes from widgets....
 - DatasetView: allow to change field name and _type_ !
-- Dataset: finish Undo implementation for column operations
 - Allow to specify format for column view
    (e.g. %2.3f for floats)
 
 - right clicking on point in dataset: goto dataset _OR_ goto Y-Value in dataset!
-
-
-
 #----------------------------------------------------------------------
 
     # I guess these access things should go into the main object, i.e.
@@ -40,9 +44,6 @@ Dataset._insert is broken...
         
 #     def set_table_import(self, *args):
 #         self._table_import = args
-
-
-
 
 
 TODO
