@@ -622,34 +622,35 @@ class Table(Dataset):
 def test():
     a = numpy.array( [(1,2,3), (4,5,6), (7,8,9)], dtype='f4,i2,f4' )
     ds = Table(a)
-
+    ds.get_info(0)
+    ds.get_info(1).designation = 'Y'
+     
     # cut_info = ds.remove_n_rows(1,1)
 #     ds.dump()
 #     print "cut = ", cut_info
 #     ds.insert_rows(1,cut_info)
 #     ds.dump()
 
-    ds.get_info(0)
-    ds.get_info(1).designation = 'Y'
-    ds.dump()
-    cut_info = ds.remove_column(1)
-    print "Cut column 1"
-    ds.dump()
-    print "cut = ", cut_info._infos
-    cut_info.dump()
-    print "Changing a designation of last column"
-    ds.get_info(1).designation = 'XERR'
-    print "re-inserting the column again"
-    ds.insert_(1, cut_info)
-    ds.dump()
-    raise SystemExit
+
+#     ds.dump()
+#     cut_info = ds.remove_column(1)
+#     print "Cut column 1"
+#     ds.dump()
+#     print "cut = ", cut_info._infos
+#     cut_info.dump()
+#     print "Changing a designation of last column"
+#     ds.get_info(1).designation = 'XERR'
+#     print "re-inserting the column again"
+#     ds.insert_(1, cut_info)
+#     ds.dump()
+
 
     ds.dump()
-
     print 
     print "Rearranging"
     ds.rearrange( [1,2,0] )
     ds.dump()
+    raise SystemExit
 
     print "Remove first field"
     ds.remove_column(0)
