@@ -123,6 +123,8 @@ class Dataset(tree.Node, HasSignals):
     def get_default_array(self):
         " Return array that is supposed to be used if no array is given. "
         raise RuntimeError("not implemented")
+
+    # Get/Set of values or of array chunks --------------------------------
     
     def get_value(self, row, col):
         " Get value with specifed row and column index. "
@@ -140,6 +142,17 @@ class Dataset(tree.Node, HasSignals):
         " Return column vector with given index. "
         raise RuntimeError("not implemented")
 
+    def get_region(self, row, col, height, width, cut=False):
+        " Return an array containing the given data range. "
+        raise RuntimeError("not implemented")
+
+    def set_region(self, row, col, array, undolist=[]):
+        " Insert the given array into the dataset at specified row and col. "
+        raise RuntimeError("not implemented")
+    
+
+    # Information ---------------------------------------------------------
+    
     # if you redefine get_nrows in derived classes,
     # please redefine 'nrows = property(get_nrows)' as well.
     def get_nrows(self): return len(self._array)
@@ -282,7 +295,7 @@ class Dataset(tree.Node, HasSignals):
         raise RuntimeError("not implemented")
 
 
-
+    
 
 
 ###############################################################################
@@ -359,6 +372,35 @@ class Table(Dataset):
 
 
     # for get_column, see get_field
+
+    def get_region(self, row, col, height, width, cut=False):        
+        formats = ','.join(self.formats[col:col+width])
+        a = numpy.zeros( (height,), formats)
+
+        i = 0
+        names = a.dtype.fields[-1]
+        for name in self.names[col:col+width]:
+            a[names[i]] = self._array[name][row:row+height].copy()
+            if cut is True:
+                self._array[name][row:row+height] = numpy.zeros((height,), self.formats[col+i])
+            i += 1
+
+        return a
+    
+
+    def set_region(self, row, col, array, undolist=[]):
+        names = array.dtype.fields[-1]
+        i = 0
+        for name in self.names[col:col+len(array)]:
+            # TODO: what if the operation aborts in between ?
+            z = self.get_column_type(col+i)(array[names[i]])
+            print "==>", z
+            
+            self._array[name][row:row+len(array)] = z
+            i += 1
+        
+                   
+    # Information ---------------------------------------------------------
 
     def get_ncols(self): return len(self._array.dtype.fields) - 1
     ncols = property(get_ncols)
@@ -643,9 +685,13 @@ def test():
 #     print "re-inserting the column again"
 #     ds.insert_(1, cut_info)
 #     ds.dump()
-
-
     ds.dump()
+    r = ds.get_region(0,0,2,2, cut=True)
+    ds.dump()
+    print ds._array, r
+    ds.set_region(0,1,r)
+    ds.dump()
+    raise SystemExit
     print 
     print "Rearranging"
     ds.rearrange( [1,2,0] )
