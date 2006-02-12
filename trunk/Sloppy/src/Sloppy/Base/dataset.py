@@ -146,7 +146,7 @@ class Dataset(tree.Node, HasSignals):
         " Return an array containing the given data range. "
         raise RuntimeError("not implemented")
 
-    def set_region(self, row, col, array, undolist=[]):
+    def set_region(self, row, col, array, coerce=True, undolist=[]):
         " Insert the given array into the dataset at specified row and col. "
         raise RuntimeError("not implemented")
     
@@ -388,17 +388,26 @@ class Table(Dataset):
         return a
     
 
-    def set_region(self, row, col, array, undolist=[]):
-        names = array.dtype.fields[-1]
-        i = 0
-        for name in self.names[col:col+len(array)]:
-            # TODO: what if the operation aborts in between ?
-            z = self.get_column_type(col+i)(array[names[i]])
-            print "==>", z
-            
-            self._array[name][row:row+len(array)] = z
-            i += 1
-        
+    def set_region(self, row, col, array, coerce=True, undolist=[]):
+        undo_data = self.get_region(row, col, len(array), len(array.dtype.fields[-1]))
+        ul = UndoList()
+        ul.append(UndoInfo(self.set_region, row, col, undo_data))
+
+        try:
+            names = array.dtype.fields[-1]
+            i = 0
+            for name in self.names[col:col+len(array)]:
+                if coerce is True:
+                    z = self.get_column_type(col+i)(array[names[i]])
+                else:
+                    z = array[names[i]]
+                self._array[name][row:row+len(array)] = z
+                i += 1
+        except Exception, msg:
+            print "set_region failed: %s.  undoing." % msg
+            ul.execute()
+        else:            
+            undolist.append(ul)
                    
     # Information ---------------------------------------------------------
 
@@ -689,7 +698,7 @@ def test():
     r = ds.get_region(0,0,2,2, cut=True)
     ds.dump()
     print ds._array, r
-    ds.set_region(0,1,r)
+    ds.set_region(0,1,r, coerce=False)
     ds.dump()
     raise SystemExit
     print 
