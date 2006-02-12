@@ -1,11 +1,16 @@
 
+Datawin:
 
-- Table: undolist for the two functions
-- Table: new_array, new_array_from_list
-- Dataset: regression tests
-- Dataview: only use functions from Dataset
+- I need to update the treeview whenever I add/remove items.
+  Is there a smart way to do this?
+
+- implement cut/copy/paste. Yes, exactly. 
+
+- implement all data win functions (add/insert/remove columns/....)
+
+- implement coercion of columns.
+
 - importer ASCII: only use Dataset functions
-- TEST EVERYTHING
 - exporter
 - projectio: import_from_table stuff.
 

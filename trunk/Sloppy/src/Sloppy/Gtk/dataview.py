@@ -26,7 +26,7 @@ TreeView to display a Dataset.
 import gtk, gobject, numpy
 
 from Sloppy.Base import globals
-from Sloppy.Base.dataset import Dataset, setup_test_dataset
+from Sloppy.Base.dataset import Dataset, Table
 from Sloppy.Lib.Undo import UndoInfo, UndoList, NullUndo
 
 
@@ -51,17 +51,21 @@ class DatasetModel(gtk.GenericTreeModel):
     #----------------------------------------------------------------------
 
     def get_column_names(self):
-        rv = []
-        n = 0
-        for name in self.dataset.names:
-            info = self.dataset.get_info(name)
-            if info.designation is not None:
-                designation = "(%s)" % info.designation
-            else:
-                designation = ""
-            rv.append("%d: %s %s\n%s" % (n, name, designation, info.label))
-            n+=1
 
+        rv = []
+        if isinstance(self.dataset, Table):        
+            n = 0
+            for name in self.dataset.names:
+                info = self.dataset.get_info(name)
+                if info.designation is not None:
+                    designation = "(%s)" % info.designation
+                else:
+                    designation = ""
+                rv.append("%d: %s %s\n%s" % (n, name, designation, info.label))
+                n+=1
+        else:
+            rv = [str(n) for n in range(self.dataset.ncols)]
+            
         return rv
 
     def get_row_from_path(self, path):
@@ -73,11 +77,6 @@ class DatasetModel(gtk.GenericTreeModel):
 
     def on_get_n_columns(self):
         return self.dataset.ncols
-
-    type_map = {numpy.float32: float,
-                numpy.string: str,
-                numpy.int16: int,
-                numpy.int32: int}        
 
     def on_get_column_type(self, index):
         return str
@@ -135,7 +134,7 @@ class DatasetModel(gtk.GenericTreeModel):
             value = numpy.nan
         else:
             try:
-                converter = self.type_map[self.dataset.get_field_type(col)]
+                converter = self.dataset.get_column_pytype(col)
                 value = converter(value)
             except Exception, msg:
                 print "Not ok: ", msg
@@ -152,35 +151,7 @@ class DatasetModel(gtk.GenericTreeModel):
         undolist.append(ui)            
 
         self.row_changed(path, self.get_iter(path))
-        
-
-#     def insert_row(self, path, data=None, undolist=[]):
-
-#         ul = UndoList().describe("Insert row")
-#         if data is None:
-#             self.table.insert_n_rows(path[0], 1)
-#         else:
-#             self.table.insert_rows(path[0], data)
-#         ul.append( UndoInfo(self.delete_rows, [path]) )
-#         self.row_inserted(path, self.get_iter(path))
-
-#         undolist.append(UndoInfo(self.delete_rows, [path]))
-
-        
-#     def delete_rows(self, pathlist, undolist=[]):
-
-#         ul = UndoList().describe("Delete rows")
-#         deleted = 0
-#         for path in pathlist:
-#             real_row = path[0]-deleted
-#             real_path = (real_row,)
-#             old_data = self.table.delete_n_rows(real_row, 1)
-#             ul.append( UndoInfo(self.insert_row, real_path, data=old_data) )
-#             self.row_deleted(real_path)
-#             deleted += 1
             
-#         undolist.append(ul)
-
 
 class DatasetView(gtk.TreeView):
 
@@ -308,7 +279,8 @@ if __name__ == "__main__":
     win = gtk.Window()
     win.connect("destroy", gtk.main_quit)
 
-    ds = setup_test_dataset()
+    ds = Table( numpy.array([(1,2,3),(4,5,6)]) )
+#    ds = setup_test_dataset()
 #    ds.remove(0)
     ds.dump()
     print ds.nrows

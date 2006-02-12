@@ -25,7 +25,7 @@ logger = logging.getLogger("Base.dataset")
 from Sloppy.Base import tree, utils
 
 from Sloppy.Lib.Signals import HasSignals
-from Sloppy.Lib.Undo import UndoInfo, UndoList, NullUndo
+from Sloppy.Lib.Undo import UndoInfo, UndoList, NullUndo, Journal
 from Sloppy.Lib.Props import HasProperties, String, Unicode, VP
 
 import numpy
@@ -166,7 +166,7 @@ class Dataset(tree.Node, HasSignals):
     def get_column_type(self, col):
         raise RuntimeError("not implemented")
 
-    pytypemap = {numpy.float32 : float,
+    _pytypemap = {numpy.float32 : float,
                 numpy.float64: float,
                 numpy.int8: int,
                 numpy.int16: int,
@@ -180,7 +180,7 @@ class Dataset(tree.Node, HasSignals):
         # TODO: The following is a hack. We might need to ask
         # TODO: if the given numpy types can be converted to a numpy-value
         # TODO: by the type directly.
-        return self._ptypemap[self.get_column_type(col)]
+        return self._pytypemap[self.get_column_type(col)]
     
     def dump(self):
         " Diagnostic dump to stdout of the array. "
@@ -195,9 +195,9 @@ class Dataset(tree.Node, HasSignals):
         current_nrows = self.nrows
         nrows = max(0, nrows)
         if nrows < current_nrows:
-            self.remove_n_rows(nrows, current_nrows - nrows, undolist=[])
+            self.remove_n_rows(nrows, current_nrows - nrows, undolist=undolist)
         elif nrows > self.nrows:
-            self.insert_n_rows(current_nrows, nrows - current_nrows, undolist=[])
+            self.insert_n_rows(current_nrows, nrows - current_nrows, undolist=undolist)
         else:
             undolist.append(NullUndo())        
 
@@ -207,7 +207,7 @@ class Dataset(tree.Node, HasSignals):
 
     def insert_n_rows(self, row, n=1, undolist=[]):
         " Insert `n` empty rows at the given row index. "
-        self.insert_rows(row, rows=numpy.zeros((n,), dtype=self._array.dtype), undolist=[])
+        self.insert_rows(row, rows=numpy.zeros((n,), dtype=self._array.dtype), undolist=undolist)
 
     def insert_rows(self, i, rows, undolist=[]):
         " Insert the given `rows` (list of one-dimensional arrays) at row `i`. "
@@ -265,7 +265,7 @@ class Dataset(tree.Node, HasSignals):
 
     def remove_column(self, col, undolist=[]):
         " Remove a single column at specified index. "
-        return self.remove_n_columns(col, 1, undolist=[])
+        return self.remove_n_columns(col, 1, undolist=undolist)
         
     def remove_n_columns(self, col, n=1, undolist=[]):
         " Remove 'n' columns starting at column with specified index. "
@@ -675,7 +675,13 @@ def test():
     ds = Table(a)
     ds.get_info(0)
     ds.get_info(1).designation = 'Y'
-     
+
+    journal = Journal()
+    ds.insert_n_rows(0, 10, undolist=journal)
+    ds.dump()
+    journal.undo()
+    ds.dump()
+    raise SystemExit
     # cut_info = ds.remove_n_rows(1,1)
 #     ds.dump()
 #     print "cut = ", cut_info

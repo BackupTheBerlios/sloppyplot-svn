@@ -19,7 +19,7 @@
 # $Id: tablewin.py 457 2006-01-19 20:45:02Z niklasv $
 
 
-from Sloppy.Base.dataset import Dataset, FieldInfo
+from Sloppy.Base.dataset import Dataset, Table
 from Sloppy.Base import uwrap, globals
 from Sloppy.Lib.Undo import UndoList, UndoInfo
 
@@ -235,12 +235,11 @@ class DatasetWindow( gtk.Window ):
             logger.error("You may not have more than one row selected.")
             return
 
-        # TODO: undo selection ?
-        logger.debug( "INSERTING ROW %s ", str(model))
-
         ul = UndoList().describe("Insert row")
-        model.insert_row(path, undolist=ul)
-        self._dataset.notify_change(undolist=ul)
+        ds = self.dataset
+        ds.insert_n_rows(path[0], 1, undolist=ul)
+        model.row_inserted(path, model.get_iter(path))        
+        ds.notify_change(undolist=ul)
         self.project.journal.add_undo(ul)
 
 
@@ -260,22 +259,35 @@ class DatasetWindow( gtk.Window ):
             logger.error("You may not have more than one row selected.")
             return
 
-        # TODO: undo selection ?
-        ul = UndoList().describe("Append row")
         path = (path[0]+1,)
-        model.insert_row(path, undolist=ul)
-        self._dataset.notify_change(undolist=ul)
+                
+        ul = UndoList().describe("Append row")
+        ds = self.dataset
+        ds.insert_n_rows(path[0], 1, undolist=ul)
+        model.row_inserted(path, model.get_iter(path))
+        ds.notify_change(undolist=ul)
         self.project.journal.add_undo(ul)
 
         selection.unselect_all()
         selection.select_path(path)
-        
 
+
+    def remove_rows(self, pathlist, undolist=[]):
+        deleted = 0
+        for path in pathlist:
+            real_row = path[0]-deleted
+            real_path = (real_row,)
+            ds.remove_n_rows(real_row, 1, undolist=ul)
+            model.row_deleted(real_path)
+            deleted += 1
+
+        
     def cb_remove_row(self, widget):
         model = self.dataview.get_model()
         if model is None:
             return
-
+        ds = self.dataset
+        
         # see the comment in cb_insert_row about get_selected_rows
         selection = self.dataview.get_selection()
         pathlist = selection.get_selected_rows()[1]
@@ -284,14 +296,13 @@ class DatasetWindow( gtk.Window ):
             
             first_path = (max(pathlist[0][0],0),)
 
-            model.delete_rows(pathlist, undolist=ul)
-            self._dataset.notify_change(undolist=ul)
+            self.remove_rows(pathlist, undolist=ul)            
+            ds.notify_change(undolist=ul)
             
             selection.unselect_all()
             selection.select_path(first_path)        
 
             self.project.journal.append(ul)
-
 
 
     def cb_view_button_press_event(self, treeview, event):
@@ -547,7 +558,7 @@ class ColumnCalculator(gtk.Window):
 class FieldView(gtk.TreeView):
 
     """
-    fields = dictionary of FieldInfo instances.
+    fields = dictionary of Table.Info instances.
     """
     
     def __init__(self, dataset):        
@@ -573,7 +584,7 @@ class FieldView(gtk.TreeView):
 
     def set_dataset(self, dataset):
         self.dataset = dataset
-        # model := (field key, FieldInfo, old_key)
+        # model := (field key, Table.Info, old_key)
         model = gtk.ListStore(str, object, str)
         self.set_model(model)
 
@@ -753,7 +764,7 @@ class ModifyDatasetDialog(gtk.Dialog):
         selection = self.fview.get_selection()
         (model, iter) = selection.get_selected()
         
-        new_info = FieldInfo()
+        new_info = Table.Info()
         fields = self.fview.get_fields()        
         new_key = unique_key(fields, 'new_field')
         iter = model.insert_after(iter, (new_key, new_info, None))

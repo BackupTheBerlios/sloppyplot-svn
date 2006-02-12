@@ -1,6 +1,6 @@
 
 from Sloppy.Lib.Undo import UndoList, ulist
-from Sloppy.Base.dataset import Dataset
+from Sloppy.Base.dataset import Table
 from Sloppy.Base import uwrap, pdict, globals
 from Sloppy.Base.objects import *
 
@@ -85,7 +85,7 @@ def add_experimental_plot(project, undolist=None):
          dtype = {'names':['col1','col2'],
                   'formats':['f4','f4']}
          )
-    ds = Dataset(a)
+    ds = Table(a)
     ds.infos['col2'].designation = 'Y'
     ds.key = pdict.unique_key(project.datasets, "exp_ds")
 
@@ -100,7 +100,7 @@ def add_experimental_plot(project, undolist=None):
                   'formats':['f4','f4']}
          )
 
-    ds2 = Dataset(a)
+    ds2 = Table(a)
     ds2.infos['col4'].designation = 'Y'        
     ds2.key = pdict.unique_key(project.datasets, "exp_ds2")
 
