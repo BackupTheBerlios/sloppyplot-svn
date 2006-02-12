@@ -20,6 +20,7 @@
 
 
 import logging
+logger = logging.getLogger("Base.dataset")
 
 from Sloppy.Base import tree, utils
 
@@ -30,6 +31,7 @@ from Sloppy.Lib.Props import HasProperties, String, Unicode, VP
 import numpy
 
 
+# TODO: check if info objects are copied or not.
 
 #------------------------------------------------------------------------------
 
@@ -109,7 +111,15 @@ class Dataset(tree.Node, HasSignals):
     def new_array(self, rows, cols):
         " Return a new array of the given dimensions. "
         raise RuntimeError("not implemented")
-    
+
+    def new_array_from_list(self, rows, cols):
+        " Return a new array from a list of arrays. "
+        raise RuntimeError("not implemented")
+
+    def new_array_from_columns(self, cols, n):
+        " Return a new array from the columns of the existing array"
+        raise RuntimeError("not implemented")    
+
     def get_default_array(self):
         " Return array that is supposed to be used if no array is given. "
         raise RuntimeError("not implemented")
@@ -124,7 +134,7 @@ class Dataset(tree.Node, HasSignals):
 
     def get_row(self, row):
         " Return row vector with given index. "
-        return self._array[i]
+        return self._array[row]
     
     def get_column(self, col):
         " Return column vector with given index. "
@@ -172,7 +182,7 @@ class Dataset(tree.Node, HasSignals):
         current_nrows = self.nrows
         nrows = max(0, nrows)
         if nrows < current_nrows:
-            self.delete_n_rows(nrows, current_nrows - nrows, undolist=[])
+            self.remove_n_rows(nrows, current_nrows - nrows, undolist=[])
         elif nrows > self.nrows:
             self.insert_n_rows(current_nrows, nrows - current_nrows, undolist=[])
         else:
@@ -190,14 +200,17 @@ class Dataset(tree.Node, HasSignals):
         " Insert the given `rows` (list of one-dimensional arrays) at row `i`. "
         raise RuntimeError("not implemented")
 
-    def delete_n_rows(self, row, n=1, only_zeros=False, undolist=[]):
+    def remove_n_rows(self, row, n=1, only_zeros=False, undolist=[]):
         """
         Delete `n` rows, starting at the row with the index `row`.
         The keyword arg `only_zeros` is an internal argument needed
-        for better undo performance.              
+        for better undo performance.
+
+        Returns array with removed rows.
         """
         n = min(self.nrows-row, n)
         if only_zeros is True:
+            undo_data = numpy.zeros((n,),dtype=self.formatstring)
             ui = UndoInfo(self.insert_n_rows, row, )
         else:
             undo_data = numpy.array(self._array[row:row+n])            
@@ -205,6 +218,8 @@ class Dataset(tree.Node, HasSignals):
             
         self._array = numpy.concatenate([self._array[0:row], self._array[row+n:]])
         undolist.append(ui)
+
+        return undo_data
 
 
     # Column Manipulation ---------------------------------------------------------
@@ -218,22 +233,30 @@ class Dataset(tree.Node, HasSignals):
         # the number of fields is preserved.
         if len(order) != self.ncols:
             raise ValueError("Rearrange order must be of the same length as before.")
-        self._rearrange(order, undolist=[])
+
+        # create reverse mapping for undo information
+        reverse_order = []
+        for i in range(self.ncols):
+            reverse_order.append(order.index(i))
+        ui = UndoInfo(self.rearrange, reverse_order)
+        
+        self._rearrange(order)
+        undolist.append(ui)
     
-    def _rearrange(self, order, undolist=[]):        
+    def _rearrange(self, order):
+        # Undoing a rearrange is not trivial, because _rearrange
+        # can also be used to remove columns by providing a new 'order'
+        # list with less entries than before. This is why the calling
+        # function needs to take care of undoing the operation.
         raise RuntimeError("not implemented")
 
     def remove_column(self, col, undolist=[]):
         " Remove a single column at specified index. "
-        self.remove_columns(col, 1, undolist=[])
+        return self.remove_n_columns(col, 1, undolist=[])
         
-    def remove_columns(self, col, n=1, undolist=[]):
+    def remove_n_columns(self, col, n=1, undolist=[]):
         " Remove 'n' columns starting at column with specified index. "
-        index = self.get_index(col)
-        order = range(self.ncols)
-        for i in range(n):
-            order.pop(index)
-        self._rearrange(order, undolist=[])
+        raise RuntimeError("not implemented")
 
     def append_columns(self, array, undolist=[]):
         " Append the given array to the Dataset array. "        
@@ -242,19 +265,23 @@ class Dataset(tree.Node, HasSignals):
     def insert_columns(self, col, array, undolist=[]):
         """ Insert the given 'array' at specified index 'col'.        
 
-        This high-level function accepts not only arrays, but
-        also lists/tuples or an integer representing a number
-        of empty columns.        
+        This high-level function accepts not only arrays, but also
+        lists/tuples, Datasets or an integer representing a number of
+        empty columns.        
         """
         if isinstance(array, int):
-            array = self.new_array(rows=self.nrows, cols=array)
+            ds = self.__class__(self.new_array(rows=self.nrows, cols=array))
         elif isinstance(array, (list, tuple)):
-            array = self.new_array_from_list(array)
+            ds = self.__class__(self.new_array_from_list(array))
+        elif isinstance(array, numpy.ndarray):
+            ds = self.__class__(array)
+            
+        self.insert_(col, ds, undolist=undolist)
 
-        self._insert_columns(col, array, undolist=undolist)
-
-    def _insert_columns(self, col, array, undolist=[]):
+    def insert_(self, col, ds, undolist=[]):
         raise RuntimeError("not implemented")
+
+
 
 
 
@@ -275,8 +302,8 @@ class Table(Dataset):
         query = String()
 
 
-    def __init__(self, array=None):
-        self._infos = {}        
+    def __init__(self, array=None, infos={}):
+        self._infos = infos
         Dataset.__init__(self, array)
 
 
@@ -291,13 +318,33 @@ class Table(Dataset):
         
         undolist.append(ui)
 
-    def new_array(self, rows, cols, names=None, formats=None):
-        raise RuntimeError("Not implemented")
+    def new_array(self, rows, cols):
+        return numpy.zeros( (rows,), dtype='f4'*cols)
 
+    def new_array_from_list(self, alist):
+        # assume a list of rank 2, e.g. [[1,2,3], [4,5,6]]
+        return numpy.array( alist, dtype='f4'*len(alist) )
+                            
+    def new_array_from_columns(self, col, n):
+        atype = {'names': self.names[col:col+n],
+                 'formats': self.formats[col:col+n]}
+        print atype
+        a = numpy.zeros( (self.nrows,), atype)
+
+        for name in a.dtype.fields[-1]:
+            a[name] = self._array[name]
+            
+        return a
+        
     def get_default_array(self):
         return numpy.array([(0.0,0.0)], dtype='f4,f4')
 
 
+    def copy(self):
+        a = self._array.copy()
+        infos = self.infos.copy()
+        return self.__class__(a, infos=infos)
+        
     # Value Access ---------------------------------------------------------
 
     def get_value(self, cindex, row):
@@ -322,37 +369,42 @@ class Table(Dataset):
 
 
     def dump(self):
-        print "Dataset (%s)" % self.__class__.__name__
-        print
         fields = self._array.dtype.fields
-        print "\t".join(fields[-1])
-        print "\t".join([str(fields[key][0]) for key in fields[-1]])
-        print
-        for row in self._array:
-            print "\t".join(str(item) for item in row.item())
-        print
+        field_descr = "  ".join(fields[-1])
+        format_descr = "  ".join(self.formats)
 
+        length = max(len(format_descr), len(field_descr))
+        
+        print "-"*length
+        print field_descr
+        print format_descr
+        print "infos = "
+        for key, info in self._infos.iteritems():
+            print "   ", key, "= ", info.get_values()
+        print "-"*length
+        for row in self._array:
+            print "  ".join(str(item) for item in row.item())
+
+        print "-"*length
 
     # Row Manipulation ----------------------------------------------------
 
     def insert_rows(self, i, rows, undolist=[]):        
         self._array = numpy.concatenate([self._array[0:i], rows, self._array[i:]])
-        undolist.append(UndoInfo(self.delete_n_rows, i, len(rows), only_zeros=True))
+        undolist.append(UndoInfo(self.remove_n_rows, i, len(rows), only_zeros=True))
 
 
     # Column Manipulation ---------------------------------------------------------
 
-    # TODO: undolist
-    def _rearrange(self, order, undolist=[]):
+    def _rearrange(self, order):
         a = self._array
-        
+
         # Create new descriptor and new infos.
         # The new infos are created because it is possible to
         # specify less fields in the rearrangement.
         descriptor = a.dtype.arrdescr
         names = a.dtype.fields[-1]
 
-        new_infos = {}
         new_descriptor = []
         for index in order:
             if isinstance(index, basestring):
@@ -361,52 +413,81 @@ class Table(Dataset):
             else:
                 name = names[index]
             new_descriptor.append(descriptor[index])
-            new_infos[name] = self.get_info(name)
 
         new_array = numpy.zeros(a.shape, dtype=numpy.dtype(new_descriptor))       
         for name in new_array.dtype.fields[-1]:
             new_array[name] = a[name]
 
         self._array = new_array
-        self._infos = new_infos
         self.sig_emit('update-fields')
 
 
-    # TODO: undolist
-    def _insert_columns(self, col, array, undolist=[]):        
+    def insert_(self, col, table, undolist=[]):
+        
         col = self.get_index(col)
-
+       
         # We merge in the description of the new array into the
         # existing array 'self.array'. Unfortunately we must
         # make sure that each new added field has a unique name.
-        names = self._array.dtype.fields[-1]        
-        descriptor = self.array.dtype.arrdescr[:]
+        new_names = self.names[:]
+        descriptor = self._array.dtype.arrdescr[:]
+        infos = {}
         i = 0
-        for name,typecode in array.dtype.arrdescr:
-            new_name = utils.unique_names([name], names)
-            descriptor.insert(i, (new_name, typecode))
+        for name in table.names:
+            typecode = table.get_column_type(name)
+            new_name = utils.unique_names([name], new_names)[0]
+            new_names.insert(i+col, new_name)
+            descriptor.insert(i+col, (new_name, typecode))
+            
+            if table._infos.has_key(name):
+                infos[new_name] = table._infos[name].copy()
             i+=1
 
-        print "new descriptor looks like this:"
-        print descriptor
-        print
-        new_array = numpy.zeros(a.shape, dtype=numpy.dtype(new_descriptor))
+        new_array = numpy.zeros( (self.nrows,), dtype=numpy.dtype(descriptor))
 
         # fill new array with data
-        array_names = array.dtype.fields[-1]
-        for name in new_array.dtype.fields[-1]:
-            if name in array_names:
-                new_array[name] = array[name]
-            else:
-                new_array[name] = self._array[name]
+        # copy data from existing dataset
+        for name in self.names:
+            new_array[name] = self._array[name]
 
-        print "new array looks like this:"
-        print new_array
-        print
+        # ..and then copy data from table object.
+        # Because the names might have changed, we refer
+        # to the columns by their index!    
+        i = 0
+        for name in table.names:
+            new_array[new_names[col+i]] = table._array[name]
+            i += 1
+            
+        # undo information
+        undolist.append(UndoInfo(self.remove_n_columns, col, table.ncols))
+        undolist.append(UndoInfo(self.update_infos, infos))
         
         self._array = new_array
         
-    
+
+
+    def remove_n_columns(self, col, n=1, undolist=[]):
+        index = self.get_index(col)
+        order = range(self.ncols)
+        for i in range(n):
+            order.pop(index)
+
+        # create undo information
+        ul = UndoList().describe("remove columns")        
+        old_names = self.names[col:col+n]
+        undo_array = self.new_array_from_columns(col, n)
+        undo_infos = {}
+        for name in old_names:
+            if self._infos.has_key(name):
+                print "COPYING INFO ", name
+                undo_infos[name] = self._infos[name].copy()
+        undo_table = self.__class__(undo_array, undo_infos)
+        print "BEFORE REARRANGE", self._infos
+        self._rearrange(order)
+        print "AFTER REARRANGE", self._infos
+        undolist.append(UndoInfo(self.insert_columns, col, undo_table))
+        return undo_table
+
 
     #----------------------------------------------------------------------
     # SPECIFIC TO TABLE OBJECTS
@@ -439,8 +520,7 @@ class Table(Dataset):
         """
         name = self.get_name(cindex)
         if not self._infos.has_key(name):
-            self._infos[name] = Table.Info()
-            
+            self._infos[name] = Table.Info()           
         return self._infos[name]
 
     def get_infos(self):
@@ -449,8 +529,43 @@ class Table(Dataset):
         for name in self.names:
             infos[name] = self.get_info(name)
         return infos
+
+    def update_infos(self, adict, undolist=[]):
+        " TODO . Value of None => delete Info"
+        undo_dict = {}
+        for name, info in adict.iteritems():
+            if self._infos.has_key(name) is True:
+                undo_dict[name] = self._infos
+            else:
+                undo_dict[name] = None
+                
+            if info is None:
+                try:
+                    del self._infos[name]
+                except KeyError:
+                    logger.warn("update_infos: info with name %s did not exist" % name)
+            else:
+                self._infos[name] = info
+
+        undolist.append(UndoInfo(self.update_infos, undo_dict))
+                
     infos = property(get_infos)
 
+    def get_formats(self):
+        " Return a list with the column formats, e.g. ['f4','f4'] "
+        rv = []
+        fields = self._array.dtype.fields
+        for name in self.names:
+            dt = fields[name][0]
+            rv.append( '%s%d' % (dt.kind,dt.itemsize) )
+        return rv
+    formats = property(get_formats)
+    
+    def get_formatstring(self):
+        " Return a string with the column formats, e.g. 'f4,f4' "
+        return ','.join(self.formats)
+    formatstring = property(get_formatstring)
+    
     def get_index(self, cindex):
         " Return index of field with given name or index `cindex`. "
         if isinstance(cindex, int):
@@ -500,26 +615,38 @@ class Table(Dataset):
 
 ###############################################################################
 
-def setup_test_table():
 
-    a = numpy.array( [ ('Li-I', 7.0, 92.2),                       
-                       ('Na', 22.9, 100.0),
-                       ('Zn-I', 62.9, 64.0)],
-                       dtype = {'formats': ['S10', 'f4', 'f4'],
-                                'names': ['element', 'amu', 'abundance']})
 
-    # TODO: allow passing field information 
-#    infos = designation='X', label='some data'
-#    designation='Y', label='some data'
-#    designation='Y', label='some data'
-
-    return Table(a)
 
     
 def test():
-    ds = setup_test_table()
+    a = numpy.array( [(1,2,3), (4,5,6), (7,8,9)], dtype='f4,i2,f4' )
+    ds = Table(a)
+
+    # cut_info = ds.remove_n_rows(1,1)
+#     ds.dump()
+#     print "cut = ", cut_info
+#     ds.insert_rows(1,cut_info)
+#     ds.dump()
+
+    ds.get_info(0)
+    ds.get_info(1).designation = 'Y'
     ds.dump()
-    
+    cut_info = ds.remove_column(1)
+    print "Cut column 1"
+    ds.dump()
+    print "cut = ", cut_info._infos
+    cut_info.dump()
+    print "Changing a designation of last column"
+    ds.get_info(1).designation = 'XERR'
+    print "re-inserting the column again"
+    ds.insert_(1, cut_info)
+    ds.dump()
+    raise SystemExit
+
+    ds.dump()
+
+    print 
     print "Rearranging"
     ds.rearrange( [1,2,0] )
     ds.dump()
@@ -537,7 +664,7 @@ def test():
     ds.dump()
 
     print "Delete rows 1-3"
-    ds.delete_n_rows(1, 2)
+    ds.remove_n_rows(1, 2)
     ds.dump()
     raise SystemExit
 
@@ -546,6 +673,7 @@ def test():
     ds.remove(c)
     #print ds
 
+    
     
 
    
