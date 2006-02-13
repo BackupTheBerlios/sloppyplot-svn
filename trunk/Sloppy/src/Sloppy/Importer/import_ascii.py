@@ -376,7 +376,7 @@ class Importer(dataio.Importer):
         # set up type converters that convert the given values
         # to the required field type
         #                
-        types = [ds.get_field_ptype(name) for name in ds.names]
+        types = [ds.get_column_pytype(name) for name in ds.names]
 
         # Assign field designations.
         # If there are more fields than designations, then

@@ -235,14 +235,14 @@ class Backend(object, HasSignals):
     def get_dataset_data(self, dataset, cx, cy):
         #:line.cx
         try:
-            xdata = dataset.get_field(cx)
+            xdata = dataset.get_column(cx)
         except IndexError:
             raise BackendError("X-Index out of range (%s). Line skipped." % cx)
 
 
         #:line.cy
         try:
-            ydata = dataset.get_field(cy)
+            ydata = dataset.get_column(cy)
         except IndexError:
             raise BackendError("Y-Index out of range (%s). Line skipped." % cy)
 

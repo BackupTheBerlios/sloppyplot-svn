@@ -20,7 +20,7 @@
 
 
 
-from Sloppy.Base.dataset import Dataset
+from Sloppy.Base.dataset import Dataset, Table
 from Sloppy.Base.project import Project
 from Sloppy.Base.objects import Legend, Axis, Plot, Layer, Line, TextLabel
 from Sloppy.Base import pdict, iohelper, error, globals, utils
@@ -30,6 +30,7 @@ from Sloppy.Lib.ElementTree.ElementTree import ElementTree, Element, SubElement,
 
 import tarfile, tempfile, os, shutil
 
+import numpy
 
 #------------------------------------------------------------------------------
 import logging
@@ -63,26 +64,87 @@ class ParseError(Exception):
 # Object Creation (starting with new_xxx)
 
 
-def new_dataset(spj, element):
-    ncols = int(element.attrib.pop('ncols',0))
-    typecodes = element.attrib.pop('typecodes','')
-
+def new_table(spj, element):
+    #ncols = int(element.attrib.pop('ncols',0))
+    
     # TODO: pass fileformat_version to importer (somehow)
     # TODO: how?
     fileformat = element.attrib.pop('fileformat', 'CSV')
     fileformat_version = element.attrib.pop('fileformat_version', None)
-    ds = Dataset(**element.attrib)
+
+    # Create field infos
+    formats = []
+    info_dict = {}
+    for eColumn in element.findall('Column'):        
+        info = Table.Info()
+
+        # name
+        try:
+            name = eColumn.attrib['name']
+        except KeyError:
+            logger.warn("Could not get column name; using default name instead.")
+            name = utils.unique_names(['col'], info_dict.keys())
+
+        # format
+        try:
+            format = eColumn.attrib['format']
+        except KeyError:
+            logger.warn("Could not get column type, using default type instead.")
+            format = 'f4'
+
+        formats.append(format)
+        info_dict[name] = info
+
+    # create table with given format and infos, but w/o any rows
+    a = numpy.zeros((0,), {'names':info_dict.keys(), 'formats':formats})
+    tbl = Table(a, infos=info_dict)
 
     # metadata
     for eMetaitem in element.findall('Metadata/Metaitem'):
         key = eMetaitem.attrib['key']
         value = eMetaitem.text
-        ds.node_info.metadata[key] = unicode(value)
+        tbl.node_info.metadata[key] = unicode(value)
 
-#     # actual Table
-#     if element.tag == 'Table':
+    # table key is essential
+    try:
+        key = element.attrib['key']
+    except KeyError:
+        logger.warn("Could not get table key. Using generic key instead.")
+        key = pdict.unique_key(spj.datasets, 'dataset')
+    tbl.key = key
 
-#         # Extract additional column information.
+    
+    print "This is how the new table dumps:"
+    print
+    tbl.dump()
+    print
+
+    # Right now, the Table is still empty. By setting this callback
+    # for the _import attribute, the dataset is loaded from the hard
+    # disk on the next access.
+    
+    filename = os.path.join('datasets', utils.as_filename(tbl.key))
+    def do_import(the_table):
+        try:
+            archive = tarfile.open(spj.get_filename(),'r:gz')
+        except tarfile.ReadError:
+            logger.error('Error while opening archive "%s"' % filename)
+            raise FileNotFoundError
+        
+        tempdir = tempfile.mkdtemp(prefix="spj-temp-")
+        try:
+            archive.extract(filename, tempdir)
+            importer = globals.importer_registry['ASCII'](dataset=the_table)
+            return importer.read_dataset_from_file(os.path.join(tempdir, filename))
+        finally:
+            shutil.rmtree(tempdir)
+
+    tbl._import = do_import
+
+    return tbl
+        
+        
+    # Extract additional column information.
 #         # This information will be passed on to 'set_table_import',
 #         # which will pass it on to the internal importer.        
 #         column_props = list()
@@ -97,13 +159,9 @@ def new_dataset(spj, element):
 #                 if key is not None:
 #                     p[key] = unicode(eInfo.text)
         
-#         filename = os.path.join('datasets', utils.as_filename(ds.key))
-#         ds.set_table_import(spj, filename, typecodes, column_props, fileformat)
+
+
         
-    
-    return ds
-
-
 def new_label(spj, element):
     text = element.text
     element.attrib['text'] = text
@@ -210,8 +268,8 @@ def fromTree(tree):
             continue
         raise IOError("Invalid Sloppy File Format Version %s. Aborting Import." % version)
 
-    for eDataset in eProject.findall('Datasets/*'):
-        spj.datasets.append( new_dataset(spj, eDataset))
+    for eDataset in eProject.findall('Datasets/Table'):
+        spj.datasets.append( new_table(spj, eDataset))
 
     for ePlot in eProject.findall('Plots/*'):
         spj.plots.append( new_plot(spj, ePlot) )
@@ -244,40 +302,50 @@ def toElement(project):
     #     Column
 
     # New notation
-    # Data
-    #   Dataset (typecodes gone)
-    #     Field
+    # Datasets
+    #   Table (no attribute typecodes)
+    #     Column (attributes name and format)
     #       Attribute
-    #     Field
+    #     Column
 
-    eData = SubElement(eProject, "Data")
+    eData = SubElement(eProject, "Datasets")
     for ds in project.datasets:
+        
         if ds._array is None:
             logger.error("Empty Dataset: %s. NOT SAVED." % ds.key)
             continue
-        
-        eDataset = SubElement(eData, 'Dataset')
-        SIV(eDataset, 'ncols', ds.ncols)
-#        SIV(eDataset, 'nrows', ds.nrows)        
 
-        # All information about the Fields is stored in the
-        # element tree.  Only the actual data will later on be
-        # written to the archive.
-        for n in range(ds.ncols):
-            eField = SubElement(eDataset, 'Field')
-            SIV(eField, 'name', ds.get_name(n))
-            dt = ds.get_field_dtype(n)
-            SIV(eField, 'type', '%s%s' % (dt.kind, str(dt.itemsize)))
-            info = ds.get_info(n)
-            for k,v in info.get_values().iteritems():
-                if v is not None:
-                    eAttribute = SubElement(eField, 'Attribute')
-                    SIV(eAttribute, 'key', k)
-                    eAttribute.text = v
+        # Table
+        if isinstance(ds, Table):
+            tbl = ds
+            eTable = SubElement(eData, 'Table')
+            #SIV(eTable, 'ncols', tbl.ncols)
+            #SIV(eDataset, 'nrows', ds.nrows)        
 
-        
-        SIV(eData, 'key', ds.key)
-        SIV(eData, 'fileformat', 'CSV' )
+            # All information about the columns is stored in the
+            # element tree.  Only the actual data will later on be
+            # written to the archive.
+            for n in range(tbl.ncols):
+                eColumn = SubElement(eTable, 'Column')
+                SIV(eColumn, 'name', tbl.get_name(n))
+                dt = tbl.get_column_dtype(n)
+                SIV(eColumn, 'format', '%s%s' % (dt.kind, str(dt.itemsize)))
+                info = tbl.get_info(n)
+                for k,v in info.get_values().iteritems():
+                    if v is not None:
+                        eAttribute = SubElement(eColumn, 'Attribute')
+                        SIV(eAttribute, 'key', k)
+                        eAttribute.text = v
+
+            # general information (should be there for any other kind of
+            # Dataset as well)
+            SIV(eTable, 'key', ds.key)
+            SIV(eTable, 'fileformat', 'CSV' )
+                        
+        else:
+            logger.error("Cannot save Dataset %s of type %s" % (ds.key, ds.__class__.__name__))
+            
+
 
         # write node information
         

@@ -59,7 +59,7 @@ class Dataset(tree.Node, HasSignals):
         self.key = "" # TODO: should be moved to parent object!    
         self.change_counter = 0
         self.__is_valid = True
-        self._table_import = None
+        self._import = None
 
         self.sig_register('closed')
         self.sig_register('notify')
@@ -102,12 +102,17 @@ class Dataset(tree.Node, HasSignals):
 
     def get_array(self):
         " Return internal array. "
+        if self._import is not None:
+            self._import(self)
+            self._import = None
         return self._array
     
     def set_array(self, array):
         " Set internal array. "
         raise RuntimeError("not implemented")
 
+    array = property(get_array, set_array)
+    
     def new_array(self, rows, cols):
         " Return a new array of the given dimensions. "
         raise RuntimeError("not implemented")
@@ -327,7 +332,7 @@ class Table(Dataset):
 
 
     # Array ---------------------------------------------------------------
-    
+
     def set_array(self, array, infos={}, undolist=[]):
         ui = UndoInfo(self.set_array, self._array, self._infos)
         self._array = array
@@ -336,6 +341,9 @@ class Table(Dataset):
         
         self.sig_emit('update-fields')    
 
+    array = property(Dataset.get_array, set_array)
+
+    
     def new_array(self, rows, cols):
         names = ['f%d'%i for i in range(cols)]
         formats = ['f4']*cols

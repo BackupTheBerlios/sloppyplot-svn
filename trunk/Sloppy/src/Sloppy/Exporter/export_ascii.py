@@ -44,8 +44,10 @@ class Exporter(dataio.Exporter):
                     numpy.int16: "%d",
                     numpy.int32: "%d",
                     numpy.string: '"%s"'}
-        
-        types  = [dataset.get_field_type(name) for name in dataset.names]
+
+        # TODO: if we have Matrix, check if we really need different
+        # TODO: types or just one for all columns
+        types  = [dataset.get_column_type(i) for i in range(dataset.ncols)]
         types = [type_map[t] for t in types]
         exp = self.delimiter.join(types) + '\n'
 

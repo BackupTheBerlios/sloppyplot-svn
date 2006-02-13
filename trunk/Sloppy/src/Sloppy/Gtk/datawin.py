@@ -156,6 +156,8 @@ class DatasetWindow( gtk.Window ):
             self.set_title("(no dataset)")
         else:
             self.set_title("DS: %s" % dataset.key)
+            # TODO: this is not the correct place for this
+            dataset.get_array()
 
         self.dataview.set_dataset(dataset)
 
