@@ -1,12 +1,14 @@
 
 Datawin:
 
-- I need to update the treeview whenever I add/remove items.
-  Is there a smart way to do this?
+- implement all data win functions (add/insert/remove columns/....)
+
+ => PROBLEM: insert a column, then undo, then redo
+    This calls the insert_ method which does not seem to work very well.
+    I also have the impression, that some info object is copied as dict
+    and not as FieldInfo.
 
 - implement cut/copy/paste. Yes, exactly. 
-
-- implement all data win functions (add/insert/remove columns/....)
 
 - implement coercion of columns.
 

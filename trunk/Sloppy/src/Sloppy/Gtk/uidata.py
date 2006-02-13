@@ -114,7 +114,7 @@ uistring_datawin = \
      </menu>
    </menubar>              
    <toolbar name='Toolbar'>
-     <toolitem action='EditColumns'/>           
+     <toolitem action='EditFields'/>           
      <separator/>
      <toolitem action='RowInsert'/>
      <toolitem action='RowAppend'/>

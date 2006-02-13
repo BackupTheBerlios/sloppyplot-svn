@@ -288,6 +288,10 @@ class Dataset(tree.Node, HasSignals):
             ds = self.__class__(self.new_array_from_list(array))
         elif isinstance(array, numpy.ndarray):
             ds = self.__class__(array)
+        elif isinstance(array, self.__class__):
+            ds = array
+        else:
+            raise ValueError("invalid value for insert_columns: %s" % array)
             
         self.insert_(col, ds, undolist=undolist)
 
@@ -314,6 +318,8 @@ class Table(Dataset):
         designation = VP(['X','Y','XERR', 'YERR', 'LABEL', None])
         query = String()
 
+        public_props=['label', 'designation', 'query']
+
 
     def __init__(self, array=None, infos={}):
         self._infos = infos
@@ -332,17 +338,21 @@ class Table(Dataset):
         undolist.append(ui)
 
     def new_array(self, rows, cols):
-        return numpy.zeros( (rows,), dtype='f4'*cols)
+        names = ['f%d'%i for i in range(cols)]
+        formats = ['f4']*cols
+        return numpy.zeros((rows,), dtype={'names':names,'formats':formats})
 
     def new_array_from_list(self, alist):
         # assume a list of rank 2, e.g. [[1,2,3], [4,5,6]]
-        return numpy.array( alist, dtype='f4'*len(alist) )
+        names = ['f%d'%i for i in range(len(alist))]
+        formats = ['f4']*len(alist)        
+        return numpy.array(alist, dtype={'names':names,'formats':formats})
                             
     def new_array_from_columns(self, col, n):
         atype = {'names': self.names[col:col+n],
                  'formats': self.formats[col:col+n]}
         print atype
-        a = numpy.zeros( (self.nrows,), atype)
+        a = numpy.zeros((self.nrows,), atype)
 
         for name in a.dtype.fields[-1]:
             a[name] = self._array[name]

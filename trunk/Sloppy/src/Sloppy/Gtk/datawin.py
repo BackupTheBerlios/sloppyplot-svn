@@ -86,21 +86,26 @@ class DatasetWindow( gtk.Window ):
         
         self.cblist = []
 
+        # GUI elements
         self.uimanager = self._construct_uimanager()
-        self.menubar = self._construct_menubar()
-        self.toolbar = self._construct_toolbar()
+
+        self.menubar = self.uimanager.get_widget('/MainMenu')
+
+        self.toolbar = self.uimanager.get_widget('/Toolbar')
+        self.toolbar.set_style(gtk.TOOLBAR_ICONS)
+
         self.popup = self.uimanager.get_widget('/popup_column')
         self.popup_info = None # needed for popup
-        self.statusbar = self._construct_statusbar()
+
+        self.statusbar = gtk.Statusbar()
+        self.statusbar.set_has_resize_grip(True)        
 
         self.dataview = self._construct_dataview()
         sw = uihelper.add_scrollbars(self.dataview)
-        sw.show()
                 
         hpaned = gtk.HPaned()
         hpaned.pack1( sw )
 #        hpaned.pack2( self._construct_metadata_widget() )
-        hpaned.show()
         self.hpaned = hpaned
         
         vbox = gtk.VBox()
@@ -110,7 +115,6 @@ class DatasetWindow( gtk.Window ):
         vbox.pack_start( self.hpaned, expand=True, fill=True )
         vbox.pack_start( self.statusbar, expand=False, fill=True )
 
-        vbox.show()
         self.add(vbox)
 
         self.project = project  # immutable
@@ -119,7 +123,9 @@ class DatasetWindow( gtk.Window ):
         self.set_dataset(dataset)        
         self.project.sig_connect("close", (lambda sender: self.destroy()))
 
-        self.dataview.emit('cursor_changed')                
+        self.dataview.emit('cursor_changed')
+
+        self.show_all()
 
         
     def _cb_close(self, action):
@@ -135,18 +141,7 @@ class DatasetWindow( gtk.Window ):
         uimanager.add_ui_from_string(self.ui)
         self.add_accel_group(uimanager.get_accel_group())
         return uimanager
-
-    def _construct_menubar(self):
-        menubar = self.uimanager.get_widget('/MainMenu')
-        menubar.show()
-        return menubar
-
-    def _construct_toolbar(self):
-        toolbar = self.uimanager.get_widget('/Toolbar')
-        toolbar.set_style(gtk.TOOLBAR_ICONS)
-        toolbar.show()
-        return toolbar
-        
+       
 
     def _construct_dataview(self):        
         view = dataview.DatasetView()
@@ -154,20 +149,12 @@ class DatasetWindow( gtk.Window ):
         contextid = self.statusbar.get_context_id("coordinates")
         view.connect('cursor-changed', self.on_cursor_changed, contextid)
         view.connect('column-clicked', self.on_column_clicked)
-        view.show()
         return view
 
     def _construct_metadata_widget(self):
         widget = gtk.Label('metadata')
-        widget.show()
         return widget
 
-
-    def _construct_statusbar(self):
-        statusbar = gtk.Statusbar()
-        statusbar.set_has_resize_grip(True)        
-        statusbar.show()
-        return statusbar
 
     
     #----------------------------------------------------------------------
@@ -217,93 +204,24 @@ class DatasetWindow( gtk.Window ):
     def on_column_clicked(self, dataview, tvcolumn):
         print "CLICK!"
         
-    def cb_insert_row(self, widget):
-        model = self.dataview.get_model()
-        if model is None:
-            return
-
-        # get_selected_rows returns a tuple (model, pathlist).
-        # If there is no selection, None is returned as model,
-        # which is not what we want. Therefore we will only use [1],
-        # the pathlist.
-        pathlist = self.dataview.get_selection().get_selected_rows()[1]
-        if len(pathlist) == 0:
-            path = (0,)
-        elif len(pathlist) == 1:
-            path = pathlist[0]
-        else:
-            logger.error("You may not have more than one row selected.")
-            return
-
-        ul = UndoList().describe("Insert row")
-        ds = self.dataset
-        ds.insert_n_rows(path[0], 1, undolist=ul)
-        model.row_inserted(path, model.get_iter(path))        
-        ds.notify_change(undolist=ul)
-        self.project.journal.add_undo(ul)
-
-
+    def cb_insert_row(self, widget, offset=0):
+        model, pathlist = self.dataview.get_selection().get_selected_rows()
+        if len(pathlist) > 0:
+            model.insert_rows_by_path(pathlist, offset=offset, undolist=self.project.journal)
+            selection = self.dataview.get_selection()
+            selection.unselect_all()
+            selection.select_path(pathlist[0])
+               
     def cb_append_row(self, widget):
-        model = self.dataview.get_model()
-        if model is None:
-            return
-
-        # see the comment in cb_insert_row about get_selected_rows
-        selection = self.dataview.get_selection()
-        pathlist = selection.get_selected_rows()[1]
-        if len(pathlist) == 0:
-            path = (0,)
-        elif len(pathlist) == 1:
-            path = pathlist[0]
-        else:
-            logger.error("You may not have more than one row selected.")
-            return
-
-        path = (path[0]+1,)
-                
-        ul = UndoList().describe("Append row")
-        ds = self.dataset
-        ds.insert_n_rows(path[0], 1, undolist=ul)
-        model.row_inserted(path, model.get_iter(path))
-        ds.notify_change(undolist=ul)
-        self.project.journal.add_undo(ul)
-
-        selection.unselect_all()
-        selection.select_path(path)
-
-
-    def remove_rows(self, pathlist, undolist=[]):
-        deleted = 0
-        for path in pathlist:
-            real_row = path[0]-deleted
-            real_path = (real_row,)
-            ds.remove_n_rows(real_row, 1, undolist=ul)
-            model.row_deleted(real_path)
-            deleted += 1
-
+        self.cb_insert_row(widget, offset=1)
         
     def cb_remove_row(self, widget):
-        model = self.dataview.get_model()
-        if model is None:
-            return
-        ds = self.dataset
-        
-        # see the comment in cb_insert_row about get_selected_rows
-        selection = self.dataview.get_selection()
-        pathlist = selection.get_selected_rows()[1]
+        model, pathlist = self.dataview.get_selection().get_selected_rows()
         if len(pathlist) > 0:
-            ul = UndoList().describe("Remove rows")
-            
-            first_path = (max(pathlist[0][0],0),)
-
-            self.remove_rows(pathlist, undolist=ul)            
-            ds.notify_change(undolist=ul)
-            
+            model.remove_rows_by_path(pathlist, undolist=self.project.journal)
+            selection = self.dataview.get_selection()
             selection.unselect_all()
-            selection.select_path(first_path)        
-
-            self.project.journal.append(ul)
-
+            selection.select_path(pathlist[0])
 
     def cb_view_button_press_event(self, treeview, event):
         if event.button == 3:
@@ -341,18 +259,17 @@ class DatasetWindow( gtk.Window ):
     def on_action_ColumnInsert(self, action):
         rownr, colnr, column_object = self.popup_info
         ul = UndoList().describe("Insert column")
-        self.dataset.insert(colnr, 1, undolist=ul)
-        uwrap.emit_last(self.dataset, 'notify')
+        self.dataset.insert_columns(colnr, 1, undolist=ul)
+        uwrap.emit_last(self.dataset, 'update-fields')
         self.project.journal.append(ul)
         
         
-    def cb_column_insert(self, action):
-        # TODO
-        pass
-        #rownr, colnr, column_object = self.popup_info
-        #table = self.dataset.get_data()
-        #column = table.new_column('f')
-        #self.insert_column(table, colnr, column, undolist=self.project.journal)
+#     def cb_column_insert(self, action):
+#         ul = UndoList("Insert column")        
+#         rownr, colnr, column_object = self.popup_info
+#         self.dataset.insert_n_columns(colnr, 1, undolist=ul)
+#         self.dataset.notify_change(undolist=ul)
+#         self.project.journal.append(ul)
 
     def cb_column_insert_after(self, action):
         # TODO
@@ -734,6 +651,7 @@ class ModifyDatasetDialog(gtk.Dialog):
 
         fields = self.fview.get_fields()
         del fields[name]
+
         # TODO: insert field for key into OptionsDialog
         
         dialog = OptionsDialog(info)

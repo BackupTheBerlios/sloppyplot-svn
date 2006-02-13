@@ -28,7 +28,7 @@ import gtk, gobject, numpy
 from Sloppy.Base import globals
 from Sloppy.Base.dataset import Dataset, Table
 from Sloppy.Lib.Undo import UndoInfo, UndoList, NullUndo
-
+from Sloppy.Lib.Signals import HasSignals
 
 
 class DatasetModel(gtk.GenericTreeModel):
@@ -151,9 +151,51 @@ class DatasetModel(gtk.GenericTreeModel):
         undolist.append(ui)            
 
         self.row_changed(path, self.get_iter(path))
-            
 
-class DatasetView(gtk.TreeView):
+
+    def remove_rows_by_path(self, pathlist, undolist=[]):
+        ul = UndoList().describe("Remove rows")       
+        ds = self.dataset
+        deleted = 0
+        real_pathlist = []
+        for path in pathlist:
+            real_path = (path[0]-deleted,)
+            ds.remove_n_rows(real_path[0], 1, undolist=ul)
+            real_pathlist += real_path
+            deleted += 1
+        self.undoable_rows_deleted(real_pathlist, undolist=ul)
+        ds.notify_change()
+        undolist.append(ul)
+
+
+    def insert_rows_by_path(self, pathlist, offset=0, undolist=[]):
+        ul = UndoList().describe("Insert row")
+        ds = self.dataset
+        added = offset
+        real_pathlist = []
+        for path in pathlist:
+            real_path = (path[0]+added,)
+            ds.insert_n_rows(real_path[0], 1, undolist=ul)
+            real_pathlist += real_path
+            added += 1
+        self.undoable_rows_inserted(pathlist, undolist=ul)
+        ds.notify_change(undolist=ul)
+        undolist.append(ul)
+
+    def undoable_rows_deleted(self, pathlist, undolist=[]):
+        for path in pathlist:
+            self.row_deleted(path)
+        undolist.append(UndoInfo(self.undoable_rows_inserted, pathlist))
+
+    def undoable_rows_inserted(self, pathlist, undolist=[]):
+        for path in pathlist:
+            self.row_inserted(path, self.get_iter(path))
+        undolist.append(UndoInfo(self.undoable_rows_deleted, pathlist))
+
+        
+        
+
+class DatasetView(gtk.TreeView, HasSignals):
 
     __gsignals__ = {
         'column-clicked' : (gobject.SIGNAL_RUN_FIRST,
@@ -175,6 +217,8 @@ class DatasetView(gtk.TreeView):
         else:
             self.set_model(model)
 
+        HasSignals.__init__(self)
+        
     def set_model(self, model):
         if model is not None:
             gtk.TreeView.set_model(self, model)
@@ -250,7 +294,9 @@ class DatasetView(gtk.TreeView):
     #
     
     def set_dataset(self, dataset):
-        self.set_model( DatasetModel(dataset) )
+        self.set_model(DatasetModel(dataset))
+        dataset.sig_connect('update-fields', lambda sender: self.setup_columns())
+        # TODO: remove callbacks
 
     def get_dataset(self, dataset):
         if self.get_model() is not None:
