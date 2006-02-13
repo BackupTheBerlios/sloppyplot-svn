@@ -1,16 +1,14 @@
 
 Datawin:
 
-- implement all data win functions (add/insert/remove columns/....)
+- implement: Insert multiple columns
 
- => PROBLEM: insert a column, then undo, then redo
-    This calls the insert_ method which does not seem to work very well.
-    I also have the impression, that some info object is copied as dict
-    and not as FieldInfo.
+- implement: column calculator
 
 - implement cut/copy/paste. Yes, exactly. 
 
 - implement coercion of columns.
+
 
 - importer ASCII: only use Dataset functions
 - exporter

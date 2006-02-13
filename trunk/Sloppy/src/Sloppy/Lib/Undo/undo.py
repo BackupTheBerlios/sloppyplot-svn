@@ -131,12 +131,23 @@ class NullUndo(UndoInfo):
 class UndoList( UserList.UserList, UndoInfo ):
 
     def __init__(self, infos=[]):
-        if infos is None:
+        # catch common usage case where we want to specify the
+        # description of the UndoList directly: UndoList("Do this and that")
+        doc = None
+        if isinstance(infos, basestring):
+            doc = infos
             infos = []
+        elif infos is None:
+            infos = []
+            
         if not isinstance(infos, (tuple,list)):
             self.infos = infos
+            
         UserList.UserList.__init__(self, infos)
         UndoInfo.__init__(self, None)
+
+        if doc is not None:
+            self.doc = doc
 
     def check_type(self, item):
         if not isinstance(item, UndoInfo):

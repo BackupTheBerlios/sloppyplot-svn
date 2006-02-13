@@ -106,15 +106,27 @@ uistring_datawin = \
  <ui>
    <menubar name='MainMenu'>
      <menu action='DatasetMenu'>
-       <menuitem action='EditFields'/>
+       <menuitem action='EditInfos'/>
        <separator/>
        <menuitem action='Close'/>
      </menu>
      <menu action='AnalysisMenu'>
      </menu>
+     <menu action='ColumnMenu'>        
+      <menuitem action='ColumnInsert'/>
+      <menuitem action='ColumnAppend'/>      
+      <menuitem action='ColumnRemove'/>
+      <separator/>
+     </menu>
+     <menu action='RowMenu'>
+      <menuitem action='RowInsert'/>
+      <menuitem action='RowAppend'/>
+      <menuitem action='RowRemove'/>
+      <separator/>
+    </menu>
    </menubar>              
    <toolbar name='Toolbar'>
-     <toolitem action='EditFields'/>           
+     <toolitem action='EditInfos'/>           
      <separator/>
      <toolitem action='RowInsert'/>
      <toolitem action='RowAppend'/>
@@ -123,7 +135,7 @@ uistring_datawin = \
      <separator/>
    </toolbar>
    <popup name='popup_column'>
-     <menuitem action='ColumnProperties'/>
+     <menuitem action='ColumnInfo'/>
      <menu action='DesignationMenu'>
        <menuitem action='DesignationX'/>
        <menuitem action='DesignationY'/>
@@ -137,7 +149,7 @@ uistring_datawin = \
      <separator/>
      <menuitem action='ColumnCalculate'/>
      <separator/>
-     <menuitem action='ColumnInsertAfter'/>                          
+     <menuitem action='ColumnAppend'/>                          
      <menuitem action='ColumnInsert'/>
      <menuitem action='ColumnRemove'/>
      <separator/>

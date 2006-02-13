@@ -57,7 +57,6 @@ class DatasetModel(gtk.GenericTreeModel):
             n = 0
             for name in self.dataset.names:
                 info = self.dataset.get_info(name)
-                print ">>> info in get_column_names: %s" % info
                 if info.designation is not None:
                     designation = "(%s)" % info.designation
                 else:

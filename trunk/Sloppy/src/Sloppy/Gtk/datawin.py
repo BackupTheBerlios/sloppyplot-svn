@@ -20,28 +20,13 @@
 
 
 from Sloppy.Base.dataset import Dataset, Table
-from Sloppy.Base import uwrap, globals
+from Sloppy.Base import uwrap, globals, utils
 from Sloppy.Lib.Undo import UndoList, UndoInfo
 
 import gtk, numpy
 
 from Sloppy.Gtk.options_dialog import OptionsDialog
 from Sloppy.Gtk import uihelper, widget_factory, dataview, uidata
-
-
-def unique_key(adict, key):
-
-    """    
-    Return a valid key that is not yet in use in the dict based on the
-    proposal. 
-    """
-    
-    suggestion = key
-    counter = 1
-    while adict.has_key(suggestion):
-        suggestion = "%s_%02d" % (key, counter)
-        counter += 1        
-    return suggestion
 
 
 #------------------------------------------------------------------------------
@@ -53,18 +38,21 @@ class DatasetWindow( gtk.Window ):
 
     actions = [
         ('DatasetMenu', None, '_Dataset'),
-        ('Close', gtk.STOCK_CLOSE, 'Close this window', 'q', 'Close this window.', '_cb_close'),
+        ('EditInfos', gtk.STOCK_EDIT, 'Edit Table...', '<control>E', '', 'on_action_EditInfos'),        
+        ('Close', gtk.STOCK_CLOSE, 'Close This Window', 'q', 'Close this window.', '_cb_close'),       
         #
-        ('RowInsert', gtk.STOCK_ADD, 'Insert new row', None, 'Insert a new row before the current position', 'cb_insert_row'),
-        ('RowAppend', gtk.STOCK_ADD, 'Append new row', None, 'Insert a new row after the current position', 'cb_append_row'),
-        ('RowRemove', gtk.STOCK_REMOVE, 'Remove row', 'Delete', 'Remove row at the current position', 'cb_remove_row'),
+        ('ColumnMenu', None, '_Columns'),
+        ('RowMenu', None, '_Rows'),
         #
-        ('ColumnProperties', None, 'Edit column properties...', None, 'Edit column properties...', 'cb_column_properties'),
-        ('ColumnCalculate', None, 'Calculate column data...', None, 'Calculate column data...', 'cb_column_calculate'),
-        ('ColumnInsert', None, 'Insert Column before', None, 'Insert column just before this one', 'on_action_ColumnInsert'),
-        ('ColumnInsertAfter', None, 'Insert Column after', None, 'Insert column after this one', 'cb_column_insert_after'),
-        ('ColumnRemove', None, 'Remove Column', None, 'Remove this column', 'cb_column_remove'),
-        ('EditFields', gtk.STOCK_EDIT, 'Edit Fields', '<control>E', '', 'cb_edit_fields'),
+        ('RowInsert', gtk.STOCK_ADD, 'Insert New Row', None, 'Insert a new row before the current position', 'on_action_RowInsert'),
+        ('RowAppend', gtk.STOCK_ADD, 'Append New Row', 'Insert', 'Insert a new row after the current position', 'on_action_RowAppend'),
+        ('RowRemove', gtk.STOCK_REMOVE, 'Remove Selected Row(s)', 'Delete', 'Remove row at the current position', 'on_action_RowRemove'),
+        #
+        ('ColumnInfo', None, 'Edit Column...', None, 'Edit column properties...', 'on_action_ColumnInfo'),
+        ('ColumnCalculate', None, 'Calculate Column Values...', None, 'Calculate column data...', 'cb_column_calculate'),
+        ('ColumnInsert', None, 'Insert New Column', None, 'Insert column just before this one', 'on_action_ColumnInsert'),
+        ('ColumnAppend', None, 'Append New Column', '<shift>Insert', 'Insert column after this one', 'on_action_ColumnAppend'),
+        ('ColumnRemove', None, 'Remove Selected Column', None, 'Remove this column', 'on_action_ColumnRemove'),
         #
         ('DesignationMenu', None, 'Set Designation'),
         ('DesignationX', None, 'X', None, None, 'on_action_DesignationX'),
@@ -95,7 +83,6 @@ class DatasetWindow( gtk.Window ):
         self.toolbar.set_style(gtk.TOOLBAR_ICONS)
 
         self.popup = self.uimanager.get_widget('/popup_column')
-        self.popup_info = None # needed for popup
 
         self.statusbar = gtk.Statusbar()
         self.statusbar.set_has_resize_grip(True)        
@@ -111,7 +98,8 @@ class DatasetWindow( gtk.Window ):
         vbox = gtk.VBox()
 
         vbox.pack_start( self.menubar, expand=False, fill=True )
-        vbox.pack_start( self.toolbar, expand=False, fill=True )
+        # toolbar disabled right now -- it clutters and is not so useful
+#        vbox.pack_start( self.toolbar, expand=False, fill=True )
         vbox.pack_start( self.hpaned, expand=True, fill=True )
         vbox.pack_start( self.statusbar, expand=False, fill=True )
 
@@ -149,6 +137,7 @@ class DatasetWindow( gtk.Window ):
         contextid = self.statusbar.get_context_id("coordinates")
         view.connect('cursor-changed', self.on_cursor_changed, contextid)
         view.connect('column-clicked', self.on_column_clicked)
+        view.connect('popup-menu', self.popup_menu, 3, 0)
         return view
 
     def _construct_metadata_widget(self):
@@ -175,24 +164,12 @@ class DatasetWindow( gtk.Window ):
         self.cblist = []
 
         self.cblist += [
-            # the next is done already in the dataview
-            #dataset.sig_connect('update-fields',
-            #                (lambda sender: self.dataview.setup_columns())),
-
             # disable this for now
             #dataset.sig_connect('notify',
             #                (lambda sender,*changeset: self.dataview.queue_draw())),
-            dataset.sig_connect('closed',
-                                (lambda sender: self.destroy()))
-            
+            dataset.sig_connect('closed', (lambda sender: self.destroy()))           
             ]
 
-        # TODO: set metadata widget       
-        print
-        print "========== METADATA =========="
-        print dataset.node_info.metadata
-        print
-        
         self._dataset = dataset
             
     def get_dataset(self):
@@ -204,21 +181,25 @@ class DatasetWindow( gtk.Window ):
     # Callbacks
     #
 
-    def on_column_clicked(self, dataview, tvcolumn):
-        print "CLICK!"
-        
-    def cb_insert_row(self, widget, offset=0):
+    def on_action_RowInsert(self, widget, offset=0):
         model, pathlist = self.dataview.get_selection().get_selected_rows()
-        if len(pathlist) > 0:
-            model.insert_rows_by_path(pathlist, offset=offset, undolist=self.project.journal)
-            selection = self.dataview.get_selection()
-            selection.unselect_all()
-            selection.select_path(pathlist[0])
+        if len(pathlist) == 0:
+            if offset == 0: pathlist = [(0,)]
+            else: pathlist = [(max(self.dataset.nrows-1,0),)]
+            model = self.dataview.get_model()
+            
+        model.insert_rows_by_path(pathlist, offset=offset, undolist=self.project.journal)
+
+        new_path = (pathlist[0][0]+offset,)
+        selection = self.dataview.get_selection()
+        selection.unselect_all()
+        selection.select_path(new_path)
+        self.dataview.set_cursor(new_path)
                
-    def cb_append_row(self, widget):
-        self.cb_insert_row(widget, offset=1)
+    def on_action_RowAppend(self, widget):
+        self.on_action_RowInsert(widget, offset=1)
         
-    def cb_remove_row(self, widget):
+    def on_action_RowRemove(self, widget):
         model, pathlist = self.dataview.get_selection().get_selected_rows()
         if len(pathlist) > 0:
             model.remove_rows_by_path(pathlist, undolist=self.project.journal)
@@ -226,30 +207,126 @@ class DatasetWindow( gtk.Window ):
             selection.unselect_all()
             selection.select_path(pathlist[0])
 
-    def cb_view_button_press_event(self, treeview, event):
-        if event.button == 3:
-            x = int(event.x)
-            y = int(event.y)
-            time = event.time
-            pthinfo = treeview.get_path_at_pos(x, y)
-            if pthinfo != None:
-                path, col, cellx, celly = pthinfo
-                treeview.grab_focus()
-                treeview.set_cursor( path, col, 0)
+    def on_action_ColumnInsert(self, action, offset=0):
+        path, column = self.dataview.get_cursor()        
+        if column is None:
+            if offset==0: colnr=0
+            else: colnr=max(self.dataset.ncols-1,0)
+        else:            
+            colnr = self.dataview.get_columns().index(column)
+        
+        ul = UndoList().describe("Insert column")
+        self.dataset.insert_columns(colnr+offset, 1, undolist=ul)
+        self.project.journal.append(ul)
 
-                # The following information is stored in self.popup_info
-                #   (rownr, colnr, column object)
-                # so that a callback called by the popup can determine
-                # the current row and column.
+        if path is not None:
+            new_column = self.dataview.get_columns()[colnr+offset]
+            self.dataview.set_cursor_on_cell(path, new_column) # start_editing=True
+        
+    def on_action_ColumnAppend(self, action):
+        self.on_action_ColumnInsert(action, offset=1)
 
-                # Note that we don't open up a popup menu for the first
-                # column which contains the row numbers.
-                colnr = self.dataview.get_column_index(col)
-                if colnr >= 0:
-                    self.popup_info = (path[0], colnr, col)
-                    self.popup.popup( None, None, None, event.button, time)
-            return 1
+    def on_action_ColumnRemove(self, action):
+        path, column = self.dataview.get_cursor()
+        if column is None:
+            return
+        else:            
+            colnr = self.dataview.get_columns().index(column)
 
+        rownr, colnr, column_object = self.popup_info
+        ul = UndoList().describe("Remove column")
+        self.dataset.remove_n_columns(colnr, 1, undolist=ul)
+        self.project.journal.append(ul)
+
+    def on_action_ColumnInfo(self, action):
+        path, column = self.dataview.get_cursor()
+        if column is None:
+            return
+        else:            
+            colnr = self.dataview.get_columns().index(column)
+
+        self.edit_column_info(colnr)
+
+
+    def on_column_clicked(self, dataview, tvcolumn):
+        columns = dataview.get_columns()
+        colnr = columns.index(tvcolumn)
+        self.edit_column_info(colnr)
+
+
+
+    def edit_column_info(self, colnr):
+        info = self.dataset.get_info(colnr)
+        dialog = OptionsDialog(info)
+        try:
+            response = dialog.run()
+            if response == gtk.RESPONSE_ACCEPT:
+                ul = UndoList("edit column info")
+                dialog.check_out(undolist=ul)
+                uwrap.emit_last(self.dataset, 'update-fields', undolist=ul)
+                self.project.journal.append(ul)
+        finally:
+            dialog.destroy()
+            
+
+        
+
+    def cb_view_button_press_event(self, widget, event):
+        # middle click => edit cell
+        if False is True and event.button == 1:
+            try:
+                path, col, cellx, celly = widget.get_path_at_pos(int(event.x), int(event.y))
+            except TypeError:
+                return False
+
+            widget.set_cursor(path, col, start_editing=True)
+            widget.grab_focus()
+            
+        if event.button != 3:
+            return False
+
+        # RMB has been clicked -> popup menu
+
+        # Different cases are possible        
+        # - The user has not yet selected anything.  In this case, we
+        # select the row on which the cursor resides.        
+        # - The user has made a selection.  In this case, we will
+        # leave it as it is.
+        
+        time = event.time
+        try:
+            path, col, cellx, celly = widget.get_path_at_pos(int(event.x), int(event.y))
+        except TypeError:
+            # => user clicked on empty space -> offer some other popup
+            print "EMPTY?"
+            pass
+        else:
+            # If user clicked on a row, then select it.
+            selection = widget.get_selection()
+            if selection.count_selected_rows() == 0:              
+                widget.grab_focus()
+                widget.set_cursor(path, col, 0)
+            
+        return self.popup_menu(widget, event.button, event.time)
+
+
+    def popup_menu(self, widget, button, time):
+        " Returns True if a popup has been popped up. "
+
+        model, pathlist = widget.get_selection().get_selected_rows()
+        rowcount = len(pathlist)
+        if rowcount == 0:
+            popup = None # TODO: popup if nothing was selected
+        else:
+            popup = self.popup           
+            
+        if popup is not None:
+            popup.popup(None,None,None,button,time)
+            return True
+        else:
+            return False
+
+        
 
     def cb_column_calculate(self, action):
         # TODO
@@ -259,89 +336,14 @@ class DatasetWindow( gtk.Window ):
         #cc = ColumnCalculator(self.project, self.dataset, colnr)        
         #cc.show()
 
-    def on_action_ColumnInsert(self, action):
-        rownr, colnr, column_object = self.popup_info
-        ul = UndoList().describe("Insert column")
-        self.dataset.insert_columns(colnr, 1, undolist=ul)
-        uwrap.emit_last(self.dataset, 'update-fields')
-        self.project.journal.append(ul)
-        
-        
-#     def cb_column_insert(self, action):
-#         ul = UndoList("Insert column")        
-#         rownr, colnr, column_object = self.popup_info
-#         self.dataset.insert_n_columns(colnr, 1, undolist=ul)
-#         self.dataset.notify_change(undolist=ul)
-#         self.project.journal.append(ul)
 
-    def cb_column_insert_after(self, action):
-        # TODO
-        pass
-        #rownr, colnr, column_object = self.popup_info
-        #table = self.dataset.get_data()
-        #column = table.new_column('f')
-        #self.insert_column(table, colnr+1, column, undolist=self.project.journal)
-
-    def cb_column_remove(self, action):
-        # TODO
-        pass
-        #rownr, colnr, column_object = self.popup_info
-        #table = self.dataset.get_data()
-        #self.remove_column(table, colnr, undolist=self.project.journal)
-    
-
-    def insert_column(self, table, index, column, undolist=[]):
-        pass
-        #table.insert(index, column)
-        #self.dataset.notify_change()        
-        #ui = UndoInfo(self.remove_column, table, index).describe("Insert Column")
-        #undolist.append(ui)
-
-    def remove_column(self, table, index, undolist=[]):
-        # TODO
-        pass
-        #old_column = table.column(index)
-        #table.remove_by_index(index)
-        #self.dataset.notify_change()
-
-        #ui = UndoInfo(self.insert_column, table, index, old_column).describe("Remove Column")        
-        #undolist.append(ui)                                      
-
-    def cb_column_properties(self, action):
-        # TODO
-        return
-    
-        # column_object = treeview_column
-        rownr, colnr, column_object = self.popup_info
-        table = self.dataset.get_data()
-
-        column = table.get_column(colnr)
-        dialog = OptionsDialog(column.copy())
-
-        try:
-            response = dialog.run()
-            if response == gtk.RESPONSE_ACCEPT:
-                # check out data 
-                new_column = dialog.check_out()
-                changeset = column.create_changeset(new_column)
-
-                ul = UndoList().describe("Update Fields")
-                uwrap.set(column, **changeset)
-                uwrap.emit_last(table, 'update-fields', undolist=ul)
-                self.project.journal.append(ul)
-        finally:
-            dialog.destroy()
-
-
-
-    def cb_edit_fields(self, action):
-        dialog = ModifyDatasetDialog(self.dataset)
+    def on_action_EditInfos(self, action):
+        dialog = ModifyTableDialog(self.dataset)
         try:
             response = dialog.run()
             if response == gtk.RESPONSE_ACCEPT:
                 ul = UndoList().describe("Update Fields")
                 dialog.check_out(undolist=ul)
-                uwrap.emit_last(self.dataset, 'update-fields', undolist=ul)
                 self.project.journal.append(ul)
         finally:
             dialog.destroy()
@@ -367,7 +369,7 @@ class DatasetWindow( gtk.Window ):
 
     # Setting the Column's designation ------------------------------------
 
-    def _set_designation(self, d):
+    def set_designation(self, d):
         rownr, colnr, column_object = self.popup_info
         info = self.dataset.get_info(colnr)
         ul = UndoList().describe("Change designation")        
@@ -375,12 +377,12 @@ class DatasetWindow( gtk.Window ):
         uwrap.emit_last(self.dataset, 'update-fields', undolist=ul)
         self.project.journal.append(ul)
     
-    def on_action_DesignationX(self, action): self._set_designation('X')
-    def on_action_DesignationY(self, action): self._set_designation('Y')
-    def on_action_DesignationXErr(self, action): self._set_designation('XERR')
-    def on_action_DesignationYErr(self, action): self._set_designation('YERR')
-    def on_action_DesignationLabel(self, action): self._set_designation('LABEL')
-    def on_action_DesignationDisregard(self, action): self._set_designation(None)
+    def on_action_DesignationX(self, action): self.set_designation('X')
+    def on_action_DesignationY(self, action): self.set_designation('Y')
+    def on_action_DesignationXErr(self, action): self.set_designation('XERR')
+    def on_action_DesignationYErr(self, action): self.set_designation('YERR')
+    def on_action_DesignationLabel(self, action): self.set_designation('LABEL')
+    def on_action_DesignationDisregard(self, action): self.set_designation(None)
 
         
 
@@ -475,7 +477,11 @@ class ColumnCalculator(gtk.Window):
 
 
 
-class FieldView(gtk.TreeView):
+
+
+
+
+class ColumnView(gtk.TreeView):
 
     """
     fields = dictionary of Table.Info instances.
@@ -508,7 +514,7 @@ class FieldView(gtk.TreeView):
         model = gtk.ListStore(str, object, str)
         self.set_model(model)
 
-    def get_fields(self):
+    def get_columns(self):
         " Return list of fields in the treeview. "
         model = self.get_model()
         
@@ -551,7 +557,7 @@ class FieldView(gtk.TreeView):
 
             if old_key in old_names:
                 # field existed before => mark for content transfer
-                transferdict[key] = self.dataset.get_field(old_key)
+                transferdict[key] = self.dataset.get_column(old_key)
                 format = dtype.fields[old_key][0].str
             else:
                 format = 'f4' # TODO: let user specify format
@@ -584,7 +590,7 @@ class FieldView(gtk.TreeView):
 
 
 
-class ModifyDatasetDialog(gtk.Dialog):
+class ModifyTableDialog(gtk.Dialog):
 
     # This is actually something like a PW.
     # We check in a dataset, keep the copy of the new values in memory
@@ -616,15 +622,15 @@ class ModifyDatasetDialog(gtk.Dialog):
         btnbox.set_border_width(uihelper.SECTION_SPACING)
                 
                 
-        # fview = column view
-        fview = FieldView(dataset)
-        fview.connect( "row-activated", self.on_row_activated )        
-        self.fview = fview
+        # cview = column view
+        cview = ColumnView(dataset)
+        cview.connect( "row-activated", self.on_row_activated )        
+        self.cview = cview
 
-        # put fview and btnbox next to each other into a hbox
+        # put cview and btnbox next to each other into a hbox
         hbox = gtk.HBox()
         hbox.set_spacing(5)
-        hbox.pack_start(fview, True, True)
+        hbox.pack_start(cview, True, True)
         hbox.pack_start(btnbox, False, True)
 
         self.vbox.add(hbox)
@@ -633,11 +639,11 @@ class ModifyDatasetDialog(gtk.Dialog):
 
 
     def check_out(self, undolist=[]):
-        self.fview.check_out(undolist=undolist)
+        self.cview.check_out(undolist=undolist)
 
         
     def run(self):
-        self.fview.check_in()
+        self.cview.check_in()
         return gtk.Dialog.run(self)
 
 
@@ -645,14 +651,14 @@ class ModifyDatasetDialog(gtk.Dialog):
     # BUTTON CALLBACKS
         
     def on_row_activated(self, treeview, *udata):
-        model, pathlist = self.fview.get_selection().get_selected_rows()
+        model, pathlist = self.cview.get_selection().get_selected_rows()
         if model is None:
             return
         iter = model.get_iter(pathlist[0])
         name = model.get_value(iter, 0)
         info = model.get_value(iter, 1)
 
-        fields = self.fview.get_fields()
+        fields = self.cview.get_columns()
         del fields[name]
 
         # TODO: insert field for key into OptionsDialog
@@ -664,11 +670,11 @@ class ModifyDatasetDialog(gtk.Dialog):
                 dialog.check_out()                
         finally:
             dialog.destroy()
-        self.fview.grab_focus()
+        self.cview.grab_focus()
 
 
     def on_btn_move_clicked(self, button, direction):
-        (model, pathlist) = self.fview.get_selection().get_selected_rows()
+        (model, pathlist) = self.cview.get_selection().get_selected_rows()
         if model is None:
             return
 
@@ -678,24 +684,24 @@ class ModifyDatasetDialog(gtk.Dialog):
 
         if second_iter is not None:
             model.swap(iter, second_iter)
-            self.fview.grab_focus()
+            self.cview.grab_focus()
         
 
     def on_btn_add_clicked(self, button):        
-        selection = self.fview.get_selection()
+        selection = self.cview.get_selection()
         (model, iter) = selection.get_selected()
         
         new_info = Table.Info()
-        fields = self.fview.get_fields()        
-        new_key = unique_key(fields, 'new_field')
+        fields = self.cview.get_columns()        
+        new_key = utils.unique_names(['new_column'], fields)[0]
         iter = model.insert_after(iter, (new_key, new_info, None))
         selection.select_iter(iter)
         
-        self.fview.grab_focus()
+        self.cview.grab_focus()
 
 
     def on_btn_remove_clicked(self, button):        
-        selection = self.fview.get_selection()
+        selection = self.cview.get_selection()
         (model, iter) = selection.get_selected()
         if iter is None:
             return
@@ -706,7 +712,7 @@ class ModifyDatasetDialog(gtk.Dialog):
         if new_iter is not None:
             selection.select_iter(new_iter)
         
-        self.fview.grab_focus()        
+        self.cview.grab_focus()        
         
 
 

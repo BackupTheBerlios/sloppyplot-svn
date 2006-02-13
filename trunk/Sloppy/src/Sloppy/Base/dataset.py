@@ -330,12 +330,11 @@ class Table(Dataset):
     
     def set_array(self, array, infos={}, undolist=[]):
         ui = UndoInfo(self.set_array, self._array, self._infos)
-
         self._array = array
         self._infos = infos
-        self.sig_emit('update-fields')
-        
         undolist.append(ui)
+        
+        self.sig_emit('update-fields')    
 
     def new_array(self, rows, cols):
         names = ['f%d'%i for i in range(cols)]
@@ -375,13 +374,13 @@ class Table(Dataset):
     
     def set_value(self, cindex, row, value, undolist=[]):
         self._array[row][cindex]
-        col = self.get_field(cindex)
+        col = self.get_column(cindex)
         old_value = col[row]
         col[row] = value
         undolist.append(UndoInfo(self.set_value, col, row, old_value))
 
 
-    # for get_column, see get_field
+    # for get_column, see get_column
 
     def get_region(self, row, col, height, width, cut=False):        
         formats = ','.join(self.formats[col:col+width])
@@ -556,23 +555,20 @@ class Table(Dataset):
     #----------------------------------------------------------------------
     # SPECIFIC TO TABLE OBJECTS
     
-    def get_field(self, cindex):
+    def get_column(self, cindex):
         " Return a copy of the field with the given name or index `cindex`. "
         if isinstance(cindex, basestring):
-            return self.get_field_by_name(cindex)
+            return self.get_column_by_name(cindex)
         elif isinstance(cindex, int):
-            return self.get_field_by_index(cindex)
+            return self.get_column_by_index(cindex)
         else:
             raise TypeError("Field must be specified using either a string or a field index.")
 
-    get_column = get_field
-
-    
-    def get_field_by_index(self, index):
+    def get_column_by_index(self, index):
         " Return a copy of the field with the given `index`. "
         return self._array[ self._array.dtype.fields[-1][index] ]
 
-    def get_field_by_name(self, name):
+    def get_column_by_name(self, name):
         " Return a copy of the field with the given `name`. "        
         return self._array[name]
     
