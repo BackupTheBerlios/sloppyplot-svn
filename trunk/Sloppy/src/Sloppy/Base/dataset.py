@@ -520,9 +520,12 @@ class Table(Dataset):
             i += 1
             
         # undo information
-        undolist.append(UndoInfo(self.remove_n_columns, col, table.ncols))
-        undolist.append(UndoInfo(self.update_infos, infos))
-        
+        ul = UndoList()
+        self.update_infos(infos, undolist=ul)        
+        ul.append(UndoInfo(self.remove_n_columns, col, table.ncols))
+        undolist.append(ul)
+
+        self.sig_emit('update-fields')
         self._array = new_array
         
 
@@ -540,13 +543,13 @@ class Table(Dataset):
         undo_infos = {}
         for name in old_names:
             if self._infos.has_key(name):
-                print "COPYING INFO ", name
                 undo_infos[name] = self._infos[name].copy()
         undo_table = self.__class__(undo_array, undo_infos)
-        print "BEFORE REARRANGE", self._infos
         self._rearrange(order)
-        print "AFTER REARRANGE", self._infos
         undolist.append(UndoInfo(self.insert_columns, col, undo_table))
+
+        self.sig_emit("update-fields")
+        
         return undo_table
 
 
@@ -596,7 +599,7 @@ class Table(Dataset):
         undo_dict = {}
         for name, info in adict.iteritems():
             if self._infos.has_key(name) is True:
-                undo_dict[name] = self._infos
+                undo_dict[name] = self._infos[name]
             else:
                 undo_dict[name] = None
                 
