@@ -525,8 +525,8 @@ class Table(Dataset):
         ul.append(UndoInfo(self.remove_n_columns, col, table.ncols))
         undolist.append(ul)
 
-        self.sig_emit('update-fields')
         self._array = new_array
+        self.sig_emit('update-fields')        
         
 
 

@@ -175,10 +175,13 @@ class DatasetWindow( gtk.Window ):
         self.cblist = []
 
         self.cblist += [
-            dataset.sig_connect('update-fields',
-                            (lambda sender: self.dataview.setup_columns())),
-            dataset.sig_connect('notify',
-                            (lambda sender,*changeset: self.dataview.queue_draw())),
+            # the next is done already in the dataview
+            #dataset.sig_connect('update-fields',
+            #                (lambda sender: self.dataview.setup_columns())),
+
+            # disable this for now
+            #dataset.sig_connect('notify',
+            #                (lambda sender,*changeset: self.dataview.queue_draw())),
             dataset.sig_connect('closed',
                                 (lambda sender: self.destroy()))
             

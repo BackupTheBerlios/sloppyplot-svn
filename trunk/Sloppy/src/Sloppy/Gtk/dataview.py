@@ -226,10 +226,10 @@ class DatasetView(gtk.TreeView, HasSignals):
             self.setup_columns()
 
     def setup_columns(self):
-
+        
         model = self.get_model()
         if model is None: return
-        
+
         # Remove all old columns...
         for col in self.get_columns():
             self.remove_column(col)
