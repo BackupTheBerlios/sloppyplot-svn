@@ -10,16 +10,12 @@ Datawin:
 - implement coercion of columns.
 
 
-- importer ASCII: only use Dataset functions
-
-- exporter
+- importer ASCII: only use Dataset functions => set_row ?
 
 - projectio: import_from_table stuff.
   => right now, the dataset is loaded because the datawin has a get_array
      call. Of course we must do this somehow different....
      maybe set _array to property(..., set_array)
-
-- recent files: start with 1, not with 0. Allow to load by pushing ALT-1, ...
 
 #------------------------------------------------------------------------------
 - Importer: remove checkboxes from widgets....

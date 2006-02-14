@@ -21,7 +21,7 @@
 
 import re
 
-from Sloppy.Base.dataset import Dataset
+from Sloppy.Base.dataset import Dataset, Table
 from Sloppy.Base import dataio, globals
 
 from Sloppy.Lib.Props import *
@@ -175,7 +175,7 @@ class Importer(dataio.Importer):
     def read_dataset_from_stream(self, fd):
 
         if self.dataset is None:
-            self.dataset = Dataset()
+            self.dataset = Table()
             self.dataset._array = None
             
         self.parse_header(fd)

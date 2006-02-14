@@ -84,26 +84,41 @@ def new_table(spj, element):
         except KeyError:
             logger.warn("Could not get column name; using default name instead.")
             name = utils.unique_names(['col'], info_dict.keys())
-
+        
         # format
         try:
             format = eColumn.attrib['format']
         except KeyError:
             logger.warn("Could not get column type, using default type instead.")
             format = 'f4'
-
         formats.append(format)
-        info_dict[name] = info
 
+        # fill info with attributes
+        for eAttribute in eColumn.findall('Attribute'):
+            key = eAttribute.attrib['key']
+            value = eAttribute.text
+            if value is not None:
+                info.set_value(key, value)       
+
+        info_dict[name] = info
+        
     # create table with given format and infos, but w/o any rows
     a = numpy.zeros((0,), {'names':info_dict.keys(), 'formats':formats})
-    tbl = Table(a, infos=info_dict)
+    tbl = Table(a, info_dict)
 
-    # metadata
-    for eMetaitem in element.findall('Metadata/Metaitem'):
-        key = eMetaitem.attrib['key']
-        value = eMetaitem.text
-        tbl.node_info.metadata[key] = unicode(value)
+    # node info
+    for eItem in element.findall('NodeInfo/Item'):
+        key = eItem.attrib['key']
+        value = eItem.text
+        if value is not None:
+            tbl.node_info.set_value(key, value)
+
+    for eItem in element.findall('NodeInfo/MetaItem'):
+        key = eItem.attrib['key']
+        value = eItem.text
+        if value is not None:
+            tbl.node_info.metadata[key] = value
+
 
     # table key is essential
     try:
@@ -113,7 +128,7 @@ def new_table(spj, element):
         key = pdict.unique_key(spj.datasets, 'dataset')
     tbl.key = key
 
-    
+
     print "This is how the new table dumps:"
     print
     tbl.dump()
@@ -142,22 +157,6 @@ def new_table(spj, element):
     tbl._import = do_import
 
     return tbl
-        
-        
-    # Extract additional column information.
-#         # This information will be passed on to 'set_table_import',
-#         # which will pass it on to the internal importer.        
-#         column_props = list()
-#         for i in range(ncols):
-#             column_props.append(dict())
-        
-#         for eColumn in element.findall('Column'):
-#             n = int(eColumn.get('n'))
-#             p = column_props[n]
-#             for eInfo in eColumn.findall('Info'):
-#                 key = eInfo.get('key', None)
-#                 if key is not None:
-#                     p[key] = unicode(eInfo.text)
         
 
 
@@ -341,23 +340,15 @@ def toElement(project):
             # Dataset as well)
             SIV(eTable, 'key', ds.key)
             SIV(eTable, 'fileformat', 'CSV' )
-                        
+
+            # write node information
+            node_items = tbl.node_info.get_keys()
+            node_items.remove('metadata')
+            iohelper.write_dict(eTable, 'NodeInfo', tbl.node_info.get_values(include=node_items))
+            iohelper.write_dict(eTable, 'NodeInfo', tbl.node_info.metadata)
         else:
             logger.error("Cannot save Dataset %s of type %s" % (ds.key, ds.__class__.__name__))
-            
-
-
-        # write node information
-        
-#         # TODO: iohelper.write_dict, but then I need a transformation
-#         # TODO: of the file format: Metaitem -> Item
-#         if len(ds.metadata) > 0:
-#             eMetadata = SubElement(eData, "Metadata")
-#             for k,v in ds.node_info.metadata.iteritems():
-#                 eMetaitem = SubElement(eMetadata, 'Metaitem')
-#                 eMetaitem.set('key', k)
-#                 eMetaitem.text = str(v)
-                       
+                                   
     ePlots = SubElement(eProject, "Plots")
     for plot in project.plots:
         ePlot = SubElement(ePlots, plot.__class__.__name__)

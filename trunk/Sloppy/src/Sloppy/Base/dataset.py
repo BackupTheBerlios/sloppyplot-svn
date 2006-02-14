@@ -327,8 +327,9 @@ class Table(Dataset):
 
 
     def __init__(self, array=None, infos={}):
-        self._infos = infos
+        self._infos = {}
         Dataset.__init__(self, array)
+        self._infos = infos
 
 
     # Array ---------------------------------------------------------------

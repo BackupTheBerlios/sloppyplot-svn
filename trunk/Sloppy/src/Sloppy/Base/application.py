@@ -117,13 +117,11 @@ class Application(object, HasSignals):
         # init recent files
         self.recent_files = []
         self.read_recentfiles()
-        self.sig_connect("write-config",
-                         (lambda sender: self.write_recentfiles()))
+        self.sig_connect("write-config", lambda sender: self.write_recentfiles())
 
         # read in existing templates
         self.read_templates()
-        self.sig_connect("write-config",
-                         (lambda sender: self.write_templates()))
+        self.sig_connect("write-config", lambda sender: self.write_templates())
 
         # init() is a good place for initialization of derived class
         self.init()
@@ -208,6 +206,7 @@ class Application(object, HasSignals):
     def set_project(self, project, confirm=True):
         """
         Set the current project to the given 'project' object.
+        Returns the new current object.
         """
         has_changed = (id(self._project) != id(project))        
         if self._project is not None and has_changed:
@@ -227,6 +226,7 @@ class Application(object, HasSignals):
         if has_changed is True:
             self.sig_emit('notify::project', self._project)        
 
+        return self._project
 
 
     # be careful when redefining get_project in derived classes -- it will

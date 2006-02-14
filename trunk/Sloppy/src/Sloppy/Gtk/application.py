@@ -120,6 +120,7 @@ class GtkApplication(application.Application):
     def set_project(self, project, confirm=True):
         """
         Assign the given project to the Application.
+        Returns the new current project.
 
         @param confirm: Ask user for permission to close the project
         (unless there were no changes).
@@ -168,6 +169,8 @@ class GtkApplication(application.Application):
 
         self.window._refresh_undo_redo()
         self.window._refresh_recentfiles()
+
+        return self._project
 
 
     def load_project(self, filename=None):
@@ -847,10 +850,12 @@ def main(filename=None):
     app = GtkApplication()
 
     if filename is None:
-        app.set_project(Project())
+        spj = app.set_project(Project())
         #filename = os.path.join(app.path.get('example_dir'), 'example_01.spj')
+
         # FOR TESTING
         app._cb_experimental_plot(None)
+        spj.journal.clear()
     else:
         try:
             logger.debug("Trying to load file %s" % filename)

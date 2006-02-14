@@ -6,6 +6,9 @@ from Sloppy.Base.objects import *
 
 import numpy
 
+import logging
+logger = logging.getLogger('Plugin.Core')
+
 
 def create_plot_from_datasets(project, datasets, plot_label=None, undolist=None):
     """
