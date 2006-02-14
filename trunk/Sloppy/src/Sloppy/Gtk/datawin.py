@@ -49,7 +49,7 @@ class DatasetWindow( gtk.Window ):
         ('RowRemove', gtk.STOCK_REMOVE, 'Remove Selected Row(s)', 'Delete', 'Remove row at the current position', 'on_action_RowRemove'),
         #
         ('ColumnInfo', None, 'Edit Column...', None, 'Edit column properties...', 'on_action_ColumnInfo'),
-        ('ColumnCalculate', None, 'Calculate Column Values...', None, 'Calculate column data...', 'cb_column_calculate'),
+        ('ColumnCalculator', None, 'Calculate Column Values...', None, 'Calculate column data...', 'on_action_ColumnCalculator'),
         ('ColumnInsert', None, 'Insert New Column', None, 'Insert column just before this one', 'on_action_ColumnInsert'),
         ('ColumnAppend', None, 'Append New Column', '<shift>Insert', 'Insert column after this one', 'on_action_ColumnAppend'),
         ('ColumnRemove', None, 'Remove Selected Column', None, 'Remove this column', 'on_action_ColumnRemove'),
@@ -235,7 +235,6 @@ class DatasetWindow( gtk.Window ):
         else:            
             colnr = self.dataview.get_columns().index(column)
 
-        rownr, colnr, column_object = self.popup_info
         ul = UndoList().describe("Remove column")
         self.dataset.remove_n_columns(colnr, 1, undolist=ul)
         self.project.journal.append(ul)
@@ -250,12 +249,56 @@ class DatasetWindow( gtk.Window ):
         self.edit_column_info(colnr)
 
 
+    def on_action_ColumnCalculator(self, action):
+        # get column
+        path, column = self.dataview.get_cursor()
+        if column is None:
+            return
+        else:            
+            colnr = self.dataview.get_columns().index(column)
+
+        cc = ColumnCalculator(self.project, self.dataset, colnr)
+
+
+
+    def on_action_EditInfos(self, action):
+        dialog = ModifyTableDialog(self.dataset)
+        try:
+            response = dialog.run()
+            if response == gtk.RESPONSE_ACCEPT:
+                ul = UndoList().describe("Update Fields")
+                dialog.check_out(undolist=ul)
+                self.project.journal.append(ul)
+        finally:
+            dialog.destroy()
+    
+    def on_action_DesignationX(self, action): self.set_designation('X')
+    def on_action_DesignationY(self, action): self.set_designation('Y')
+    def on_action_DesignationXErr(self, action): self.set_designation('XERR')
+    def on_action_DesignationYErr(self, action): self.set_designation('YERR')
+    def on_action_DesignationLabel(self, action): self.set_designation('LABEL')
+    def on_action_DesignationDisregard(self, action): self.set_designation(None)
+
+
+    #-- END ACTIONS -------------------------------------------------------
+
     def on_column_clicked(self, dataview, tvcolumn):
         columns = dataview.get_columns()
         colnr = columns.index(tvcolumn)
         self.edit_column_info(colnr)
 
+    def on_cursor_changed(self, dataview, contextid):
+        total_rows = self.dataview.get_model().dataset.nrows
+        path, column = dataview.get_cursor()
+        if path is not None:
+            row = str(path[0]+1)            
+            msg = 'row %s of %s' % (row, total_rows)            
+        else:
+            msg = '%s rows' % total_rows
 
+
+        self.statusbar.pop(contextid)        
+        self.statusbar.push (contextid, msg)
 
     def edit_column_info(self, colnr):
         info = self.dataset.get_info(colnr)
@@ -269,12 +312,9 @@ class DatasetWindow( gtk.Window ):
                 self.project.journal.append(ul)
         finally:
             dialog.destroy()
-            
-
-        
 
     def cb_view_button_press_event(self, widget, event):
-        # middle click => edit cell
+        # constant editing turned off right now
         if False is True and event.button == 1:
             try:
                 path, col, cellx, celly = widget.get_path_at_pos(int(event.x), int(event.y))
@@ -328,63 +368,18 @@ class DatasetWindow( gtk.Window ):
         else:
             return False
 
-        
-
-    def cb_column_calculate(self, action):
-        # TODO
-        pass
-        #rownr, colnr, column_object = self.popup_info        
-        #table = self.dataset.get_data()
-        #cc = ColumnCalculator(self.project, self.dataset, colnr)        
-        #cc.show()
-
-
-    def on_action_EditInfos(self, action):
-        dialog = ModifyTableDialog(self.dataset)
-        try:
-            response = dialog.run()
-            if response == gtk.RESPONSE_ACCEPT:
-                ul = UndoList().describe("Update Fields")
-                dialog.check_out(undolist=ul)
-                self.project.journal.append(ul)
-        finally:
-            dialog.destroy()
-
-
-
-    def on_cursor_changed(self, dataview, contextid):
-        # TODO
-        return
-    
-        total_rows = self.dataview.get_model().table.nrows        
-        path, column = dataview.get_cursor()
-        if path is not None:
-            row = str(path[0]+1)            
-            msg = 'row %s of %s' % (row, total_rows)            
-        else:
-            msg = '%s rows' % total_rows
-
-
-        self.statusbar.pop(contextid)        
-        self.statusbar.push (contextid, msg)
-
-
-    # Setting the Column's designation ------------------------------------
-
     def set_designation(self, d):
-        rownr, colnr, column_object = self.popup_info
+        path, column = self.dataview.get_cursor()
+        if column is None:
+            return
+        else:            
+            colnr = self.dataview.get_columns().index(column)
+        
         info = self.dataset.get_info(colnr)
         ul = UndoList().describe("Change designation")        
         uwrap.set(info, designation=d, undolist=ul)
         uwrap.emit_last(self.dataset, 'update-fields', undolist=ul)
         self.project.journal.append(ul)
-    
-    def on_action_DesignationX(self, action): self.set_designation('X')
-    def on_action_DesignationY(self, action): self.set_designation('Y')
-    def on_action_DesignationXErr(self, action): self.set_designation('XERR')
-    def on_action_DesignationYErr(self, action): self.set_designation('YERR')
-    def on_action_DesignationLabel(self, action): self.set_designation('LABEL')
-    def on_action_DesignationDisregard(self, action): self.set_designation(None)
 
         
 
@@ -394,86 +389,96 @@ class ColumnCalculator(gtk.Window):
     some expression.  """
 
     def __init__(self, project, dataset, colnr):
-        self.project = project
-        self.dataset = dataset
-        self.colnr = colnr
-        
         gtk.Window.__init__(self)
         self.set_title("Cool Column Calculator")
         self.set_size_request(width=-1, height=200)
+        
+        self.project = project
+        self.dataset = dataset
+        self.colnr = colnr    
 
         vbox = gtk.VBox()
 
-        self.label = gtk.Label("col(%d) = " % self.colnr)
-        self.label.show()
-        
+        self.label = gtk.Label("col(%d) = " % self.colnr)       
+
         self.textview = gtk.TextView()
-        self.textview.show()
         self.scrolled_window = uihelper.add_scrollbars(self.textview)
-        self.scrolled_window.show()
 
         btn1 = gtk.Button(stock=gtk.STOCK_APPLY)
-        btn1.connect('clicked', (lambda sender: self.evaluate()))
-        btn1.show()
-
+        btn1.connect('clicked', self.on_apply)
         btn2 = gtk.Button(stock=gtk.STOCK_CLOSE)
         btn2.connect('clicked', (lambda sender: self.destroy()))
-        btn2.show()
         
         self.btnbox = gtk.HButtonBox()
         self.btnbox.pack_end(btn2)
         self.btnbox.pack_end(btn1)
-        self.btnbox.show()
 
         vbox.pack_start(self.label, False)
         vbox.pack_start(self.scrolled_window, True, True)
         vbox.pack_end(self.btnbox, False)
         self.add(vbox)
-        vbox.show()
+        self.show_all()
+        
 
-    def evaluate(self):
-        table = self.dataset.get_data() # TODO: type checking
-
-        # sample expression
-        #eval('col(0) = col(0) + 10')
-        def col(nr):
-            return table[nr].copy()
-
+    def on_apply(self, sender):
+        ds = self.dataset
+        
+        # fetch expression from textview
         buffer = self.textview.get_buffer()
         start, end = buffer.get_bounds()
-        expression = buffer.get_text(start, end)        
-    
-        result = eval(expression,
-                      {'__builtins__': {},
-                       'sin': numpy.sin},
-                      {'col' : col,
-                       'cc' : self.colnr
-                       }
-                      )
+        expression = buffer.get_text(start, end)
+
+        local_vars = {'cc': self.colnr}
+        result = self.evaluate(ds, expression, local_vars)
+
+        # copy new value to the column
+        ds.set_column(self.colnr, result, undolist=self.project.journal)
+
+
+        
+    def evaluate(self, ds, expression, local_vars={}):
+
+        """ Evaluate the entered expression and return the result.
+
+        Examples:
+
+        >>> evaluate('col(0) + 10')
+        >>> evaluate('col(0) + col('f2')')
+        >>> evaluate('sinus(col(0))', {'sinus': numpy.sin})
+        """        
+
+        # if we really wanted to avoid any value setting on the
+        # right side of the equation, then we need to copy the
+        # column: ds.get_column(nr).copy.
+        # But this of course means some overhead, so I avoid it
+        # right now and wait for complaints.
+        def col(nr):
+            return ds.get_column(nr)
+
+        # evaluate expression
+        _globals = {'__builtins__': {},
+                    'sin': numpy.sin, 'cos': numpy.cos, 'tan': numpy.tan,
+                    'pi': numpy.pi}
+        _locals = {'col': col}
+        _locals.update(local_vars)
+        result = eval(expression, _globals, _locals)
 
         # If the result is not an array, then it is probably a scalar.
         # We create an array from this by multiplying it with an array
         # that consists only of ones.
-        if not isinstance(result, ArrayType):
-            o = numpy.ones( (table.nrows,), table[self.colnr].typecode() )
-            result = o * result
-            print "-- result is not an array --"
-            print "==> converted to array"
-            
-        ul = UndoList().describe("Calculate column")
-        try:
-            def set_column_data(column, data, undolist=[]):
-                old_data = column.data
-                column.data = data
-                undolist.append(UndoInfo(set_column_data, column, old_data))
+        if not isinstance(result, numpy.ndarray):
+            if numpy.isscalar(result):           
+                o = numpy.ones((ds.nrows,), ds.get_column_dtype(self.colnr))
+                return  o * result
+            else:
+                logger.error("result has unknown type %s" % type(result))
+                return
 
-            set_column_data(table.column(self.colnr), result, undolist=ul)
+        return result
+        
 
-        except TypeError:
-            print "-- incompatible result --", result
-            return
-        self.dataset.notify_change(undolist=ul)
-        self.project.journal.append(ul)
+        
+        
 
      
 

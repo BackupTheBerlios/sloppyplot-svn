@@ -147,7 +147,7 @@ uistring_datawin = \
        <menuitem action='DesignationDisregard'/>
      </menu>     
      <separator/>
-     <menuitem action='ColumnCalculate'/>
+     <menuitem action='ColumnCalculator'/>
      <separator/>
      <menuitem action='ColumnAppend'/>                          
      <menuitem action='ColumnInsert'/>

@@ -142,9 +142,13 @@ class Dataset(tree.Node, HasSignals):
     def get_row(self, row):
         " Return row vector with given index. "
         return self._array[row]
-    
+                
     def get_column(self, col):
         " Return column vector with given index. "
+        raise RuntimeError("not implemented")
+
+    def set_column(self, col, array, undolist=[]):
+        " Set column to given value. "
         raise RuntimeError("not implemented")
 
     def get_region(self, row, col, height, width, cut=False):
@@ -580,7 +584,13 @@ class Table(Dataset):
     def get_column_by_name(self, name):
         " Return a copy of the field with the given `name`. "        
         return self._array[name]
-    
+
+    def set_column(self, col, array, undolist=[]):
+        name = self.get_name(col)        
+        old_data = self._array[name].copy()
+        self._array[name] = array
+        undolist.append(UndoInfo(self.set_column, col, old_data))
+        self.sig_emit('notify')
 
     def get_info(self, cindex):
         """
@@ -600,7 +610,14 @@ class Table(Dataset):
         return infos
 
     def update_infos(self, adict, undolist=[]):
-        " TODO . Value of None => delete Info"
+        """ Update the Table's info dict with the given dict.
+
+        Besides providing an undo, the method differs from
+        the update method of a python dictionary in the followin
+        way: A value of None implies that the info object
+        is to be deleted (after all any value in the info dict
+        should be a Table.Info object).
+        """
         undo_dict = {}
         for name, info in adict.iteritems():
             if self._infos.has_key(name) is True:
