@@ -104,9 +104,15 @@ class Toolbox(gtk.Window):
 
         self.set_project(project)
 
-        # config data
-        self.read_config()
-        globals.app.sig_connect("write-config", self.write_config)
+        # move window to top right        
+        # TODO: From my understanding, the following code should be
+        #  self.set_gravity(gtk.gdk.GRAVITY_NORTH_EAST)
+        #  self.move(gtk.gdk.screen_width(), 0)
+        # However, at least with metacity (gnome) this does not work.    
+        width, height = self.get_size()
+        self.set_gravity(gtk.gdk.GRAVITY_NORTH_EAST)
+        self.move(gtk.gdk.screen_width() - width, 0)
+
 
         self.vbox.show_all()
                       
@@ -209,61 +215,6 @@ class Toolbox(gtk.Window):
             self.combobox.set_sensitive(False)
 
 
-    def read_config(self):
-        global tools
-       
-        eToolbox = globals.app.eConfig.find('Toolbox')
-        if eToolbox is None:
-            # basic setup (for now)
-            book = dock.Dockbook()
-            self.dock.add(book)            
-            lt = LabelsTool()
-            book.add(lt)        
-            lt = LayerTool()
-            book.add(lt)
-            return        
-
-        for eDockbook in eToolbox.findall('Dock/Dockbook'):
-
-            book = dock.Dockbook()
-            self.dock.add(book)
-
-            for eDockable in eDockbook.findall('Dockable'):
-                try:                    
-                    tool = tools[eDockable.text]()
-                    book.add(tool)
-                    # TODO: size information is not used                    
-                except:
-                    logger.error("Could not init tool dock '%s', unknown class." % eDockable.text)
-
-        #-----------
-        # move window to top right        
-        # TODO: From my understanding, the following code should be
-        #  self.set_gravity(gtk.gdk.GRAVITY_NORTH_EAST)
-        #  self.move(gtk.gdk.screen_width(), 0)
-        # However, at least with metacity (gnome) this does not work.    
-        width, height = self.get_size()
-        self.set_gravity(gtk.gdk.GRAVITY_NORTH_EAST)
-        self.move(gtk.gdk.screen_width() - width, 0)
-
-        
-    def write_config(self, app):
-        eToolbox = app.eConfig.find("Toolbox")
-        if eToolbox is None:
-            eToolbox = SubElement(app.eConfig, "Toolbox")
-        else:
-            eToolbox.clear()
-
-        # get information about dockables/dockbooks
-        eDock = SubElement(eToolbox, "Dock")
-        for dockbook in self.dock.dockbooks:
-            eDockbook = SubElement(eDock, "Dockbook")        
-            for dockable in dockbook.get_children():
-                eDockable = SubElement(eDockbook, "Dockable")
-                width, height = dockable.size_request()            
-                eDockable.attrib['width'] = str(width)
-                eDockable.attrib['height'] = str(height)
-                eDockable.text = dockable.__class__.__name__
 
 
 
@@ -271,9 +222,6 @@ class Toolbox(gtk.Window):
 #------------------------------------------------------------------------------
 # Tool and derived classes
 #
-
-
-tools = {}
 
 
 class Tool(dock.Dockable):
@@ -294,7 +242,7 @@ class Tool(dock.Dockable):
         self.layer = -1
         self.backend_cblist = []
         self.layer_cblist = []
-
+        
     def set_backend(self, backend):
         if backend == self.backend:
             return
@@ -324,6 +272,8 @@ class Tool(dock.Dockable):
         if not isinstance(self.layer, objects.Layer):
             raise TypeError("Invalid Layer %s" % self.layer)
     
+
+
 
 class LayerTool(Tool):
 
@@ -419,9 +369,6 @@ class LayerTool(Tool):
         layer = model.get_value(iter, 0)               
         globals.app.edit_layer(self.backend.plot, layer)
         
-
-tools['LayerTool'] = LayerTool
-
 
 
         
@@ -580,9 +527,6 @@ class LabelsTool(Tool):
         
     def on_notify_labels(self, layer, updateinfo=None):
         self.update_layer()
-
-        
-tools['LabelsTool'] = LabelsTool
 
 
 

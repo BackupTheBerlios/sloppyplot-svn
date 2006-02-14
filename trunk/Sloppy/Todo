@@ -1,12 +1,5 @@
 
 
-Two bugs:
-
-- adding lines does not work properly. When applying, there is 
-  an error message about missing canvas
-  
-- crash when specifying reverse limits?
-
 Datawin:
 
 - implement: Insert multiple columns
@@ -16,7 +9,6 @@ Datawin:
 - implement cut/copy/paste. Yes, exactly. 
 
 - implement coercion of columns.
-
 
 - importer ASCII: only use Dataset functions => set_row ?
 

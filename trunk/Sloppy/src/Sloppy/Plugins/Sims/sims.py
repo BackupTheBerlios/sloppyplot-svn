@@ -12,14 +12,16 @@ logger = logging.getLogger('plugin.sims')
 
 #------------------------------------------------------------------------------
 
-def gtk_popup_actions():
+def gtk_init(app):
+    
     a = plugin.ActionWrapper('CreatePFC', "Create a SIMS profile from Dataset")
     a.connect(_cb_create_pfc)
 
     b = plugin.ActionWrapper('CreateSPC', 'Create a SIMS spectrum from Dataset')
     b.connect(_cb_create_spc)
 
-    return [a, b]
+    app.register_actions([a,b])
+
 
 #----------------------------------------------------------------------
 

@@ -124,13 +124,9 @@ class Application(object, HasSignals):
         self.sig_connect("write-config", lambda sender: self.write_templates())
 
         # init() is a good place for initialization of derived class
-        self.init()
-
-        # Plugins need to be initialized after init(), because
-        # derived Application objects might associate advanced
-        # functionality with some plugins.
         self.plugins = {}
-        self.init_plugins()
+        self.load_plugins()
+        self.init()        
 
         # After everything is initialized, we can set up the project.
         self._project = None
@@ -151,7 +147,7 @@ class Application(object, HasSignals):
 
     # Plugin Handling -------------------------------------------------------
     
-    def init_plugins(self):
+    def load_plugins(self):
         """
         Init the plugins from the plugin directories.
 

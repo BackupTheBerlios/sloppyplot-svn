@@ -36,4 +36,4 @@ try:
 except ImportError:
     logger.info("No pygtk found. PeakFinder GTK GUI skipped.")
 else:
-    import gui_gtk
+    from gui_gtk import *

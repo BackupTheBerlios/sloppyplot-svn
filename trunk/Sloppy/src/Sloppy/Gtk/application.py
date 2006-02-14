@@ -35,6 +35,7 @@ from Sloppy.Gtk.appwindow import AppWindow
 from Sloppy.Gtk.layerwin import LayerWindow
 from Sloppy.Gtk.property_browser import PropertyBrowserDialog
 from Sloppy.Gtk.options_dialog import OptionsDialog, NoOptionsError
+from Sloppy.Gtk import tools, dock
 
 from Sloppy.Base import \
      utils, error, application, globals, pdict, uwrap, dataio
@@ -44,6 +45,8 @@ from Sloppy.Base.project import Project
 from Sloppy.Base.projectio import load_project, save_project, ParseError
 
 from Sloppy.Gnuplot.terminal import PostscriptTerminal
+
+from Sloppy.Lib.ElementTree.ElementTree import Element, SubElement
 
 
 #------------------------------------------------------------------------------
@@ -66,6 +69,11 @@ class GtkApplication(application.Application):
         self.path.icon_dir = os.path.join(self.path.base_dir, 'Gtk','Icons')
         self.register_stock()      
 
+        self.tools = {}
+        
+        self.init_plugins()
+        self.init_tools()
+
 
     def register_stock(self):
         """
@@ -87,33 +95,116 @@ class GtkApplication(application.Application):
             factory.add(new_stock, icon_set)
             
 
-    # Plugin Handling ------------------------------------------------------
-    
+    # Plugin Handling ------------------------------------------------------       
+        
     def init_plugins(self):
-        """
-        gtk_popup_actions
-        """
-        application.Application.init_plugins(self)
-
         for plugin in self.plugins.itervalues():
+            if hasattr(plugin, 'gtk_init'):
+                print "GTK init the plugin."
+                plugin.gtk_init(self)
 
-            if hasattr(plugin, 'gtk_popup_actions'):
-                action_wrappers = plugin.gtk_popup_actions()                
-                # create action group
-                ag = gtk.ActionGroup("Plugin")
-                for item in action_wrappers:
-                    ag.add_action(item.action)
-                self.window.uimanager.insert_action_group(ag, -1)
+    def register_actions(self, action_wrappers):
+        " Helper function for plugins. "
+        # create action group
+        ag = gtk.ActionGroup("Plugin")
+        for item in action_wrappers:
+            ag.add_action(item.action)
+        self.window.uimanager.insert_action_group(ag, -1)
 
-                # construct plugin ui
-                plugin_ui = '<popup name="popup_dataset">'
-                for item in action_wrappers:
-                    plugin_ui += '<menuitem action="%s"/>' % item.name
-                plugin_ui += '</popup>'
+        # construct plugin ui
+        plugin_ui = '<popup name="popup_dataset">'
+        for item in action_wrappers:
+            plugin_ui += '<menuitem action="%s"/>' % item.name
+        plugin_ui += '</popup>'
                         
-                # merge plugin ui
-                merge_id = self.window.uimanager.add_ui_from_string(plugin_ui)
+        # merge plugin ui
+        merge_id = self.window.uimanager.add_ui_from_string(plugin_ui)
 
+    def register_tool(self, klass, name=None):
+        " Helper functions for plugins. "
+        if name is None:
+            name = klass.__name__
+        if self.tools.has_key(name):
+            logger.error("Tool %s is already registered." % name)
+            return
+        
+        self.tools[name] = klass    
+        toolbox = self.window.toolbox 
+        book = dock.Dockbook()
+        toolbox.dock.add(book)
+
+        # FOR TESTING PURPOSES
+        book.add(klass())
+    
+        
+
+    # Tool Handling --------------------------------------------------------
+
+    def init_tools(self):
+        # TODO:
+        # we register these two tools here.
+        # this should be done somewhere else.
+        # one solution would be to source the corresponding
+        # module from the application, like it is done with
+        # the plugins
+        self.tools['LayerTool'] = tools.LayerTool
+        self.tools['LabelsTool'] = tools.LabelsTool
+        
+        self.tools_read_config()
+        self.sig_connect("write-config", self.tools_write_config)
+
+        
+    def tools_read_config(self):
+        # TODO: maybe put the toolbox into the application?
+        toolbox = self.window.toolbox 
+        
+        eToolbox = self.eConfig.find('Toolbox')
+        if eToolbox is None:
+            # basic setup (for now)
+            book = dock.Dockbook()
+            toolbox.dock.add(book)
+            lt = tools.LabelsTool()
+            book.add(lt)        
+            lt = tools.LayerTool()
+            book.add(lt)
+            return        
+
+        for eDockbook in eToolbox.findall('Dock/Dockbook'):
+
+            book = dock.Dockbook()
+            toolbox.dock.add(book)
+
+            for eDockable in eDockbook.findall('Dockable'):
+                try:                    
+                    tool = self.tools[eDockable.text]()
+                    book.add(tool)
+                    # TODO: size information is not used                    
+                except:
+                    logger.error("Could not init tool dock '%s', unknown class." % eDockable.text)
+
+
+        
+    def tools_write_config(self, app):
+        toolbox = self.window.toolbox
+        
+        eToolbox = app.eConfig.find("Toolbox")
+        if eToolbox is None:
+            eToolbox = SubElement(app.eConfig, "Toolbox")
+        else:
+            eToolbox.clear()
+
+        # get information about dockables/dockbooks
+        eDock = SubElement(eToolbox, "Dock")
+        for dockbook in toolbox.dock.dockbooks:
+            eDockbook = SubElement(eDock, "Dockbook")        
+            for dockable in dockbook.get_children():
+                eDockable = SubElement(eDockbook, "Dockable")
+                width, height = dockable.size_request()            
+                eDockable.attrib['width'] = str(width)
+                eDockable.attrib['height'] = str(height)
+                eDockable.text = dockable.__class__.__name__
+
+    
     # ----------------------------------------------------------------------
     # Project
     

@@ -1,45 +1,39 @@
 
-from Sloppy.Lib.Props import *
-
 import main
+
 import gtk
 
+from Sloppy.Lib.Props import *
+from Sloppy.Gtk.tools import Tool
+#----------------------------------------------------------------------
 
-class Dialog(gtk.Dialog):
-
+class PeakFinderTool(Tool):
+    
     def __init__(self):
-        gtk.Dialog.__init__(self, "Peak Finder", None,
-                            gtk.DIALOG_MODAL|gtk.DIALOG_DESTROY_WITH_PARENT,
-                            (gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
+        Tool.__init__(self, "PeakFinder", gtk.STOCK_EDIT)
 
-        vbox = gtk.VBox()
+        # model: (object) = (...)
+        model = gtk.ListStore(object)        
+        treeview = gtk.TreeView(model)
+        treeview.set_headers_visible(False)
 
-        # Line (=> cx and cy will be automatically determined)
-        ctl_line = gtk.ComboBox()
-        ctl_line.show()
-        vbox.add(ctl_line)
+        cell = gtk.CellRendererText()
+        column = gtk.TreeViewColumn('label', cell)
+
+        treeview.append_column(column)
+        #treeview.connect("row-activated", self.on_row_activated)
+        #treeview.connect("cursor-changed", self.on_cursor_changed)
+        treeview.show()
+        self.add(treeview)
+
         
-        # threshold
-        ctl_threshold = gtk.Entry()
-        ctl_threshold.show()
-        vbox.add(ctl_threshold)
-        
-        # accuracy
-        ctl_accuracy = gtk.Entry()
-        ctl_accuracy.show()
-        vbox.add(ctl_accuracy)
-        
-        # max. nr. of points before aborting.
-
-        vbox.show()
-        self.vbox.add(vbox)
 
 
-
-def gtk_new_dialog():
-    return Dialog()
+def gtk_init(app):
+    app.register_tool(PeakFinderTool, 'PeakFinder')
 
     
+        
 
 
 

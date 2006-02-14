@@ -5,10 +5,11 @@ from LabPlot!  """
 
 def find_peaks(data_x, data_y, threshold, accuracy):
     """
-    data = column or table
-    cx, cy = columns to use (int)
+    data_x, data_y = 1-d array with x and y coordinates
     threshold = y range
     accuracy = x range
+
+    Returns list of found peaks.
     """
     xmin, xmax = 0, 1
     ymin, ymax = 0, 1
