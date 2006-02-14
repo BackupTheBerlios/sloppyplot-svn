@@ -32,7 +32,7 @@ from Sloppy.Lib.Signals import HasSignals
 from Sloppy.Lib.Props import *
 
 from Sloppy.Base.objects import Plot, Axis, Line, Layer, new_lineplot2d
-from Sloppy.Base.dataset import Dataset
+from Sloppy.Base.dataset import Dataset, Table
 from Sloppy.Base.backend import Backend
 
 from Sloppy.Base import pdict, uwrap, utils, error, tree, globals
@@ -374,7 +374,7 @@ class Project(HasProperties, HasSignals):
             undolist = self.journal
         
         key = pdict.unique_key(self.datasets, key)
-        ds = Dataset()
+        ds = Table()
         pdict.setitem(self.datasets, key, ds)
         self.sig_emit("notify::datasets")
 

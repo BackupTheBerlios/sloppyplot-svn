@@ -83,12 +83,12 @@ class Dataset(tree.Node, HasSignals):
     def has_changes(self, counter):
         return self.change_counter != counter
 
+    # what is the difference btw. close and detach?
     def close(self):
-        self.sig_emit('closed')        
-        self.data = None
-
-    def detach(self):
-        self.sig_emit('closed')                
+        print "CLOSING"
+        self.sig_emit('closed')
+    detach = close
+    
 
     def is_empty(self):
         " Returns True if the Dataset has no data or if that data is empty. "
@@ -323,7 +323,7 @@ class Table(Dataset):
         designation = VP(['X','Y','XERR', 'YERR', 'LABEL', None])
         query = String()
 
-        public_props=['label', 'designation', 'query']
+        public_props=['label', 'designation']
 
 
     def __init__(self, array=None, infos={}):

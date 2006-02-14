@@ -169,7 +169,7 @@ class DatasetWindow( gtk.Window ):
             # disable this for now
             #dataset.sig_connect('notify',
             #                (lambda sender,*changeset: self.dataview.queue_draw())),
-            dataset.sig_connect('closed', (lambda sender: self.destroy()))           
+            dataset.sig_connect('closed', (lambda sender: self.destroy()))
             ]
 
         self._dataset = dataset
