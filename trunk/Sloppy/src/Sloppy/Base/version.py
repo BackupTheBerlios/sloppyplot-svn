@@ -24,7 +24,7 @@ Version, copyright, author, license and other metainformation.
  
 
 NAME = "sloppyplot"
-COPYRIGHT = "(C)opyright 2004-2005 Niklas Volbers"
+COPYRIGHT = "(C)opyright 2004-2006 Niklas Volbers"
 AUTHORS = ["Niklas Volbers"]
 URL="http://sloppyplot.berlios.de"
 

@@ -99,12 +99,12 @@ class Dataset(tree.Node, HasSignals):
     # Any derived classes needs to implement the following functions,
     # that provide some basic functionality for arrays of rank 2.
     #
-
+        
     def get_array(self):
         " Return internal array. "
         if self._import is not None:
             self._import(self)
-            self._import = None
+            self._import = None        
         return self._array
     
     def set_array(self, array):
@@ -496,7 +496,7 @@ class Table(Dataset):
         col = self.get_index(col)
        
         # We merge in the description of the new array into the
-        # existing array 'self.array'. Unfortunately we must
+        # existing array 'self._array'. Unfortunately we must
         # make sure that each new added field has a unique name.
         new_names = self.names[:]
         descriptor = self._array.dtype.arrdescr[:]

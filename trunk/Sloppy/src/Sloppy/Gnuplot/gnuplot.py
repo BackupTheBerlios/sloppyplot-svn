@@ -480,13 +480,15 @@ class Backend(backend.Backend):
         #:layer.labels
         cmd = []
         for label in layer.labels:                                    
-            if label.system == 0: # 0: data
+            if label.system == 'data':
                 coords = "at first %.2f, first %.2f" % (label.x, label.y)
-            elif label.system == 1: # 1: graph
+            elif label.system == 'graph':
                 coords = "at graph %.2f, graph %.2f" % (label.x, label.y)
-
-            map_align = {0:'center', 1:'left', 2:'right'}
-            align = map_align[label.halign]
+            else:
+                logger.error("label has non-supported coordinate system %s" % label.system)
+                return
+            
+            align = label.halign
             cmd += ['set label "%s" %s %s' % (label.text, coords, align)]
 
         queue.append((cd, 'labels', cmd, 'unset labels'))

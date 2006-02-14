@@ -233,6 +233,8 @@ class Backend(object, HasSignals):
 
 
     def get_dataset_data(self, dataset, cx, cy):
+        dataset.get_array() #
+        
         #:line.cx
         try:
             xdata = dataset.get_column(cx)

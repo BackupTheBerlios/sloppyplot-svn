@@ -1,4 +1,12 @@
 
+
+Two bugs:
+
+- adding lines does not work properly. When applying, there is 
+  an error message about missing canvas
+  
+- crash when specifying reverse limits?
+
 Datawin:
 
 - implement: Insert multiple columns

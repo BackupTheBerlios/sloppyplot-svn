@@ -139,6 +139,8 @@ def new_table(spj, element):
     # disk on the next access.
     
     filename = os.path.join('datasets', utils.as_filename(tbl.key))
+
+            
     def do_import(the_table):
         try:
             archive = tarfile.open(spj.get_filename(),'r:gz')
