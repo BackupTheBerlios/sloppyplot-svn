@@ -7,6 +7,17 @@ from Sloppy.Lib.Props import *
 from Sloppy.Gtk.tools import Tool
 #----------------------------------------------------------------------
 
+# we need to specify a x column and a y column
+# => we are not necessarily acting on a specific layer,
+#    but even on a specific line!
+
+#    Maybe we can stay independent of the layer stuff ?
+#    If this Tool is some kind of history window, where you
+#    can see the results of the find_peak operation, then we must
+#    make sure, that this history is not cleared, when the layer
+#    changes.
+
+
 class PeakFinderTool(Tool):
     
     def __init__(self):

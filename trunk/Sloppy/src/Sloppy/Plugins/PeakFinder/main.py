@@ -9,7 +9,7 @@ def find_peaks(data_x, data_y, threshold, accuracy):
     threshold = y range
     accuracy = x range
 
-    Returns list of found peaks.
+    Returns list of found peaks (x,y).
     """
     xmin, xmax = 0, 1
     ymin, ymax = 0, 1
