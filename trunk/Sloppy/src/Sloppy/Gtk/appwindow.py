@@ -113,7 +113,7 @@ class AppWindow( gtk.Window ):
 
 
         self._refresh_windowlist()
-        globals.app.sig_connect("update-recent-files", (lambda sender: self._refresh_recentfiles()))
+        globals.app.sig_connect("update-recent-files", lambda sender: self._refresh_recentfiles())
 
     def _construct_uimanager(self):
 
@@ -354,15 +354,17 @@ class AppWindow( gtk.Window ):
         # Create action group list from list of recent files.
         # The corresponding ui string is created as well.
         ui = ""
-        n = 0
+        n = 1
         ag = gtk.ActionGroup('DynamicRecentFiles')
         for file in globals.app.recent_files:
             key = 'recent_files_%d' % n
-            action = gtk.Action(key, '%d: %s' % (n, os.path.basename(file)), None, None)
+            label = os.path.basename(file)
+            action = gtk.Action(key, label, None, None)
+            accel = '<control>%d' % n
             action.connect('activate',
                            (lambda sender, filename: globals.app.load_project(filename)),
                            file)
-            ag.add_action(action)
+            ag.add_action_with_accel(action, accel)
             
             ui+="<menuitem action='%s'/>\n" % key
             n += 1
@@ -385,7 +387,9 @@ class AppWindow( gtk.Window ):
         """ % ui
             
         self._recentfiles_merge_id = self.uimanager.add_ui_from_string(ui)
-        
+
+
+                
             
     #--- SUBWINDOW HANDLING -------------------------------------------------------
     
