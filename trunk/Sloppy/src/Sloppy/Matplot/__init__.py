@@ -19,6 +19,7 @@
 # $Id$
 
 
-__all__ = ['mpl']
+__all__ = ['mpl', 'mpl2']
 
 import mpl
+import mpl2

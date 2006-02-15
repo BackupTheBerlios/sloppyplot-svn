@@ -511,7 +511,7 @@ class GtkApplication(application.Application):
 
             window.show()
             window.present()
-            
+
         else:
             raise RuntimeError("Unknown backend %s" % backend_name)
         

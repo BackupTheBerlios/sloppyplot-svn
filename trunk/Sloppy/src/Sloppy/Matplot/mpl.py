@@ -31,8 +31,11 @@ import logging
 logger = logging.getLogger('Backends.mpl')
 
 from matplotlib.figure import Figure
-from matplotlib.backends.backend_gtk import FigureCanvasGTK as FigureCanvas
-#from matplotlib.backends.backend_gtkcairo import FigureCanvasGTKCairo as FigureCanvas
+
+if gtk.pygtk_version[1] > 8:
+    from matplotlib.backends.backend_gtkcairo import FigureCanvasGTKCairo as FigureCanvas
+else:
+    from matplotlib.backends.backend_gtk import FigureCanvasGTK as FigureCanvas
 
 from matplotlib.text import Text
 
@@ -113,7 +116,7 @@ class Backend( backend.Backend ):
         self.axes_to_layer = {}
         self.layers_cache = [] # copy of self.plot.layers
         self.layer_cblists = {}
-        
+
         self.line_caches = {}
         self.omaps = {}
         
@@ -201,7 +204,7 @@ class Backend( backend.Backend ):
             self.arrange()
 
         self.omaps = {}
-        for layer in self.plot.layers:
+        for layer in self.plot.layers:            
             self.update_layer(layer)
         self.draw_canvas()
         

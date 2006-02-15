@@ -394,7 +394,13 @@ class MatplotlibWidget(gtk.VBox):
             # TODO: and zoom level
 
             canvas_width, canvas_height = 800,600
-            backend = self.project.request_backend('matplotlib', plot=plot)           
+
+            testing = True
+            if testing == True:
+                backend = self.project.request_backend('matplotlib2', plot=plot)
+            else:
+                backend = self.project.request_backend('matplotlib', plot=plot)
+                
             backend.canvas.set_size_request(canvas_width, canvas_height)
 
             # [NV] I disabled rulers again to get ready for the next release.

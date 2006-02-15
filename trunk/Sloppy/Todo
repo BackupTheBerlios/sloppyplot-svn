@@ -44,27 +44,12 @@ BUGFIXES TO BE DONE
 - Signals.connect_once -> requires an additional flag in the SignalContainer
 
 
-TOOLBOX CONCEPT:
-----------------
-- All tools in a toolbox belong to the toolbox's backend, i.e. matplotlib backend.
+------------------------------------------------------------------------------
 
-  One tool can store the settings for a specific matplotlib window.
-
-  The question is now: Can there be two tool instances, e.g. 2
-  PeakFinder Tools? Yes, why not? The Tool itself creates a temporary line
-  in the backend. This line must be saved in the backend, so that it is
-  displayed, with some temp attribute turned on. The PeakFinderTool instance
-  knows the name of the line _pft, __pft_2, ... and will replace exactly that
-  line.  The tool could save this information not in the PFT instance, but
-  in the backend.
-
-  backend.tool_data[object_id] where object_id is the id of the PeakFinderTool,
-  so it would be unique for instances. If a tool is closed, then it would be 
-  very easy to discard that data.
-
-
-
-
-
+When writing tools for the Toolbox I saw the necessity for a new painting
+mechanisms for the mpl backend: not a monolithic one, like the one we have
+right now, but one that is oriented at the existing objects.  Each such
+object is called a Painter, e.g. LayerPainter, LinePainter, ....
+You do not necessarily need such a painter object, but you can.
 
 
