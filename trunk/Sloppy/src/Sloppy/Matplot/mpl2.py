@@ -28,12 +28,53 @@ logger = logging.getLogger('Backends.mpl2')
 
 #  So obviously each painter needs to connect to its object somehow
 #  and realize if it changes/if it is removed/if there's a new item.
-#  => maybe test this with the LinePainter !?!
+#  This _should_ be done with the 'notify' and the 'notify::obj' 
+#  signals, where the second version is for altering lists and dicts.
+#  I should try this with the lines.
 
 # Another thing:
 #  Should the line be painted single or total ?
 
+#------------------------------------------------------------------------------
 
+linestyle_mappings = \
+{'None'               : "None",
+ "solid"              : "-",
+ "dashed"             : "--",
+ "dash-dot"           : "-.",
+ "dotted"             : ":",
+ "steps"              : "steps"
+}
+
+
+# marker=
+linemarker_mappings = \
+{'None'                    : 'None',
+ "points"                  : ".",
+ "pixels"                  : ",",
+ "circle symbols"          : "o",
+ "triangle up symbols"     : "^",
+ "triangle down symbols"   : "v",
+ "triangle left symbols"   : "<",
+ "triangle right symbols"  : ">",
+ "square symbols"          : "s",             
+ "plus symbols"            : "+",
+ "cross symbols"           : "x",
+ "diamond symbols"         : "D",
+ "thin diamond symbols"    : "d",
+ "tripod down symbols"     : "1",
+ "tripod up symbols"       : "2",
+ "tripod left symbols"     : "3",
+ "tripod right symbols"    : "4",
+ "hexagon symbols"         : "h",
+ "rotated hexagon symbols" : "H",
+ "pentagon symbols"        : "p",
+ "vertical line symbols"   : "|",
+ "horizontal line symbols" : "_"
+ }
+
+
+#------------------------------------------------------------------------------
 
 class Backend(backend.Backend):
 
@@ -127,9 +168,14 @@ class LinePainter(Painter):
 
     def paint(self):
         line, layer_painter = self.obj, self.parent
-        axes = layer_painter.axes
-        backend = layer_painter.parent
-               
+        layer = layer_painter.obj
+        axes, backend = layer_painter.axes, layer_painter.parent
+
+        #:line.visible
+        if line.visible is False:
+            if line in axes.lines:
+                axes.lines.remove(line)
+                               
         # data 
         ds = backend.get_line_source(line)
         cx, cy = backend.get_column_indices(line)
@@ -137,15 +183,60 @@ class LinePainter(Painter):
             xdata, ydata = backend.get_dataset_data(ds, cx, cy)
         except backend.BackendError, msg:            
             raise
+
+        # row_first, row_last
+        start, end = line.row_first, line.row_last        
+        try:
+            xdata = backend.limit_data(xdata, start, end)
+            ydata = backend.limit_data(ydata, start, end)
+        except BackendError, msg:
+            riase
+
+        index = layer.lines.index(line)
+
+        # style, layer.group_style
+        style = layer.group_style.get(line, index, line.style)
+
+        global linestyle_mappings
+        try: style = linestyle_mappings[style]
+        except KeyError: style = linestyle_mappings.values()[1]
+
+        #:line.marker
+        #:layer.group_marker
+        marker = layer.group_marker.get(line, index, line.marker)
+
+        global linemarker_mappings
+        try: marker = linemarker_mappings[marker]
+        except KeyError: marker = linemarker_mappings.values()[0]
         
+        #:line.width
+        #:layer.group_width
+        width = layer.group_width.get(line, index, line.width) or 1.0
+        
+        #:line.color
+        #:layer.group_color
+        color = layer.group_color.get(line, index, line.color) or 'black'
+
+        #:line.marker_color
+        marker_color = layer.group_marker_color.get(line, index, line.marker_color) or 'black'
+
+        #:line.marker_siize
+        marker_size = line.marker_size or 1
+
         # plot line!
         try:
-            l, = axes.plot( xdata, ydata )
+            l, = axes.plot( xdata, ydata,
+                            linewidth=width,
+                            linestyle=style,
+                            marker=marker,
+                            color=color,
+                            markerfacecolor=marker_color,
+                            markeredgecolor=marker_color,
+                            markersize=marker_size)
+                            
         except Exception, msg:
             raise
 
-        
-        
         
 
 
