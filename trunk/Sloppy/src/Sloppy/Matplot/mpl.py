@@ -23,19 +23,12 @@
 An implementation of the Backend object using matplotlib.
 """
 
-try:
-    import pygtk
-    pygtk.require('2.0')
-except ImportError:
-    pass
 
 import gtk, inspect, matplotlib
 from matplotlib import * # maybe remove this?
 
 import logging
 logger = logging.getLogger('Backends.mpl')
-
-
 
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_gtk import FigureCanvasGTK as FigureCanvas
@@ -45,6 +38,25 @@ from matplotlib.text import Text
 
 from Sloppy.Base import backend, objects, utils, globals
 from Sloppy.Base.dataset import Dataset
+#------------------------------------------------------------------------------
+
+# Horizontal/vertical lines in mpl:
+#  self.lx, = ax.plot( (0,0), (0,0), 'k-' ) # horiz line
+#  self.ly, = ax.plot( (0,0), (0,0), 'k-' ) # vert line
+#
+#  # text location in axes coords
+#  self.txt = ax.text( 0.7, 0.9, '', transform=ax.transAxes)
+#
+#  # update line positions
+#  self.lx.set_data( (minx, maxx), (y,y) )
+#  self.ly.set_data( (x,x), (miiny, maxy) )
+#
+#  self.txt.set_text( 'x=%1.2f, y=%1.2f' % (x,y) )
+#  draw()
+
+# -------- See also: axvline for such a function
+
+#------------------------------------------------------------------------------
 
 
 linestyle_mappings = \

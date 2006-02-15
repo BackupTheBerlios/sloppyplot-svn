@@ -30,7 +30,39 @@ from Sloppy.Base import uwrap
 
 import logging
 logger = logging.getLogger('gtk.widget_factory')
+#------------------------------------------------------------------------------
 
+# - Make CTreeFactory, CWidgetFactory similar in functionality, so that 
+#   you can have the same comfort in adding widgets as in adding renderers.
+
+# - Implement some kind of sub-connector: a connector that itself is a vbox
+#   with other connectors (this is why I need a proper CWidgetFactory)
+#   -> CLimits aka CInlineInstance
+#   there might be a way to tell the widget_factory that the instance is supposed
+#   to be displayed inline (=> a Keylist or view?)
+
+# - gui for cycle list... (=> widget_factory)
+
+# - RendererUnicodeReadOnly for non-implemented properties
+
+# - Why can't I have get_keys() of HasProperties as classmethod?
+#   It is risky to initiate a new instance just to get the names
+#   of the keys.  I know that the problem is that the keys are collected
+#   from the base classes, but maybe we could have a static alternative
+#   that takes more time but collects this information on the fly?
+
+#   Or maybe we can initiate the keys not in __init__ but in __new__ ?
+#   Or is __new__ for the instance instantiation. I need some method
+#   for the class instantiation!
+
+
+# (F2) Implement Group Properties
+
+# - Group Properties: if each get_xxx method needs exactly one property
+#   to be defined, then we could arrange the widgets likewise: one button
+#   per mode: fixed, cycle_list, range
+
+#------------------------------------------------------------------------------
 
 class CTreeViewFactory:
 
