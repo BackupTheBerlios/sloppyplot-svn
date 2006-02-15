@@ -19,9 +19,13 @@ from Sloppy.Gtk.tools import Tool
 
 
 class PeakFinderTool(Tool):
+
+    name = "PeakFinder"
+    stock_id = gtk.STOCK_EDIT
+
     
     def __init__(self):
-        Tool.__init__(self, "PeakFinder", gtk.STOCK_EDIT)
+        Tool.__init__(self)
 
         # model: (object) = (...)
         model = gtk.ListStore(object)        

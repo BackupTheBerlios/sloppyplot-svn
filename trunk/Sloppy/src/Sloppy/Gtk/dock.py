@@ -42,11 +42,11 @@ class Dockable( gtk.VBox ):
     TARGET_TYPE_TEXT = 80
     dnd_from_label = [ ("text/plain", gtk.TARGET_SAME_APP, TARGET_TYPE_TEXT) ]
 
-    def __init__(self, blurb, stock_id):
+    #name =
+    #stock_id =
+    
+    def __init__(self):
         gtk.VBox.__init__(self)
-        
-        self.blurb = blurb
-        self.stock_id = stock_id
 
         self.dockbook = None
         
@@ -70,7 +70,7 @@ class Dockable( gtk.VBox ):
         close_button.add(image)
         image.show()
 
-        title_label = gtk.Label(self.blurb)
+        title_label = gtk.Label(self.name)
         title_label.unset_flags(gtk.CAN_FOCUS)
         title_label.show()
 
@@ -115,7 +115,7 @@ class Dockable( gtk.VBox ):
     def get_menu_widget(self):
         image = gtk.image_new_from_stock(self.stock_id, gtk.ICON_SIZE_MENU)
         image.show()
-        label = gtk.Label(self.blurb)
+        label = gtk.Label(self.name)
         label.show()
 
         hbox = gtk.HBox()

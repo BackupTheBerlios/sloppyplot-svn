@@ -25,9 +25,11 @@ from Sloppy.Lib.Undo import ulist, UndoList
 from Sloppy.Lib.ElementTree.ElementTree import Element, SubElement
 from Sloppy.Gtk import uihelper, dock, options_dialog
 
-#------------------------------------------------------------------------------
+
 import logging
 logger = logging.getLogger('Gtk.tools')
+#------------------------------------------------------------------------------
+
 
 
 
@@ -40,12 +42,12 @@ class Toolbox(gtk.Window):
 
     """ The Toolbox holds a dock with a number of Tools.
 
-    Since each Tool refers to a backend and to the backend's active
-    layer, the Toolbox has the task to set these two values for all
-    of its tools.
+    Each Tool refers to a backend and to the backend's active layer,
+    and the Toolbox has the task to set these two values for all of
+    its tools.
 
-    The Toolbox also provides a combobox, so that the user may switch
-    the active backend.  The active layer of this backend can not be
+    The Toolbox provides a combobox, so that the user may switch the
+    active backend.  The active layer of this backend can not be
     manipulated by the Toolbox.  However, the Toolbox catches any
     change of this active layer and sends it to its tools.
     
@@ -95,8 +97,8 @@ class Toolbox(gtk.Window):
         self.vbox = vbox
 
         # We add a handler to skip delete-events, i.e. if the
-        # user clicks on the close button of his window, the window
-        # will only be hidden.        
+        # user clicks on the close button of the toolbox, then
+        # it is only hidden.
         def _cb_delete_event(widget, *args):
             self.hide()
             return True # don't continue deletion
@@ -192,7 +194,7 @@ class Toolbox(gtk.Window):
         """
         Fill the combobox with all available matplotlib backends.
         This method might change the current backend, e.g. if the former
-        current backend does no longer exist in the list.
+        current backend no longer exists in the list.
         """
         
         model = self.combobox.get_model()
@@ -231,12 +233,14 @@ class Tool(dock.Dockable):
 
     The project should be set by the top window using
 
-        >>> tool.set_data('project', project)        
+        >>> tool.set_data('project', project)
+
+    The class attributes 'name' and 'stock_id' should be set.
     """
     
     
-    def __init__(self, label, stock_id):
-        dock.Dockable.__init__(self, label, stock_id)
+    def __init__(self):
+        dock.Dockable.__init__(self)
 
         self.backend = -1
         self.layer = -1
@@ -252,20 +256,20 @@ class Tool(dock.Dockable):
         self.backend_cblist = []
 
         self.backend = backend
-        self.update_backend()
+        self.on_update_backend()
         
         if backend is not None:            
             self.set_layer(backend.layer)
         else:
             self.set_layer(None)            
 
-    def update_backend(self):
+    def on_update_backend(self):
         pass
 
     def set_layer(self, layer):
         pass
 
-    def update_layer(self):
+    def on_update_layer(self):
         pass
 
     def check_layer(self):
@@ -277,9 +281,11 @@ class Tool(dock.Dockable):
 
 class LayerTool(Tool):
 
+    name = "Layers"
+    stock_id = gtk.STOCK_EDIT
     
     def __init__(self):
-        Tool.__init__(self, "Layers", gtk.STOCK_EDIT)
+        Tool.__init__(self)
         
         # model: (object) = (layer object)
         model = gtk.ListStore(object)        
@@ -321,10 +327,10 @@ class LayerTool(Tool):
         if layer is not None:
             # maybe connect to layer properties: is it visible, position, ...
             pass
-        self.update_layer()
+        self.on_update_layer()
 
         
-    def update_backend(self):
+    def on_update_backend(self):
         if self.backend is None:
             self.treeview.set_sensitive(False)
             return        
@@ -343,7 +349,7 @@ class LayerTool(Tool):
             )
         
              
-    def update_layer(self):
+    def on_update_layer(self):
         # mark active layer
         model = self.treeview.get_model()
         iter = model.get_iter_first()
@@ -374,8 +380,11 @@ class LayerTool(Tool):
         
 class LabelsTool(Tool):
 
+    name = "Labels"
+    stock_id = gtk.STOCK_EDIT
+
     def __init__(self):
-        Tool.__init__(self, "Labels", gtk.STOCK_EDIT)
+        Tool.__init__(self)
         self.set_size_request(-1,200)
        
         #
@@ -430,11 +439,11 @@ class LabelsTool(Tool):
             self.layer_cblist.append(
                 self.layer.sig_connect("notify::labels", self.on_notify_labels)
                 )
-        self.update_layer()
+        self.on_update_layer()
         
     #------------------------------------------------------------------------------
         
-    def update_layer(self):       
+    def on_update_layer(self):       
         model = self.treeview.get_model()        
         model.clear()
             
@@ -490,7 +499,7 @@ class LabelsTool(Tool):
         project.journal.append(ul)
         logger.info("Journal text: %s" % project.journal.undo_text())
 
-        self.update_layer()
+        self.on_update_layer()
                 
 
     def on_new(self, sender):
@@ -526,34 +535,4 @@ class LabelsTool(Tool):
         
         
     def on_notify_labels(self, layer, updateinfo=None):
-        self.update_layer()
-
-
-
-
-    
-#------------------------------------------------------------------------------
-
-import Sloppy
-from Sloppy.Base import objects
-
-import application
-import os.path
-
-def test2():
-
-    
-    app = application.GtkApplication()
-    filename = os.path.join(app.path('example_dir'), 'example.spj')
-    app.load_project(filename)
-    
-    plot = app.project.get_plot(0)
-
-    win = Toolbox(app, app.project)
-    win.connect("destroy", gtk.main_quit)
-
-    win.show()
-    gtk.main()
-
-if __name__ == "__main__":
-    test2()
+        self.on_update_layer()
