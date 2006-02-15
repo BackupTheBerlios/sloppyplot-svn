@@ -668,7 +668,7 @@ class Table(Dataset):
 
     def get_names(self):
         " Return a list of all field names. "
-        return self._array.dtype.fields[-1]
+        return list(self._array.dtype.fields[-1])
     names = property(get_names)
 
          
