@@ -473,5 +473,5 @@ globals.importer_registry['ASCII'] = Importer
 
 globals.import_templates['ASCII'] = \
   dataio.IOTemplate(blurb="ASCII", extensions='dat,txt',
-                    importer_key='ASCII', is_internal=True)
+                    importer_key='ASCII', immutable=True)
 

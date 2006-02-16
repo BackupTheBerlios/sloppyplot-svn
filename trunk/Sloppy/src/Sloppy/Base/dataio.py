@@ -149,7 +149,7 @@ class IOTemplate(HasProperties):
 
     defaults = Dictionary()    
     importer_key = String()
-    is_internal = Boolean(False) #
+    immutable = Boolean(False) #
     
 
     def new_instance(self):

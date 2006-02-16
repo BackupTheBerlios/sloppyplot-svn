@@ -355,7 +355,7 @@ class Application(object, HasSignals):
             eTemplates.clear()            
                 
         for key, tpl in globals.import_templates.iteritems():
-            if tpl.is_internal is False:
+            if tpl.immutable is False:
                 logger.debug("Writing template %s" % key)
                 eTemplate = SubElement(eTemplates, 'ImportTemplate')               
 

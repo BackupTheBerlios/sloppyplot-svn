@@ -789,7 +789,7 @@ class GtkApplication(application.Application):
                     template.blurb = "Recently used Template"
                     template.importer_key = dialog.template.importer_key
                     template.write_config = True
-                    template.is_internal = True
+                    template.immutable = True
                     globals.import_templates['recently used'] = template
                 else:
                     return

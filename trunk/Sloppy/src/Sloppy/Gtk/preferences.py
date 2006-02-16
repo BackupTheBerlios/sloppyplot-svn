@@ -32,7 +32,8 @@ from Sloppy.Lib.Props import Keyword
 
 
 DS={
-'template_immutable': "<i>This is an internal template\nwhich cannot be edited.</i>",
+'template_immutable': "<i>This is an internal template\nwhich cannot be altered.</i>",
+'template_immutable_nomarkup': "This is an internal template\nwhich cannot be altered.",
 'empty_key': "<b>Empty key not allowed. Try again.</b>",
 'existing_key': "<b>Key already exists. Try again.</b>"
 }
@@ -170,28 +171,35 @@ class ImportTemplatesPage(gtk.VBox):
         # columns should be created in the order given by COLUMN_xxx
         # definitions above.
         tv = gtk.TreeView(model)
-        tv.set_headers_visible(True)
-        
-        cell = gtk.CellRendererText()        
-        column = gtk.TreeViewColumn("Key", cell)
-        column.set_attributes(cell, text=self.MODEL_KEY)
-        column.set_resizable(True)        
-        tv.append_column(column)
 
-        def render_blurb(column, cell, model, iter):
-            object = model.get_value(iter, self.MODEL_OBJECT)
-            blurb = object.blurb or ""
-            if object.is_internal:
-                blurb += " (immutable)"            
-            cell.set_property('text', blurb)
+        tv.set_headers_visible(False)
+
         cell = gtk.CellRendererText()
-        column = gtk.TreeViewColumn("Description", cell)        
-        column.set_cell_data_func(cell, render_blurb)
-        column.set_resizable(True)
+        column = gtk.TreeViewColumn()
+        column.pack_start(cell)
+
+        def render(column, cell, model, iter):
+            object = model.get_value(iter, self.MODEL_OBJECT)
+            key = model.get_value(iter, self.MODEL_KEY)
+
+            key = "<big><b>%s</b></big>" % key
+
+            if object.blurb is not None:
+                blurb = "<i>%s</i>" % object.blurb
+            else:
+                blurb = "<i>no description</i>"
+
+            if object.immutable is True:
+                blurb += " <i>(immutable)</i>"
+
+            text = "%s\n%s" % (key, blurb)
+
+            cell.set_property('markup', text)
+
+        column.set_cell_data_func(cell, render)
         tv.append_column(column)
-
+            
         self.treeview = tv
-
         sw = uihelper.add_scrollbars(tv)
 
         tv.connect("row-activated", (lambda a,b,c: self.on_edit_item(a,c)))
@@ -364,7 +372,7 @@ class ImportTemplatesPage(gtk.VBox):
 
         template = model.get_value(iter, self.MODEL_OBJECT)
         key = model.get_value(iter, self.MODEL_KEY) 
-        new_key = self.do_edit(template, key, allow_edit=not template.is_internal)
+        new_key = self.do_edit(template, key, allow_edit=not template.immutable)
         model[iter][self.MODEL_KEY] = new_key
     
     def on_delete_item(self, sender):
@@ -373,8 +381,8 @@ class ImportTemplatesPage(gtk.VBox):
             return            
 
         template = model.get_value(iter, self.MODEL_OBJECT)
-        if template.is_internal is True:
-            globals.app.error_msg("This is an internal template that cannot be edited or deleted.")
+        if template.immutable is True:
+            globals.app.error_msg(DS['template_immutable_nomarkup'])
         else:
             model.remove(iter)
 
@@ -428,18 +436,28 @@ class PluginPage(gtk.VBox):
             model.append( (plugin,) )
             
         treeview = gtk.TreeView(model)
+        treeview.set_headers_visible(False)
 
-        treeview.set_headers_visible(True)
+        cell = gtk.CellRendererText()
+        column = gtk.TreeViewColumn()
+        column.pack_start(cell)
 
-        def add_column(attr):
-            cell = gtk.CellRendererText()
-            column = gtk.TreeViewColumn(attr, cell)
-            column.set_cell_data_func(cell, self.cell_data_func, attr)
-            column.set_resizable(True)        
-            treeview.append_column(column)
+        def render(column, cell, model, iter):
+            object = model.get_value(iter, 0)
 
-        for attr in ['name', 'blurb']:
-            add_column(attr)
+            name = "<big><b>%s</b></big>" % object.name
+
+            if object.blurb is not None:
+                blurb = "<i>%s</i>" % object.blurb
+            else:
+                blurb = "<i>no description</i>"
+
+            text = "%s\n%s" % (name, blurb)
+
+            cell.set_property('markup', text)
+
+        column.set_cell_data_func(cell, render)
+        treeview.append_column(column)
 
         vbox.pack_start(label, False, True)
         vbox.pack_start(treeview, True, True)        
@@ -448,12 +466,3 @@ class PluginPage(gtk.VBox):
         self.add(frame)
 
 
-    def cell_data_func(self, column, cell, model, iter, attr):
-        """ Display the attribute plugin.attr """
-        plugin = model.get_value(iter, 0)
-        try:
-            value = plugin.__dict__[attr]
-        except KeyError:
-            value = ""
-        cell.set_property('text', value)
-        
