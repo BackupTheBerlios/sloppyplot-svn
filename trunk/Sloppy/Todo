@@ -2,6 +2,8 @@
 BUGFIXES TO BE DONE
 ====================
 
+- is_internal should be renamed to 'immutable'
+
 - DatasetView: allow to change field name 
 
 - dataset signal 'notify' => dataview does not update properly...

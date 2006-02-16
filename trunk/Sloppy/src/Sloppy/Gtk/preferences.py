@@ -32,8 +32,9 @@ from Sloppy.Lib.Props import Keyword
 
 
 DS={
-'template_immutable':
-"<i>This is an internal template\nwhich cannot be edited.</i>"
+'template_immutable': "<i>This is an internal template\nwhich cannot be edited.</i>",
+'empty_key': "<b>Empty key not allowed. Try again.</b>",
+'existing_key': "<b>Key already exists. Try again.</b>"
 }
 
 
@@ -196,7 +197,6 @@ class ImportTemplatesPage(gtk.VBox):
         tv.connect("row-activated", (lambda a,b,c: self.on_edit_item(a,c)))
                     
         buttons=[(gtk.STOCK_EDIT, self.on_edit_item),
-                 ('sloppy-rename', self.on_rename_item),
                  (gtk.STOCK_ADD, self.on_add_item),
                  (gtk.STOCK_COPY, self.on_copy_item),
                  (gtk.STOCK_DELETE, self.on_delete_item)]
@@ -239,13 +239,42 @@ class ImportTemplatesPage(gtk.VBox):
 
 
 
-    def do_edit(self, template, allow_edit=True):
+    def do_edit(self, template, key=None, allow_edit=True):
+        """
+        Edit the given template. Returns the new key of the template.
+
+        The method assures that the entered key is valid, i.e. its
+        length is > 0 and it is different from existing keys.
+        If no key is given, then a new unique key is created as
+        suggestion.
+        """
+        
         importer = template.new_instance()
 
+        # keys = list of existing keys, needed to check for duplicates
+        keys = []        
+        model = self.treeview.get_model()
+        iter = model.get_iter_first()
+        while iter is not None:
+            keys.append(model.get_value(iter, self.MODEL_KEY))
+            iter = model.iter_next(iter)
+
+        # if no key was given, then the key is new and should
+        # be constructed unique.        
+        if key is None:
+            key = utils.unique_names(['template'], keys)[0]
+
+        #
+        # create gui elements
+        #
         dlg = gtk.Dialog("Edit Template Options",None,
                          gtk.DIALOG_MODAL,
                          (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
                           gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
+
+        key_entry = gtk.Entry()
+        key_entry.set_text(unicode(key))
+        key_entry.set_activates_default(True)
 
         factorylist = []
 
@@ -259,7 +288,9 @@ class ImportTemplatesPage(gtk.VBox):
 
         table1 = factory1.create_table()
         table2 = factory2.create_table()
-        
+
+        dlg.vbox.pack_start(key_entry, True, True)
+        dlg.vbox.pack_start(gtk.HSeparator(), False, True)
         dlg.vbox.pack_start(table1, True, True)
         dlg.vbox.pack_start(gtk.HSeparator(), False, True)
         dlg.vbox.pack_start(table2, True, True)
@@ -267,86 +298,27 @@ class ImportTemplatesPage(gtk.VBox):
         for factory in factorylist:
             factory.check_in()
 
+        hint = gtk.Label()
+        dlg.vbox.pack_start(hint,False,True)
+        dlg.vbox.pack_start(gtk.HSeparator(), False, True)
+
+        # gray out gui items if object is immutable
         if allow_edit is False:
-            notice = gtk.Label()
-            notice.set_markup(DS['template_immutable'])
-            dlg.vbox.pack_start(notice,False,True)
-            dlg.vbox.pack_start(gtk.HSeparator(), False, True)
-            
+            hint.set_markup(DS['template_immutable'])            
             for factory in factorylist:
                 for c in factory.clist:
                     c.widget.set_sensitive(False)
+            key_entry.set_sensitive(False)
 
+            
         dlg.show_all()
-
-        try:
-            response = dlg.run()
-
-            if response == gtk.RESPONSE_ACCEPT:                
-
-                # check out
-                for factory in factorylist:
-                    factory.check_out()
-
-                # move importer data to template
-                values = importer.get_values(importer.public_props, default=None)
-                template.set_values(defaults=values)                    
-
-        finally:
-            dlg.destroy()
-
-        return response
-
-
-    def input_key(self, key=None, suggestion='new template'):
-        """
-        Let the user input a valid key.
-
-        The given key is always valid. If key is None, then a new
-        unique key is created as suggestion for the user base on the
-        suggestion.
-
-        An empty key (length 0) is not allowed.
-        """
-
-        # keys = list of existing keys, needed to check for duplicates
-        keys = []        
-        model = self.treeview.get_model()
-        iter = model.get_iter_first()
-        while iter is not None:
-            keys.append(model.get_value(iter, self.MODEL_KEY))
-            iter = model.iter_next(iter)
-
-        # if no key was given, then the key is new and should
-        # be constructed unique.        
-        if key is None:
-            key = utils.unique_names([suggestion], keys)[0]
-
-
-        # create gui
-        dlg = gtk.Dialog("Rename Template",None, gtk.DIALOG_MODAL,
-                         (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
-                          gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
-                         
-        entry = gtk.Entry()
-        entry.set_text(unicode(key))
-        entry.set_activates_default(True)
-
-        hint = gtk.Label()
-        
-        dlg.vbox.add(entry)
-        dlg.vbox.add(hint)
-        dlg.set_default_response(gtk.RESPONSE_ACCEPT)        
-        dlg.show_all()
-        
-        hint.hide()
 
         try:
             while True:
                 response = dlg.run()
-                if response == gtk.RESPONSE_ACCEPT:
-                    # check if key itself is valid                
-                    new_key = entry.get_text()
+                if response == gtk.RESPONSE_ACCEPT:                
+                    # check key
+                    new_key = key_entry.get_text()
                     try:
                         new_key = Keyword().check(new_key)
                     except PropertyError:
@@ -356,25 +328,31 @@ class ImportTemplatesPage(gtk.VBox):
 
                     # if key is equal to the suggested key, use it
                     if key is not None and new_key == key:
-                        return key
+                        pass
                     elif len(new_key) == 0:
                         # don't allow empty keys                        
-                        hint.set_text("Empty key not allowed. Try again.")
-                        hint.show()
+                        hint.set_markup(DS['empty_key'])                        
+                        continue                            
                     elif new_key in keys:
                         # otherwise check if key does not yet exist                        
-                        hint.set_text("Key already exists. Try again.")
-                        hint.show()
-                    else:
-                        return new_key
-                else:
-                    break
+                        hint.set_markup(DS['existing_key'])
+                        continue
+
+                    # check out
+                    for factory in factorylist:
+                        factory.check_out()
+
+                    # move importer data to template
+                    values = importer.get_values(importer.public_props, default=None)
+                    template.set_values(defaults=values)                    
+
+                    return new_key
+
+                raise error.UserCancel
+
         finally:
             dlg.destroy()
-
-        raise error.UserCancel
-
-
+   
 
     #
     # Callbacks
@@ -384,33 +362,10 @@ class ImportTemplatesPage(gtk.VBox):
         if iter is None:
             return
 
-        # perform action based on the column clicked on
-        if column is not None:
-            index = self.treeview.get_columns().index(column)
-        else:
-            index = self.COLUMN_BLURB
-            
-        if index == self.COLUMN_KEY:
-            key = model.get_value(iter, self.MODEL_KEY)
-            new_key = self.input_key(key)
-            if new_key is not None:
-                model.set_value(iter, self.MODEL_KEY, new_key)
-        elif index == self.COLUMN_BLURB:             
-            template = model.get_value(iter, self.MODEL_OBJECT)
-            self.do_edit(template, allow_edit=not template.is_internal)
-        
-
-    def on_rename_item(self, sender):
-        model,iter = self.treeview.get_selection().get_selected()
-        if iter is None:
-            return
-
-        key = model.get_value(iter,self.MODEL_KEY)
-        new_key = self.input_key(key)
-
-        if new_key is not None:
-            model.set_value(iter, self.MODEL_KEY, new_key)
-        
+        template = model.get_value(iter, self.MODEL_OBJECT)
+        key = model.get_value(iter, self.MODEL_KEY) 
+        new_key = self.do_edit(template, key, allow_edit=not template.is_internal)
+        model[iter][self.MODEL_KEY] = new_key
     
     def on_delete_item(self, sender):
         model,iter = self.treeview.get_selection().get_selected()
@@ -419,22 +374,16 @@ class ImportTemplatesPage(gtk.VBox):
 
         template = model.get_value(iter, self.MODEL_OBJECT)
         if template.is_internal is True:
-            pass
-            # TODO: print error message, but we need the app for this!
-            #self.error_msg("This is an internal template that cannot be edited or deleted.")
+            globals.app.error_msg("This is an internal template that cannot be edited or deleted.")
         else:
             model.remove(iter)
 
-
     def on_add_item(self, sender):
         template = dataio.IOTemplate(importer_key='ASCII')
-        key = self.input_key()
-        response = self.do_edit(template)   
-        
-        if response == gtk.RESPONSE_ACCEPT:
-            new_item = (key, template)
-            model = self.treeview.get_model()            
-            model.append(new_item)
+        key = self.do_edit(template)   
+        new_item = (key, template)
+        model = self.treeview.get_model()            
+        model.append(new_item)
 
     def on_copy_item(self, sender):
         model,iter = self.treeview.get_selection().get_selected()
@@ -447,12 +396,9 @@ class ImportTemplatesPage(gtk.VBox):
         template.defaults = source.defaults.copy()
            
         # edit template
-        key = self.input_key()
-        response = self.do_edit(template)        
-        
-        if response == gtk.RESPONSE_ACCEPT:
-            new_item = (key, template)
-            model.append(new_item)
+        key = self.do_edit(template)                
+        new_item = (key, template)
+        model.append(new_item)
 
 
 class PluginPage(gtk.VBox):
