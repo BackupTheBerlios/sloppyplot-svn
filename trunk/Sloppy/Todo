@@ -2,16 +2,24 @@
 BUGFIXES TO BE DONE
 ====================
 
+- DatasetView: allow to change field name 
+
+- dataset signal 'notify' => dataview does not update properly...
+  => there is a model.row_changed(path, iter) method.
+  I guess if there are more than, say, 20 rows involved, it might
+  be smart to tell the model that everything has changed.
+
+
+#------------------------------------------------------------------------------
+
+- transform file format from 0.5.1
+
 - projectio: import_from_table stuff.
   => right now, the dataset is loaded because the datawin has a get_array
      call. Of course we must do this somehow different....
      maybe set _array to property(..., set_array)
 
-- dataset signal 'notify' => dataview does not update properly...
-
 - Importer: remove checkboxes from widgets....
-
-- DatasetView: allow to change field name 
 
 - Allow to specify format for column view (e.g. %2.3f for floats)
 
@@ -22,9 +30,6 @@ BUGFIXES TO BE DONE
   we need to apply all changes that are not yet active.  Maybe by
   moving focus to the current button?
 
-- close matplotlib backend, then edit its plot again --> I think this will
-  cause an error because the backend has not been properly closed.
-
 - check if we really want to have None values for some object properties, e.g.
   line.label, ...
 
@@ -33,23 +38,4 @@ BUGFIXES TO BE DONE
 
 - aspect ratio of figures should be preserved.
 
-- What if we have two templates for the same extension?
-  -> either ask the user what to do
-  -> or prefer the template that is on the top.  This would
-     require a 'move up' and 'move down' button in the preferences
-     dialog
-
-- don't update tools window if it is hidden, i.e. disconnect signals!
-
 - Signals.connect_once -> requires an additional flag in the SignalContainer
-
-
-------------------------------------------------------------------------------
-
-When writing tools for the Toolbox I saw the necessity for a new painting
-mechanisms for the mpl backend: not a monolithic one, like the one we have
-right now, but one that is oriented at the existing objects.  Each such
-object is called a Painter, e.g. LayerPainter, LinePainter, ....
-You do not necessarily need such a painter object, but you can.
-
-

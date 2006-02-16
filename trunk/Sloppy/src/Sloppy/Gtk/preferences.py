@@ -25,7 +25,7 @@ Configuration dialog and widgets.
 
 
 import gtk
-from Sloppy.Base import globals, dataio, version
+from Sloppy.Base import globals, dataio, version, error, utils
 
 from Sloppy.Gtk import uihelper, widget_factory
 from Sloppy.Lib.Props import Keyword
@@ -298,8 +298,32 @@ class ImportTemplatesPage(gtk.VBox):
         return response
 
 
-    def input_key(self, key):
-        " Let the user enter a valid key.  The given key is always valid. "
+    def input_key(self, key=None, suggestion='new template'):
+        """
+        Let the user input a valid key.
+
+        The given key is always valid. If key is None, then a new
+        unique key is created as suggestion for the user base on the
+        suggestion.
+
+        An empty key (length 0) is not allowed.
+        """
+
+        # keys = list of existing keys, needed to check for duplicates
+        keys = []        
+        model = self.treeview.get_model()
+        iter = model.get_iter_first()
+        while iter is not None:
+            keys.append(model.get_value(iter, self.MODEL_KEY))
+            iter = model.iter_next(iter)
+
+        # if no key was given, then the key is new and should
+        # be constructed unique.        
+        if key is None:
+            key = utils.unique_names([suggestion], keys)[0]
+
+
+        # create gui
         dlg = gtk.Dialog("Rename Template",None, gtk.DIALOG_MODAL,
                          (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
                           gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
@@ -331,26 +355,24 @@ class ImportTemplatesPage(gtk.VBox):
                         continue
 
                     # if key is equal to the suggested key, use it
-                    if key == new_key:
+                    if key is not None and new_key == key:
                         return key
-
-                    # otherwise check if key does not yet exist
-                    model = self.treeview.get_model()
-                    iter = model.get_iter_first()
-                    while iter is not None:
-                        if new_key == model.get_value(iter, self.MODEL_KEY):
-                            hint.set_text("Key already exists. Try again.")
-                            hint.show()
-                            continue
-                        iter = model.iter_next(iter)
-
-                    return new_key
+                    elif len(new_key) == 0:
+                        # don't allow empty keys                        
+                        hint.set_text("Empty key not allowed. Try again.")
+                        hint.show()
+                    elif new_key in keys:
+                        # otherwise check if key does not yet exist                        
+                        hint.set_text("Key already exists. Try again.")
+                        hint.show()
+                    else:
+                        return new_key
                 else:
                     break
         finally:
             dlg.destroy()
 
-        return None
+        raise error.UserCancel
 
 
 
@@ -403,19 +425,11 @@ class ImportTemplatesPage(gtk.VBox):
         else:
             model.remove(iter)
 
-        
 
     def on_add_item(self, sender):
-        # set up new template        
         template = dataio.IOTemplate(importer_key='ASCII')
-
-        # let user input key
-        key = self.input_key("New Template")
-        if key is None:
-            return
-
-        # edit template
-        response = self.do_edit(template)        
+        key = self.input_key()
+        response = self.do_edit(template)   
         
         if response == gtk.RESPONSE_ACCEPT:
             new_item = (key, template)
@@ -431,15 +445,9 @@ class ImportTemplatesPage(gtk.VBox):
         # set up new template        
         template = dataio.IOTemplate(importer_key='ASCII')
         template.defaults = source.defaults.copy()
-
-        # Let user input key.
-        # TODO: We must make sure that the new key is unique!
-        key = 'New Template'            
-        key = self.input_key(key)
-        if key is None:
-            return        
-
+           
         # edit template
+        key = self.input_key()
         response = self.do_edit(template)        
         
         if response == gtk.RESPONSE_ACCEPT:
