@@ -2,17 +2,7 @@
 BUGFIXES TO BE DONE
 ====================
 
-- is_internal should be renamed to 'immutable'
-
-- DatasetView: allow to change field name 
-
-- dataset signal 'notify' => dataview does not update properly...
-  => there is a model.row_changed(path, iter) method.
-  I guess if there are more than, say, 20 rows involved, it might
-  be smart to tell the model that everything has changed.
-
-
-#------------------------------------------------------------------------------
+- DatasetView: allow to change field name also in ModifyTableDialog
 
 - transform file format from 0.5.1
 
@@ -23,21 +13,11 @@ BUGFIXES TO BE DONE
 
 - Importer: remove checkboxes from widgets....
 
-- Allow to specify format for column view (e.g. %2.3f for floats)
-
-- when switching the view, we first should leave focus, because otherwise
-  you might see remnants from combo boxes
-
 - if clicking on 'apply' or any other button in the layer window,
   we need to apply all changes that are not yet active.  Maybe by
   moving focus to the current button?
 
 - check if we really want to have None values for some object properties, e.g.
   line.label, ...
-
-- extra option: autotitles: if set to off, then only plots that do have a
-  label are given a title (gnuplot: set key noautotitles)
-
-- aspect ratio of figures should be preserved.
 
 - Signals.connect_once -> requires an additional flag in the SignalContainer

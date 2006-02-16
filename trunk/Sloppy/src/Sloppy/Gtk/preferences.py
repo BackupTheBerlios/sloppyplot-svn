@@ -28,14 +28,15 @@ import gtk
 from Sloppy.Base import globals, dataio, version, error, utils
 
 from Sloppy.Gtk import uihelper, widget_factory
-from Sloppy.Lib.Props import Keyword
+from Sloppy.Lib.Props import Keyword, PropertyError
 
 
 DS={
 'template_immutable': "<i>This is an internal template\nwhich cannot be altered.</i>",
 'template_immutable_nomarkup': "This is an internal template\nwhich cannot be altered.",
 'empty_key': "<b>Empty key not allowed. Try again.</b>",
-'existing_key': "<b>Key already exists. Try again.</b>"
+'existing_key': "<b>Sorry, this key is already in use!\nPLease choose another one.</b>",
+'invalid_key': "<b>Key is invalid. Try again.</b>"
 }
 
 
@@ -280,24 +281,29 @@ class ImportTemplatesPage(gtk.VBox):
                          (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
                           gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
 
+        key_label = gtk.Label("Template name ")        
         key_entry = gtk.Entry()
         key_entry.set_text(unicode(key))
         key_entry.set_activates_default(True)
+        key_box = gtk.HBox()
+        key_box.pack_start(key_label,False,True)
+        key_box.pack_start(key_entry,True,True)
 
+        hint = gtk.Label()
+        
         factorylist = []
-
         factory1 = widget_factory.CWidgetFactory(template)
         factory1.add_keys('blurb','extensions','skip_options')
-        factorylist.append(factory1)
-        
+        factorylist.append(factory1)    
         factory2 = widget_factory.CWidgetFactory(importer)
         factory2.add_keys(importer.public_props)
-        factorylist.append(factory2)        
-
+        factorylist.append(factory2)
+        
         table1 = factory1.create_table()
         table2 = factory2.create_table()
 
-        dlg.vbox.pack_start(key_entry, True, True)
+        dlg.vbox.pack_start(key_box, True, True)
+        dlg.vbox.pack_start(hint,False,True)       
         dlg.vbox.pack_start(gtk.HSeparator(), False, True)
         dlg.vbox.pack_start(table1, True, True)
         dlg.vbox.pack_start(gtk.HSeparator(), False, True)
@@ -305,10 +311,6 @@ class ImportTemplatesPage(gtk.VBox):
 
         for factory in factorylist:
             factory.check_in()
-
-        hint = gtk.Label()
-        dlg.vbox.pack_start(hint,False,True)
-        dlg.vbox.pack_start(gtk.HSeparator(), False, True)
 
         # gray out gui items if object is immutable
         if allow_edit is False:
@@ -327,11 +329,11 @@ class ImportTemplatesPage(gtk.VBox):
                 if response == gtk.RESPONSE_ACCEPT:                
                     # check key
                     new_key = key_entry.get_text()
+
                     try:
                         new_key = Keyword().check(new_key)
                     except PropertyError:
-                        hint.set_text("Key is invalid. Try again.")
-                        hint.show()
+                        hint.set_markup(DS['invalid_key'])
                         continue
 
                     # if key is equal to the suggested key, use it
@@ -401,8 +403,8 @@ class ImportTemplatesPage(gtk.VBox):
 
         # set up new template        
         template = dataio.IOTemplate(importer_key='ASCII')
-        template.defaults = source.defaults.copy()
-           
+        template.defaults = dict(source.defaults)
+
         # edit template
         key = self.do_edit(template)                
         new_item = (key, template)

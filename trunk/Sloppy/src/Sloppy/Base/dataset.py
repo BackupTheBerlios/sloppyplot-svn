@@ -627,7 +627,7 @@ class Table(Dataset):
                 
             if info is None:
                 try:
-                    del self._infos[name]
+                    self._infos.pop(name)
                 except KeyError:
                     logger.warn("update_infos: info with name %s did not exist" % name)
             else:
@@ -676,21 +676,23 @@ class Table(Dataset):
         name = self.get_name(cindex)
         return self._array.dtype.fields[name][0]
 
-    def rename(self, cindex, new_name):
+    def rename_column(self, col, new_name, undolist=[]):
         """
         Rename the field with the name or index `cindex` to the new name.        
         """
-        a = self._array
-        old_name = self.get_name(cindex)
-        new = dict(a.dtype.fields)
-        new[new_name] = new[old_name]
-        del new[old_name]
-        del new[-1]
-        a.dtype = numpy.dtype(new)
+        index = self.get_index(col)
+        new_names = self.names[:]
+        old_name = new_names[index]
+        new_names[index] = new_name
+        self._array.dtype = numpy.dtype({'formats': self.formats, 'names': new_names})
+
+        print "NEW DTYPE", self._array.dtype
 
         # keep field infos in sync
-        self._infos[new_name] = self._infos[old_name]
-        del self._infos[old_name]
+        if self._infos.has_key(old_name):
+            self._infos[new_name] = self._infos.pop(old_name)
+
+        undolist.append(UndoInfo(self.rename_column, col, old_name))
         self.sig_register('update-fields')        
 
     
