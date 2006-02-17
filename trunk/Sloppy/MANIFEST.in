@@ -2,11 +2,12 @@ include *.txt
 include AUTHORS COPYING ChangeLog INSTALL README ReleaseNotes
 recursive-include Licenses *.txt
 recursive-include src *.png
-include Examples *.spj
-include Examples/Data *.dat
-recursive-include Icons *.png *.svg
-include sloppyplot.desktop sloppyplot.xml 
+include data/examples *.spj
+include data/examples/Data *.dat
+recursive-include data/icons *.png *.svg
+include data/desktop-integration/*
 include sloppyplot.build
+
 
 
 
