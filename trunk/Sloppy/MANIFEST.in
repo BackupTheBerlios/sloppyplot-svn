@@ -3,7 +3,7 @@ include AUTHORS COPYING ChangeLog INSTALL README ReleaseNotes LICENSE
 recursive-include Licenses *.txt
 recursive-include src *.png
 include data/examples *.spj
-include data/examples/Data *.dat
+include data/examples/data *.dat
 recursive-include data/icons *.png *.svg
 include data/desktop-integration/*
 include sloppyplot.build

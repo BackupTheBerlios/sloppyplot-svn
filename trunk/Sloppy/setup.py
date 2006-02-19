@@ -86,12 +86,12 @@ setup(name=NAME,
       # second argument of data_files tuples is a list!
       data_files = [
         # example files
-        (join(PATH_SLOPPYSHARE,'Examples'),
+        (join(PATH_SLOPPYSHARE,'examples'),
 	glob(join("data","examples","*.spj"))),
 
 	# example data
-        (join(PATH_SLOPPYSHARE,'Examples','Data'),
-         glob(join("data","examples","Data","*.dat"))),
+        (join(PATH_SLOPPYSHARE,'examples','data'),
+         glob(join("data","examples","data","*.dat"))),
 	#
 
 	# pixmaps (=icons used within the application)
