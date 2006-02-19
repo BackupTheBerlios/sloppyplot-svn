@@ -13,12 +13,14 @@ logging.basicConfig()
 
 def demo_zno():
 
-    ds = Dataset(key = "Zn10Abs1")
-    ds.data = read_table_from_file("Data/sample_data_01.dat", "ASCII", delimiter='\s*')
+    tbl = read_table_from_file("data/zno.dat", "ASCII", delimiter='\s*')
+    tbl.key = "Zn10Abs1"
 
-    tbl = ds.data
-    tbl.column(0).set_values('key', 'Wavelength', 'label', 'Wavelength (nm)')
-    tbl.column(1).set_values(key='Absorption', designation = 'Y', label='Optical Absorption (arb. units)')
+    info = tbl.get_info(0)
+    info.set_values('key', 'Wavelength', 'label', 'Wavelength (nm)')
+
+    info = tbl.get_info(1)
+    info.set_values(key='Absorption', designation = 'Y', label='Optical Absorption (arb. units)')
     
     layer = Layer(type='line2d',
                   lines=[Line(source=ds)],
@@ -30,7 +32,7 @@ def demo_zno():
     
     spj = Project(plots=[pl], datasets=[ds])
 
-    save_project(spj, 'example_01.spj')
+    save_project(spj, 'zno.spj')
 
 
 if __name__ == "__main__":
