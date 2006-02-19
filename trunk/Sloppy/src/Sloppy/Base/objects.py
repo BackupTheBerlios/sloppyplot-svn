@@ -48,7 +48,7 @@ PV = {
     'line.style' : ["solid","dashed","dash-dot","dotted","steps","None"],
     'layer.type' : ['line2d', 'contour'],
 
-    'line.color' : ['green', 'red', 'blue', 'black'],
+    'line.color' : ['black', 'blue', 'red', 'green', 'cyan', 'magenta', 'yellow'],
     'line.marker_color' : ['black', 'red', 'blue', 'green'],    
     'position_system' : ['data', 'graph', 'screen', 'display'],
     'position_valign' : ['center', 'top','bottom'],

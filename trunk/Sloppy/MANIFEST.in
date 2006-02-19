@@ -1,5 +1,5 @@
 include *.txt
-include AUTHORS COPYING ChangeLog INSTALL README ReleaseNotes
+include AUTHORS COPYING ChangeLog INSTALL README ReleaseNotes LICENSE
 recursive-include Licenses *.txt
 recursive-include src *.png
 include data/examples *.spj
