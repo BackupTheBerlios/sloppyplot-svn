@@ -2,22 +2,24 @@
 BUGFIXES TO BE DONE
 ====================
 
-- DatasetView: allow to change field name also in ModifyTableDialog
+- Data: maybe use markup in the status bar, so
+  that the read coordinates are bold
 
-- transform file format from 0.5.1
+- DatasetView: allow to change field name also in ModifyTableDialog
 
 - projectio: import_from_table stuff.
   => right now, the dataset is loaded because the datawin has a get_array
      call. Of course we must do this somehow different....
      maybe set _array to property(..., set_array)
 
-- Importer: remove checkboxes from widgets....
-
-- if clicking on 'apply' or any other button in the layer window,
-  we need to apply all changes that are not yet active.  Maybe by
-  moving focus to the current button?
+- Importer
+  - don't display checkboxes ?
+  - use Gtk.EntryCombo or whatever it is called for the delimiter.
+    The user must be able to choose from a list!
 
 - check if we really want to have None values for some object properties, e.g.
   line.label, ...
 
-- Signals.connect_once -> requires an additional flag in the SignalContainer
+- if clicking on 'apply' or any other button in the layer window,
+  we need to apply all changes that are not yet active.  Maybe by
+  moving focus to the current button?

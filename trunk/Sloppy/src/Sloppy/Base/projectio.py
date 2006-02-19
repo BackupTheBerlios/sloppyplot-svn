@@ -39,22 +39,6 @@ logger = logging.getLogger('Base.projectio')
 
 FILEFORMAT = "0.5.2"
 
-"""
-File format history:
-
-  - 0.3 -> 0.4: Table.cols -> Table.ncols  (transformation implemented)
-
-  - 0.4 -> 0.4.3: added layer.labels (no conversion required)
-
-  - 0.4.5 -> 0.5: changed internal file format to netCDF.
-    This is an incompatible change, so I decided to drop the
-    prior conversions for 0.4.6. Sorry, but this is what Alpha
-    software really means.
-
-  - 0.5 -> 0.5.2: implemented line.color.  Since line.color was not accessible
-    through the GUI until then, there is no conversion of existing entries.
-  
-"""
 
 class ParseError(Exception):
     pass
@@ -65,19 +49,11 @@ class ParseError(Exception):
 
 
 def new_table(spj, element):
-    #ncols = int(element.attrib.pop('ncols',0))
-    
-    # TODO: pass fileformat_version to importer (somehow)
-    # TODO: how?
-    fileformat = element.attrib.pop('fileformat', 'CSV')
-    fileformat_version = element.attrib.pop('fileformat_version', None)
 
     # Create field infos
     formats = []
     info_dict = {}
     for eColumn in element.findall('Column'):        
-        info = Table.Info()
-
         # name
         try:
             name = eColumn.attrib['name']
@@ -93,14 +69,15 @@ def new_table(spj, element):
             format = 'f4'
         formats.append(format)
 
-        # fill info with attributes
+        # create info with attributes
+        info = Table.Info()        
         for eAttribute in eColumn.findall('Attribute'):
             key = eAttribute.attrib['key']
             value = eAttribute.text
             if value is not None:
                 info.set_value(key, value)       
-
         info_dict[name] = info
+        
         
     # create table with given format and infos, but w/o any rows
     a = numpy.zeros((0,), {'names':info_dict.keys(), 'formats':formats})
@@ -129,18 +106,10 @@ def new_table(spj, element):
     tbl.key = key
 
 
-    print "This is how the new table dumps:"
-    print
-    tbl.dump()
-    print
-
     # Right now, the Table is still empty. By setting this callback
     # for the _import attribute, the dataset is loaded from the hard
-    # disk on the next access.
-    
-    filename = os.path.join('datasets', utils.as_filename(tbl.key))
-
-            
+    # disk on the next access.    
+    filename = os.path.join('datasets', utils.as_filename(tbl.key))           
     def do_import(the_table):
         try:
             archive = tarfile.open(spj.get_filename(),'r:gz')
@@ -254,10 +223,11 @@ def new_plot(spj, element):
 #------------------------------------------------------------------------------
 
 def fromTree(tree):
-    eProject = tree.getroot()
-                    
+    eProject = tree.getroot()                    
     spj = Project()
 
+    # If we encounter an older file format, then we simply transform
+    # the XML to the new format.
     version = eProject.get('version', None)
     def raise_version(new_version):
         logger.info("Converted SloppyPlot Archive to version %s" % new_version)
@@ -265,13 +235,18 @@ def fromTree(tree):
     
     while (version is not None and version != FILEFORMAT):
         if version=='0.5':
+            # Datasets.Table.Column.Info -> Datasets.Table.Column.Attribute
+            for element in eRoot.findall('Datasets/Table/Column/Info'):
+                element.tag = 'Attribute'            
             version = raise_version('0.5.2')
             continue
         raise IOError("Invalid Sloppy File Format Version %s. Aborting Import." % version)
 
+    # load datasets
     for eDataset in eProject.findall('Datasets/Table'):
         spj.datasets.append( new_table(spj, eDataset))
 
+    # load plots
     for ePlot in eProject.findall('Plots/*'):
         spj.plots.append( new_plot(spj, ePlot) )
     
@@ -293,21 +268,7 @@ def toElement(project):
 
 
     eProject = Element("Project")
-    eProject.attrib['version'] = FILEFORMAT
-
-    # Former notation
-    # Datasets
-    #   Table  (attribute typecodes)
-    #     Column
-    #       Info
-    #     Column
-
-    # New notation
-    # Datasets
-    #   Table (no attribute typecodes)
-    #     Column (attributes name and format)
-    #       Attribute
-    #     Column
+    eProject.attrib['version'] = FILEFORMAT  
 
     eData = SubElement(eProject, "Datasets")
     for ds in project.datasets:
@@ -320,8 +281,6 @@ def toElement(project):
         if isinstance(ds, Table):
             tbl = ds
             eTable = SubElement(eData, 'Table')
-            #SIV(eTable, 'ncols', tbl.ncols)
-            #SIV(eDataset, 'nrows', ds.nrows)        
 
             # All information about the columns is stored in the
             # element tree.  Only the actual data will later on be

@@ -920,11 +920,14 @@ class GtkApplication(application.Application):
 
     def progress(self, fraction):
         pb = self.window.progressbar
-        
-        if fraction == -1:
+
+        if fraction == 0:
+            pb.show()
+            pb.set_fraction(0)
+        elif fraction == -1:
             pb.hide()
         else:
-            pb.show()
+            print "PERCENTAGE ", fraction
             pb.set_fraction(fraction)
 
         # Calling main_iteration is definitely not the only way to

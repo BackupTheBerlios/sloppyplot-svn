@@ -247,13 +247,9 @@ class MatplotlibWidget(gtk.VBox):
         ('ZoomFit', gtk.STOCK_ZOOM_FIT, '_Zoom Fit', '0', 'Zoom', 'on_action_ZoomFit'),
         ('ZoomRect', gtk.STOCK_ZOOM_FIT, '_Zoom Rectangle', 'r', 'Zoom', 'on_action_ZoomRect'),
         ('MoveAxes', None, 'Move Plot', 'm', '', 'on_action_MoveAxes'),
-        ('DataCursor', None, 'Data Cursor (EXPERIMENTAL!)', 'c', '', 'on_action_DataCursor'),
+        ('DataCursor', None, 'Data Cursor', 'c', '', 'on_action_DataCursor'),
         ('SelectLine', None, 'Select Line', 's', '', 'on_action_SelectLine'),
         ('ZoomAxes', None, 'Zoom Axes', 'z', '', 'on_action_ZoomAxes')
-        ],
-        'Experimental':
-        [
-        ('PeakFinder', None, 'Find Peaks (EXPERIMENTAL!)', None, '', 'on_action_PeakFinder')
         ]
         }
 
@@ -271,8 +267,6 @@ class MatplotlibWidget(gtk.VBox):
         </menu>        
         <menu action='AnalysisMenu'>
           <menuitem action='DataCursor'/>
-          <separator/>
-          <menuitem action='PeakFinder'/>
         </menu>        
         <menu action='DisplayMenu'>
           <menuitem action='ZoomRect'/>

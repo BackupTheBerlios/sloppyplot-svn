@@ -39,7 +39,6 @@ from groups import Group, MODE_CONSTANT, MODE_CYCLE
 #
 
 PV = {
-#    'PointType': ['circle','square'],
     'legend.position': ['best', 'center', 'lower left', 'center right', 'upper left',
                         'center left', 'upper right', 'lower right',
                         'upper center', 'lower center',
