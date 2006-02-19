@@ -2,9 +2,6 @@
 BUGFIXES TO BE DONE
 ====================
 
-- Data: maybe use markup in the status bar, so
-  that the read coordinates are bold
-
 - DatasetView: allow to change field name also in ModifyTableDialog
 
 - projectio: import_from_table stuff.

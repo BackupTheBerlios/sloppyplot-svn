@@ -34,6 +34,65 @@ import logging
 logger = logging.getLogger('Gtk.datawin')
 
 
+
+class ColumnInfoDialog(gtk.Dialog):
+
+    def __init__(self, col_info, col_name, used_names):
+        gtk.Dialog.__init__(self, "Edit Column",None,
+                            gtk.DIALOG_MODAL,
+                            (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
+                             gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
+
+        self.col_info = col_info
+        self.col_name = col_name
+        self.used_names = used_names
+
+        self.new_name = None # result
+
+        name_label = gtk.Label("Column name ")
+        name_entry = gtk.Entry()
+        name_entry.set_text(unicode(col_name))
+        name_entry.set_activates_default(True)
+        name_box = gtk.HBox()
+        name_box.pack_start(name_label,False,True)
+        name_box.pack_start(name_entry,True,True)
+
+        hint = gtk.Label()
+
+        factory = widget_factory.CWidgetFactory(col_info)
+        factory.add_keys('label', 'designation')
+        table = factory.create_table()
+        factory.check_in()
+        
+        self.vbox.pack_start(name_box, True, True)
+        self.vbox.pack_start(hint, False, True)
+        self.vbox.pack_start(gtk.HSeparator(), False, True)
+        self.vbox.pack_start(table, True, True)
+
+        self.vbox.show_all()
+
+        self.name_entry = name_entry
+
+
+    def run(self):
+        while True:
+            response = gtk.Dialog.run(self)
+            if response == gtk.RESPONSE_ACCEPT:
+                # check column name
+                new_name = self.name_entry.get_text()
+                if len(new_name) == 0:
+                    continue                    
+
+                if new_name != self.col_name and new_name in self.used_names:
+                    hint.set_markup("<b>Sorry, this name is already in use!\nPlease choose another one.</b>")
+                    continue
+
+                self.new_name = new_name
+                return response             
+            else:
+                return response
+
+
 class DatasetWindow( gtk.Window ):    
 
     actions = [
@@ -303,66 +362,25 @@ class DatasetWindow( gtk.Window ):
     def edit_column_info(self, colnr):
         self._edit_column_info(colnr)
             
-        
-
     def _edit_column_info(self, colnr):
-        info = self.dataset.get_info(colnr)
+        info = self.dataset.get_info(colnr)                        
         name = self.dataset.get_name(colnr)            
+        names = self.dataset.names
 
-        dlg = gtk.Dialog("Edit Column",None,
-                         gtk.DIALOG_MODAL,
-                         (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
-                          gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
-
-
-        name_label = gtk.Label("Column name ")
-        name_entry = gtk.Entry()
-        name_entry.set_text(unicode(name))
-        name_entry.set_activates_default(True)
-        name_box = gtk.HBox()
-        name_box.pack_start(name_label,False,True)
-        name_box.pack_start(name_entry,True,True)
-
-        hint = gtk.Label()
-
-        factory = widget_factory.CWidgetFactory(info)
-        factory.add_keys('label', 'designation')
-        table = factory.create_table()
-        factory.check_in()
-
-        dlg.vbox.pack_start(name_box, True, True)
-        dlg.vbox.pack_start(hint, False, True)
-        dlg.vbox.pack_start(gtk.HSeparator(), False, True)
-        dlg.vbox.pack_start(table, True, True)
-        dlg.show_all()
-
+        dlg = ColumnInfoDialog(info, name, names)
         try:
-            while True:
-                response = dlg.run()
-                if response == gtk.RESPONSE_ACCEPT:
-                    # check column name
-                    new_name = name_entry.get_text()
-                    if len(new_name) == 0:
-                        continue                    
-
-                    if new_name != name and new_name in self.dataset.names:
-                        hint.set_markup("<b>Sorry, this name is already in use!\nPlease choose another one.</b>")
-                        continue
-
-                    # check out
-                    ul = UndoList("edit column info")
-                    factory.check_out(undolist=ul)
-                    print "info has changed to ", info.get_values()
-                    self.dataset.rename_column(colnr, new_name, undolist=ul)
-                    uwrap.emit_last(self.dataset, 'update-fields', undolist=ul)
-                    self.project.journal.append(ul)
-                    break
-                        
-                else:
-                    break
+            response = dlg.run()
+            if response == gtk.RESPONSE_ACCEPT:
+                # check out
+                ul = UndoList("edit column info")
+                factory.check_out(undolist=ul)
+                self.dataset.rename_column(colnr, dlg.new_name, undolist=ul)
+                uwrap.emit_last(self.dataset, 'update-fields', undolist=ul)
+                self.project.journal.append(ul)                
         finally:
-            dlg.destroy()     
-
+            dlg.destroy()
+            
+    
 
     def cb_view_button_press_event(self, widget, event):
         # constant editing turned off right now
@@ -720,13 +738,21 @@ class ModifyTableDialog(gtk.Dialog):
         del fields[name]
 
         # TODO: insert field for key into OptionsDialog
-        dialog = OptionsDialog(info)
+        TESTING=True
+        if TESTING is True:
+            dialog = ColumnInfoDialog(info, name, fields)
+#            dialog = EditInfoDialog(info, fields)
+        else:
+            dialog = OptionsDialog(info)
+            
         try:
             response = dialog.run()
             if response == gtk.RESPONSE_ACCEPT:
                 dialog.check_out()                
         finally:
             dialog.destroy()
+
+            
         self.cview.grab_focus()
 
 
