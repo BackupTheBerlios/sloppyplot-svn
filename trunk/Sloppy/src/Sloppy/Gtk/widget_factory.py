@@ -530,15 +530,21 @@ class ConnectorUnicode(Connector):
         entry.connect("focus-out-event", self.on_focus_out_event)
 
         # create checkbutton if requested
-        try:
-            prop = self.container.get_prop(self.key)
-            prop.check(None)
-        except PropertyError:
-            self.checkbutton = None            
+
+        # TODO: disabled for now, until better solution is found.
+
+        if 1:
+            self.checkbutton = None
         else:
-            self.checkbutton = gtk.CheckButton()
-            self.checkbutton.connect("toggled",
-              (lambda sender: entry.set_sensitive(sender.get_active())))
+            try:
+                prop = self.container.get_prop(self.key)
+                prop.check(None)
+            except PropertyError:
+                self.checkbutton = None            
+            else:
+                self.checkbutton = gtk.CheckButton()
+                self.checkbutton.connect("toggled",
+                  (lambda sender: entry.set_sensitive(sender.get_active())))
 
 
         # pack everything together

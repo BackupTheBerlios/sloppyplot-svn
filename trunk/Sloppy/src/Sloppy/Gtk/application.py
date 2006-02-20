@@ -927,7 +927,6 @@ class GtkApplication(application.Application):
         elif fraction == -1:
             pb.hide()
         else:
-            print "PERCENTAGE ", fraction
             pb.set_fraction(fraction)
 
         # Calling main_iteration is definitely not the only way to

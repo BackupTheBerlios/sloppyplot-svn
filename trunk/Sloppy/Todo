@@ -7,11 +7,6 @@ BUGFIXES TO BE DONE
      call. Of course we must do this somehow different....
      maybe set _array to property(..., set_array)
 
-- Importer
-  - don't display checkboxes ?
-  - use Gtk.EntryCombo or whatever it is called for the delimiter.
-    The user must be able to choose from a list!
-
 - check if we really want to have None values for some object properties, e.g.
   line.label, ...
 

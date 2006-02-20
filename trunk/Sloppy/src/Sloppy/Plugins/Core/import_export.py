@@ -1,5 +1,5 @@
 
-from Sloppy.Lib.Undo import UndoList, ulist
+from Sloppy.Lib.Undo import UndoList, ulist, NullUndo
 from Sloppy.Base import globals, dataio, utils, error
 import os.path
 
@@ -26,7 +26,7 @@ def import_datasets(project, filenames, template, undolist=None):
 
     n = 0.0
     N = len(filenames)
-    app.progress(0)        
+    app.progress(0.0)        
     for filename in filenames:
         app.status_msg("Importing %s" % filename)                       
         try:
@@ -46,7 +46,7 @@ def import_datasets(project, filenames, template, undolist=None):
         n+=1
         app.progress(n/N)
 
-    app.progress(100)
+    app.progress(1.0)
 
     if len(new_datasets) > 0:
         ul = UndoList()

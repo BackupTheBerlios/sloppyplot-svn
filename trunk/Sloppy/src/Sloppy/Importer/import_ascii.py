@@ -123,12 +123,9 @@ class Importer(dataio.Importer):
 
     
     # Other
-    
-    delimiter = \
-    String(
-        blurb ="Delimiter",
-        doc="Column delimiter that separates the columns"
-        )
+
+    delimiter = String(blurb="Delimiter",
+                       doc="Column delimiter that separates the columns")
        
     ncols = \
      VP(
@@ -298,7 +295,7 @@ class Importer(dataio.Importer):
             line = fd.readline()
         fd.seek(rewind)
 
-        # determine delimiter
+        # determine delimiter            
         delimiter = self.delimiter
         if delimiter is None or len(delimiter) == 0:
             # determine from first non-comment line
