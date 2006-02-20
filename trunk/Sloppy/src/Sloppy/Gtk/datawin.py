@@ -19,23 +19,34 @@
 # $Id: tablewin.py 457 2006-01-19 20:45:02Z niklasv $
 
 
+import gtk, numpy
+
 from Sloppy.Base.dataset import Dataset, Table
 from Sloppy.Base import uwrap, globals, utils, error
 from Sloppy.Lib.Undo import UndoList, UndoInfo
 
-import gtk, numpy
-
 from Sloppy.Gtk.options_dialog import OptionsDialog
 from Sloppy.Gtk import uihelper, widget_factory, dataview, uidata
 
-
-#------------------------------------------------------------------------------
 import logging
 logger = logging.getLogger('Gtk.datawin')
-
-
+#------------------------------------------------------------------------------
 
 class ColumnInfoDialog(gtk.Dialog):
+
+    """ Edit the info object and the name of a column.
+
+    You must specify the info object 'col_info', the column name
+    'col_name' and a list of names that are already in use 'used_names'.
+    The dialog rejects any name that is already in this list, unless
+    it is the initially proposed name 'col_name'.
+
+    The run() method returns gtk.RESPONSE_ACCEPT or gtk.RESPONSE_REJECT
+    as one expects from a gtk Dialog.
+
+    The info can be checked out using the 'check_out' method. The
+    entered name can be retrieved using the attribute 'new_name'.    
+    """
 
     def __init__(self, col_info, col_name, used_names):
         gtk.Dialog.__init__(self, "Edit Column",None,
@@ -72,7 +83,9 @@ class ColumnInfoDialog(gtk.Dialog):
         self.vbox.show_all()
 
         self.name_entry = name_entry
-
+        self.factory = factory
+        self.hint = hint
+        
 
     def run(self):
         while True:
@@ -84,7 +97,7 @@ class ColumnInfoDialog(gtk.Dialog):
                     continue                    
 
                 if new_name != self.col_name and new_name in self.used_names:
-                    hint.set_markup("<b>Sorry, this name is already in use!\nPlease choose another one.</b>")
+                    self.hint.set_markup("<b>Sorry, this name is already in use!\nPlease choose another one.</b>")
                     continue
 
                 self.new_name = new_name
@@ -93,7 +106,255 @@ class ColumnInfoDialog(gtk.Dialog):
                 return response
 
 
-class DatasetWindow( gtk.Window ):    
+    def check_out(self, undolist=[]):
+        self.factory.check_out(undolist=undolist)
+        
+
+#------------------------------------------------------------------------------
+class ColumnView(gtk.TreeView):
+
+    """ TreeView that displays infos and names of a given Table.
+
+    Actually, copies of the info objects are displayed. This is
+    a helper class for the ModifyTableDialog.
+    """
+    
+    def __init__(self, dataset):        
+        gtk.TreeView.__init__(self)
+        self.set_dataset(dataset)
+
+        # set up first column
+        cell = gtk.CellRendererText()
+        column = gtk.TreeViewColumn('key', cell)                
+        column.set_attributes(cell, text=0)        
+        self.append_column(column)
+        
+        # set up other columns
+        def add_column(key):
+            cell = gtk.CellRendererText()            
+            column = gtk.TreeViewColumn(key, cell)
+            column.set_cell_data_func(cell, self.render_column_prop, key)
+            self.append_column(column)
+        
+        for key in ['label', 'designation']:
+            add_column(key)
+
+
+    def set_dataset(self, dataset):
+        self.dataset = dataset
+        # model := (field key, Table.Info, old_key)
+        model = gtk.ListStore(str, object, str)
+        self.set_model(model)
+
+    def get_columns(self):
+        " Return list of fields in the treeview. "
+        model = self.get_model()
+        
+        fields = {}
+        iter =model.get_iter_first()
+        while iter is not None:
+            key = model.get_value(iter,0)
+            value = model.get_value(iter, 1)
+            fields[key] = value
+            iter = model.iter_next(iter)
+        return fields        
+
+    def check_in(self):
+        # create copies of fields (except for the data)
+        model = self.get_model()
+        model.clear()
+        for name in self.dataset.names:
+            info = self.dataset.get_info(name)
+            model.append( (name, info.copy(), name) )
+
+
+    def check_out(self, undolist=[]):
+        old_infos = self.dataset.infos
+        dtype = self.dataset._array.dtype
+        old_names = dtype.fields[-1]
+        
+        model = self.get_model()
+        iter = model.get_iter_first()
+        n = 0
+        
+        infos = {}
+        names = []
+        formats = []
+        transferdict = {}
+        
+        while iter:
+            key = model.get_value(iter, 0)
+            info = model.get_value(iter, 1)
+            old_key = model.get_value(iter, 2)
+
+            if old_key in old_names:
+                # field existed before => mark for content transfer
+                transferdict[key] = self.dataset.get_column(old_key)
+                format = dtype.fields[old_key][0].str
+            else:
+                format = 'f4' # TODO: let user specify format
+
+            names.append(key)
+            formats.append(format)
+            infos[key] = info
+            
+            iter = model.iter_next(iter)
+
+        # instantiate new array from names and formats
+        array = numpy.zeros( (self.dataset.nrows,),
+                             dtype={'names':names, 'formats':formats})       
+        def transfer(dest, adict):
+            for key, data in adict.iteritems():
+                dest[key] = data            
+        transfer(array, transferdict)
+
+        self.dataset.set_array(array, infos, undolist=undolist)
+        
+        
+    def render_column_prop(self, column, cell, model, iter, propkey):
+        info = model.get_value(iter, 1)
+        cell.set_property('text', info.get_value(propkey) or "")
+
+
+
+#------------------------------------------------------------------------------
+class ModifyTableDialog(gtk.Dialog):
+
+    """ Modify the structure of a Table, i.e. all its infos and field names.
+
+    The dialog displays a treeview with all column infos and names
+    along with a buttonbox that enables the user to add/remove/edit entries,
+    as well as move items up or down.
+
+    The infos are not modified directly, but rather copies of them; the
+    caller must invoke 'check_out' if the new infos and names should
+    be used.
+    """
+    
+    def __init__(self, dataset, parent=None):
+
+        self.dataset = dataset
+
+        gtk.Dialog.__init__(self, "Modify Dataset", parent,
+                            gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
+                            (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
+                             gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
+        self.set_size_request(480,300)
+
+        #
+        # button box
+        #
+
+        buttons = [(gtk.STOCK_EDIT, self.on_row_activated),
+                   (gtk.STOCK_NEW, self.on_btn_add_clicked),
+                   (gtk.STOCK_REMOVE, self.on_btn_remove_clicked),
+                   (gtk.STOCK_GO_UP, self.on_btn_move_clicked, -1),
+                   (gtk.STOCK_GO_DOWN, self.on_btn_move_clicked, +1)
+                   ]
+
+        btnbox = uihelper.construct_vbuttonbox(buttons)
+        btnbox.set_spacing(uihelper.SECTION_SPACING)
+        btnbox.set_border_width(uihelper.SECTION_SPACING)
+                
+                
+        # cview = column view
+        cview = ColumnView(dataset)
+        cview.connect( "row-activated", self.on_row_activated )        
+        self.cview = cview
+
+        # put cview and btnbox next to each other into a hbox
+        hbox = gtk.HBox()
+        hbox.set_spacing(5)
+        hbox.pack_start(cview, True, True)
+        hbox.pack_start(btnbox, False, True)
+
+        self.vbox.add(hbox)
+        self.show_all()
+
+
+
+    def check_out(self, undolist=[]):
+        self.cview.check_out(undolist=undolist)
+
+        
+    def run(self):
+        self.cview.check_in()
+        return gtk.Dialog.run(self)
+
+
+    #----------------------------------------------------------------------
+    # BUTTON CALLBACKS
+        
+    def on_row_activated(self, treeview, *udata):
+        model, pathlist = self.cview.get_selection().get_selected_rows()
+        if model is None:
+            return
+        iter = model.get_iter(pathlist[0])
+        name = model.get_value(iter, 0)
+        info = model.get_value(iter, 1)
+
+        fields = self.cview.get_columns()
+        del fields[name]
+
+        dialog = ColumnInfoDialog(info, name, fields)            
+        try:
+            response = dialog.run()
+            if response == gtk.RESPONSE_ACCEPT:
+                dialog.check_out()
+                model[iter][0] = dialog.new_name                
+        finally:
+            dialog.destroy()
+            
+        self.cview.grab_focus()
+
+
+    def on_btn_move_clicked(self, button, direction):
+        (model, pathlist) = self.cview.get_selection().get_selected_rows()
+        if model is None:
+            return
+
+        new_row = max(0, pathlist[0][0] + direction)
+        iter = model.get_iter(pathlist[0])        
+        second_iter = model.iter_nth_child(None, new_row)
+
+        if second_iter is not None:
+            model.swap(iter, second_iter)
+            self.cview.grab_focus()
+        
+
+    def on_btn_add_clicked(self, button):        
+        selection = self.cview.get_selection()
+        (model, iter) = selection.get_selected()
+        
+        new_info = Table.Info()
+        fields = self.cview.get_columns()        
+        new_key = utils.unique_names(['new_column'], fields)[0]
+        iter = model.insert_after(iter, (new_key, new_info, None))
+        selection.select_iter(iter)
+        
+        self.cview.grab_focus()
+
+
+    def on_btn_remove_clicked(self, button):        
+        selection = self.cview.get_selection()
+        (model, iter) = selection.get_selected()
+        if iter is None:
+            return
+
+        new_iter = model.iter_next(iter)
+        model.remove(iter)
+
+        if new_iter is not None:
+            selection.select_iter(new_iter)
+        
+        self.cview.grab_focus()        
+
+
+
+#------------------------------------------------------------------------------
+class DatasetWindow( gtk.Window ):
+
+    """ High-level window for the manipulation of a Dataset. """
 
     actions = [
         ('DatasetMenu', None, '_Dataset'),
@@ -373,7 +634,7 @@ class DatasetWindow( gtk.Window ):
             if response == gtk.RESPONSE_ACCEPT:
                 # check out
                 ul = UndoList("edit column info")
-                factory.check_out(undolist=ul)
+                dlg.check_out(undolist=ul)
                 self.dataset.rename_column(colnr, dlg.new_name, undolist=ul)
                 uwrap.emit_last(self.dataset, 'update-fields', undolist=ul)
                 self.project.journal.append(ul)                
@@ -544,263 +805,3 @@ class ColumnCalculator(gtk.Window):
                 return
 
         return result
-        
-
-        
-        
-
-     
-
-
-
-
-
-
-
-class ColumnView(gtk.TreeView):
-
-    """
-    fields = dictionary of Table.Info instances.
-    """
-    
-    def __init__(self, dataset):        
-        gtk.TreeView.__init__(self)
-        self.set_dataset(dataset)
-
-        # set up first column
-        cell = gtk.CellRendererText()
-        column = gtk.TreeViewColumn('key', cell)
-        column.set_attributes(cell, text=0)
-        self.append_column(column)
-        
-        # set up other columns
-        def add_column(key):
-            cell = gtk.CellRendererText()            
-            column = gtk.TreeViewColumn(key, cell)
-            column.set_cell_data_func(cell, self.render_column_prop, key)
-            self.append_column(column)
-
-        for key in ['label', 'designation']:
-            add_column(key)
-
-
-    def set_dataset(self, dataset):
-        self.dataset = dataset
-        # model := (field key, Table.Info, old_key)
-        model = gtk.ListStore(str, object, str)
-        self.set_model(model)
-
-    def get_columns(self):
-        " Return list of fields in the treeview. "
-        model = self.get_model()
-        
-        fields = {}
-        iter =model.get_iter_first()
-        while iter is not None:
-            key = model.get_value(iter,0)
-            value = model.get_value(iter, 1)
-            fields[key] = value
-            iter = model.iter_next(iter)
-        return fields        
-
-    def check_in(self):
-        # create copies of fields (except for the data)
-        model = self.get_model()
-        model.clear()
-        for name in self.dataset.names:
-            info = self.dataset.get_info(name)
-            model.append( (name, info.copy(), name) )
-
-
-    def check_out(self, undolist=[]):
-        old_infos = self.dataset.infos
-        dtype = self.dataset._array.dtype
-        old_names = dtype.fields[-1]
-        
-        model = self.get_model()
-        iter = model.get_iter_first()
-        n = 0
-        
-        infos = {}
-        names = []
-        formats = []
-        transferdict = {}
-        
-        while iter:
-            key = model.get_value(iter, 0)
-            info = model.get_value(iter, 1)
-            old_key = model.get_value(iter, 2)
-
-            if old_key in old_names:
-                # field existed before => mark for content transfer
-                transferdict[key] = self.dataset.get_column(old_key)
-                format = dtype.fields[old_key][0].str
-            else:
-                format = 'f4' # TODO: let user specify format
-
-            names.append(key)
-            formats.append(format)
-            infos[key] = info
-            
-            iter = model.iter_next(iter)
-
-        # instantiate new array from names and formats
-        array = numpy.zeros( (self.dataset.nrows,),
-                             dtype={'names':names, 'formats':formats})       
-        def transfer(dest, adict):
-            for key, data in adict.iteritems():
-                dest[key] = data            
-        transfer(array, transferdict)
-
-        self.dataset.set_array(array, infos, undolist=undolist)
-        
-        
-    def render_column_prop(self, column, cell, model, iter, propkey):
-        info = model.get_value(iter, 1)
-        cell.set_property('text', info.get_value(propkey) or "")
-
-
-
-
-
-
-
-
-class ModifyTableDialog(gtk.Dialog):
-
-    # This is actually something like a PW.
-    # We check in a dataset, keep the copy of the new values in memory
-    # and if we like the changes, we check out the new values.
-    
-    def __init__(self, dataset, parent=None):
-
-        self.dataset = dataset
-
-        gtk.Dialog.__init__(self, "Modify Dataset", parent,
-                            gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
-                            (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
-                             gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
-        self.set_size_request(480,300)
-
-        #
-        # button box
-        #
-
-        buttons = [(gtk.STOCK_EDIT, self.on_row_activated),
-                   (gtk.STOCK_NEW, self.on_btn_add_clicked),
-                   (gtk.STOCK_REMOVE, self.on_btn_remove_clicked),
-                   (gtk.STOCK_GO_UP, self.on_btn_move_clicked, -1),
-                   (gtk.STOCK_GO_DOWN, self.on_btn_move_clicked, +1)
-                   ]
-
-        btnbox = uihelper.construct_vbuttonbox(buttons)
-        btnbox.set_spacing(uihelper.SECTION_SPACING)
-        btnbox.set_border_width(uihelper.SECTION_SPACING)
-                
-                
-        # cview = column view
-        cview = ColumnView(dataset)
-        cview.connect( "row-activated", self.on_row_activated )        
-        self.cview = cview
-
-        # put cview and btnbox next to each other into a hbox
-        hbox = gtk.HBox()
-        hbox.set_spacing(5)
-        hbox.pack_start(cview, True, True)
-        hbox.pack_start(btnbox, False, True)
-
-        self.vbox.add(hbox)
-        self.show_all()
-
-
-
-    def check_out(self, undolist=[]):
-        self.cview.check_out(undolist=undolist)
-
-        
-    def run(self):
-        self.cview.check_in()
-        return gtk.Dialog.run(self)
-
-
-    #----------------------------------------------------------------------
-    # BUTTON CALLBACKS
-        
-    def on_row_activated(self, treeview, *udata):
-        model, pathlist = self.cview.get_selection().get_selected_rows()
-        if model is None:
-            return
-        iter = model.get_iter(pathlist[0])
-        name = model.get_value(iter, 0)
-        info = model.get_value(iter, 1)
-
-        fields = self.cview.get_columns()
-        del fields[name]
-
-        # TODO: insert field for key into OptionsDialog
-        TESTING=True
-        if TESTING is True:
-            dialog = ColumnInfoDialog(info, name, fields)
-#            dialog = EditInfoDialog(info, fields)
-        else:
-            dialog = OptionsDialog(info)
-            
-        try:
-            response = dialog.run()
-            if response == gtk.RESPONSE_ACCEPT:
-                dialog.check_out()                
-        finally:
-            dialog.destroy()
-
-            
-        self.cview.grab_focus()
-
-
-    def on_btn_move_clicked(self, button, direction):
-        (model, pathlist) = self.cview.get_selection().get_selected_rows()
-        if model is None:
-            return
-
-        new_row = max(0, pathlist[0][0] + direction)
-        iter = model.get_iter(pathlist[0])        
-        second_iter = model.iter_nth_child(None, new_row)
-
-        if second_iter is not None:
-            model.swap(iter, second_iter)
-            self.cview.grab_focus()
-        
-
-    def on_btn_add_clicked(self, button):        
-        selection = self.cview.get_selection()
-        (model, iter) = selection.get_selected()
-        
-        new_info = Table.Info()
-        fields = self.cview.get_columns()        
-        new_key = utils.unique_names(['new_column'], fields)[0]
-        iter = model.insert_after(iter, (new_key, new_info, None))
-        selection.select_iter(iter)
-        
-        self.cview.grab_focus()
-
-
-    def on_btn_remove_clicked(self, button):        
-        selection = self.cview.get_selection()
-        (model, iter) = selection.get_selected()
-        if iter is None:
-            return
-
-        new_iter = model.iter_next(iter)
-        model.remove(iter)
-
-        if new_iter is not None:
-            selection.select_iter(new_iter)
-        
-        self.cview.grab_focus()        
-        
-
-
-###############################################################################
-
-if __name__ == "__main__":
-
-    win = DatasetWindow

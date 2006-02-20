@@ -2,8 +2,6 @@
 BUGFIXES TO BE DONE
 ====================
 
-- DatasetView: allow to change field name also in ModifyTableDialog
-
 - projectio: import_from_table stuff.
   => right now, the dataset is loaded because the datawin has a get_array
      call. Of course we must do this somehow different....
