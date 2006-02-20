@@ -530,21 +530,24 @@ class ConnectorUnicode(Connector):
         entry.connect("focus-out-event", self.on_focus_out_event)
 
         # create checkbutton if requested
+        try:
+            prop = self.container.get_prop(self.key)
+            prop.check(None)
+        except PropertyError:
+            self.allow_none = False
+        else:
+            self.allow_none = True
+
 
         # TODO: disabled for now, until better solution is found.
-
-        if 1:
+        if self.allow_none is False or 1:
             self.checkbutton = None
         else:
-            try:
-                prop = self.container.get_prop(self.key)
-                prop.check(None)
-            except PropertyError:
-                self.checkbutton = None            
-            else:
-                self.checkbutton = gtk.CheckButton()
-                self.checkbutton.connect("toggled",
-                  (lambda sender: entry.set_sensitive(sender.get_active())))
+            self.checkbutton = gtk.CheckButton()
+            self.checkbutton.connect("toggled",
+              (lambda sender: entry.set_sensitive(sender.get_active())))
+
+
 
 
         # pack everything together
@@ -588,22 +591,23 @@ class ConnectorUnicode(Connector):
             state = value is not None
             self.checkbutton.set_active(state)
             self.entry.set_sensitive(state)            
-        else:
-            if value is None:
-                value = ""
-            
-        if value is not None:
-            self.entry.set_text(unicode(value))
+
+        if value is None:
+            value = ""
+
+        self.entry.set_text(unicode(value))            
         self.last_value = value
 
 
     def get_data(self):
         value = self.entry.get_text()
-
+        if self.allow_none is False:
+            value = ""
+            
         if self.checkbutton is not None:
             state = self.checkbutton.get_active()
             if state is False:
-                return None
+                return None       
 
         try:
             return self.prop.check(value)
