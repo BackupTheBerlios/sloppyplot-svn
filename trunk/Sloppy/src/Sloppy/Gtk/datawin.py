@@ -54,13 +54,19 @@ class ColumnInfoDialog(gtk.Dialog):
                             (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
                              gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
 
+        # TODO: It would be nicer to have all entries arranged in
+        # TODO: one table. A nice implementation would be similar
+        # TODO: to the one in CRendererFactory, defining dummy
+        # TODO: pseudo keys in the factory and then filling this
+        # TODO: entry on our own.
+        
         self.col_info = col_info
         self.col_name = col_name
         self.used_names = used_names
 
         self.new_name = None # result
 
-        name_label = gtk.Label("Column name ")
+        name_label = gtk.Label("Name:")
         name_entry = gtk.Entry()
         name_entry.set_text(unicode(col_name))
         name_entry.set_activates_default(True)
@@ -74,12 +80,15 @@ class ColumnInfoDialog(gtk.Dialog):
         factory.add_keys('label', 'designation')
         table = factory.create_table()
         factory.check_in()
-        
-        self.vbox.pack_start(name_box, True, True)
-        self.vbox.pack_start(hint, False, True)
-        self.vbox.pack_start(gtk.HSeparator(), False, True)
-        self.vbox.pack_start(table, True, True)
 
+        vbox = gtk.VBox()
+        vbox.pack_start(name_box, True, True)
+        vbox.pack_start(hint, False, True)
+#        self.vbox.pack_start(gtk.HSeparator(), False, True)
+        vbox.pack_start(table, True, True)
+        frame = uihelper.new_section('Edit Column Information', vbox)
+        
+        self.vbox.add(frame)
         self.vbox.show_all()
 
         self.name_entry = name_entry
