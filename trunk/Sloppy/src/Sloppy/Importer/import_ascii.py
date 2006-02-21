@@ -108,7 +108,7 @@ class Importer(dataio.Importer):
     header_keytrim_re = \
      String(
         blurb="Key trim expression",
-        default='\s*[#]?\s*(?P<keys>.*)\s*',
+        default='\s*[#]?\s*(?P<keys>.*)\s*[\r]+',
         doc="Regular expression that trims the key line before splitting it up"
         )
 
