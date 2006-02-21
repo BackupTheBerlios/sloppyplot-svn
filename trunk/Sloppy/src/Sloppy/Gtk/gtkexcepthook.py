@@ -41,7 +41,7 @@ import traceback
 from gettext import gettext as _
 
 
-from Sloppy.Base import error
+from Sloppy.Base import error, globals
 
 
 def _info(type, value, tb):
