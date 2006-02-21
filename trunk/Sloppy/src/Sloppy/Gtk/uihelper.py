@@ -150,10 +150,16 @@ def construct_buttonbox(buttons, horizontal=True, labels=True,
     """
     
     if horizontal is True:
-        btnbox = gtk.HButtonBox()
+        btnbox = gtk.HBox()
     else:
-        btnbox = gtk.VButtonBox()
-    btnbox.set_layout(layout)
+        btnbox = gtk.VBox()
+
+    if layout == gtk.BUTTONBOX_END:
+        buttons = buttons[:]
+        buttons.reverse()
+        pack = btnbox.pack_end
+    else:
+        pack = btnbox.pack_start
 
     for item in buttons:
         stock, callback = item[0:2]
@@ -167,13 +173,13 @@ def construct_buttonbox(buttons, horizontal=True, labels=True,
             alignment = button.get_children()[0]
             hbox = alignment.get_children()[0]
             image, label = hbox.get_children()
-            label.set_text('')                
+            hbox.remove(label)
 
         button.show()
 
         if callback is not None:
             button.connect('clicked', callback, *args)
-        btnbox.pack_end(button,False,False)
+        pack(button,False,False)
 
     global SECTION_SPACING
     btnbox.set_spacing(SECTION_SPACING)

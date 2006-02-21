@@ -141,9 +141,7 @@ class Importer(dataio.Importer):
     dataset = VP(Instance(Dataset), None, default=None)
 
     designations = \
-     VP(
-        ['X', 'Y', 'X|Y', 'XY'],
-        default='X|Y',        
+     VP(['X', 'Y', 'X|Y', 'XY'], default='X|Y',        
         blurb="Designations",
         doc=DS['import_ascii:designations']
         )
@@ -469,6 +467,6 @@ class Importer(dataio.Importer):
 globals.importer_registry['ASCII'] = Importer
 
 globals.import_templates['ASCII'] = \
-  dataio.IOTemplate(blurb="ASCII", extensions='dat,txt',
-                    importer_key='ASCII', immutable=True)
+ dataio.IOTemplate(blurb="ASCII", extensions='dat,txt',
+                   importer_key='ASCII', immutable=True)
 

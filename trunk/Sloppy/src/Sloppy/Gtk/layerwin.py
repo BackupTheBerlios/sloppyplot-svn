@@ -396,7 +396,7 @@ class LineTab(AbstractTab):
                    (gtk.STOCK_GO_UP, self.on_move_selection, -1),
                    (gtk.STOCK_GO_DOWN, self.on_move_selection, +1)]        
         buttonbox = uihelper.construct_vbuttonbox(buttons, labels=False)
-
+        
         hbox = gtk.HBox(False, 5)
         hbox.pack_start(sw, True, True)
         hbox.pack_start(buttonbox, False, True)
