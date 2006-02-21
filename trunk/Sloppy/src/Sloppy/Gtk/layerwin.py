@@ -388,9 +388,8 @@ class LineTab(AbstractTab):
         keybox.pack_start(key_combo, False, False)
         keybox.pack_start(gtk.Label(), True, True)
 
-        self.key_combo.set_active(0)        
+        self.key_combo.set_active(0)
         self.limit_columns()
-
         
         buttons = [(gtk.STOCK_ADD, self.on_insert_new),
                    (gtk.STOCK_REMOVE, self.on_remove_selection),

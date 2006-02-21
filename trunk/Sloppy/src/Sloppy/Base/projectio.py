@@ -29,13 +29,11 @@ from Sloppy.Base.dataio import read_dataset_from_stream
 from Sloppy.Lib.ElementTree.ElementTree import ElementTree, Element, SubElement, parse
 
 import tarfile, tempfile, os, shutil
-
 import numpy
 
-#------------------------------------------------------------------------------
 import logging
 logger = logging.getLogger('Base.projectio')
-
+#------------------------------------------------------------------------------
 
 FILEFORMAT = "0.5.2"
 
@@ -449,7 +447,6 @@ def save_project(spj, filename=None, path=None):
                 raise
             except error.NoData:
                 logger.error("Warning, empty Dataset -- no data file written.")
-
 
         #
         # create tar archive from tempdir

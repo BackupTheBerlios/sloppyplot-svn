@@ -72,13 +72,11 @@ class PostscriptTerminal(Terminal, HasProperties):
       ['solid', 'dashed'],
       blurb="Line style"
       )
-    dashlength = FloatRange(\
-      0.0, None,
+    dashlength = VP(FloatRange(0.0, None), None, default=None,
       blurb="dash length",
       doc = "Scales the length of dashed-line segments"
       )
-    linewidth = FloatRange(\
-      0.0, None,
+    linewidth = VP(FloatRange(0.0,None), None, default=None,
       blurb="line width",
       doc = "Scales all linewidths"
       )
@@ -90,12 +88,11 @@ class PostscriptTerminal(Terminal, HasProperties):
       blurb="Cap style",
       doc="Whether line caps and line joins should be rounded"
       )
-    fontname = String(\
+    fontname = VP(String,None,default=None,
       blurb="font name",
       doc="Name of a valid PostScript font"
       )
-    fontsize = FloatRange(
-      0.0, None,
+    fontsize = VP(FloatRange(0.0, None), None, default=None,
       blurb="font size",
       doc="Size of the font in PostScript points."
       )

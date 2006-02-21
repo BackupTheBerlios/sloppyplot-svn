@@ -50,8 +50,8 @@ class PathHandler:
         
         base_dir = internal_path
         system_prefix_dir = join(sep, 'usr')
-        example_dir = join(sep,'usr','share','sloppyplot','Examples')
-        data_dir = join(example_dir, 'Data')
+        example_dir = join(sep,'usr','share','sloppyplot','examples')
+        data_dir = join(example_dir, 'data')
         plugins = join(internal_path, 'Plugins')
         logfile = join(sep,'var','tmp','sloppy','sloppyplot.log')
         current_dir = curdir
