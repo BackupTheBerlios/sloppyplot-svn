@@ -100,7 +100,7 @@ setup(name=NAME,
 	##glob(join("src", "Sloppy", "Gtk", "Icons", "*.png"))),
         
 	# icons for the application sloppyplot
-	(join(PATH_SHARE, 'icons' 'hicolor', '24x24', 'apps'), 
+	(join(PATH_SHARE, 'icons', 'hicolor', '24x24', 'apps'), 
 	[join("data", "icons", "hicolor", "24x24", "apps", "sloppyplot.png")]),
         
 	(join(PATH_SHARE, 'icons', 'hicolor', '48x48', 'apps'), 

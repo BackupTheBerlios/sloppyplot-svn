@@ -23,7 +23,7 @@ import gtk
 
 from Sloppy.Lib.Undo import UndoList, UndoInfo, NullUndo, ulist
 from Sloppy.Base import objects, globals, pdict, uwrap
-from Sloppy.Gtk import config, uihelper, widget_factory
+from Sloppy.Gtk import uihelper, widget_factory
 
 
 

@@ -25,7 +25,6 @@ import inspect
 
 from Sloppy.Lib.Props import *
 from Sloppy.Lib.Undo import UndoList
-from Sloppy.Base.properties import *
 from Sloppy.Base import uwrap
 
 import logging
@@ -571,12 +570,15 @@ class ConnectorUnicode(Connector):
         if value == self.last_value:
             return
 
+        if self.allow_none is True and value == "":
+            return
+            
         try:
-            self.prop.check(value)
+            value = self.prop.check(value)
+            widget.set_text(unicode(value))
         except PropertyError:
             widget.set_text(self.last_value)
-            
-                
+                            
         return False
             
 
@@ -601,8 +603,8 @@ class ConnectorUnicode(Connector):
 
     def get_data(self):
         value = self.entry.get_text()
-        if self.allow_none is False:
-            value = ""
+        if self.allow_none is True and value == "":
+            return None
             
         if self.checkbutton is not None:
             state = self.checkbutton.get_active()
@@ -611,7 +613,7 @@ class ConnectorUnicode(Connector):
 
         try:
             return self.prop.check(value)
-        except:
+        except Exception, msg:
             return self.last_value
 
 
@@ -703,47 +705,6 @@ class ConnectorRange(Connector):
             return self.prop.check(self.spinbutton.get_value())
         except:
             raise ValueError("Invalid value %s in spinbutton." % self.spinbutton.get_value())
-
-
-###############################################################################
-
-class ConnectorRGBColor(Connector):
-
-    def create_widget(self):       
-        self.colorbutton = gtk.ColorButton()
-        self.widget = self.colorbutton
-
-        widget = self.widget
-        
-        return self.widget
-
-    def create_renderer(self, model, index):
-        cell = gtk.CellRenderer
-        return self.widget
-
-    
-    def to_gdk_color(self, color):
-        return gtk.gdk.Color(int(color[0]*65535), int(color[1]*65535), int(color[2]*65535))
-
-    def to_rgb(self, color):
-        return (color.red/65535.0, color.green/65535.0, color.blue/65535.0)
-
-    def get_data(self):
-        gdk_color = self.colorbutton.get_color()
-        print "Comparing ", gdk_color, self.last_value
-        if (gdk_color.red == self.last_value.red) and \
-               (gdk_color.blue == self.last_value.blue) and \
-               (gdk_color.green == self.last_value.green):
-            return self.container.get_mvalue(self.key)
-        
-        return self.to_rgb(gdk_color)
-
-    def check_in(self):
-        rgb_color = self.container.get_mvalue(self.key) or (0.0,0.0,0.0)
-        gdk_color = self.to_gdk_color(rgb_color)
-        self.colorbutton.set_color(gdk_color)
-        self.last_value = gdk_color
-
 
 
 ###############################################################################
@@ -971,7 +932,6 @@ class ConnectorLimits(Connector):
 
         
 connectors ={'Choice': ConnectorChoice,
-             'RGBColor': ConnectorRGBColor,
              'Range': ConnectorRange,
              'Unicode': ConnectorUnicode,
              'Boolean': ConnectorBoolean,
@@ -994,8 +954,6 @@ def get_cname(owner, key):
             if v.instance.__name__ == 'Limits':
                 return 'Limits'
             return 'Instance'        
-        #elif isinstance(v, VRGBColor):
-        #    return 'RGBColor'
         elif isinstance(v, VChoice):
             return 'Choice'
         elif isinstance(v, VBoolean):

@@ -1,8 +1,6 @@
+(for 0.5.3):
+============
 
-BUGFIXES TO BE DONE
-====================
-
-- if clicking on 'apply' or any other button in the layer window,
-  we need to apply all changes that are not yet active.  Maybe by
-  moving focus to the current button?
+- change headers (copyright)
+- set svn props properly
 

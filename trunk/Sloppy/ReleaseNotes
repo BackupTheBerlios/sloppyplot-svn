@@ -1,3 +1,14 @@
+Release Notes for SloppyPlot 0.5.2 (released 2005-02-22)
+========================================================
+
+This release does not feature a lot of user visible improvements; but
+it represents a major rewrite of most of SloppyPlot's internal
+structures, providing a much nicer code base for future extensions.
+Most notably, support for Numeric has been replaced by support for
+numpy (0.9.5) which should work along with the newest matplotlib
+(0.86.2).
+
+
 Release Notes for SloppyPlot 0.5.1 (released 2005-12-01)
 ========================================================
 
@@ -9,6 +20,7 @@ and drop of files and projects has been implemented. Finally,
 SloppyPlot integrates nicely into your desktop (tested with GNOME,
 should work in KDE as well), so double-clicking on a .spj file will
 open up SloppyPlot.
+
 
 Release Notes for SloppyPlot 0.5.0 (released 2005-11-16)
 ========================================================

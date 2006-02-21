@@ -1,19 +1,22 @@
 CHANGELOG
 =========
 
-2005-xx-yy SloppyPlot 0.5.2
+2005-02-22 SloppyPlot 0.5.2
 ===========================
-
-  * Renamed configuration path to lowercase 'sloppyplot'.  
-    Only in release notes, web pages and so on is the mixed
-    spelling "SloppyPlot" used.
 
   * Much of the code has been rewritten, but most of these changes should
     not be visible to the user. Examples are the Property system, the gtk
     widget creation, the plugin system and the underlying data structure.
 
+  * Numeric has been replaced by numpy, the successor of Numeric/numarray.
+	
   * The dataset window has been modified slightly.
-  
+
+  * Renamed configuration path to lowercase 'sloppyplot'.  
+    Only in release notes, web pages and so on is the mixed
+    spelling "SloppyPlot" used.
+
+  * more verbosity, e.g. some errors are displayed in a dialog now.	
 	
 
 2005-12-01 SloppyPlot 0.5.1

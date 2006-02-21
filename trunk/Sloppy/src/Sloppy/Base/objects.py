@@ -25,7 +25,6 @@ Collection of all basic data objects used for SloppyPlot.
 
 from Sloppy.Base.tree import Node
 from Sloppy.Base.dataset import Dataset
-from Sloppy.Base.properties import *
 
 from Sloppy.Lib.Signals import HasSignals
 from Sloppy.Lib.Undo import udict

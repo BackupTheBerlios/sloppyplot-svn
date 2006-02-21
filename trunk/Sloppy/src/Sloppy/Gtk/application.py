@@ -128,14 +128,7 @@ class GtkApplication(application.Application):
             logger.error("Tool %s is already registered." % name)
             return
         
-        self.tools[name] = klass    
-        toolbox = self.window.toolbox 
-        book = dock.Dockbook()
-        toolbox.dock.add(book)
-
-        # FOR TESTING PURPOSES
-        book.add(klass())
-    
+        self.tools[name] = klass        
         
 
     # Tool Handling --------------------------------------------------------
@@ -826,12 +819,6 @@ class GtkApplication(application.Application):
         pj.remove_objects(objects)        
 
 
-    def _cb_experimental_plot(self, action):        
-        pj = self._check_project()
-        self.core.add_experimental_plot(pj)
-
-
-
     # --- EDIT -------------------------------------------------------------
 
     ###
@@ -944,11 +931,11 @@ def main(filename=None):
 
     if filename is None:
         spj = app.set_project(Project())
-        #filename = os.path.join(app.path.get('example_dir'), 'example_01.spj')
 
-        # FOR TESTING
-        app._cb_experimental_plot(None)
-        spj.journal.clear()
+        ## FOR TESTING
+        # TODO: maybe as command line option?
+        #app._cb_experimental_plot(None)
+        #spj.journal.clear()
     else:
         try:
             logger.debug("Trying to load file %s" % filename)

@@ -46,8 +46,6 @@ uistring_appwindow = \
       <separator/>
       <menuitem action='NewPlot'/>
       <menuitem action='DatasetToPlot'/>
-      <separator/>
-      <menuitem action='ExperimentalPlot'/>
     </menu>
     <menu action='ViewMenu'>
       <menuitem action='ToggleToolbox'/>

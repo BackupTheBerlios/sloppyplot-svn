@@ -411,9 +411,9 @@ class LabelsTool(Tool):
         # buttons
         #
 
-        buttons = [(gtk.STOCK_EDIT, self.on_edit),
+        buttons = [(gtk.STOCK_ADD, self.on_new),
                    (gtk.STOCK_REMOVE, self.on_remove),
-                   (gtk.STOCK_NEW, self.on_new)]
+                   (gtk.STOCK_EDIT, self.on_edit)]
 
         btnbox = uihelper.construct_buttonbox(buttons, labels=False)
         btnbox.show()        
