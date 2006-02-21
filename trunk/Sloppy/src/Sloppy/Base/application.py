@@ -280,7 +280,7 @@ class Application(object, HasSignals):
             if len(self.recent_files) == 0 or \
                    self.recent_files[0] != new_filename:                               
                 self.recent_files.insert(0, new_filename)
-                if len(self.recent_files) > 10:
+                if len(self.recent_files) > 9:
                     self.recent_files.pop(-1)
                 self.sig_emit("update-recent-files")            
 

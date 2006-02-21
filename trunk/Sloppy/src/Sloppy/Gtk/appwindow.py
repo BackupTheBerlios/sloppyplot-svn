@@ -360,11 +360,15 @@ class AppWindow( gtk.Window ):
             key = 'recent_files_%d' % n
             label = os.path.basename(file)
             action = gtk.Action(key, label, None, None)
-            accel = '<control>%d' % n
             action.connect('activate',
                            (lambda sender, filename: globals.app.load_project(filename)),
                            file)
-            ag.add_action_with_accel(action, accel)
+
+            # the most recent file can be retrieved using <control><alt>r
+            if n == 1:
+                ag.add_action_with_accel(action, '<control><alt>r')
+            else:
+                ag.add_action(action)
             
             ui+="<menuitem action='%s'/>\n" % key
             n += 1
