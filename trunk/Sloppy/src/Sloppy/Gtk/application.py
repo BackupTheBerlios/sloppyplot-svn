@@ -285,7 +285,7 @@ class GtkApplication(application.Application):
                          gtk.STOCK_OPEN,
                          gtk.RESPONSE_OK))
             chooser.set_default_response(gtk.RESPONSE_OK)
-            chooser.set_current_folder(self.path.current_dir)
+            chooser.set_current_folder(os.path.abspath(self.path.current_dir))
             chooser.set_select_multiple(False)
 
             filter = gtk.FileFilter()
@@ -332,7 +332,7 @@ class GtkApplication(application.Application):
                          gtk.STOCK_SAVE,
                          gtk.RESPONSE_OK))
             chooser.set_default_response(gtk.RESPONSE_OK)
-            chooser.set_current_folder( self.path.example_dir)
+            chooser.set_current_folder(os.path.abspath(self.path.example_dir))
             chooser.set_select_multiple(False)
             chooser.set_filename(os.path.abspath(pj.filename or "unnamed.spj"))
 
@@ -544,7 +544,7 @@ class GtkApplication(application.Application):
                          gtk.RESPONSE_OK))
         chooser.set_default_response(gtk.RESPONSE_OK)        
         chooser.set_select_multiple(False)
-        chooser.set_current_folder(os.path.dirname(filename))
+        chooser.set_current_folder(os.path.abspath(os.path.dirname(filename)))
         chooser.set_current_name(os.path.basename(filename))
 
         filter = gtk.FileFilter()
@@ -658,7 +658,7 @@ class GtkApplication(application.Application):
                      gtk.STOCK_OPEN,
                      gtk.RESPONSE_OK))
         chooser.set_default_response(gtk.RESPONSE_OK)
-        chooser.set_current_folder(self.path.current_dir)
+        chooser.set_current_folder(os.path.abspath(self.path.current_dir))
         chooser.set_select_multiple(True)
 
         filter_keys = {} # used for reference later on
