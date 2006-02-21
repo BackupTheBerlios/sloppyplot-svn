@@ -41,6 +41,38 @@ class ParseError(Exception):
     pass
 
 
+class DatasetImporter:
+
+    def __init__(self, projectname, key, destdir=None):
+        self.projectname = projectname
+        self.key = key
+        self.destdir = destdir
+           
+    def __call__(self, ds):
+
+        filename = os.path.join('datasets', utils.as_filename(self.key))
+    
+        try:
+            archive = tarfile.open(self.projectname, 'r:gz')
+        except tarfile.ReadError:
+            logger.error('Error while opening archive "%s"' % self.projectname)
+            raise FileNotFoundError
+
+        if self.destdir is None:
+            tempdir = tempfile.mkdtemp(prefix="spj-temp-")
+        else:
+            tempdir = self.destdir
+            
+        try:
+            archive.extract(filename, tempdir)
+            importer = globals.importer_registry['ASCII'](dataset=ds)
+            return importer.read_dataset_from_file(os.path.join(tempdir, filename))
+        finally:
+            if self.destdir is None:
+                shutil.rmtree(tempdir)
+            archive.close()
+
+        
 #------------------------------------------------------------------------------
 # Object Creation (starting with new_xxx)
 
@@ -106,27 +138,7 @@ def new_table(spj, element):
     # Right now, the Table is still empty. By setting this callback
     # for the _import attribute, the dataset is loaded from the hard
     # disk on the next access.
-    filename = os.path.join('datasets', utils.as_filename(tbl.key))           
-    spjname = spj.get_filename()
-    
-    def do_import(ds):
-        try:
-            print "TRYING TO OPEN ", spjname
-            archive = tarfile.open(spjname, 'r:gz')
-        except tarfile.ReadError:
-            logger.error('Error while opening archive "%s"' % spjname)
-            raise FileNotFoundError
-        
-        tempdir = tempfile.mkdtemp(prefix="spj-temp-")
-        try:
-            archive.extract(filename, tempdir)
-            importer = globals.importer_registry['ASCII'](dataset=ds)
-            return importer.read_dataset_from_file(os.path.join(tempdir, filename))
-        finally:
-            shutil.rmtree(tempdir)
-
-    tbl._import = do_import
-
+    tbl._import = DatasetImporter(spj.get_filename(), tbl.key)
     return tbl
         
 
