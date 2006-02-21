@@ -125,7 +125,7 @@ class ColumnView(gtk.TreeView):
     """ TreeView that displays infos and names of a given Table.
 
     Actually, copies of the info objects are displayed. This is
-    a helper class for the ModifyTableDialog.
+    a helper class for the EditStructureDialog.
     """
     
     def __init__(self, dataset):        
@@ -227,7 +227,7 @@ class ColumnView(gtk.TreeView):
 
 
 #------------------------------------------------------------------------------
-class ModifyTableDialog(gtk.Dialog):
+class EditStructureDialog(gtk.Dialog):
 
     """ Modify the structure of a Table, i.e. all its infos and field names.
 
@@ -244,7 +244,7 @@ class ModifyTableDialog(gtk.Dialog):
 
         self.dataset = dataset
 
-        gtk.Dialog.__init__(self, "Modify Dataset", parent,
+        gtk.Dialog.__init__(self, "Edit Structure", parent,
                             gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
                             (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
                              gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
@@ -367,7 +367,7 @@ class DatasetWindow( gtk.Window ):
 
     actions = [
         ('DatasetMenu', None, '_Dataset'),
-        ('EditInfos', gtk.STOCK_EDIT, 'Edit Table...', '<control>E', '', 'on_action_EditInfos'),        
+        ('EditInfos', gtk.STOCK_EDIT, 'Edit Structure...', '<control>E', '', 'on_action_EditInfos'),        
         ('Close', gtk.STOCK_CLOSE, 'Close This Window', 'q', 'Close this window.', '_cb_close'),       
         #
         ('ColumnMenu', None, '_Columns'),
@@ -381,7 +381,7 @@ class DatasetWindow( gtk.Window ):
         ('ColumnCalculator', None, 'Calculate Column Values...', None, 'Calculate column data...', 'on_action_ColumnCalculator'),
         ('ColumnInsert', None, 'Insert New Column', None, 'Insert column just before this one', 'on_action_ColumnInsert'),
         ('ColumnAppend', None, 'Append New Column', '<shift>Insert', 'Insert column after this one', 'on_action_ColumnAppend'),
-        ('ColumnRemove', None, 'Remove Selected Column', None, 'Remove this column', 'on_action_ColumnRemove'),
+        ('ColumnRemove', None, 'Remove Selected Column', '<shift>Delete', 'Remove this column', 'on_action_ColumnRemove'),
         #
         ('DesignationMenu', None, 'Set Designation'),
         ('DesignationX', None, 'X', None, None, 'on_action_DesignationX'),
@@ -591,7 +591,7 @@ class DatasetWindow( gtk.Window ):
 
 
     def on_action_EditInfos(self, action):
-        dialog = ModifyTableDialog(self.dataset)
+        dialog = EditStructureDialog(self.dataset)
         try:
             response = dialog.run()
             if response == gtk.RESPONSE_ACCEPT:

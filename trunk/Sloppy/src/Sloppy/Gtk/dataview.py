@@ -208,7 +208,7 @@ class DatasetView(gtk.TreeView, HasSignals):
         gtk.TreeView.__init__(self)
         self.set_headers_visible(True)
         self.set_headers_clickable(True)
-        self.set_property("rules-hint", True)
+        ##self.set_property("rules-hint", True)
         self.get_selection().set_mode(gtk.SELECTION_MULTIPLE)
         self.set_fixed_height_mode(True) # PYGTK 2.6
       

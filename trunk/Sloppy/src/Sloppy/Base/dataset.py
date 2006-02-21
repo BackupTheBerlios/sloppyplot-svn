@@ -475,7 +475,7 @@ class Table(Dataset):
         # Create new descriptor and new infos.
         # The new infos are created because it is possible to
         # specify less fields in the rearrangement.
-        descriptor = a.dtype.arrdescr
+        descriptor = a.dtype.descr
         names = a.dtype.fields[-1]
 
         new_descriptor = []
@@ -503,7 +503,7 @@ class Table(Dataset):
         # existing array 'self._array'. Unfortunately we must
         # make sure that each new added field has a unique name.
         new_names = self.names[:]
-        descriptor = self._array.dtype.arrdescr[:]
+        descriptor = self._array.dtype.descr[:]
         infos = {}
         i = 0
         for name in table.names:
