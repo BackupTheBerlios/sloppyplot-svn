@@ -791,8 +791,7 @@ class ConnectorChoice(Connector):
     #----------------------------------------------------------------------
 
     def check_in(self):
-        value = self.container.get_value(self.key)
-
+        value = self.get_value()
         if value != Undefined:
             try:
                 index = self.vchoice.choices.index(value)
