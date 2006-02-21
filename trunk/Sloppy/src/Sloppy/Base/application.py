@@ -371,6 +371,9 @@ class Application(object, HasSignals):
     def ask_yes_no(self, msg):
         return True
 
+    def error_msg(self, msg):
+        print "error: %s" % msg
+        
     def status_msg(self, msg):
         print msg
 

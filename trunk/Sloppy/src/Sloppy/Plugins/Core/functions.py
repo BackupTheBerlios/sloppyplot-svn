@@ -2,6 +2,7 @@
 from Sloppy.Lib.Undo import UndoList, ulist
 from Sloppy.Base.dataset import Table
 from Sloppy.Base import uwrap, pdict, globals
+from Sloppy.Base.error import SloppyError
 from Sloppy.Base.objects import *
 
 import numpy
@@ -58,8 +59,7 @@ def create_plot_from_datasets(project, datasets, plot_label=None, undolist=None)
                     cx = None
 
     if len(lines) == 0:
-        logger.error("The Dataset contains no X/Y column pair.")
-        return
+        raise SloppyError("The Dataset contains no X/Y column pair.")
 
     layer = Layer(lines=lines)
     plot = Plot(title=plot_label, key=plot_key, layers=[layer])

@@ -70,10 +70,15 @@ def _info(type, value, tb):
         finally:
             dialog.destroy()
 
+    elif isinstance(value, error.SloppyError):
+        msg += '\n'.join(value.args)
+        globals.app.error_msg(msg)
+        return
+
     elif isinstance(value, error.UserCancel):
-        # TODO: This should put a message into the statusbar:
-        # TODO: "action aborted by user."
-        pass
+        globals.app.status_msg("Action aborted by user.")
+        return
+    
     elif isinstance(value, KeyboardInterrupt):
         # for testing versions, allow keyboard interrupt
         pass
