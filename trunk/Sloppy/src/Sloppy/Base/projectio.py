@@ -33,10 +33,9 @@ import numpy
 
 import logging
 logger = logging.getLogger('Base.projectio')
+
 #------------------------------------------------------------------------------
-
 FILEFORMAT = "0.5.2"
-
 
 class ParseError(Exception):
     pass
@@ -106,19 +105,22 @@ def new_table(spj, element):
 
     # Right now, the Table is still empty. By setting this callback
     # for the _import attribute, the dataset is loaded from the hard
-    # disk on the next access.    
+    # disk on the next access.
     filename = os.path.join('datasets', utils.as_filename(tbl.key))           
-    def do_import(the_table):
+    spjname = spj.get_filename()
+    
+    def do_import(ds):
         try:
-            archive = tarfile.open(spj.get_filename(),'r:gz')
+            print "TRYING TO OPEN ", spjname
+            archive = tarfile.open(spjname, 'r:gz')
         except tarfile.ReadError:
-            logger.error('Error while opening archive "%s"' % filename)
+            logger.error('Error while opening archive "%s"' % spjname)
             raise FileNotFoundError
         
         tempdir = tempfile.mkdtemp(prefix="spj-temp-")
         try:
             archive.extract(filename, tempdir)
-            importer = globals.importer_registry['ASCII'](dataset=the_table)
+            importer = globals.importer_registry['ASCII'](dataset=ds)
             return importer.read_dataset_from_file(os.path.join(tempdir, filename))
         finally:
             shutil.rmtree(tempdir)
@@ -220,9 +222,8 @@ def new_plot(spj, element):
 
 #------------------------------------------------------------------------------
 
-def fromTree(tree):
+def fromTree(spj, tree):
     eProject = tree.getroot()                    
-    spj = Project()
 
     # If we encounter an older file format, then we simply transform
     # the XML to the new format.
@@ -439,9 +440,9 @@ def save_project(spj, filename=None, path=None):
         os.mkdir(dsdir)
         for ds in spj.datasets:
             try:
+                ds.get_array()
                 dspath = os.path.join(dsdir, utils.as_filename(ds.key))
-                exporter_ascii.write_to_file(dspath, ds)
-                
+                exporter_ascii.write_to_file(dspath, ds)                
             except AttributeError:
                 logger.error("Error while writing Dataset '%s'" % ds.key)
                 raise
@@ -495,8 +496,12 @@ def load_project(filename):
     # Create Project from file
     try:
         projectfile = archive.extractfile("project.xml")
-        project = fromTree( parse(projectfile) )
-        project.filename = filename
+        # project filename must be set _before_ fromTree,
+        # because any importer that is set up therein
+        # must know the project filename!
+        project = Project()
+        project.filename = filename 
+        fromTree( project, parse(projectfile) )
     except:
         raise
 
