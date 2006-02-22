@@ -31,7 +31,7 @@ before running the program.
 - NumPy >= 0.9.5
   http://numpy.sf.net
 
-- matplotlib > 0.86.2
+- matplotlib > 0.87
   http://matplotlib.sf.net
 
 

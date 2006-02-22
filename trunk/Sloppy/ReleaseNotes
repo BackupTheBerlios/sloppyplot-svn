@@ -6,7 +6,7 @@ it represents a major rewrite of most of SloppyPlot's internal
 structures, providing a much nicer code base for future extensions.
 Most notably, support for Numeric has been replaced by support for
 numpy (0.9.5) which should work along with the newest matplotlib
-(0.86.2).
+(0.87).
 
 
 Release Notes for SloppyPlot 0.5.1 (released 2005-12-01)

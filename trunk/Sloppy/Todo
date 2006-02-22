@@ -4,3 +4,5 @@
 - change headers (copyright)
 - set svn props properly
 
+
+- column.set_visible would be one way to limit the columns.
