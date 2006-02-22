@@ -1,0 +1,105 @@
+
+INSTALLATION HINTS
+==================
+
+1. Requirements
+2. Generic Installation Instructions
+3. Post Installation Instructions 
+4. Slackware Installation Instructions
+5. Testing Without Prior Installation
+
+
+------------------------------------------------------------------------------
+
+1. Requirements
+===============
+
+Sloppyplot is developed and has been tested under Linux.  Windows
+environments are not yet supported, but will be once everything has
+been stabilized.
+
+The following applications and libraries have to to be installed
+before running the program. 
+
+
+- python >= 2.4
+  http://www.python.org
+
+- pygtk 2.6, 
+  http://www.pygtk.org
+
+- NumPy >= 0.9.5
+  http://numpy.sf.net
+
+- matplotlib > 0.87
+  http://matplotlib.sf.net
+
+
+For the postscript export you need to have Gnuplot installed
+
+- Gnuplot
+  www.gnuplot.info
+
+
+
+2. Generic Installation Instructions
+====================================
+
+To install, stay in the directory where you found this INSTALL.txt
+file and enter:
+
+$ python setup.py install
+
+And you are done.  The executable is called sloppyplot
+
+
+
+
+3. Post Installation Instructions 
+=================================
+
+For a complete integration into your favorite desktop, you _might_
+need to run the following commands as root:
+
+
+$ update-desktop-database
+$ update-mime-database /usr/share/mime
+
+and maybe even
+
+$ gtk-update-icon-cache /usr/share/icons
+
+If you know better than me if this is needed, please tell me so!
+
+
+
+
+4. Slackware Installation Instructions
+======================================
+
+As root type
+
+$ ./sloppyplot.build
+
+A slackware compatible package is built which you install using
+the standard 'installpkg' command.
+
+
+
+5. Testing Without Prior Installation
+=====================================
+
+SloppyPlot is still under construction.
+
+If you would like to test the application without installing it, then
+first make sure that you have the requirements installed as explained
+above in this document.
+
+Then in this directory type
+
+  $ ./test-sloppy
+  
+and enjoy.
+
+
+

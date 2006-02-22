@@ -1,0 +1,8 @@
+(for 0.5.3):
+============
+
+- change headers (copyright)
+- set svn props properly
+
+
+- column.set_visible would be one way to limit the columns.
