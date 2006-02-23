@@ -43,13 +43,16 @@ class VProperty(Property):
     def __init__(self, *validators, **kwargs):
         self.blurb = kwargs.get('blurb', None)
         self.doc = kwargs.get('doc', None)
-
+        self.on_notify = kwargs.pop('on_notify', None)
         default = kwargs.pop('default', Undefined)
+
         self.validator = construct_validator_list(*validators, **kwargs)
         if default is not Undefined:
             self.on_default = lambda: default
         else:
             self.on_default = self.validator.on_default
+
+        
         
     def set_value(self, owner, key, value):
         try:
@@ -57,6 +60,7 @@ class VProperty(Property):
         except Exception,msg:
             raise PropertyError("Failed to set property '%s' of container '%s' to '%s': Value must be %s." %
                                 (key, owner.__class__.__name__, value, str(msg)))
+
 
     def get_default(self, owner, key):
         return self.on_default()

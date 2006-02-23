@@ -113,7 +113,7 @@ class HasProperties(object):
                     
                     kwvalue = kwargs.pop(key, None)
                     if kwvalue is not None:
-                        self.__setattr__(key, kwvalue)
+                        self.set_value(key, kwvalue)
                     else:
                         default = prop.get_default(self, key)
                         if default is not Undefined:  
