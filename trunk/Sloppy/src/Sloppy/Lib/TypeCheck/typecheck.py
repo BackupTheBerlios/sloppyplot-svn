@@ -10,6 +10,7 @@ __all__ = ['Undefined', 'Integer', 'Float', 'Bool', 'String', 'Unicode',
 # therefore we would have to check for this in projectio.
 
 
+# the
 
 
 #------------------------------------------------------------------------------
@@ -68,7 +69,6 @@ class Descriptor(object):
             obj.__dict__[key] = Undefined
             if self.keepraw is True:
                 obj.__dict__[key+"_"] = Undefined
-                print "KEEPING RAW VALUE"
         else:
             self.__set__(obj, initval)
             
@@ -218,28 +218,9 @@ class Dict(Descriptor):
 
 
 #------------------------------------------------------------------------------
-class Example(object):
-
-    an_int = Integer()
-    another_int = Integer(strict=True, none=True)
-    a_choice = Choice(['eggs', 'bacon', 'cheese'])
-    a_bool = Bool()
-    another_bool = Bool(strict=True)
-    a_mapping = Mapping({6:'failed miserably',5:'failed',4:'barely passed',
-                         3:'passed',2:'good',1:'pretty good'}, keepraw=True)
-
-    another_mapping = Mapping({6:'failed miserably',5:'failed',4:'barely passed',
-                         3:'passed',2:'good',1:'pretty good'}, reverse=True)
-
-    an_instance = Instance('Example', none=True)
-
-    a_list = List(Integer())
-    another_list = List(Mapping({'good':1,'evil':-1}))
-
-    a_dict = Dict(keys=Integer(), values=String())
-    
+class HasDescriptors(object):
     def __init__(self, **kwargs):
-
+        
         # We need to iterate over all descriptor instances and
         # (a) set their key attribute to their name, 
         # (b) init the descriptor
@@ -266,12 +247,49 @@ class Example(object):
         # quick property retrieval: self._descr[key]
         self._descr = descriptors
 
+
+
+
+class SloppyObject(HasDescriptors):
+    
     def __setattr__(self, key, value):
         object.__setattr__(self, key, value)
 
-        # another possibility: descr.on_notify
-#        if hasattr(self, 'on_notify') and self._descr.has_key(key):
- #           self.on_notify(self, key, value)
+
+    def set(self, **kw):
+        # TODO: somehow it should be possible to _collect_
+        # TODO: update informations...
+        # TODO: But maybe the problem would be solved if
+        # TODO: we could improve the signal mechanism
+        # TODO: to block (and maybe store them for later
+        # TODO: retrieval) certain signals.
+        for key, value in kw.iteritems():
+            object.__setattr__(self, key, value)
+
+
+
+class Example(SloppyObject):
+
+    an_int = Integer()
+    another_int = Integer(strict=True, none=True)
+    a_choice = Choice(['eggs', 'bacon', 'cheese'])
+    a_bool = Bool()
+    another_bool = Bool(strict=True)
+    a_mapping = Mapping({6:'failed miserably',5:'failed',4:'barely passed',
+                         3:'passed',2:'good',1:'pretty good'}, keepraw=True)
+
+    another_mapping = Mapping({6:'failed miserably',5:'failed',4:'barely passed',
+                         3:'passed',2:'good',1:'pretty good'}, reverse=True)
+
+    an_instance = Instance('Example', none=True)
+
+    a_list = List(Integer())
+    another_list = List(Mapping({'good':1,'evil':-1}))
+
+    a_dict = Dict(keys=Integer(), values=String())
+    
+
+
         
 
 
@@ -339,3 +357,17 @@ def dictitems_were_updated(sender, action, items):
 
 e.a_dict.value_descr.on_update = dictitems_were_updated
 e.a_dict = {}
+
+print "----------"
+
+def notify(sender, key, value):
+    print "notify", key, value
+e._descr['a_bool'].on_update = notify
+e._descr['a_choice'].on_update = notify
+e.a_bool = True
+e.a_bool = False
+e.a_choice = 'bacon'
+
+
+e.set(a_bool=True, a_choice='eggs')
+
