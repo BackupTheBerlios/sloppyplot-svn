@@ -15,8 +15,8 @@ __all__ = ['Undefined', 'Integer', 'Float', 'Bool', 'String', 'Unicode',
 
 #------------------------------------------------------------------------------
 class Undefined:
-    def __str__(self):
-        return "Undefined value"
+    def __repr__(self): return __str__
+    def __str__(self): return "Undefined value"
 
 
 
@@ -28,7 +28,7 @@ class Descriptor(object):
         self.blurb = None
         self.keepraw = False
         
-        self.on_update = kwargs.pop('on_update', lambda obj, key, value: None)
+        self.on_update = kwargs.pop('on_update', lambda obj, key, value: Undefined)
 
         # the on_init is a lambda function returning the
         # init value for a given object. You can either
@@ -70,6 +70,10 @@ class Descriptor(object):
             if self.keepraw is True:
                 obj.__dict__[key+"_"] = Undefined
         else:
+            #obj.__dict__[key] = initval
+            #if self.keepraw is True:
+            #    obj.__dict__[self.key+"_"] = initval
+
             self.__set__(obj, initval)
             
 
@@ -220,6 +224,7 @@ class Dict(Descriptor):
 #------------------------------------------------------------------------------
 class HasDescriptors(object):
     def __init__(self, **kwargs):
+        object.__init__(self)
         
         # We need to iterate over all descriptor instances and
         # (a) set their key attribute to their name, 
@@ -237,36 +242,56 @@ class HasDescriptors(object):
         for klass in klasslist:
             for key, item in self.__class__.__dict__.iteritems():
                 if isinstance(item, Descriptor):
-                    item.init(self, key, kwargs.pop(key,Undefined))
-                descriptors[key] = item
+                    item.init(self, key, kwargs.pop(key, Undefined))
+                    print "  SINGLE VALUE", key, "=",self.__dict__[key]
+                    descriptors[key] = item
        
         # complain if there are unused keyword arguments
         if len(kwargs) > 0:
             raise ValueError("Unrecognized keyword arguments: %s" % kwargs)
 
         # quick property retrieval: self._descr[key]
-        self._descr = descriptors
+        self._descr = descriptors        
 
 
-
+        print "an_int", self.__dict__['an_int']
+        print "ALL VALUES:", self.__dict__
 
 class SloppyObject(HasDescriptors):
     
-    def __setattr__(self, key, value):
-        object.__setattr__(self, key, value)
-
-
-    def set(self, **kw):
+    def set(self, *args, **kw):
         # TODO: somehow it should be possible to _collect_
         # TODO: update informations...
         # TODO: But maybe the problem would be solved if
         # TODO: we could improve the signal mechanism
         # TODO: to block (and maybe store them for later
         # TODO: retrieval) certain signals.
+        for arg in args:
+            arglist = list(args)
+            while len(arglist) > 1:
+                key = arglist.pop(0)
+                value = arglist.pop(0)
+                self.__setattr__(key, value)
+            
         for key, value in kw.iteritems():
-            object.__setattr__(self, key, value)
+            self.__setattr__(key, value)
 
-
+    def get(self, *keys, **kwargs):
+        default = kwargs.pop('default', Undefined)
+        if len(keys) == 1:
+            value = object.__getattribute__(self, keys[0])
+            if value is Undefined:
+                value = default
+            return value
+        else:
+            values = []
+            for key in keys:
+                value = object.__getattribute__(self, key)
+                if value is Undefined:
+                    value = default
+                values.append(value)
+            return tuple(values)
+        
 
 class Example(SloppyObject):
 
@@ -297,6 +322,7 @@ class Example(SloppyObject):
 ###############################################################################
 print "---"
 e = Example(an_int=10.5)
+print e.an_int
 e.another_int = 11
 #e.another_int=10.5
 print e.an_int,":",e.another_int
@@ -355,7 +381,7 @@ print e.another_list
 def dictitems_were_updated(sender, action, items):
     print "dict items were ", action, items
 
-e.a_dict.value_descr.on_update = dictitems_were_updated
+e._descr['a_dict'].value_descr.on_update = dictitems_were_updated
 e.a_dict = {}
 
 print "----------"
@@ -369,5 +395,17 @@ e.a_bool = False
 e.a_choice = 'bacon'
 
 
-e.set(a_bool=True, a_choice='eggs')
+e.set('a_bool', False, a_choice='eggs')
 
+print "*"*80
+
+print e.get('a_bool')
+print e.get('a_bool','a_choice')
+print "*"*80
+
+a = Example(an_int=5, a_dict={'Hallo':5})
+#a.an_int = 5
+print a.a_dict
+print a.a_bool
+print a.an_int
+print a.get('a_bool', 'an_int')
