@@ -6,13 +6,6 @@ from containers import TypedList, TypedDict
 __all__ = ['Undefined', 'Integer', 'Float', 'Bool', 'String', 'Unicode',
            'Instance', 'List', 'Dict', 'Choice', 'Mapping']
 
-
-# list/dict notification problem:
-#  what if we implemented that list/dict would call some function,
-#  on_notify, and then the main object has to take care that
-#  this notification reaches the correct place?
-
-
 #------------------------------------------------------------------------------
 class Undefined:
     def __str__(self):
@@ -224,22 +217,17 @@ class List(Descriptor):
 
     def __init__(self, descr, **kwargs):
         self.descr = descr
+        def default_on_update(sender, updateinfo):
+            print "dou: %s" % updateinfo
+        self.descr.on_update = kwargs.pop('on_update', default_on_update)
         Descriptor.__init__(self, **kwargs)
 
     def check(self, value):
-
-        def check_item(v):
-            try:
-                return self.descr.check(v)
-            except Exception, msg:
-                # TODO:
-                raise
-
         if isinstance(value, TypedList):
-            value.check = check_item
+            value.descr = self.descr
             return value
         elif isinstance(value, list):
-            return TypedList(check_item, value)
+            return TypedList(self.descr, value)
         else:
             raise TypeError("A list required.")
 
@@ -320,6 +308,8 @@ class Example(object):
 
     def __setattr__(self, key, value):
         object.__setattr__(self, key, value)
+
+        # another possibility: descr.on_notify
         if hasattr(self, 'on_notify') and self._descr.has_key(key):
             self.on_notify(self, key, value)
         
@@ -375,6 +365,9 @@ def was_notified(sender, key, value):
 e.on_notify = was_notified
 e.a_bool = False
 
+def list_was_updated(sender, updateinfo):
+    print "list was updated:", updateinfo
+e.another_list.descr.on_update = list_was_updated
 e.another_list.append('evil')
 e.another_list.remove(1)
 e.another_list.extend(['good','evil'])

@@ -21,12 +21,13 @@
 
 class TypedList:
 
-    def __init__(self, check, _list=None):
-        self.check = check
+    def __init__(self, descr, _list=None):
+        self.descr = descr
+        
         self.data = []
         def update(sender, updateinfo):
             print "Updated list: ", updateinfo
-        self.on_update = update
+        self.descr.on_update = update
         if _list is not None:
             self.data = self.check_list(_list)
 
@@ -48,68 +49,68 @@ class TypedList:
         return self.data[i]
     
     def __setitem__(self, i, item):
-        item = self.check(item)
+        item = self.descr.check(item)
         self.data[i] = item
-        self.on_update(self, {'+':item})
+        self.descr.on_update(self, {'+':item})
         
     def __delitem__(self, i):
         item = self.data[i]
         del self.data[i]
-        self.on_update(self, {'-':[item]})
+        self.descr.on_update(self, {'-':[item]})
     
     def __getslice__(self, i, j):
         i = max(i, 0); j = max(j, 0)
-        return self.__class__(self.check, self.data[i:j])
+        return self.__class__(self.descr.check, self.data[i:j])
     
     def __setslice__(self, i, j, other):
         i = max(i, 0); j = max(j, 0)
         self.data[i:j] = self.check_list(other)
         # TODO: 
-        self.on_update(self, {'-':items})
+        self.descr.on_update(self, {'-':items})
         
     def __delslice__(self, i, j):
         i = max(i, 0); j = max(j, 0)
         items = self.data[i:j]
         del self.data[i:j]
-        self.on_update(self, {'-':items})
+        self.descr.on_update(self, {'-':items})
 
     def __add__(self, other):
-        return self.__class__(self.check, self.data + self.check_list(other))
+        return self.__class__(self.descr.check, self.data + self.check_list(other))
     
     def __radd__(self, other):
-        return self.__class__(self.check, self.check_list(other) + self.data)
+        return self.__class__(self.descr.check, self.check_list(other) + self.data)
         
     def __iadd__(self, other):
         items = items
         self.data += self.check_list(other)
-        self.on_update(self, {'+':items})
+        self.descr.on_update(self, {'+':items})
         return self
 
     def __mul__(self, n):
-        return self.__class__(self.check, self.data*n)
+        return self.__class__(self.descr, self.data*n)
     __rmul__ = __mul__
     def __imul__(self, n):
         self.data *= n
         return self
 
     def append(self, item):
-        item = self.check(item)
+        item = self.descr.check(item)
         self.data.append(item)
-        self.on_update(self, {'+':[item]})
+        self.descr.on_update(self, {'+':[item]})
         
     def insert(self, i, item):
-        item = self.check(item)
+        item = self.descr.check(item)
         self.data.insert(i, item)
-        self.on_update(self, {'+':[item]})        
+        self.descr.on_update(self, {'+':[item]})        
         
     def pop(self, i=-1):    
         item = self.data.pop(i)
-        self.on_update(self, {'-':[item]})
+        self.descr.on_update(self, {'-':[item]})
         return item       
     
     def remove(self, item):
         self.data.remove(item)
-        self.on_update(self, {'-':[item]})
+        self.descr.on_update(self, {'-':[item]})
         
     def count(self, item):
         return self.data.count(item)
@@ -126,7 +127,7 @@ class TypedList:
     def extend(self, other):
         items = self.check_list(other)
         self.data.extend(items)
-        self.on_update(self, {'+':items})
+        self.descr.on_update(self, {'+':items})
 
     def __iter__(self):
         for member in self.data:
@@ -144,7 +145,7 @@ class TypedList:
         if isinstance(alist, (list,tuple)):
             newlist = []
             for item in alist:
-                newlist.append(self.check(item))
+                newlist.append(self.descr.check(item))
             return newlist
         else:
             raise TypeError("List required, got %s instead." % type(alist))
