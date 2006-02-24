@@ -10,9 +10,6 @@ __all__ = ['Undefined', 'Integer', 'Float', 'Bool', 'String', 'Unicode',
 # therefore we would have to check for this in projectio.
 
 
-# the
-
-
 #------------------------------------------------------------------------------
 class Undefined:
     def __repr__(self): return __str__
@@ -53,6 +50,7 @@ class Descriptor(object):
         obj.__dict__[self.key] = self.check(value)
         if self.keepraw is True:
             obj.__dict__[self.key+"_"] = value
+
         self.on_update(obj, self.key, value)
 
     def __delete__(self, obj):
@@ -65,15 +63,11 @@ class Descriptor(object):
         if initval is Undefined:
             initval = self.on_init(obj)
 
-        if initval is Undefined:
-            obj.__dict__[key] = Undefined
-            if self.keepraw is True:
-                obj.__dict__[key+"_"] = Undefined
-        else:
-            #obj.__dict__[key] = initval
-            #if self.keepraw is True:
-            #    obj.__dict__[self.key+"_"] = initval
+        obj.__dict__[key] = Undefined
+        if self.keepraw is True:
+            obj.__dict__[key+"_"] = Undefined
 
+        if initval is not Undefined:
             self.__set__(obj, initval)
             
 
@@ -240,10 +234,9 @@ class HasDescriptors(object):
 
         descriptors = {}
         for klass in klasslist:
-            for key, item in self.__class__.__dict__.iteritems():
+            for key, item in klass.__dict__.iteritems():
                 if isinstance(item, Descriptor):
                     item.init(self, key, kwargs.pop(key, Undefined))
-                    print "  SINGLE VALUE", key, "=",self.__dict__[key]
                     descriptors[key] = item
        
         # complain if there are unused keyword arguments
@@ -253,9 +246,6 @@ class HasDescriptors(object):
         # quick property retrieval: self._descr[key]
         self._descr = descriptors        
 
-
-        print "an_int", self.__dict__['an_int']
-        print "ALL VALUES:", self.__dict__
 
 class SloppyObject(HasDescriptors):
     
@@ -403,8 +393,10 @@ print e.get('a_bool')
 print e.get('a_bool','a_choice')
 print "*"*80
 
+print "CREATING A"
+print "=========="
 a = Example(an_int=5, a_dict={'Hallo':5})
-#a.an_int = 5
+
 print a.a_dict
 print a.a_bool
 print a.an_int
