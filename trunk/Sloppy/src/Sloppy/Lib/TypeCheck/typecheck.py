@@ -7,41 +7,16 @@ __all__ = ['Undefined', 'Integer', 'Float', 'Bool', 'String', 'Unicode',
            'Instance', 'List', 'Dict', 'Choice', 'Mapping']
 
 
-#------------------------------------------------------------------------------
-# Helper Stuff
-#
+# list/dict notification problem:
+#  what if we implemented that list/dict would call some function,
+#  on_notify, and then the main object has to take care that
+#  this notification reaches the correct place?
 
-class DictionaryLookup(object):
-    """ Helper class to allow access to members of a dictionary.
-
-    >>> mydict = {'One': 1, 'Two': 2}
-    >>> dl = DictionaryLookup(mydict)
-    >>> print dl.One
-    >>> print dl.Two
-    """
-    
-    def __init__(self, adict):
-        object.__setattr__(self, '_adict', adict)
-
-    def __getattribute__(self, key):
-        adict = object.__getattribute__(self, '_adict')         
-        return adict[key]
-
-    def __setattr__(self, key, value):
-        adict = object.__getattribute__(self, '_adict')
-        if adict.has_key(key) is False:
-            raise KeyError("'%s' cannot be set, because it doesn't exist yet." % key)
-        adict[key] = value
-            
-    def __str__(self):
-        adict = object.__getattribute__(self, '_adict')
-        return "Available items: %s" % str(adict)
 
 #------------------------------------------------------------------------------
-
 class Undefined:
     def __str__(self):
-        return "Undefined"
+        return "Undefined value"
 
 
 
@@ -51,7 +26,18 @@ class Descriptor(object):
         self.key = None
         self.doc = None
         self.blurb = None
+
+        # the on_default is a lambda function returning the
+        # default value for a given object. You can either
+        # specify a keyword 'default' which will be translated
+        # to (lambda obj: default) or you can specify a direct
+        # lambda function using the keyword 'on_default'.
+        # If nothing is given, then Undefined is set as default-
+        default = kwargs.pop('default', Undefined)
+        self.on_default = kwargs.pop('on_default', lambda obj: default)
+        
         self.__dict__.update(kwargs)
+        
         
     def __get__(self, obj, type=None):
         # if obj is None, return self
@@ -71,17 +57,13 @@ class Descriptor(object):
         self.key = key
         
         if initval is Undefined:
-            initval = self.default()
+            initval = self.on_default(obj)
 
         if initval is Undefined:
             obj.__dict__[key] = Undefined
         else:
             self.__set__(obj, initval)
             
-
-
-    def default(self):
-        return Undefined
 
 
 
@@ -201,7 +183,7 @@ class Mapping(Descriptor):
         self.mapkey = key+"_"
         
         if initval is Undefined:
-            initval = self.default()
+            initval = self.on_default(obj)
 
         if initval is Undefined:
             obj.__dict__[key] = Undefined
@@ -333,9 +315,14 @@ class Example(object):
         if len(kwargs) > 0:
             raise ValueError("Unrecognized keyword arguments: %s" % kwargs)
 
-        # quick property retrieval: self._descr.key
-        object.__setattr__(self, '_descr', DictionaryLookup(descriptors))
+        # quick property retrieval: self._descr[key]
+        self._descr = descriptors
 
+    def __setattr__(self, key, value):
+        object.__setattr__(self, key, value)
+        if hasattr(self, 'on_notify') and self._descr.has_key(key):
+            self.on_notify(self, key, value)
+        
 
 
 
@@ -380,4 +367,15 @@ e.a_list.append(5)
 
 e.another_list = ['good']
 
-print e._descr.another_list
+print e._descr['another_list'].on_default(e)
+
+
+def was_notified(sender, key, value):
+    print "The object %s has set its attribute '%s' to '%s'" % (sender, key, value)
+e.on_notify = was_notified
+e.a_bool = False
+
+e.another_list.append('evil')
+e.another_list.remove(1)
+e.another_list.extend(['good','evil'])
+print e.another_list

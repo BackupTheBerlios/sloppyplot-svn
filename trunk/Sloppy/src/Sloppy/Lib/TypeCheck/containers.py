@@ -24,6 +24,9 @@ class TypedList:
     def __init__(self, check, _list=None):
         self.check = check
         self.data = []
+        def update(sender, updateinfo):
+            print "Updated list: ", updateinfo
+        self.on_update = update
         if _list is not None:
             self.data = self.check_list(_list)
 
@@ -45,10 +48,14 @@ class TypedList:
         return self.data[i]
     
     def __setitem__(self, i, item):
-        self.data[i] = self.check(item)
+        item = self.check(item)
+        self.data[i] = item
+        self.on_update(self, {'+':item})
         
     def __delitem__(self, i):
+        item = self.data[i]
         del self.data[i]
+        self.on_update(self, {'-':[item]})
     
     def __getslice__(self, i, j):
         i = max(i, 0); j = max(j, 0)
@@ -57,10 +64,14 @@ class TypedList:
     def __setslice__(self, i, j, other):
         i = max(i, 0); j = max(j, 0)
         self.data[i:j] = self.check_list(other)
+        # TODO: 
+        self.on_update(self, {'-':items})
         
     def __delslice__(self, i, j):
         i = max(i, 0); j = max(j, 0)
+        items = self.data[i:j]
         del self.data[i:j]
+        self.on_update(self, {'-':items})
 
     def __add__(self, other):
         return self.__class__(self.check, self.data + self.check_list(other))
@@ -69,7 +80,9 @@ class TypedList:
         return self.__class__(self.check, self.check_list(other) + self.data)
         
     def __iadd__(self, other):
+        items = items
         self.data += self.check_list(other)
+        self.on_update(self, {'+':items})
         return self
 
     def __mul__(self, n):
@@ -80,16 +93,23 @@ class TypedList:
         return self
 
     def append(self, item):
-        self.data.append(self.check(item))
+        item = self.check(item)
+        self.data.append(item)
+        self.on_update(self, {'+':[item]})
         
     def insert(self, i, item):
-        self.data.insert(i, self.check(item))
+        item = self.check(item)
+        self.data.insert(i, item)
+        self.on_update(self, {'+':[item]})        
         
-    def pop(self, i=-1):
-        return self.data.pop(i)
+    def pop(self, i=-1):    
+        item = self.data.pop(i)
+        self.on_update(self, {'-':[item]})
+        return item       
     
     def remove(self, item):
         self.data.remove(item)
+        self.on_update(self, {'-':[item]})
         
     def count(self, item):
         return self.data.count(item)
@@ -104,7 +124,9 @@ class TypedList:
         self.data.sort(*args, **kwds)
         
     def extend(self, other):
-        self.data.extend(self.check_list(other))              
+        items = self.check_list(other)
+        self.data.extend(items)
+        self.on_update(self, {'+':items})
 
     def __iter__(self):
         for member in self.data:
