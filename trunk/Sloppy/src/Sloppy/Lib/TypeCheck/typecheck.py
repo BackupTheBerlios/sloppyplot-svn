@@ -10,23 +10,47 @@ __all__ = ['Undefined', 'Integer', 'Float', 'Bool', 'String', 'Unicode',
 # therefore we would have to check for this in projectio.
 
 
+# The python class 'object' calls the '__set__' method of the Descriptor
+# with the arguments (obj, value).  However the key, i.e. the attribute
+# name, is not passed to the Descriptor and it is therefore not possible
+# for the descriptor to set the value in the object.
+
+# There are two possible solutions for this problem:
+# (1) Overwrite the object.__setattr__ method to not call __set__,
+#     but to call set(obj, key, value) of the Descriptor. The
+#     Descriptor would be totally indepent of the object that
+#     it belongs to and could easily be used more than once!
+#     The disadvantage is that I would have to rewrite the __setattr__
+#     and the __getattribute__ methods and that might be slower than
+#     the pythonic object.
+
+# (2) init the Descriptor and pass the attribute name to the Descriptor.
+#     The Descriptor can then use self.key as attribute name.
+
+# Hmmm, I guess I will use the first method; it already worked.
+
+
+# What about the on_update stuff?  If the Descriptor is independent,
+# then it doesn't make sense to let it call on_update.  It would make
+# much more sense to let the parent object call on_update.
+# But what about List and Dict? They can be considered top-level
+# objects as well, because they contain sub-objects.  So the List/Dict
+# should emit its signals itself, independent of any other object!
+# We just need a way to access the List object, so that we can set
+# the on_update method.
+
 #------------------------------------------------------------------------------
 class Undefined:
-    def __repr__(self): return __str__
-    def __str__(self): return "Undefined value"
-
+    pass
 
 
 class Descriptor(object):
 
     def __init__(self, **kwargs):
-        self.key = None
         self.doc = None
         self.blurb = None
-        self.keepraw = False
+        self.raw = False
         
-        self.on_update = kwargs.pop('on_update', lambda obj, key, value: Undefined)
-
         # the on_init is a lambda function returning the
         # init value for a given object. You can either
         # specify a keyword 'init' which will be translated
@@ -39,38 +63,23 @@ class Descriptor(object):
         self.__dict__.update(kwargs)
         
         
-    def __get__(self, obj, type=None):
-        # if obj is None, return self
-        if obj is None:
-            return self
-        else:
-            return obj.__dict__[self.key]
+    def get(self, obj, key):
+        return obj.__dict__[key]
 
-    def __set__(self, obj, value):
-        obj.__dict__[self.key] = self.check(value)
-        if self.keepraw is True:
-            obj.__dict__[self.key+"_"] = value
-
-        self.on_update(obj, self.key, value)
-
-    def __delete__(self, obj):
-        raise AttributeError("Can't delete attribute %s" % self.key)
-
-
-    def init(self, obj, key, initval=Undefined):
-        self.key = key
+    def set(self, obj, key, value):
+        obj.__dict__[key] = self.check(value)
+        if self.raw is True:
+            obj.__dict__[key+"_"] = value
         
-        if initval is Undefined:
-            initval = self.on_init(obj)
 
-        obj.__dict__[key] = Undefined
-        if self.keepraw is True:
-            obj.__dict__[key+"_"] = Undefined
-
-        if initval is not Undefined:
-            self.__set__(obj, initval)
-            
-
+    def init(self, obj, key, value):
+        " Similar to 'set', but accepts Undefined as valid. "
+        if value is Undefined:
+            obj.__dict__[key] = Undefined
+            if self.raw is True:
+                obj.__dict__[key+"_"] = Undefined
+        else:
+            self.set(obj, key, value)
 
 
 def new_type_descriptor(_type, _typename):
@@ -79,7 +88,7 @@ def new_type_descriptor(_type, _typename):
 
         def __init__(self, **kwargs):
             self.strict = False
-            self.none = True
+            self.required = True
             self.min = None
             self.max = None
             Descriptor.__init__(self, **kwargs)
@@ -87,7 +96,7 @@ def new_type_descriptor(_type, _typename):
         def check(self, value):
             
             if value is None:
-                if self.none is True:
+                if self.required is False:
                     return None
                 else:
                     raise ValueError("Value %s must be %s." % (value, _typename) )
@@ -155,7 +164,7 @@ class Instance(Descriptor):
 
     def check(self, value):
         if value is None:
-            if self.none is True:
+            if self.required is False:
                 return None
             else:
                 raise ValueError("Value %s may not be None." % value)
@@ -218,11 +227,12 @@ class Dict(Descriptor):
 #------------------------------------------------------------------------------
 class HasDescriptors(object):
     def __init__(self, **kwargs):
-        object.__init__(self)
-        
+
+        # Initialize props and values dict
+        object.__setattr__(self, '_descr', {})
+
         # We need to iterate over all descriptor instances and
-        # (a) set their key attribute to their name, 
-        # (b) init the descriptor
+        # set default values for them.
         
         # To support inheritance, we need to take all base classes
         # into account as well. To give meaningful error messages, we
@@ -236,20 +246,44 @@ class HasDescriptors(object):
         for klass in klasslist:
             for key, item in klass.__dict__.iteritems():
                 if isinstance(item, Descriptor):
-                    item.init(self, key, kwargs.pop(key, Undefined))
+                    if descriptors.has_key(key):
+                        raise KeyError("%s defines Descriptor '%s', which has already been defined by a base class!" % (klass,key))
                     descriptors[key] = item
+                    
+                    item.init(self, key, kwargs.pop(key, Undefined))
+
        
         # complain if there are unused keyword arguments
         if len(kwargs) > 0:
             raise ValueError("Unrecognized keyword arguments: %s" % kwargs)
 
-        # quick property retrieval: self._descr[key]
+        # quick descriptor retrieval: self._descr[key]
+        # _OR_ self.__class__.__dict__[key]  (which would have the advantage
+        # that we would never be able to create descriptors at runtime)
         self._descr = descriptors        
 
 
-class SloppyObject(HasDescriptors):
+    def __getattribute__(self, key):
+        descr = object.__getattribute__(self, '_descr')
+        if descr.has_key(key):
+            return descr[key].get(self, key)
+        return object.__getattribute__(self, key)
+
+    def __setattr__(self, key, value):
+        descr = self._descr
+        if descr.has_key(key):
+            descr[key].set(self, key, value)
+        else:
+            object.__setattr__(self, key, value)
     
     def set(self, *args, **kw):
+        """ Set the given attribute(s) to specified value(s).
+
+        You may pass an even number of arguments, where one
+        argument is the attribute name and the next one the
+        attribute value. You may also pass this as keyword
+        argument, i.e. use the key=value notation.
+        """        
         # TODO: somehow it should be possible to _collect_
         # TODO: update informations...
         # TODO: But maybe the problem would be solved if
@@ -266,7 +300,16 @@ class SloppyObject(HasDescriptors):
         for key, value in kw.iteritems():
             self.__setattr__(key, value)
 
-    def get(self, *keys, **kwargs):
+    def get(self, *keys, **kwargs):        
+        """ Retrieve attribute value(s) from object based on the
+        attribute names.
+
+        Returns a single value if one attribute name is given and
+        returns a tuple of values if more than one name is given.
+        The keyword argument 'default' may be given as a value
+        to be displayed for Undefined values.
+        """
+        
         default = kwargs.pop('default', Undefined)
         if len(keys) == 1:
             value = object.__getattribute__(self, keys[0])
@@ -281,123 +324,107 @@ class SloppyObject(HasDescriptors):
                     value = default
                 values.append(value)
             return tuple(values)
-        
-
-class Example(SloppyObject):
-
-    an_int = Integer()
-    another_int = Integer(strict=True, none=True)
-    a_choice = Choice(['eggs', 'bacon', 'cheese'])
-    a_bool = Bool()
-    another_bool = Bool(strict=True)
-    a_mapping = Mapping({6:'failed miserably',5:'failed',4:'barely passed',
-                         3:'passed',2:'good',1:'pretty good'}, keepraw=True)
-
-    another_mapping = Mapping({6:'failed miserably',5:'failed',4:'barely passed',
-                         3:'passed',2:'good',1:'pretty good'}, reverse=True)
-
-    an_instance = Instance('Example', none=True)
-
-    a_list = List(Integer())
-    another_list = List(Mapping({'good':1,'evil':-1}))
-
-    a_dict = Dict(keys=Integer(), values=String())
-    
 
 
-        
+
+
+    def get_values(self):
+        rv = {}
+        for key in self._descr.keys():
+            rv[key] = self.get(key)
+        return rv
+
+
+# HasProperties methods:
+# - set_value aka set
+# - set_values
+# - get_value aka get
+# - get_values
+# - get_prop
+# - get_props
+# - copy
+# - create_changeset
+# - get_keys
+
 
 
 
 ###############################################################################
-print "---"
-e = Example(an_int=10.5)
-print e.an_int
-e.another_int = 11
-#e.another_int=10.5
-print e.an_int,":",e.another_int
-
-e.a_choice = 'eggs'
-#e.a_choice = 'jam'
-
-e.a_bool = True
-e.a_bool = 'True'
-e.a_bool = 'true'
-e.a_bool = 'fals'
-#e.a_bool = 'MIST'
-
-e.another_bool = None
-#e.another_bool = 'True'
 
 
-e.a_mapping = 2
-print "MAPPED VALUE", e.a_mapping
-print "RAW VALUE:", e.a_mapping_
+# test fixture -- preparing and cleaning up: TestCase.setUp(), TestCase.tearDown()
+# test case -- simple single test
+# test suites -- test cases or suites that should run together
+# test runner -- graphical/textual representation of the test
 
-e.another_mapping = 2
-print e.another_mapping
+import unittest
 
-print "REVERSE IS ", e.__class__.another_mapping.reverse
-e.another_mapping = 'failed'
-print e.another_mapping
+class Ingredient(HasDescriptors):
+    name = String()
+    
+class Recipe(HasDescriptors):
+    author = String(strict=True)
+    calories = Integer()
+    comment = String(required=False)
+    skill = Mapping({'easy':1, 'intermediate':2, 'advanced':3},
+                    reverse=True, raw=True)
+    category = Choice(['breakfast', 'lunch', 'dinner', 'snack'])
+    is_tested = Bool()
+    ingredients = List(Ingredient())
+    reviews = Dict(keys=String(), values=String())
+        
+class DescriptorTestCase(unittest.TestCase):
 
-e.an_instance = e
-#e.an_instance = 5
-
-e.a_list = [2]
-#e.a_list = [2,'niki']
-e.a_list.append(5)
-#e.a_list.append('niki')
-
-e.another_list = ['good']
-
-print e._descr['another_list'].on_init(e)
-
-
-def list_was_updated(sender, key, value):
-    print "list '%s' was updated to", value
-e._descr['another_list'].on_update = list_was_updated
-
-def listitems_were_updated(sender, action, items):
-    print "list items were ", action, items
-e.another_list.descr.on_update = listitems_were_updated
-e.another_list.append('evil')
-e.another_list.remove(1)
-e.another_list.extend(['good','evil'])
-
-e.another_list = ['good']
-print e.another_list
-
-def dictitems_were_updated(sender, action, items):
-    print "dict items were ", action, items
-
-e._descr['a_dict'].value_descr.on_update = dictitems_were_updated
-e.a_dict = {}
-
-print "----------"
-
-def notify(sender, key, value):
-    print "notify", key, value
-e._descr['a_bool'].on_update = notify
-e._descr['a_choice'].on_update = notify
-e.a_bool = True
-e.a_bool = False
-e.a_choice = 'bacon'
+    def setUp(self):
+        self.values = {'author': 'Niklas Volbers',
+                       'calories': 1024,
+                       'comment': 'no comment',
+                       'skill': 'easy'}        
+        self.recipe = Recipe(**self.values)
 
 
-e.set('a_bool', False, a_choice='eggs')
+    def test_string(self):       
+        set = lambda v: self.recipe.set(author=v)
+        self.assert_(set, 'Joerg')
+        self.assertRaises(ValueError, set, None)
+        self.assertRaises(ValueError, set, 5)
+        self.assertRaises(ValueError, set, 5.2)
 
-print "*"*80
+        set = lambda v: self.recipe.set(comment=v)
+        self.assert_(set, 'Joerg')
+        self.assert_(set, None)
 
-print e.get('a_bool')
-print e.get('a_bool','a_choice')
-print "*"*80
+    def test_mapping(self):
+        set = lambda v: self.recipe.set(skill=v)
 
-print "CREATING A"
-print "=========="
-a = Example(an_int=5, a_dict={'Hallo':5})
+        self.recipe.set(skill='advanced')
+        print self.recipe.skill, self.recipe.skill_
+        return
+        # mapped values must be identical
+        self.assert_(self.recipe.set, skill='difficult')
+        v1 = self.recipe.skill
+        v1_ = self.recipe.skill_
 
-print a.a_dict
-print a.a_bool
-print a.an_int
-print a.get('a_bool', 'an_int')
+        self.assert_(set, 1)
+        v2 = self.recipe.skill
+        v2_ = self.recipe.skill_
+
+        self.assertEqual(v1, v2)
+
+        # however, the raw values should stay the same
+        self.assertEqual(v1_, 'easy')
+        self.assertEqual(v2_, 1)
+        
+
+    def test_values(self):
+        pass
+        #print self.recipe.get_values()
+        #print self.recipe.__class__.__dict__
+
+
+
+if __name__ == "__main__":
+    unittest.main()
+    
+    
+        
