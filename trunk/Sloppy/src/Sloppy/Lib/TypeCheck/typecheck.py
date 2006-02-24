@@ -203,7 +203,8 @@ class HasDescriptors(object):
 
         # Initialize props and values dict
         object.__setattr__(self, '_descr', {})
-
+        object.__setattr__(self, 'on_update', lambda sender, key, value: None)
+        
         # We need to iterate over all Descriptor instances and
         # set default values for them.
         
@@ -232,7 +233,7 @@ class HasDescriptors(object):
 
         # descriptor retrieval
         self._descr = descriptors        
-
+        
 
     def __getattribute__(self, key):
         descr = object.__getattribute__(self, '_descr')
@@ -244,6 +245,7 @@ class HasDescriptors(object):
         descr = self._descr
         if descr.has_key(key):
             descr[key].set(self, key, value)
+            self.on_update(self, key, value)
         else:
             object.__setattr__(self, key, value)
     
@@ -390,9 +392,14 @@ class DescriptorTestCase(unittest.TestCase):
         def on_update(sender, updateinfo):
             print "ingredients has changed: ", updateinfo            
         self.recipe.ingredients.on_update = on_update
+
+        def on_update_element(sender, key, value):
+            print "item of recipe has changed: ", key, value
+        self.recipe.on_update = on_update_element
         
         i = self.recipe.ingredients
         i.append( Ingredient(name="garlic") )
+        self.recipe.ingredients = []
         pass
         #print self.recipe.get_values()
         #print self.recipe.__class__.__dict__
