@@ -23,11 +23,8 @@ class TypedList:
 
     def __init__(self, descr, _list=None):
         self.descr = descr
-        
         self.data = []
-        def update(sender, updateinfo):
-            print "Updated list: ", updateinfo
-        self.descr.on_update = update
+        
         if _list is not None:
             self.data = self.check_list(_list)
 
@@ -51,12 +48,12 @@ class TypedList:
     def __setitem__(self, i, item):
         item = self.descr.check(item)
         self.data[i] = item
-        self.descr.on_update(self, {'+':item})
+        self.descr.on_update(self, 'added', [item])
         
     def __delitem__(self, i):
         item = self.data[i]
         del self.data[i]
-        self.descr.on_update(self, {'-':[item]})
+        self.descr.on_update(self, 'removed', [item])
     
     def __getslice__(self, i, j):
         i = max(i, 0); j = max(j, 0)
@@ -66,13 +63,13 @@ class TypedList:
         i = max(i, 0); j = max(j, 0)
         self.data[i:j] = self.check_list(other)
         # TODO: 
-        self.descr.on_update(self, {'-':items})
+        self.descr.on_update(self, 'updated', items)
         
     def __delslice__(self, i, j):
         i = max(i, 0); j = max(j, 0)
         items = self.data[i:j]
         del self.data[i:j]
-        self.descr.on_update(self, {'-':items})
+        self.descr.on_update(self, 'removed', items)
 
     def __add__(self, other):
         return self.__class__(self.descr.check, self.data + self.check_list(other))
@@ -83,7 +80,7 @@ class TypedList:
     def __iadd__(self, other):
         items = items
         self.data += self.check_list(other)
-        self.descr.on_update(self, {'+':items})
+        self.descr.on_update(self, 'updated', items)
         return self
 
     def __mul__(self, n):
@@ -96,21 +93,21 @@ class TypedList:
     def append(self, item):
         item = self.descr.check(item)
         self.data.append(item)
-        self.descr.on_update(self, {'+':[item]})
+        self.descr.on_update(self, 'added', [item])
         
     def insert(self, i, item):
         item = self.descr.check(item)
         self.data.insert(i, item)
-        self.descr.on_update(self, {'+':[item]})        
+        self.descr.on_update(self, 'added', [item])        
         
     def pop(self, i=-1):    
         item = self.data.pop(i)
-        self.descr.on_update(self, {'-':[item]})
+        self.descr.on_update(self, 'removed', [item])
         return item       
     
     def remove(self, item):
         self.data.remove(item)
-        self.descr.on_update(self, {'-':[item]})
+        self.descr.on_update(self, 'removed', [item])
         
     def count(self, item):
         return self.data.count(item)
@@ -127,7 +124,7 @@ class TypedList:
     def extend(self, other):
         items = self.check_list(other)
         self.data.extend(items)
-        self.descr.on_update(self, {'+':items})
+        self.descr.on_update(self, 'added', items)
 
     def __iter__(self):
         for member in self.data:
@@ -155,22 +152,41 @@ class TypedList:
     
 class TypedDict:
 
-    def __init__(self, check, _dict=None):
-        self.check = check
+    def __init__(self, key_descr, value_descr, _dict=None):
+        self.key_descr = key_descr
+        self.value_descr = value_descr
         self.data = {}
+
         if _dict is not None:
             self.update(_dict)
+
                 
     def __repr__(self): return repr(self.data)
     def __cast(self, other): return self.check_dict(other)
     def __cmp__(self, other): return cmp(self.data, self.__cast(other))
     def __len__(self): return len(self.data)
     def __getitem__(self, key): return self.data[key]
+
     def __setitem__(self, key, item):
-        self.data[key] = self.check(item)
-    def __delitem__(self, key): del self.data[key]
-    def clear(self): self.data.clear()
+        item = self.value_descr.check(item)
+        if self.data.has_key(key):
+            self.data[key] = item
+            self.value_descr.on_update({'update': [key]})
+        else:
+            self.data[key] = item
+            self.value_descr.on_update({'added': [key]})
+        
+    def __delitem__(self, key):
+        del self.data[key]
+        self.value_descr.on_update({'removed': [key]})
+        
+    def clear(self):
+        keys = self.data.keys()
+        self.data.clear()
+        self.value_descr.on_update({'removed': keys})
+    
     def copy(self):
+        # TODO
         if self.__class__ is TypedDict:
             return TypedDict(self.data.copy())
         # OK ?
@@ -193,25 +209,40 @@ class TypedDict:
        
     def update(self, dict=None, **kwargs):
         if dict is not None:
-            self.data.update(self.check_dict(dict))
-        if len(kwargs):
-            self.data.update(self.check_dict(kwargs))
+            adict = self.check_dict(dict)
+        if len(kwargs) > 0:
+            adict.update(self.check_dict(kwargs))
+            
+        self.data.update(adict)
+        self.value_descr.on_update(self, 'update', adict.keys())
             
     def get(self, key, failobj=None):
         if not self.has_key(key):
             return failobj
         return self[key]
+    
     def setdefault(self, key, failobj=None):
+        # ????
         if not self.has_key(key):
-            self[key] = self.check(failobj)
+            self[key] = self.value_descr.check(failobj)
         return self[key]
+    
     def pop(self, key, *args):
-        return self.data.pop(key, *args)
+        item = self.data.pop(key, *args)
+        self.value_descr.on_update(self, 'removed', [key])
+        return item
+    
     def popitem(self):
-        return self.data.popitem()
+        item = self.data.popitem()
+        # ??? Which key?
+        #self.value_descr.on_update({'-': [item]})
+        return item
+    
     def __contains__(self, key):
         return key in self.data
+    
     def fromkeys(cls, iterable, value=None):
+        # TODO
         d = cls() # TODO: type?
         for key in iterable:
             d[key] = value
@@ -231,7 +262,7 @@ class TypedDict:
         if isinstance(adict, dict):
             new_dict = {}
             for key, val in adict.iteritems():
-                new_dict[key] = self.check(val)
+                new_dict[key] = self.value_descr.check(val)
             return adict
         else:
             raise TypeError("Dict required, got %s instead." % type(adict))

@@ -1,10 +1,16 @@
-
 import inspect
 from containers import TypedList, TypedDict
 
 
 __all__ = ['Undefined', 'Integer', 'Float', 'Bool', 'String', 'Unicode',
            'Instance', 'List', 'Dict', 'Choice', 'Mapping']
+
+
+# bool is not like the bool in VP, because strings are not treated properly.
+# therefore we would have to check for this in projectio.
+
+
+
 
 #------------------------------------------------------------------------------
 class Undefined:
@@ -19,15 +25,18 @@ class Descriptor(object):
         self.key = None
         self.doc = None
         self.blurb = None
+        self.keepraw = False
+        
+        self.on_update = kwargs.pop('on_update', lambda obj, key, value: None)
 
-        # the on_default is a lambda function returning the
-        # default value for a given object. You can either
-        # specify a keyword 'default' which will be translated
-        # to (lambda obj: default) or you can specify a direct
-        # lambda function using the keyword 'on_default'.
-        # If nothing is given, then Undefined is set as default-
-        default = kwargs.pop('default', Undefined)
-        self.on_default = kwargs.pop('on_default', lambda obj: default)
+        # the on_init is a lambda function returning the
+        # init value for a given object. You can either
+        # specify a keyword 'init' which will be translated
+        # to (lambda obj: init) or you can specify a direct
+        # lambda function using the keyword 'on_init'.
+        # If nothing is given, then Undefined is set as init-
+        init = kwargs.pop('init', Undefined)
+        self.on_init = kwargs.pop('on_init', lambda obj: init)
         
         self.__dict__.update(kwargs)
         
@@ -41,6 +50,9 @@ class Descriptor(object):
 
     def __set__(self, obj, value):
         obj.__dict__[self.key] = self.check(value)
+        if self.keepraw is True:
+            obj.__dict__[self.key+"_"] = value
+        self.on_update(obj, self.key, value)
 
     def __delete__(self, obj):
         raise AttributeError("Can't delete attribute %s" % self.key)
@@ -50,10 +62,13 @@ class Descriptor(object):
         self.key = key
         
         if initval is Undefined:
-            initval = self.on_default(obj)
+            initval = self.on_init(obj)
 
         if initval is Undefined:
             obj.__dict__[key] = Undefined
+            if self.keepraw is True:
+                obj.__dict__[key+"_"] = Undefined
+                print "KEEPING RAW VALUE"
         else:
             self.__set__(obj, initval)
             
@@ -99,38 +114,8 @@ Integer = new_type_descriptor(int, 'an integer')
 Float = new_type_descriptor(float, 'a float')
 Unicode = new_type_descriptor(unicode, 'an unicode string')
 String = new_type_descriptor(str, 'a string')
+Bool = new_type_descriptor(bool, 'a boolean value')
 
-
-class Bool(Descriptor):
-
-    def __init__(self, **kwargs):
-        self.strict = False
-        self.none = True
-        Descriptor.__init__(self, **kwargs)
-    
-    def __set__(self, obj, value):
-        if value is None:
-            if self.none is True:
-                obj.__dict__[self.key] = None
-                return
-            else:
-                raise ValueError("Value %s must be a boolean value." % value)
-
-        if self.strict is True:
-            if not isinstance(value, bool):       
-                raise ValueError("Value %s must be a boolean value" % value)
-        else:
-            if isinstance(value, bool):
-                obj.__dict__[self.key] = bool(value)
-            elif isinstance(value, basestring):
-                if "true".find(value.lower()) > -1:
-                    obj.__dict__[self.key] = True
-                elif "false".find(value.lower()) > -1:
-                    obj.__dict__[self.key] = False
-            elif isinstance(value, (int,float)):
-                obj.__dict__[self.key] = bool(value)
-            else:
-                raise ValueError("Value %s must be a valid True/False value (bool or a 'true'/'false' string)" % value )
 
 class Choice(Descriptor):
 
@@ -149,40 +134,19 @@ class Mapping(Descriptor):
     def __init__(self, adict, **kwargs):
         self.adict = adict
         self.reverse = False
-        Descriptor.__init__(self, **kwargs)
-
-    def __set__(self, obj, value):
-        obj.__dict__[self.key] = self.check(value)
-        if hasattr(self, '_setmap'):
-            obj.__dict__[self.mapkey] = self._setmap
-            del self._setmap
+        Descriptor.__init__(self, **kwargs)        
             
     def check(self, value):
         if value in self.adict.keys():
-            self._setmap = value
             return self.adict[value]
         elif self.reverse is True:
             if value in self.adict.values():
-                self._setmap = value
                 return value
             else:
                 raise ValueError("Value %s must be one of %s or one of %s" % (value, str(self.adict.keys()), str(self.adict.values())))
         else:
             raise ValueError("Value %s must be one of %s" % (value, str(self.adict.keys())))
 
-
-    def init(self, obj, key, initval=Undefined):
-        self.key = key
-        self.mapkey = key+"_"
-        
-        if initval is Undefined:
-            initval = self.on_default(obj)
-
-        if initval is Undefined:
-            obj.__dict__[key] = Undefined
-            obj.__dict__[self.mapkey] = Undefined
-        else:
-            self.__set__(obj, initval)            
 
 
 class Instance(Descriptor):
@@ -217,9 +181,9 @@ class List(Descriptor):
 
     def __init__(self, descr, **kwargs):
         self.descr = descr
-        def default_on_update(sender, updateinfo):
-            print "dou: %s" % updateinfo
-        self.descr.on_update = kwargs.pop('on_update', default_on_update)
+        if kwargs.has_key('on_init') is False and \
+           kwargs.has_key('init') is False:
+            kwargs['init'] = []
         Descriptor.__init__(self, **kwargs)
 
     def check(self, value):
@@ -234,27 +198,23 @@ class List(Descriptor):
 
 class Dict(Descriptor):
 
-    def __init__(self, descr, **kwargs):
-        self.descr = descr
+    def __init__(self, keys, values, **kwargs):
+        self.key_descr = keys
+        self.value_descr = values
+        if kwargs.has_key('on_init') is False and \
+           kwargs.has_key('init') is False:
+            kwargs['init'] = {}
         Descriptor.__init__(self, **kwargs)
 
     def check(self, value):
-
-        def check_item(v):
-            try:
-                return self.descr.check(v)
-            except Exception, msg:
-                # TODO:
-                raise
-
         if isinstance(value, TypedDict):
-            value.check = check_item
+            value.value_descr = self.value_descr
+            value.key_descr = self.key_descr
             return value
         elif isinstance(value, dict):
-            return TypedDict(check_item, value)
+            return TypedDict(self.key_descr, self.value_descr, value)
         else:
             raise TypeError("A dict required.")
-        
 
 
 #------------------------------------------------------------------------------
@@ -266,7 +226,7 @@ class Example(object):
     a_bool = Bool()
     another_bool = Bool(strict=True)
     a_mapping = Mapping({6:'failed miserably',5:'failed',4:'barely passed',
-                         3:'passed',2:'good',1:'pretty good'})
+                         3:'passed',2:'good',1:'pretty good'}, keepraw=True)
 
     another_mapping = Mapping({6:'failed miserably',5:'failed',4:'barely passed',
                          3:'passed',2:'good',1:'pretty good'}, reverse=True)
@@ -275,14 +235,14 @@ class Example(object):
 
     a_list = List(Integer())
     another_list = List(Mapping({'good':1,'evil':-1}))
+
+    a_dict = Dict(keys=Integer(), values=String())
     
     def __init__(self, **kwargs):
 
         # We need to iterate over all descriptor instances and
         # (a) set their key attribute to their name, 
-        # (b) create the corresponding instance attribute for them,
-        # (c) set this attribute either to default or to the value
-        #     given by the keyword argument
+        # (b) init the descriptor
         
         # To support inheritance, we need to take all base classes
         # into account as well. To give meaningful error messages, we
@@ -310,8 +270,8 @@ class Example(object):
         object.__setattr__(self, key, value)
 
         # another possibility: descr.on_notify
-        if hasattr(self, 'on_notify') and self._descr.has_key(key):
-            self.on_notify(self, key, value)
+#        if hasattr(self, 'on_notify') and self._descr.has_key(key):
+ #           self.on_notify(self, key, value)
         
 
 
@@ -337,8 +297,8 @@ e.another_bool = None
 
 
 e.a_mapping = 2
-print e.a_mapping
-print e.a_mapping_
+print "MAPPED VALUE", e.a_mapping
+print "RAW VALUE:", e.a_mapping_
 
 e.another_mapping = 2
 print e.another_mapping
@@ -357,18 +317,25 @@ e.a_list.append(5)
 
 e.another_list = ['good']
 
-print e._descr['another_list'].on_default(e)
+print e._descr['another_list'].on_init(e)
 
 
-def was_notified(sender, key, value):
-    print "The object %s has set its attribute '%s' to '%s'" % (sender, key, value)
-e.on_notify = was_notified
-e.a_bool = False
+def list_was_updated(sender, key, value):
+    print "list '%s' was updated to", value
+e._descr['another_list'].on_update = list_was_updated
 
-def list_was_updated(sender, updateinfo):
-    print "list was updated:", updateinfo
-e.another_list.descr.on_update = list_was_updated
+def listitems_were_updated(sender, action, items):
+    print "list items were ", action, items
+e.another_list.descr.on_update = listitems_were_updated
 e.another_list.append('evil')
 e.another_list.remove(1)
 e.another_list.extend(['good','evil'])
+
+e.another_list = ['good']
 print e.another_list
+
+def dictitems_were_updated(sender, action, items):
+    print "dict items were ", action, items
+
+e.a_dict.value_descr.on_update = dictitems_were_updated
+e.a_dict = {}
