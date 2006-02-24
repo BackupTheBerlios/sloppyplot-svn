@@ -6,39 +6,6 @@ __all__ = ['Undefined', 'Integer', 'Float', 'Bool', 'String', 'Unicode',
            'Instance', 'List', 'Dict', 'Choice', 'Mapping']
 
 
-# bool is not like the bool in VP, because strings are not treated properly.
-# therefore we would have to check for this in projectio.
-
-
-# The python class 'object' calls the '__set__' method of the Descriptor
-# with the arguments (obj, value).  However the key, i.e. the attribute
-# name, is not passed to the Descriptor and it is therefore not possible
-# for the descriptor to set the value in the object.
-
-# There are two possible solutions for this problem:
-# (1) Overwrite the object.__setattr__ method to not call __set__,
-#     but to call set(obj, key, value) of the Descriptor. The
-#     Descriptor would be totally indepent of the object that
-#     it belongs to and could easily be used more than once!
-#     The disadvantage is that I would have to rewrite the __setattr__
-#     and the __getattribute__ methods and that might be slower than
-#     the pythonic object.
-
-# (2) init the Descriptor and pass the attribute name to the Descriptor.
-#     The Descriptor can then use self.key as attribute name.
-
-# Hmmm, I guess I will use the first method; it already worked.
-
-
-# What about the on_update stuff?  If the Descriptor is independent,
-# then it doesn't make sense to let it call on_update.  It would make
-# much more sense to let the parent object call on_update.
-# But what about List and Dict? They can be considered top-level
-# objects as well, because they contain sub-objects.  So the List/Dict
-# should emit its signals itself, independent of any other object!
-# We just need a way to access the List object, so that we can set
-# the on_update method.
-
 #------------------------------------------------------------------------------
 class Undefined:
     pass
@@ -56,9 +23,9 @@ class Descriptor(object):
         # specify a keyword 'init' which will be translated
         # to (lambda obj: init) or you can specify a direct
         # lambda function using the keyword 'on_init'.
-        # If nothing is given, then Undefined is set as init-
-        init = kwargs.pop('init', Undefined)
-        self.on_init = kwargs.pop('on_init', lambda obj: init)
+        # If nothing is given, then the value is Undefined.
+        init = kwargs.pop('init', Undefined)        
+        self.on_init = kwargs.pop('on_init', lambda obj: init)        
         
         self.__dict__.update(kwargs)
         
@@ -73,7 +40,10 @@ class Descriptor(object):
         
 
     def init(self, obj, key, value):
-        " Similar to 'set', but accepts Undefined as valid. "
+        " Similar to 'set', but accepts Undefined as valid. "        
+        if value is Undefined:
+            value = self.on_init(obj)
+
         if value is Undefined:
             obj.__dict__[key] = Undefined
             if self.raw is True:
@@ -119,9 +89,10 @@ def new_type_descriptor(_type, _typename):
 
 Integer = new_type_descriptor(int, 'an integer')
 Float = new_type_descriptor(float, 'a float')
+Bool = new_type_descriptor(bool, 'a boolean value')
+
 Unicode = new_type_descriptor(unicode, 'an unicode string')
 String = new_type_descriptor(str, 'a string')
-Bool = new_type_descriptor(bool, 'a boolean value')
 
 
 class Choice(Descriptor):
@@ -194,6 +165,8 @@ class List(Descriptor):
         Descriptor.__init__(self, **kwargs)
 
     def check(self, value):
+        # TODO: keep the TypedList, only change the contents!
+        # TODO: this way, the signals will be kept.
         if isinstance(value, TypedList):
             value.descr = self.descr
             return value
@@ -231,7 +204,7 @@ class HasDescriptors(object):
         # Initialize props and values dict
         object.__setattr__(self, '_descr', {})
 
-        # We need to iterate over all descriptor instances and
+        # We need to iterate over all Descriptor instances and
         # set default values for them.
         
         # To support inheritance, we need to take all base classes
@@ -257,9 +230,7 @@ class HasDescriptors(object):
         if len(kwargs) > 0:
             raise ValueError("Unrecognized keyword arguments: %s" % kwargs)
 
-        # quick descriptor retrieval: self._descr[key]
-        # _OR_ self.__class__.__dict__[key]  (which would have the advantage
-        # that we would never be able to create descriptors at runtime)
+        # descriptor retrieval
         self._descr = descriptors        
 
 
@@ -284,12 +255,6 @@ class HasDescriptors(object):
         attribute value. You may also pass this as keyword
         argument, i.e. use the key=value notation.
         """        
-        # TODO: somehow it should be possible to _collect_
-        # TODO: update informations...
-        # TODO: But maybe the problem would be solved if
-        # TODO: we could improve the signal mechanism
-        # TODO: to block (and maybe store them for later
-        # TODO: retrieval) certain signals.
         for arg in args:
             arglist = list(args)
             while len(arglist) > 1:
@@ -328,6 +293,19 @@ class HasDescriptors(object):
 
 
 
+    # --- compatibility ----
+
+    # HasProperties methods:
+    # - set_value aka set
+    # - set_values
+    # - get_value aka get
+    # - get_values
+    # - get_prop
+    # - get_props
+    # - copy
+    # - create_changeset
+    # - get_keys
+
     def get_values(self):
         rv = {}
         for key in self._descr.keys():
@@ -335,16 +313,6 @@ class HasDescriptors(object):
         return rv
 
 
-# HasProperties methods:
-# - set_value aka set
-# - set_values
-# - get_value aka get
-# - get_values
-# - get_prop
-# - get_props
-# - copy
-# - create_changeset
-# - get_keys
 
 
 
@@ -370,7 +338,7 @@ class Recipe(HasDescriptors):
                     reverse=True, raw=True)
     category = Choice(['breakfast', 'lunch', 'dinner', 'snack'])
     is_tested = Bool()
-    ingredients = List(Ingredient())
+    ingredients = List(Instance('Ingredient'))
     reviews = Dict(keys=String(), values=String())
         
 class DescriptorTestCase(unittest.TestCase):
@@ -416,7 +384,15 @@ class DescriptorTestCase(unittest.TestCase):
         self.assertEqual(v2_, 1)
         
 
-    def test_values(self):
+    def test_on_update(self):
+        print "ingredients = ", self.recipe.ingredients
+
+        def on_update(sender, updateinfo):
+            print "ingredients has changed: ", updateinfo            
+        self.recipe.ingredients.on_update = on_update
+        
+        i = self.recipe.ingredients
+        i.append( Ingredient(name="garlic") )
         pass
         #print self.recipe.get_values()
         #print self.recipe.__class__.__dict__

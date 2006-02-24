@@ -28,6 +28,8 @@ class TypedList:
         if _list is not None:
             self.data = self.check_list(_list)
 
+        self.on_update = lambda sender, updateinfo: None
+
     #------------------------------------------------------------------------------
     def __repr__(self): return repr(self.data)
     def __lt__(self, other): return self.data <  self.__cast(other)
@@ -48,12 +50,12 @@ class TypedList:
     def __setitem__(self, i, item):
         item = self.descr.check(item)
         self.data[i] = item
-#        self.descr.on_update(self, 'added', [item])
+        self.on_update(self, {'added': [item]})
         
     def __delitem__(self, i):
         item = self.data[i]
         del self.data[i]
-        #self.descr.on_update(self, 'removed', [item])
+        self.on_update(self, {'removed': [item]})
     
     def __getslice__(self, i, j):
         i = max(i, 0); j = max(j, 0)
@@ -63,13 +65,13 @@ class TypedList:
         i = max(i, 0); j = max(j, 0)
         self.data[i:j] = self.check_list(other)
         # TODO: 
-        #self.descr.on_update(self, 'updated', items)
+        self.on_update(self, {'updated': items})
         
     def __delslice__(self, i, j):
         i = max(i, 0); j = max(j, 0)
         items = self.data[i:j]
         del self.data[i:j]
-        #self.descr.on_update(self, 'removed', items)
+        self.on_update(self, {'removed': items})
 
     def __add__(self, other):
         return self.__class__(self.descr.check, self.data + self.check_list(other))
@@ -80,7 +82,7 @@ class TypedList:
     def __iadd__(self, other):
         items = items
         self.data += self.check_list(other)
-        #self.descr.on_update(self, 'updated', items)
+        self.on_update(self, {'updated': items})
         return self
 
     def __mul__(self, n):
@@ -93,21 +95,21 @@ class TypedList:
     def append(self, item):
         item = self.descr.check(item)
         self.data.append(item)
-        #self.descr.on_update(self, 'added', [item])
+        self.on_update(self, {'added': [item]})
         
     def insert(self, i, item):
         item = self.descr.check(item)
         self.data.insert(i, item)
-        #self.descr.on_update(self, 'added', [item])        
+        self.on_update(self, {'added': [item]})        
         
     def pop(self, i=-1):    
         item = self.data.pop(i)
-        #self.descr.on_update(self, 'removed', [item])
+        self.on_update(self, {'removed': [item]})
         return item       
     
     def remove(self, item):
         self.data.remove(item)
-        #self.descr.on_update(self, 'removed', [item])
+        self.on_update(self, {'removed': [item]})
         
     def count(self, item):
         return self.data.count(item)
@@ -124,7 +126,7 @@ class TypedList:
     def extend(self, other):
         items = self.check_list(other)
         self.data.extend(items)
-        #self.descr.on_update(self, 'added', items)
+        self.on_update(self, {'added': items})
 
     def __iter__(self):
         for member in self.data:
