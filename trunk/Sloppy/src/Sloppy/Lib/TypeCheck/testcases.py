@@ -11,7 +11,7 @@ class Ingredient(HasDescriptors):
     name = String()
     
 class Recipe(HasDescriptors):
-    author = String(strict=True)
+    author = String(strict=True, doc="Name of the author")
     calories = Integer()
     comment = String(required=False)
     skill = Mapping({'easy':1, 'intermediate':2, 'advanced':3},

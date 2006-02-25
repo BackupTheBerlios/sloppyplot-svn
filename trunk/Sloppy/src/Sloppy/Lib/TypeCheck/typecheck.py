@@ -1,15 +1,13 @@
 import inspect
 from containers import TypedList, TypedDict
-
+from common import Undefined
 
 __all__ = ['Undefined', 'Integer', 'Float', 'Bool', 'String', 'Unicode',
-           'Instance', 'List', 'Dict', 'Choice', 'Mapping', 'HasDescriptors']
+           'Instance', 'List', 'Dict', 'Choice', 'Mapping', 'HasDescriptors',
+           'AnyValue']
 
 
 #------------------------------------------------------------------------------
-class Undefined:
-    pass
-
 
 class Descriptor(object):
 
@@ -34,9 +32,12 @@ class Descriptor(object):
         return obj.__dict__[key]
 
     def set(self, obj, key, value):
-        obj.__dict__[key] = self.check(value)
-        if self.raw is True:
-            obj.__dict__[key+"_"] = value
+        try:
+            obj.__dict__[key] = self.check(value)
+            if self.raw is True:
+                obj.__dict__[key+"_"] = value
+        except ValueError, msg:
+            raise ValueError("Value (%s) for attribute '%s' is invalid, it %s." % (value, key, msg))
         
 
     def init(self, obj, key, value):
@@ -50,6 +51,11 @@ class Descriptor(object):
                 obj.__dict__[key+"_"] = Undefined
         else:
             self.set(obj, key, value)
+    
+
+class AnyValue(Descriptor):
+    def check(self, value):
+        return value
 
 
 def new_type_descriptor(_type, _typename):
@@ -69,18 +75,21 @@ def new_type_descriptor(_type, _typename):
                 if self.required is False:
                     return None
                 else:
-                    raise ValueError("Value %s must be %s." % (value, _typename) )
+                    raise ValueError("is required and may not be None")
 
             if self.strict is True:
                 if not isinstance(value, _type):       
-                    raise ValueError("Value %s must be %s" % (value, _typename) )
+                    raise ValueError("must be %s" %  _typename)
             else:
-                value = _type(value)
+                try:
+                    value = _type(value)
+                except ValueError:
+                    raise ValueError("cannot be converted to %s" % _typename)
 
             if (self.min is not None and value < self.min):
-                raise ValueError("Value must be at least %s" % self.min)
+                raise ValueError("must be at least %s" % self.min)
             if  (self.max is not None and value > self.max):
-                raise ValueError("Value may be at most %s" % self.max)
+                raise ValueError("may be at most %s" % self.max)
             
             return value
 
@@ -106,7 +115,7 @@ class Choice(Descriptor):
         if value in self.alist:
             return value
         else:
-            raise ValueError("Value %s must be one of %s" % (value, str(self.alist)))
+            raise ValueError("must be one of %s" % str(self.alist))
 
 class Mapping(Descriptor):
 
@@ -122,9 +131,9 @@ class Mapping(Descriptor):
             if value in self.adict.values():
                 return value
             else:
-                raise ValueError("Value %s must be one of %s or one of %s" % (value, str(self.adict.keys()), str(self.adict.values())))
+                raise ValueError("must be one of %s or one of %s" %  (str(self.adict.keys()), str(self.adict.values())))
         else:
-            raise ValueError("Value %s must be one of %s" % (value, str(self.adict.keys())))
+            raise ValueError("must be one of %s" % str(self.adict.keys()))
 
 
 
@@ -139,7 +148,7 @@ class Instance(Descriptor):
             if self.required is False:
                 return None
             else:
-                raise ValueError("Value %s may not be None." % value)
+                raise ValueError("is required and may not be None")
 
         # self.instance may be a class or the name of a class
         # in the first case we use isinstance() for the check,
@@ -148,18 +157,22 @@ class Instance(Descriptor):
             if isinstance(value, self.instance):
                 return value
             else:
-                raise ValueError("Value %s must be an instance of %s" % (value, self.instance.__name__))
+                raise ValueError("must be an instance of %s" % self.instance.__name__)
         else:
             if value.__class__.__name__ == self.instance:
                 return value
             else:
-                raise ValueError("Value %s must be an instance of %s" % (value, self.instance))
+                raise ValueError("must be an instance of %s" % self.instance)
             
 
 class List(Descriptor):
 
-    def __init__(self, descr, **kwargs):
+    def __init__(self, descr=AnyValue, **kwargs):
+        # make sure we have an instance, not a class
+        if inspect.isclass(descr):
+            descr = descr()
         self.descr = descr
+            
         if kwargs.has_key('on_init') is False and \
            kwargs.has_key('init') is False:
             kwargs['init'] = []
@@ -183,9 +196,7 @@ class List(Descriptor):
         if v is Undefined:
             obj.__dict__[key] = cv
         else:
-            olddata = v.data
-            v.data = cv.data
-            v.on_update(v, {'removed': olddata, 'added': v.data})
+            v.set_data(cv.data)
 
 
     def check(self, value):
@@ -195,21 +206,29 @@ class List(Descriptor):
         elif isinstance(value, list):
             return TypedList(self.descr, value)
         else:
-            raise TypeError("A list required.")
+            raise TypeError("a list.")
 
 
 class Dict(Descriptor):
 
-    def __init__(self, keys, values, **kwargs):
+    def __init__(self, keys=AnyValue, values=AnyValue, **kwargs):
+        # make sure we have an instance, not a class
+        if inspect.isclass(keys):
+            keys=keys()
         self.key_descr = keys
+
+        if inspect.isclass(values):
+            values=values()
         self.value_descr = values
+        
         if kwargs.has_key('on_init') is False and \
            kwargs.has_key('init') is False:
             kwargs['init'] = {}
+
         Descriptor.__init__(self, **kwargs)
 
     def set(self, obj, key, value):
-        # see the comments of List.set
+        # see the comments on List.set
         cv = self.check(value)
         try:
             v = self.get(obj, key)
@@ -219,9 +238,7 @@ class Dict(Descriptor):
         if v is Undefined:
             obj.__dict__[key] = cv
         else:
-            oldkeys = v.data.keys()
-            v.data = cv.data
-            v.on_update(v, {'removed': oldkeys, 'added': v.data.keys()})
+            v.set_data(cv.data)
             
     def check(self, value):
         if isinstance(value, TypedDict):
@@ -231,14 +248,15 @@ class Dict(Descriptor):
         elif isinstance(value, dict):
             return TypedDict(self.key_descr, self.value_descr, value)
         else:
-            raise TypeError("A dict required.")
+            raise TypeError("a dict.")
 
 
 #------------------------------------------------------------------------------
 class HasDescriptors(object):
+    
     def __init__(self, **kwargs):
 
-        # Initialize props and values dict
+        # Initialize descriptor dict and on_update slot
         object.__setattr__(self, '_descr', {})
         object.__setattr__(self, 'on_update', lambda sender, key, value: None)
         
@@ -328,27 +346,5 @@ class HasDescriptors(object):
                     value = default
                 values.append(value)
             return tuple(values)
-
-
-
-
-    # --- compatibility ----
-
-    # HasProperties methods:
-    # - set_value aka set
-    # - set_values
-    # - get_value aka get
-    # - get_values
-    # - get_prop
-    # - get_props
-    # - copy
-    # - create_changeset
-    # - get_keys
-
-    def get_values(self):
-        rv = {}
-        for key in self._descr.keys():
-            rv[key] = self.get(key)
-        return rv
 
 
