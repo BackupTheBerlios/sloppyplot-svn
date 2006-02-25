@@ -19,13 +19,14 @@ class DictionaryLookup(object):
     def __getattribute__(self, key):
         adict = object.__getattribute__(self, '_adict')         
         return adict[key]
-
+    __getitem__ = __getattribute__
+    
     def __setattr__(self, key, value):
         adict = object.__getattribute__(self, '_adict')
         if adict.has_key(key) is False:
             raise KeyError("'%s' cannot be set, because it doesn't exist yet." % key)
         adict[key] = value
-            
+    
     def __str__(self):
         adict = object.__getattribute__(self, '_adict')
         return "Available items: %s" % str(adict)
@@ -40,7 +41,7 @@ class View:
         
     def refresh(self):
         self.descr = DictionaryLookup(self.obj._descr)
-        self.values = DictionaryLookup(self.get_values())
+        self.values = DictionaryLookup(self.get_values())                                     
 
     def get_values(self):
         valuedict = {}

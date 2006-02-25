@@ -85,8 +85,11 @@ print tl.years
 #tl.years['0BC'] = 'this year does not exist anyway' # '0BC' cannot be casted
 
 view = View(tl)
-print "what is this tl all about?", view.descr.years.doc
-#print "The values", view.valuedict
+# print "descr.years.doc", view.descr.years.doc
+# print "descr.years.doc", view.descr['years'].doc
+# print "years:", view.values.years
+# print "years:", view.values['years']
+# print "keys:", view.values
 
 #print "possible to copy the dict?"
 #cd = tl.__class__(**tl.get_values())
