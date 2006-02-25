@@ -3,7 +3,7 @@ from containers import TypedList, TypedDict
 
 
 __all__ = ['Undefined', 'Integer', 'Float', 'Bool', 'String', 'Unicode',
-           'Instance', 'List', 'Dict', 'Choice', 'Mapping']
+           'Instance', 'List', 'Dict', 'Choice', 'Mapping', 'HasDescriptors']
 
 
 #------------------------------------------------------------------------------
@@ -91,6 +91,7 @@ Integer = new_type_descriptor(int, 'an integer')
 Float = new_type_descriptor(float, 'a float')
 Bool = new_type_descriptor(bool, 'a boolean value')
 
+# TODO: these might contain regular expressions
 Unicode = new_type_descriptor(unicode, 'an unicode string')
 String = new_type_descriptor(str, 'a string')
 
@@ -164,9 +165,30 @@ class List(Descriptor):
             kwargs['init'] = []
         Descriptor.__init__(self, **kwargs)
 
+    def set(self, obj, key, value):        
+        # Container objects like the 'List' should not simply replace
+        # their item (the TypedList), because these might contain an
+        # on_update notification.
+
+        # Therefore, unless the current value is Undefined, we check
+        # the value and then simply set the list items of the
+        # exisiting TypeDict.
+        
+        cv = self.check(value)
+        try:
+            v = self.get(obj, key)
+        except KeyError:
+            v = Undefined
+
+        if v is Undefined:
+            obj.__dict__[key] = cv
+        else:
+            olddata = v.data
+            v.data = cv.data
+            v.on_update(v, {'removed': olddata, 'added': v.data})
+
+
     def check(self, value):
-        # TODO: keep the TypedList, only change the contents!
-        # TODO: this way, the signals will be kept.
         if isinstance(value, TypedList):
             value.descr = self.descr
             return value
@@ -186,6 +208,21 @@ class Dict(Descriptor):
             kwargs['init'] = {}
         Descriptor.__init__(self, **kwargs)
 
+    def set(self, obj, key, value):
+        # see the comments of List.set
+        cv = self.check(value)
+        try:
+            v = self.get(obj, key)
+        except KeyError:
+            v = Undefined
+
+        if v is Undefined:
+            obj.__dict__[key] = cv
+        else:
+            oldkeys = v.data.keys()
+            v.data = cv.data
+            v.on_update(v, {'removed': oldkeys, 'added': v.data.keys()})
+            
     def check(self, value):
         if isinstance(value, TypedDict):
             value.value_descr = self.value_descr
@@ -315,99 +352,3 @@ class HasDescriptors(object):
         return rv
 
 
-
-
-
-
-###############################################################################
-
-
-# test fixture -- preparing and cleaning up: TestCase.setUp(), TestCase.tearDown()
-# test case -- simple single test
-# test suites -- test cases or suites that should run together
-# test runner -- graphical/textual representation of the test
-
-import unittest
-
-class Ingredient(HasDescriptors):
-    name = String()
-    
-class Recipe(HasDescriptors):
-    author = String(strict=True)
-    calories = Integer()
-    comment = String(required=False)
-    skill = Mapping({'easy':1, 'intermediate':2, 'advanced':3},
-                    reverse=True, raw=True)
-    category = Choice(['breakfast', 'lunch', 'dinner', 'snack'])
-    is_tested = Bool()
-    ingredients = List(Instance('Ingredient'))
-    reviews = Dict(keys=String(), values=String())
-        
-class DescriptorTestCase(unittest.TestCase):
-
-    def setUp(self):
-        self.values = {'author': 'Niklas Volbers',
-                       'calories': 1024,
-                       'comment': 'no comment',
-                       'skill': 'easy'}        
-        self.recipe = Recipe(**self.values)
-
-
-    def test_string(self):       
-        set = lambda v: self.recipe.set(author=v)
-        self.assert_(set, 'Joerg')
-        self.assertRaises(ValueError, set, None)
-        self.assertRaises(ValueError, set, 5)
-        self.assertRaises(ValueError, set, 5.2)
-
-        set = lambda v: self.recipe.set(comment=v)
-        self.assert_(set, 'Joerg')
-        self.assert_(set, None)
-
-    def test_mapping(self):
-        set = lambda v: self.recipe.set(skill=v)
-
-        self.recipe.set(skill='advanced')
-        print self.recipe.skill, self.recipe.skill_
-        return
-        # mapped values must be identical
-        self.assert_(self.recipe.set, skill='difficult')
-        v1 = self.recipe.skill
-        v1_ = self.recipe.skill_
-
-        self.assert_(set, 1)
-        v2 = self.recipe.skill
-        v2_ = self.recipe.skill_
-
-        self.assertEqual(v1, v2)
-
-        # however, the raw values should stay the same
-        self.assertEqual(v1_, 'easy')
-        self.assertEqual(v2_, 1)
-        
-
-    def test_on_update(self):
-        print "ingredients = ", self.recipe.ingredients
-
-        def on_update(sender, updateinfo):
-            print "ingredients has changed: ", updateinfo            
-        self.recipe.ingredients.on_update = on_update
-
-        def on_update_element(sender, key, value):
-            print "item of recipe has changed: ", key, value
-        self.recipe.on_update = on_update_element
-        
-        i = self.recipe.ingredients
-        i.append( Ingredient(name="garlic") )
-        self.recipe.ingredients = []
-        pass
-        #print self.recipe.get_values()
-        #print self.recipe.__class__.__dict__
-
-
-
-if __name__ == "__main__":
-    unittest.main()
-    
-    
-        

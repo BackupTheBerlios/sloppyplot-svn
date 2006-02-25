@@ -24,11 +24,10 @@ class TypedList:
     def __init__(self, descr, _list=None):
         self.descr = descr
         self.data = []
+        self.on_update = lambda sender, updateinfo: None
         
         if _list is not None:
             self.data = self.check_list(_list)
-
-        self.on_update = lambda sender, updateinfo: None
 
     #------------------------------------------------------------------------------
     def __repr__(self): return repr(self.data)
@@ -158,7 +157,8 @@ class TypedDict:
         self.key_descr = key_descr
         self.value_descr = value_descr
         self.data = {}
-
+        self.on_update = lambda sender, undoinfo: None
+        
         if _dict is not None:
             self.update(_dict)
 
@@ -173,19 +173,19 @@ class TypedDict:
         item = self.value_descr.check(item)
         if self.data.has_key(key):
             self.data[key] = item
-            #self.value_descr.on_update({'update': [key]})
+            self.on_update(self, {'update': [key]})
         else:
             self.data[key] = item
-            #self.value_descr.on_update({'added': [key]})
+            self.on_update(self, {'added': [key]})
         
     def __delitem__(self, key):
         del self.data[key]
-        #self.value_descr.on_update({'removed': [key]})
+        self.on_update(self, {'removed': [key]})
         
     def clear(self):
         keys = self.data.keys()
         self.data.clear()
-        #self.value_descr.on_update({'removed': keys})
+        self.on_update(self, {'removed': keys})
     
     def copy(self):
         # TODO
@@ -201,6 +201,7 @@ class TypedDict:
             self.data = data
         c.update(self)
         return c
+    
     def keys(self): return self.data.keys()
     def items(self): return self.data.items()
     def iteritems(self): return self.data.iteritems()
@@ -216,7 +217,7 @@ class TypedDict:
             adict.update(self.check_dict(kwargs))
             
         self.data.update(adict)
-        #self.value_descr.on_update(self, 'update', adict.keys())
+        self.on_update(self, {'update': adict.keys()})
             
     def get(self, key, failobj=None):
         if not self.has_key(key):
@@ -224,28 +225,26 @@ class TypedDict:
         return self[key]
     
     def setdefault(self, key, failobj=None):
-        # ????
+        # TODO: on_update
         if not self.has_key(key):
             self[key] = self.value_descr.check(failobj)
         return self[key]
     
     def pop(self, key, *args):
         item = self.data.pop(key, *args)
-        #self.value_descr.on_update(self, 'removed', [key])
+        self.on_update(self, {'removed': [key]})
         return item
     
     def popitem(self):
-        item = self.data.popitem()
-        # ??? Which key?
-        #self.value_descr.on_update({'-': [item]})
+        key, value = self.data.popitem()
+        self.on_update({'removed': [key]})
         return item
     
     def __contains__(self, key):
         return key in self.data
     
     def fromkeys(cls, iterable, value=None):
-        # TODO
-        d = cls() # TODO: type?
+        d = self.__class__(self.descr)
         for key in iterable:
             d[key] = value
         return d
