@@ -1,15 +1,15 @@
 import inspect
 from containers import TypedList, TypedDict
-from common import Undefined
+from defs import Undefined
 
 __all__ = ['Undefined', 'Integer', 'Float', 'Bool', 'String', 'Unicode',
-           'Instance', 'List', 'Dict', 'Choice', 'Mapping', 'HasDescriptors',
+           'Instance', 'List', 'Dict', 'Choice', 'Mapping', 'HasChecks',
            'AnyValue']
 
 
 #------------------------------------------------------------------------------
 
-class Descriptor(object):
+class Check(object):
 
     def __init__(self, **kwargs):
         self.doc = None
@@ -26,48 +26,40 @@ class Descriptor(object):
         self.on_init = kwargs.pop('on_init', lambda obj: init)        
         
         self.__dict__.update(kwargs)
-        
+
+    def __call__(self, value):
+        return self.check(self, value)
         
     def get(self, obj, key):
-        return obj.__dict__[key]
+        try:
+            return obj.__dict__['_values'][key]
+        except KeyError:
+            return Undefined
 
     def set(self, obj, key, value):
         try:
-            obj.__dict__[key] = self.check(value)
+            obj.__dict__['_values'][key] = self.check(value)
             if self.raw is True:
-                obj.__dict__[key+"_"] = value
+                obj.__dict__['_raw_values'][key] = value
         except ValueError, msg:
             raise ValueError("Value (%s) for attribute '%s' is invalid, it %s." % (value, key, msg))
-        
 
-    def init(self, obj, key, value):
-        " Similar to 'set', but accepts Undefined as valid. "        
-        if value is Undefined:
-            value = self.on_init(obj)
 
-        if value is Undefined:
-            obj.__dict__[key] = Undefined
-            if self.raw is True:
-                obj.__dict__[key+"_"] = Undefined
-        else:
-            self.set(obj, key, value)
-    
-
-class AnyValue(Descriptor):
+class AnyValue(Check):
     def check(self, value):
         return value
 
 
-def new_type_descriptor(_type, _typename):
+def new_type_check(_type, _typename):
     
-    class TypeDescriptor(Descriptor):
+    class TypeCheck(Check):
 
         def __init__(self, **kwargs):
             self.strict = False
             self.required = True
             self.min = None
             self.max = None
-            Descriptor.__init__(self, **kwargs)
+            Check.__init__(self, **kwargs)
 
         def check(self, value):
             
@@ -93,23 +85,23 @@ def new_type_descriptor(_type, _typename):
             
             return value
 
-    return TypeDescriptor
+    return TypeCheck
 
 
-Integer = new_type_descriptor(int, 'an integer')
-Float = new_type_descriptor(float, 'a float')
-Bool = new_type_descriptor(bool, 'a boolean value')
+Integer = new_type_check(int, 'an integer')
+Float = new_type_check(float, 'a float')
+Bool = new_type_check(bool, 'a boolean value')
 
 # TODO: these might contain regular expressions
-Unicode = new_type_descriptor(unicode, 'an unicode string')
-String = new_type_descriptor(str, 'a string')
+Unicode = new_type_check(unicode, 'an unicode string')
+String = new_type_check(str, 'a string')
 
 
-class Choice(Descriptor):
+class Choice(Check):
 
     def __init__(self, alist, **kwargs):
         self.alist = alist
-        Descriptor.__init__(self, **kwargs)
+        Check.__init__(self, **kwargs)
         
     def check(self, value):
         if value in self.alist:
@@ -117,12 +109,12 @@ class Choice(Descriptor):
         else:
             raise ValueError("must be one of %s" % str(self.alist))
 
-class Mapping(Descriptor):
+class Mapping(Check):
 
     def __init__(self, adict, **kwargs):
         self.adict = adict
         self.reverse = False
-        Descriptor.__init__(self, **kwargs)        
+        Check.__init__(self, **kwargs)        
             
     def check(self, value):
         if value in self.adict.keys():
@@ -137,11 +129,11 @@ class Mapping(Descriptor):
 
 
 
-class Instance(Descriptor):
+class Instance(Check):
 
     def __init__(self, instance, **kwargs):
         self.instance = instance
-        Descriptor.__init__(self, **kwargs)
+        Check.__init__(self, **kwargs)
 
     def check(self, value):
         if value is None:
@@ -165,18 +157,18 @@ class Instance(Descriptor):
                 raise ValueError("must be an instance of %s" % self.instance)
             
 
-class List(Descriptor):
+class List(Check):
 
-    def __init__(self, descr=AnyValue, **kwargs):
+    def __init__(self, check=AnyValue, **kwargs):
         # make sure we have an instance, not a class
-        if inspect.isclass(descr):
-            descr = descr()
-        self.descr = descr
+        if inspect.isclass(check):
+            check = check()
+        self._check = check
             
         if kwargs.has_key('on_init') is False and \
            kwargs.has_key('init') is False:
             kwargs['init'] = []
-        Descriptor.__init__(self, **kwargs)
+        Check.__init__(self, **kwargs)
 
     def set(self, obj, key, value):        
         # Container objects like the 'List' should not simply replace
@@ -194,38 +186,38 @@ class List(Descriptor):
             v = Undefined
 
         if v is Undefined:
-            obj.__dict__[key] = cv
+            obj.__dict__['_values'][key] = cv
         else:
             v.set_data(cv.data)
 
 
     def check(self, value):
         if isinstance(value, TypedList):
-            value.descr = self.descr
+            value._check = self._check
             return value
         elif isinstance(value, list):
-            return TypedList(self.descr, value)
+            return TypedList(self._check, value)
         else:
             raise TypeError("a list.")
 
 
-class Dict(Descriptor):
+class Dict(Check):
 
     def __init__(self, keys=AnyValue, values=AnyValue, **kwargs):
         # make sure we have an instance, not a class
         if inspect.isclass(keys):
             keys=keys()
-        self.key_descr = keys
+        self.key_check = keys
 
         if inspect.isclass(values):
             values=values()
-        self.value_descr = values
+        self.value_check = values
         
         if kwargs.has_key('on_init') is False and \
            kwargs.has_key('init') is False:
             kwargs['init'] = {}
 
-        Descriptor.__init__(self, **kwargs)
+        Check.__init__(self, **kwargs)
 
     def set(self, obj, key, value):
         # see the comments on List.set
@@ -236,70 +228,77 @@ class Dict(Descriptor):
             v = Undefined
 
         if v is Undefined:
-            obj.__dict__[key] = cv
+            obj.__dict__['_values'][key] = cv
         else:
             v.set_data(cv.data)
             
     def check(self, value):
         if isinstance(value, TypedDict):
-            value.value_descr = self.value_descr
-            value.key_descr = self.key_descr
+            value.value_check = self.value_check
+            value.key_check = self.key_check
             return value
         elif isinstance(value, dict):
-            return TypedDict(self.key_descr, self.value_descr, value)
+            return TypedDict(self.key_check, self.value_check, value)
         else:
             raise TypeError("a dict.")
 
 
 #------------------------------------------------------------------------------
-class HasDescriptors(object):
+class HasChecks(object):
     
     def __init__(self, **kwargs):
 
-        # Initialize descriptor dict and on_update slot
-        object.__setattr__(self, '_descr', {})
+        # Initialize check dict and on_update slot
+        object.__setattr__(self, '_checks', {})
+        object.__setattr__(self, '_values', {})
+        object.__setattr__(self, '_raw_values', {})
         object.__setattr__(self, 'on_update', lambda sender, key, value: None)
         
-        # We need to iterate over all Descriptor instances and
+        # We need to iterate over all Check instances and
         # set default values for them.
         
         # To support inheritance, we need to take all base classes
         # into account as well. To give meaningful error messages, we
-        # reverse the order and define the base class descriptors
+        # reverse the order and define the base class checks
         # first.
         
         klasslist = list(self.__class__.__mro__[:-1])
         klasslist.reverse()
 
-        descriptors = {}
+        checks = {}
         for klass in klasslist:
             for key, item in klass.__dict__.iteritems():
-                if isinstance(item, Descriptor):
-                    if descriptors.has_key(key):
-                        raise KeyError("%s defines Descriptor '%s', which has already been defined by a base class!" % (klass,key))
-                    descriptors[key] = item
-                    
-                    item.init(self, key, kwargs.pop(key, Undefined))
+                if isinstance(item, Check):
+                    if checks.has_key(key):
+                        raise KeyError("%s defines Check '%s', which has already been defined by a base class!" % (klass,key))
+                    checks[key] = item
 
-       
+                    if kwargs.has_key(key):
+                        value = kwargs.pop(key)
+                    else:
+                        value = item.on_init(self)
+
+                    if value is not Undefined:
+                        item.set(self, key, value)
+                        
         # complain if there are unused keyword arguments
         if len(kwargs) > 0:
             raise ValueError("Unrecognized keyword arguments: %s" % kwargs)
 
-        # descriptor retrieval
-        self._descr = descriptors        
+        # check retrieval
+        self._checks = checks
         
 
     def __getattribute__(self, key):
-        descr = object.__getattribute__(self, '_descr')
-        if descr.has_key(key):
-            return descr[key].get(self, key)
+        check = object.__getattribute__(self, '_checks')
+        if check.has_key(key):
+            return check[key].get(self, key)
         return object.__getattribute__(self, key)
 
     def __setattr__(self, key, value):
-        descr = self._descr
-        if descr.has_key(key):
-            descr[key].set(self, key, value)
+        checks = self._checks
+        if checks.has_key(key):
+            checks[key].set(self, key, value)
             self.on_update(self, key, value)
         else:
             object.__setattr__(self, key, value)

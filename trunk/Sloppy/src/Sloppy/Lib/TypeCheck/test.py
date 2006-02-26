@@ -8,9 +8,10 @@ from typecheck import *
 recipe = testcases.Recipe()
 recipe2 = testcases.Recipe()
 
-print "Author documentation:", recipe._descr['author'].doc
+recipe.calories = 720
+print "Author documentation:", recipe._checks['author'].doc
 
-dl = DictionaryLookup(recipe._descr)
+dl = DictionaryLookup(recipe._checks)
 print "Author documentation:", dl.author.doc
 
 #recipe.author = Undefined
@@ -70,7 +71,7 @@ recipe.reviews.copy()
 
 print "\n=== A Complicated Dict ===\n"
 
-class Timeline(HasDescriptors):
+class Timeline(HasChecks):
     years = Dict( values=String(), doc="Years and their events")
 
 
@@ -84,15 +85,13 @@ print tl.years
 # this fails:
 #tl.years['0BC'] = 'this year does not exist anyway' # '0BC' cannot be casted
 
-view = View(tl)
-# print "descr.years.doc", view.descr.years.doc
-# print "descr.years.doc", view.descr['years'].doc
-# print "years:", view.values.years
-# print "years:", view.values['years']
-# print "keys:", view.values
+view = View(recipe)
+print "SKILL:", view.values.skill, "-", view.checks.skill
+print view.checks.skill.doc
 
-#print "possible to copy the dict?"
-#cd = tl.__class__(**tl.get_values())
-#print "cd has the following values:", cd.get_values()
+print "possible to copy the dict?"
+copy = tl.__class__(**tl._values)
+print "the copy has the following values:", copy._values
+
 
 

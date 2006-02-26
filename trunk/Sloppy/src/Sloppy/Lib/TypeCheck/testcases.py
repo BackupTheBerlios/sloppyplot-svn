@@ -7,10 +7,10 @@
 from typecheck import *
 import unittest
 
-class Ingredient(HasDescriptors):
+class Ingredient(HasChecks):
     name = String()
     
-class Recipe(HasDescriptors):
+class Recipe(HasChecks):
     author = String(strict=True, doc="Name of the author")
     calories = Integer()
     comment = String(required=False)
@@ -21,7 +21,7 @@ class Recipe(HasDescriptors):
     ingredients = List(Instance('Ingredient'))
     reviews = Dict(keys=String(), values=String())
         
-class DescriptorTestCase(unittest.TestCase):
+class CheckTestCase(unittest.TestCase):
 
     def setUp(self):
         self.values = {'author': 'Niklas Volbers',

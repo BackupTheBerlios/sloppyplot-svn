@@ -17,8 +17,12 @@ class DictionaryLookup(object):
         object.__setattr__(self, '_adict', adict)
 
     def __getattribute__(self, key):
-        adict = object.__getattribute__(self, '_adict')         
-        return adict[key]
+        adict = object.__getattribute__(self, '_adict')
+        try:
+            return adict[key]
+        except KeyError:
+            return Undefined
+
     __getitem__ = __getattribute__
     
     def __setattr__(self, key, value):
@@ -34,19 +38,17 @@ class DictionaryLookup(object):
 
 
 class View:
-
     def __init__(self, obj):
         self.obj = obj
+        self.values = None
+        self.checks = None
+        self.keys = []
         self.refresh()
         
     def refresh(self):
-        self.descr = DictionaryLookup(self.obj._descr)
-        self.values = DictionaryLookup(self.get_values())                                     
+        self.checks = DictionaryLookup(self.obj._checks)
+        self.values = DictionaryLookup(self.obj._values)
+        self.raw_values = DictionaryLookup(self.obj._raw_values)
+        self.keys = self.obj._checks.keys()
 
-    def get_values(self):
-        valuedict = {}
-        keys = self.obj._descr.keys()
-        for key in keys:
-            valuedict[key] = self.obj.get(key)
-        return valuedict
     

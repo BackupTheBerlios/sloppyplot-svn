@@ -23,8 +23,8 @@ from defs import Undefined
 
 class TypedList:
 
-    def __init__(self, descr, _list=None):
-        self.descr = descr
+    def __init__(self, check, _list=None):
+        self._check = check
         self.data = []
         self.on_update = lambda sender, updateinfo: None
 
@@ -40,7 +40,7 @@ class TypedList:
 
     def check(self, item):
         try:
-            return self.descr.check(item)
+            return self._check.check(item)
         except ValueError, msg:
             raise ValueError("Item for list is invalid: %s" % msg)
     
@@ -51,7 +51,7 @@ class TypedList:
         if isinstance(alist, (list,tuple)):
             newlist = []
             for item in alist:
-                newlist.append(self.descr.check(item))
+                newlist.append(self._check.check(item))
             return newlist
         else:
             raise TypeError("List required, got %s instead." % type(alist))
@@ -119,7 +119,7 @@ class TypedList:
         return self
 
     def __mul__(self, n):
-        return self.__class__(self.descr, self.data*n)
+        return self.__class__(self._check, self.data*n)
     __rmul__ = __mul__
 
     def __imul__(self, n):
@@ -175,16 +175,16 @@ class TypedList:
     
 class TypedDict:
 
-    def __init__(self, key_descr, value_descr, _dict=None):
-        self.key_descr = key_descr
-        self.value_descr = value_descr        
+    def __init__(self, key_check, value_check, _dict=None):
+        self.key_check = key_check
+        self.value_check = value_check        
         self.on_update = lambda sender, undoinfo: None
         self.data = {}
         if _dict is not None:
             self.update(_dict)
 
     def __doc__(self):
-        return self.value_descr.doc
+        return self.value_check.doc
     
     def set_data(self, adict):        
         olddata = self.data
@@ -193,12 +193,12 @@ class TypedDict:
 
     def check(self, key, value):
         try:
-            key = self.key_descr.check(key)
+            key = self.key_check.check(key)
         except ValueError, msg:
             raise ValueError("Key (%s) for dict item is invalid, it %s" % (key, msg))
 
         try:
-            value = self.value_descr.check(value)
+            value = self.value_check.check(value)
         except ValueError, msg:
             raise ValueError("Value (%s) for dict item is invalid, it %s" % (value, msg))
         
@@ -220,7 +220,7 @@ class TypedDict:
 
     #------------------------------------------------------------------------------
     # All functions below are implementations of methods from UserDict.
-    # Any new key/item must be checked via self.key_descr.check/self.value_descr.check,
+    # Any new key/item must be checked via self.key_check.check/self.value_check.check,
     # any new dict of items via self.check_dict.
                     
 
@@ -250,7 +250,7 @@ class TypedDict:
         self.on_update(self, {'removed': olddata})
     
     def copy(self):
-        return TypedDict(key_descr=self.key_descr, value_descr=self.value_descr,
+        return TypedDict(key_check=self.key_check, value_check=self.value_check,
                              _dict=self.data.copy())
     
     def keys(self): return self.data.keys()
@@ -278,7 +278,7 @@ class TypedDict:
     def setdefault(self, key, failobj=Undefined):
         if not self.has_key(key):
             if failobj is Undefined:
-                failobj = self.value_descr.on_default()
+                failobj = self.value_check.on_default()
             key, value = self.check(key, failobj)
             self[key] = value
             self.on_update(self, {'added': {key:value}})
@@ -298,7 +298,7 @@ class TypedDict:
         return key in self.data
     
     def fromkeys(cls, iterable, value=None):
-        d = self.__class__(self.key_descr, self.value_descr)
+        d = self.__class__(self.key_check, self.value_check)
         for key in iterable:
             d[key] = value
         return d

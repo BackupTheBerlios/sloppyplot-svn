@@ -35,6 +35,17 @@ USE CASES FOR ACCESSING DESCRIPTORS AND/OR VALUES
 Another possibility would be to have two dictionaries: _values, _raw_values
 and let the object itself set the values, not the Descriptor.
 
+Then we don't need any extra methods to access the value dict, we can
+simply iterate over the value dict.  The only problem: we cannot use
+the postfix _ notation anymore to access the raw value, unless we translated
+it.
+
+I could also rename _descr to _checks and Descriptor to Check (or
+Validator again?).
+
+Using this _values dictionary we might even get rid of the Undefined thingy:
+__getattribute__ returns Undefined if the object doesn't exist in the Dictionary!
+
             
 # --- compatibility ----
 
