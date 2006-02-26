@@ -257,36 +257,3 @@ class Backend(object, HasSignals):
             logger.error("Index range '%s'out of bounds!" % str((start,end)) )
 
 
-    #----------------------------------------------------------------------
-    # Current Layer
-
-    def get_layer(self):
-        """
-        Returns the current layer.
-        Make sure that the current_layer actually exists.
-        If this is not the case, the current_layer attribute is reset.
-        """
-        if self._layer is None or self.plot is None:
-            return None
-        if self._layer in self.plot.layers:
-            return self._layer
-
-        self.set_layer(None)
-        return None
-
-    def set_layer(self, layer):
-        """
-        Set the current layer.
-        The layer must be either None or a Layer instance that is
-        contained in self.layers.
-        """
-        if layer is None or layer in self.plot.layers:
-            self._layer = layer
-            # TODO: only when it changes!
-            self.sig_emit("notify::layer", layer)
-        else:
-            raise ValueError("Layer %s can't be set as current, because it is not part of the Plot!" % layer)
-
-    layer = property(get_layer, set_layer)            
-
-

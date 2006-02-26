@@ -389,7 +389,7 @@ class MatplotlibWidget(gtk.VBox):
 
             canvas_width, canvas_height = 800,600
 
-            testing = False
+            testing = True
             if testing == True:
                 backend = self.project.request_backend('matplotlib2', plot=plot)
             else:

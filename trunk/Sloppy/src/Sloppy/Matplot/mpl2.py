@@ -81,6 +81,10 @@ class Backend(backend.Backend):
     def init(self):
         self.painters = {} # == layers
 
+        self.active_layer = None
+        #self.plot.sig_connect('notify::layers', self.on_notify_layers)
+
+
     def connect(self):
         self.figure = Figure(dpi=100, facecolor="white")
         self.canvas = FigureCanvas(self.figure)
@@ -104,6 +108,19 @@ class Backend(backend.Backend):
         for layer in self.plot.layers:
             painter = self.get_painter(layer, LayerPainter)
             painter.paint()
+
+    def set_active_layer(self, layer):
+        if layer == self.active_layer:
+            return
+
+        self.sig_emit("notify", {'active_layer':layer})
+        self.active_layer = layer
+
+    def on_notify_layers(self, sender, updateinfo):
+        print "layers have changed:", updateinfo
+        removed = updateinfo.get('removed', [])
+        if self.active_layer in removed:
+            self.set_active_layer(None)
 
 
 

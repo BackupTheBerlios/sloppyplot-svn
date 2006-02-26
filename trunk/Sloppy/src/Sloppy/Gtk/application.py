@@ -934,8 +934,8 @@ def main(filename=None):
 
         ## FOR TESTING
         # TODO: maybe as command line option?
-        #app._cb_experimental_plot(None)
-        #spj.journal.clear()
+        app.core.add_experimental_plot(spj)
+        spj.journal.clear()
     else:
         try:
             logger.debug("Trying to load file %s" % filename)

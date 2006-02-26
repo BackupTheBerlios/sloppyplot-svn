@@ -33,6 +33,56 @@ from Sloppy.Lib.Props import *
 from groups import Group, MODE_CONSTANT, MODE_CYCLE
 
 
+
+# This is just for testing.
+class SPObject(HasProperties, HasSignals):
+
+    def __init__(self, *args, **kwargs):
+        object.__setattr__(self, 'do_notify', False)
+        HasProperties.__init__(self, *args, **kwargs)
+        self.do_notify = True
+        HasSignals.__init__(self)
+        self.sig_register('notify') 
+
+    def __setattr__(self, key, value):
+        if key in ('props', '_props','_values'):
+            raise RuntimeError("Attribute '%s' cannot be altered for HasProperties objects." % key)
+        
+        props = object.__getattribute__(self, '_props')
+        if props.has_key(key):
+            props[key].set_value(self, key, value)
+            if self.do_notify is True:
+                self.sig_emit('notify', {key:value})            
+        else:
+            object.__setattr__(self, key, value)
+
+    def set_values(self, *args, **kwargs):
+        # turn off notification until we have set all values
+        do_notify = self.do_notify
+        self.do_notify = False
+
+        try:
+            arglist = list(args)
+            updateinfo = {}
+
+            while len(arglist) > 1:
+                key = arglist.pop(0)
+                value = arglist.pop(0)
+                self.__setattr__(key, value)
+                updateinfo[key] = value
+
+            for (key, value) in kwargs.iteritems():
+                self.__setattr__(key, value)
+                updateinfo[key] = value
+        finally:
+            self.do_notify = do_notify
+
+        if self.do_notify is True:
+            self.sig_emit('notify', updateinfo)            
+
+        
+    
+
 # ----------------------------------------------------------------------
 #  PERMITTED VALUES
 #
@@ -213,26 +263,30 @@ class View(HasProperties):
 ###############################################################################
 
 
-class Plot(Node, HasProperties, HasSignals):
+class Plot(Node, SPObject):
 
     key = Keyword(blurb="Key") # TODO: remove this!
 
     title = VP(Unicode, None, blurb="Title")
     comment = Unicode(blurb="Comment")
     
-    lines = List(Line)
     labels = List(TextLabel)
     layers = List(Layer, blurb="Layers")
 
     views = List(View, blurb="Views")   
 
+    
     def __init__(self, *args, **kwargs):
-        HasProperties.__init__(self, *args, **kwargs)        
+        SPObject.__init__(self, *args, **kwargs)
         Node.__init__(self)
-        HasSignals.__init__(self)
+
         self.sig_register("closed")
         self.sig_register("changed")
-        
+
+        self.sig_register("notify::labels")
+        self.sig_register("notify::layers")
+
+       
 #     #----------------------------------------------------------------------
     
     def close(self):

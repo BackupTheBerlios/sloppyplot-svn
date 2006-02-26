@@ -28,11 +28,6 @@ from Sloppy.Gtk import uihelper, dock, options_dialog
 
 import logging
 logger = logging.getLogger('Gtk.tools')
-#------------------------------------------------------------------------------
-
-
-
-
 
 #------------------------------------------------------------------------------
 # Toolbox
@@ -42,18 +37,14 @@ class Toolbox(gtk.Window):
 
     """ The Toolbox holds a dock with a number of Tools.
 
-    Each Tool refers to a backend and to the backend's active layer,
-    and the Toolbox has the task to set these two values for all of
-    its tools.
+    Each Tool refers to a backend and the Toolbox has the task to set
+    these two values for all of its tools.
 
     The Toolbox provides a combobox, so that the user may switch the
-    active backend.  The active layer of this backend can not be
-    manipulated by the Toolbox.  However, the Toolbox catches any
-    change of this active layer and sends it to its tools.
+    active backend.
     
     @ivar project: project.
-    @ivar backend: currently active backend as displayed in the Toolbox combo.
-    @ivar layer: currently active layer.
+    @ivar backend: currently active backend as displayed in the Toolbox combo.    
     """
 
     def __init__(self, project=None):
@@ -65,7 +56,6 @@ class Toolbox(gtk.Window):
         self.backend_cblist = []
 
         self.backend = None
-        self.layer = None
         
         #
         # create gui
@@ -144,28 +134,13 @@ class Toolbox(gtk.Window):
 
 
     def set_backend(self, backend):
-        """ Set the backend to the new value (implies setting a new layer). """
+        """ Set the backend to the new value. """
         if self.backend != backend:
             for cb in self.backend_cblist:
                 cb.disconnect()
             self.backend_cblist = []
 
             self.backend = backend
-
-            if self.backend is not None:
-                # If no active layer is set, even though there are layers,
-                # then we should set the first layer as being active.
-                if self.backend.layer is None and len(self.backend.plot.layers) > 0:
-                    self.backend.layer = self.backend.plot.layers[0]
-                self.layer = self.backend.layer
-
-                # make sure we keep track of changes to the active layer
-                self.backend_cblist.append(
-                    backend.sig_connect("notify::layer",
-                                    (lambda sender, layer: self.set_layer(layer)))
-                    )
-            else:
-                self.layer = None
 
             # propagate the new backend to all tools
             self.dock.foreach((lambda tool: tool.set_backend(self.backend)))
@@ -178,16 +153,6 @@ class Toolbox(gtk.Window):
                 model = self.combobox.get_model()
                 index = self.project.backends.index(backend)
             self.combobox.set_active(index)
-            
-
-    def set_layer(self, layer):
-        """ Set the layer to the new value (implies keeping the old backend). """
-        if layer != self.layer:
-            self.layer = layer
-
-            # propagate the new layer to all tools
-            self.dock.foreach(lambda tool: tool.set_layer(layer))
-
                               
         
     def update_combobox(self):
@@ -202,7 +167,7 @@ class Toolbox(gtk.Window):
         # fill model with Backend objects and their keys
         model.clear()
         if self.project is not None:
-            for backend in self.project.find_backends(key='matplotlib'):
+            for backend in self.project.find_backends(key='matplotlib2'):
                 model.append((backend, backend.plot.key))
             self.combobox.set_sensitive(True)
             
@@ -243,9 +208,7 @@ class Tool(dock.Dockable):
         dock.Dockable.__init__(self)
 
         self.backend = -1
-        self.layer = -1
         self.backend_cblist = []
-        self.layer_cblist = []
         
     def set_backend(self, backend):
         if backend == self.backend:
@@ -258,23 +221,10 @@ class Tool(dock.Dockable):
         self.backend = backend
         self.on_update_backend()
         
-        if backend is not None:            
-            self.set_layer(backend.layer)
-        else:
-            self.set_layer(None)            
 
     def on_update_backend(self):
         pass
 
-    def set_layer(self, layer):
-        pass
-
-    def on_update_layer(self):
-        pass
-
-    def check_layer(self):
-        if not isinstance(self.layer, objects.Layer):
-            raise TypeError("Invalid Layer %s" % self.layer)
     
 
 
@@ -286,6 +236,16 @@ class LayerTool(Tool):
     
     def __init__(self):
         Tool.__init__(self)
+
+        # the matplotlib backend is what one might call the
+        # 'BackendPainter' and it has an attribute 'active_layer'.
+
+        # TODO
+                # TODO
+                        # TODO
+                                # TODO
+                                        # TODO
+                                                # TODO
         
         # model: (object) = (layer object)
         model = gtk.ListStore(object)        
