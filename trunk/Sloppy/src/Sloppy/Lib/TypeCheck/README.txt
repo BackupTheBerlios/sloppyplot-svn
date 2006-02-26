@@ -5,7 +5,36 @@ TODO: TypedDict now has 'updated', 'added', 'removed' ? But if it was 'updated',
 
 TODO: descr.help
 
-        
+
+USE CASES FOR ACCESSING DESCRIPTORS AND/OR VALUES
+=================================================
+
+(1) Iterate over all descriptors incl. their keys:
+
+  for key, descr in obj._descr.iteritems():
+
+(2) Get all keys of an object:
+
+  keys = obj._descr.iterkeys()
+
+(3) Iterate over all values:
+
+  for key in obj._descr.iterkeys():
+      value = obj.get(key)
+
+(4) Use a value dictionary to create changesets etc.
+
+  adict = {}
+  for key in obj._descr.iterkeys():
+      adict[key] = obj.get(key)
+
+  This is the only use case that is complicated enough to be
+  put into its own method.  It used to be called get_values,
+  but I don't like the name so much.
+
+Another possibility would be to have two dictionaries: _values, _raw_values
+and let the object itself set the values, not the Descriptor.
+
             
 # --- compatibility ----
 
@@ -24,6 +53,14 @@ class Changes:
 
       def compare_to(self, final):
 
+
+descriptors = _descr => dict of descriptors
+values ???? => dict of values (but what about raw values?)
+keys ==> list of available keys
+
+view.descriptors
+view.values
+view.keys
 
 
 #------------------------------------------------------------------------------
