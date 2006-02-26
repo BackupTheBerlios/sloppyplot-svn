@@ -332,15 +332,16 @@ class HasChecks(object):
         """
         
         default = kwargs.pop('default', Undefined)
+        checks = self._checks
         if len(keys) == 1:
-            value = object.__getattribute__(self, keys[0])
+            value = checks[keys[0]].get(self, keys[0])
             if value is Undefined:
                 value = default
             return value
         else:
             values = []
             for key in keys:
-                value = object.__getattribute__(self, key)
+                value = checks[key].get(self, key)
                 if value is Undefined:
                     value = default
                 values.append(value)

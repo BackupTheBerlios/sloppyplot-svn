@@ -1,2 +1,2 @@
 
-__all__ = ['ElementTree', 'Props', 'Undo']
+__all__ = ['ElementTree', 'Props', 'Undo', 'Check']
