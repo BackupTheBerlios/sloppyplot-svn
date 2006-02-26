@@ -4,7 +4,7 @@
 # test suites -- test cases or suites that should run together
 # test runner -- graphical/textual representation of the test
 
-from typecheck import *
+from check import *
 import unittest
 
 class Ingredient(HasChecks):

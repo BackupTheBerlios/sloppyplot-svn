@@ -2,8 +2,7 @@
 # just some hand-written testing
 
 import testcases
-from defs import *
-from typecheck import *
+from check import *
 
 recipe = testcases.Recipe()
 recipe2 = testcases.Recipe()
@@ -11,8 +10,6 @@ recipe2 = testcases.Recipe()
 recipe.calories = 720
 print "Author documentation:", recipe._checks['author'].doc
 
-dl = DictionaryLookup(recipe._checks)
-print "Author documentation:", dl.author.doc
 
 #recipe.author = Undefined
 
@@ -85,7 +82,7 @@ print tl.years
 # this fails:
 #tl.years['0BC'] = 'this year does not exist anyway' # '0BC' cannot be casted
 
-view = View(recipe)
+view = CheckView(recipe)
 print "SKILL:", view.values.skill, "-", view.checks.skill
 print view.checks.skill.doc
 

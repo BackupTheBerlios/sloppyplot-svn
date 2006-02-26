@@ -36,8 +36,7 @@ class DictionaryLookup(object):
         return "Available items: %s" % str(adict)
 
 
-
-class View:
+class CheckView:
     def __init__(self, obj):
         self.obj = obj
         self.values = None

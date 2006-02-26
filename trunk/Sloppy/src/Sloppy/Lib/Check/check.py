@@ -1,10 +1,10 @@
 import inspect
 from containers import TypedList, TypedDict
-from defs import Undefined
+from defs import Undefined, CheckView
 
 __all__ = ['Undefined', 'Integer', 'Float', 'Bool', 'String', 'Unicode',
            'Instance', 'List', 'Dict', 'Choice', 'Mapping', 'HasChecks',
-           'AnyValue']
+           'AnyValue', 'CheckView']
 
 
 #------------------------------------------------------------------------------
