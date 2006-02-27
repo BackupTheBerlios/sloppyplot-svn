@@ -18,6 +18,59 @@ logger = logging.getLogger('gtk.checkwidgets')
 #
 
 
+class Color(Check):
+
+    colors = {'black': (1,1,1),
+              'green': (0,1,0)}
+    
+    def check(self, value):
+        """
+        A color can be defined
+         (1) as a verbose string ('black', 'blue', ...)
+         (2) as a 3-tuple (r,g,b) where each value is a floating
+             point number in between 0 and 1
+         (3) as a 3-digit hex code (#rgb)
+         (3) as a 6-digit hex code (#rrggbb)
+
+        Internally it is stored as a 3-tuple (possibility 2).
+        """
+
+        if isinstance(value, basestring):
+            if value.startswith('#'):
+                # string starts with '#' => hex color code
+                try:
+                    if len(value) == 4:
+                        r,g,b = [int(c,16)/16 for c in (value[1], value[2], value[3])]
+                    elif len(value) == 7:
+                        r,g,b = [int(c,16)/255 for c in (value[1:2], value[3:4], value[5:6])]
+                    else:
+                        raise
+                except:
+                    raise ValueError("must be three or six digits long and must be 0-9,A-F only")
+            else:
+                # a string w/o a '#' as first letter => a color name
+                key = value.lower()
+                if self.colors.has_key(key):
+                    return self.colors[key]
+                else:
+                    raise ValueError("not a valid color name")
+
+        elif isinstance(value, tuple):
+            # a 3-tuple => (r,g,b)
+            if len(value) == 3:
+                r,g,b = value
+                for c in (r,g,b):
+                    if c < 0.0 or c > 1.0:
+                        raise ValueError("all components of the (r,g,b) color tuple must be in between 0 and 1.0")
+            else:
+                raise ValueError("r,g,b tuple has the wrong length")
+
+        else:
+            raise ValueError("unknown color format")
+
+        return (r,g,b)
+            
+
 # ----------------------------------------------------------------------------
 
 
@@ -229,9 +282,20 @@ class TestObject(HasChecks):
     another_float = Float(max=27.0)
     a_third_float = Float(min=-5, max=12.874)
     what_an_integer = Integer(max=20)
+
+    a_color = Color()
     
 
 obj = TestObject(is_valid=False)
+
+obj.a_color = 'black'
+print "color:", obj.a_color
+
+obj.a_color = (0.5, 1.0, 0.3)
+print "color:", obj.a_color
+
+obj.a_color = '#FFFF00';
+print "color:", obj.a_color
 
 cdict = {'is_valid': Display_Bool_As_Combobox,
          'is_valid_or_none': Display_Bool_As_Combobox,
