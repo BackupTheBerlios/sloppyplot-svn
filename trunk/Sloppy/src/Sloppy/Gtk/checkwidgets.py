@@ -20,8 +20,10 @@ logger = logging.getLogger('gtk.checkwidgets')
 
 class Color(Check):
 
-    colors = {'black': (1,1,1),
-              'green': (0,1,0)}
+    colors = {'black': 0xFFFFFF,
+              'red': 0xFF0000,
+              'green': 0x00FF00,
+              'blue': 0x0000FF}
     
     def check(self, value):
         """
@@ -30,46 +32,52 @@ class Color(Check):
          (2) as a 3-tuple (r,g,b) where each value is a floating
              point number in between 0 and 1
          (3) as a 3-digit hex code (#rgb)
-         (3) as a 6-digit hex code (#rrggbb)
+         (4) as a 6-digit hex code (#rrggbb)
+         (5) as an integer (=> no conversion)
 
-        Internally it is stored as a 3-tuple (possibility 2).
+        Internally it is stored as a 24-bit number (corresponding to 4).
         """
 
+        if isinstance(value, int):
+            return value
+        
         if isinstance(value, basestring):
+            # string starts with '#' => hex color code
             if value.startswith('#'):
-                # string starts with '#' => hex color code
-                try:
-                    if len(value) == 4:
-                        r,g,b = [int(c,16)/16 for c in (value[1], value[2], value[3])]
-                    elif len(value) == 7:
-                        r,g,b = [int(c,16)/255 for c in (value[1:2], value[3:4], value[5:6])]
-                    else:
-                        raise
-                except:
-                    raise ValueError("must be three or six digits long and must be 0-9,A-F only")
+                if len(value) == 4 or len(value) == 7:
+                    return int(value[1:], 16)
+                raise ValueError("not a valid color code")
+                    
+
+            # a string w/o a '#' as first letter => a color name                
             else:
-                # a string w/o a '#' as first letter => a color name
                 key = value.lower()
                 if self.colors.has_key(key):
                     return self.colors[key]
-                else:
-                    raise ValueError("not a valid color name")
+                raise ValueError("not a valid color name")
 
-        elif isinstance(value, tuple):
+        if isinstance(value, (tuple,list)):
             # a 3-tuple => (r,g,b)
             if len(value) == 3:
-                r,g,b = value
-                for c in (r,g,b):
-                    if c < 0.0 or c > 1.0:
+                base = 1
+                color = 0
+                for c in value:
+                    if 0.0 <= c <= 1.0:
+                        color+=c*255
+                        base*=16
+                    else:
                         raise ValueError("all components of the (r,g,b) color tuple must be in between 0 and 1.0")
-            else:
-                raise ValueError("r,g,b tuple has the wrong length")
-
-        else:
-            raise ValueError("unknown color format")
-
-        return (r,g,b)
+                return color
             
+            raise ValueError("r,g,b tuple has the wrong length")
+
+        raise ValueError("unknown color format")
+
+    def as_color_tuple(self, value):
+        # this gives r,g,b as values from 0x00 to 0xff
+        return [hex(c) for c in (value and 0xff0000,
+                                 value and 0x00ff00,
+                                 value and 0x0000ff)]
 
 # ----------------------------------------------------------------------------
 
@@ -112,7 +120,8 @@ class Display:
     def check_out(self, undolist=[]):
         " Set value in object. "
         new_value = self.get_widget_data()
-        uwrap.smart_set(self.obj, self.key, new_value, undolist=undolist)
+        if new_value != self.last_value:
+            uwrap.smart_set(self.obj, self.key, new_value, undolist=undolist)
 
     def get_object_data(self):
         return self.obj.get(self.key)
@@ -270,6 +279,26 @@ class Display_Integer_As_Spinbutton(Display_Number_As_Spinbutton):
 Display_Number_As_Entry = Display_Anything_As_Entry
 Display_String_As_Entry = Display_Unicode_As_Entry = Display_Anything_As_Entry
 
+
+class Display_Color_As_Colorbutton(Display):
+
+    def create_widget(self):
+        return gtk.ColorButton()
+
+    def prepare_widget(self, colorbutton):
+        colorbutton.set_use_alpha(False)
+        colorbutton.set_title(self.obj._checks[self.key].blurb or "Select Color")
+
+    def set_widget_data(self, data):
+        color = gtk.gdk.color_parse('#%s' % hex(data)[2:])
+        self.widget.set_color(color)
+
+    def get_widget_data(self):
+        c = self.widget.get_color()
+        v = (int(c.red/256.0)<<16) + (int(c.green/256.0)<<8) + (int(c.blue/256.0))
+        return v
+        
+    
 #------------------------------------------------------------------------------
 
 class TestObject(HasChecks):
@@ -277,25 +306,23 @@ class TestObject(HasChecks):
     is_valid_or_none = Bool(required=False)
     choices = Choice(['One', 'Two', 'Three'])
 
-    an_integer = Integer()
-    a_float = Float()
+    an_integer = Integer(required=False)
+    a_float = Float(required=False)
     another_float = Float(max=27.0)
     a_third_float = Float(min=-5, max=12.874)
     what_an_integer = Integer(max=20)
 
-    a_color = Color()
+    a_color = Color(raw=True, doc="A color")
     
 
 obj = TestObject(is_valid=False)
 
-obj.a_color = 'black'
-print "color:", obj.a_color
+cv = CheckView(obj)
+print "a_color is: %s " % str(cv.a_color.doc)
+for value in ['black', (0.5, 1.0, 0.3), '#FFEE00']:
+    obj.a_color = value
+    print "color %s = %s (=%s)" % (value, obj.a_color, obj._raw_values['a_color'])
 
-obj.a_color = (0.5, 1.0, 0.3)
-print "color:", obj.a_color
-
-obj.a_color = '#FFFF00';
-print "color:", obj.a_color
 
 cdict = {'is_valid': Display_Bool_As_Combobox,
          'is_valid_or_none': Display_Bool_As_Combobox,
@@ -304,7 +331,8 @@ cdict = {'is_valid': Display_Bool_As_Combobox,
          'a_float': Display_Number_As_Entry,
          'another_float': Display_Number_As_Entry,
          'a_third_float': Display_Number_As_Spinbutton,
-         'what_an_integer': Display_Integer_As_Spinbutton}
+         'what_an_integer': Display_Integer_As_Spinbutton,
+         'a_color': Display_Color_As_Colorbutton}
 
 clist = []
 for key, connector in cdict.iteritems():
