@@ -1,3 +1,3 @@
 
-from check import *
-
+from checks import *
+from xchecks import *
