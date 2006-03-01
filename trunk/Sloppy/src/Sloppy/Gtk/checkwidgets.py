@@ -19,6 +19,32 @@
 # $Id$
 
 
+
+# similar interface to CWidgetFactory and CTreeeFactory.
+
+# WidgetFactory:
+#  - __init__(self, obj)
+
+#  - add_columns(self, *keys, **kwargs)
+
+#  - create_table(self)  _or_  create_vbox(self)
+#    (both use _create_connectors)
+
+#  - check_in/check_out
+
+
+
+# TreeViewFactory
+#  - __init__(self, obj, listkey)
+
+#  - add_keys(self, *keys)
+
+# - show_columns/hide_columns(*keys) => specific to treeview factory
+# - new_row(self, item)
+
+#  - create_treeview(self)
+
+
 import gtk, sys
 
 from Sloppy.Lib.Check import *
@@ -32,6 +58,116 @@ logger = logging.getLogger('gtk.checkwidgets')
 ###############################################################################
 
 
+   
+class TreeViewFactory:
+
+    def create_treeview(self):
+        model = gtk.ListStore(*([object]*(len(self.keys)+1)))
+        treeview = gtk.TreeView(model)
+        index = 0
+
+        for key in self.keys:
+            if self.columns.has_key(key):
+                boj = self.columns[key]
+                if inspect.isfunction(obj) or inspect.ismethod(obj):
+                    column = obj(model, index)
+                else:
+                    column = obj
+            else:
+                # TODO: create column
+                # TODO: add column to treeview
+                pass
+
+            self.columns[key] = column
+            treeview.append_column(column)
+            index +=1
+
+        return treeview
+        
+
+
+def new_display(owner, key):
+    check = owner._checks[key]
+    if isinstance(check, Bool):
+        v = Display_Bool_As_Combobox
+    elif isinstance(check, Choice):
+        v = Display_Choice_As_Combobox
+    elif isinstance(check, Integer):
+        v = Display_Integer_As_Spinbutton
+    elif isinstance(check, Float):
+        v = Display_Number_As_Entry
+    elif isinstance(check, RGBColor):
+        v = Display_RGBColor_As_Colorbutton
+    elif isinstance(check, Mapping):
+        v = Display_Mapping_As_Combobox
+    else:
+        raise ValueError("Unknown value check %s" % type(check))
+
+    return v(owner, key)
+
+    
+
+                
+class DisplayFactory:
+
+    def __init__(self, obj):
+        self.obj = obj
+        self.keys = []
+        self.columns = {}
+        self.display = {}
+        
+    def add_keys(self, *keys, **kwargs):
+        keys = list(keys)
+        while len(keys) > 0:
+            key = keys.pop()
+            if isinstance(key, basestring):
+                value = keys.pop()
+                self.keys.append(key)
+                self.columns[key] = value
+            elif isinstance(key, (list, tuple)):
+                self.keys.extend(key)
+            elif isinstance(key, dict):
+                sef.columns.update(key)
+            else:
+                raise TypeError("String, tuple or dict required.")
+
+        if len(kwargs) > 0:
+            self.add_columns(kwargs)
+
+
+    def _create_displays(self):
+        displays = {}
+        for key in self.keys:
+            display = new_display(self.obj, key)
+            display.create_widget()
+            displays[key] = display
+
+        self.displays = displays
+        return displays
+    
+            
+    def create_vbox(self):
+        displays = self._create_displays()
+        vbox = gtk.VBox()
+        for d in displays.itervalues():
+            d.check_in()
+            vbox.add(d.widget)
+        return vbox
+                    
+    def check_in(self):
+        for display in self.displays.itervalues():
+            display.check_in()
+
+    def check_out(self, undolist=[]):
+        ul = UndoList()    
+        for display in self.displays.itervalues():
+            display.check_out(undolist=ul)
+        undolist.append(ul)
+        
+        
+
+###############################################################################
+
 class Display:
     
     def __init__(self, obj, key):
@@ -40,7 +176,7 @@ class Display:
         self.check = None
         self.set_source(obj, key)
 
-        self.last_value = None
+        self.last_value = Undefined
         self.widget = None
 
         self.widget = self.create_widget()
@@ -64,8 +200,9 @@ class Display:
     def check_in(self):
         " Retrieve value from object. "
         value = self.get_object_data()
-        self.set_widget_data(value)
-        self.last_value = value
+        if value != self.last_value:
+            self.set_widget_data(value)
+            self.last_value = value
 
     def check_out(self, undolist=[]):
         " Set value in object. "
@@ -257,6 +394,7 @@ class Display_RGBColor_As_Colorbutton(Display):
         colorbutton.set_title(self.obj._checks[self.key].blurb or "Select Color")
 
     def set_widget_data(self, data):
+        print "DATA IS ", data
         color = gtk.gdk.color_parse('#%s' % hex(data)[2:])
         self.widget.set_color(color)
 
@@ -290,52 +428,23 @@ class TestObject(HasChecks):
 
 obj = TestObject(is_valid=False)
 
-cv = CheckView(obj)
-print "a_color is: %s " % str(cv.a_color.doc)
-for value in ['black', (0.5, 1.0, 0.3), '#FFEE00']:
-    obj.a_color = value
-    print "color %s = %s (=%s)" % (value, obj.a_color, obj._raw_values['a_color'])
 
-
-cdict = {'is_valid': Display_Bool_As_Combobox,
-         'is_valid_or_none': Display_Bool_As_Combobox,
-         'choices': Display_Choice_As_Combobox,
-         'an_integer': Display_Number_As_Entry,
-         'a_float': Display_Number_As_Entry,
-         'another_float': Display_Number_As_Entry,
-         'a_third_float': Display_Number_As_Spinbutton,
-         'what_an_integer': Display_Integer_As_Spinbutton,
-         'a_color': Display_RGBColor_As_Colorbutton,
-         'a_mapping': Display_Mapping_As_Combobox
-         }
-
-clist = []
-for key, connector in cdict.iteritems():
-    new_connector = connector(obj, key)
-    new_connector.check_in()    
-    clist.append(new_connector)
+df = DisplayFactory(obj)
+df.add_keys(obj._checks.keys())
+tv = df.create_vbox()
     
 
-
 def quit(sender):
-    for connector in clist:
-        connector.check_out()
-    print obj._values
+    df.check_out()
+    print "VALUES ===>", obj._values
     gtk.main_quit()
     
 win = gtk.Window()
 win.set_size_request(480,320)
 win.connect('destroy', quit)
 
-vbox = gtk.VBox()
-for c in clist:
-    hbox = gtk.HBox()
-    label = gtk.Label(c.key)
-    hbox.pack_start(label, False, False)
-    hbox.pack_start(c.widget, True, True)
-    vbox.pack_start(hbox, False, True)
 
-win.add(vbox)
+win.add(tv)
 win.show_all()
 
 gtk.main()
