@@ -130,8 +130,8 @@ class Display:
 
 
 class As_Combobox:
-    # self.values
-    # model: str, object
+    # prepare_widget should define and fill the dict self.values
+    # the model should be of the form str, object.
 
     def create_widget(self):
         return gtk.ComboBox()
@@ -142,7 +142,7 @@ class As_Combobox:
             return Undefined            
         else:
             model = self.widget.get_model()
-            return model[index][1]
+            return  model[index][1]
 
     def set_widget_data(self, data):
         try:
@@ -210,9 +210,26 @@ class Display_Choice_As_Combobox(As_Combobox, Display):
         cb.pack_start(cell, True)
         cb.add_attribute(cell, 'text', 0)
         model.clear()
+        self.values = {}
         for value in self.check.choices:
             model.append((unicode(value), value))
-        
+            self.values[value] = value
+
+
+class Display_Mapping_As_Combobox(As_Combobox, Display):
+
+    def prepare_widget(self, cb):
+        model = gtk.ListStore(str, object)
+        cb.set_model(model)
+        cell = gtk.CellRendererText()
+        cb.pack_start(cell, True)
+        cb.add_attribute(cell, 'text', 0)
+        model.clear()
+        self.values = {}
+        for key, value in self.check.mapping.iteritems():
+            model.append((unicode(key), key))
+            self.values[value] = value
+            
 
 class Display_Anything_As_Entry(As_Entry, Display):
 
@@ -302,16 +319,18 @@ class Display_RGBColor_As_Colorbutton(Display):
 
 class TestObject(HasChecks):
     is_valid = Bool()
-    is_valid_or_none = Bool(required=False)
+    is_valid_or_none = Bool()
     choices = Choice(['One', 'Two', 'Three'])
 
-    an_integer = Integer(required=False)
-    a_float = Float(required=False)
+    an_integer = Integer()
+    a_float = Float()
     another_float = Float(max=27.0)
     a_third_float = Float(min=-5, max=12.874)
     what_an_integer = Integer(max=20)
 
     a_color = RGBColor(raw=True, doc="A color")
+
+    a_mapping = Mapping({'One':1, 'Two':2, 'Three':3})
     
 
 obj = TestObject(is_valid=False)
@@ -331,7 +350,9 @@ cdict = {'is_valid': Display_Bool_As_Combobox,
          'another_float': Display_Number_As_Entry,
          'a_third_float': Display_Number_As_Spinbutton,
          'what_an_integer': Display_Integer_As_Spinbutton,
-         'a_color': Display_RGBColor_As_Colorbutton}
+         'a_color': Display_RGBColor_As_Colorbutton,
+         'a_mapping': Display_Mapping_As_Combobox
+         }
 
 clist = []
 for key, connector in cdict.iteritems():

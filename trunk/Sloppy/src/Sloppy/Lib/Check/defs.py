@@ -36,18 +36,7 @@ class DictionaryLookup(object):
         return "Available items: %s" % str(adict)
 
 
-class CheckView:
-    def __init__(self, obj):
-        self.obj = obj
-        self.values = None
-        self.checks = None
-        self.keys = []
-        self.refresh()
-        
-    def refresh(self):
-        self.checks = DictionaryLookup(self.obj._checks)
-        self.values = DictionaryLookup(self.obj._values)
-        self.raw_values = DictionaryLookup(self.obj._raw_values)
-        self.keys = self.obj._checks.keys()
 
-    
+class CheckView(DictionaryLookup):
+    def __init__(self, obj):
+        DictionaryLookup.__init__(self, obj._checks)

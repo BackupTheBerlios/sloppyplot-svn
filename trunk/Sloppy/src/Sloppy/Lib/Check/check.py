@@ -4,7 +4,7 @@ from defs import Undefined, CheckView
 
 __all__ = ['Undefined', 'Integer', 'Float', 'Bool', 'String', 'Unicode',
            'Instance', 'List', 'Dict', 'Choice', 'Mapping', 'HasChecks',
-           'AnyValue', 'CheckView']
+           'AnyValue', 'CheckView', 'Check']
 
 
 #------------------------------------------------------------------------------
@@ -28,7 +28,7 @@ class Check(object):
         self.__dict__.update(kwargs)
 
     def __call__(self, value):
-        return self.check(self, value)
+        return self.check(value)
         
     def get(self, obj, key):
         try:
@@ -56,7 +56,7 @@ def new_type_check(_type, _typename):
 
         def __init__(self, **kwargs):
             self.strict = False
-            self.required = True
+            self.required = False
             self.min = None
             self.max = None
             Check.__init__(self, **kwargs)
@@ -99,33 +99,33 @@ String = new_type_check(str, 'a string')
 
 class Choice(Check):
 
-    def __init__(self, alist, **kwargs):
-        self.alist = alist
+    def __init__(self, choices, **kwargs):
+        self.choices = choices
         Check.__init__(self, **kwargs)
         
     def check(self, value):
-        if value in self.alist:
+        if value in self.choices:
             return value
         else:
-            raise ValueError("must be one of %s" % str(self.alist))
+            raise ValueError("must be one of %s" % str(self.choices))
 
 class Mapping(Check):
 
-    def __init__(self, adict, **kwargs):
-        self.adict = adict
+    def __init__(self, mapping, **kwargs):
+        self.mapping = mapping
         self.reverse = False
         Check.__init__(self, **kwargs)        
             
     def check(self, value):
-        if value in self.adict.keys():
-            return self.adict[value]
+        if value in self.mapping.keys():
+            return self.mapping[value]
         elif self.reverse is True:
-            if value in self.adict.values():
+            if value in self.mapping.values():
                 return value
             else:
-                raise ValueError("must be one of %s or one of %s" %  (str(self.adict.keys()), str(self.adict.values())))
+                raise ValueError("must be one of %s or one of %s" %  (str(self.mapping.keys()), str(self.mapping.values())))
         else:
-            raise ValueError("must be one of %s" % str(self.adict.keys()))
+            raise ValueError("must be one of %s" % str(self.mapping.keys()))
 
 
 
