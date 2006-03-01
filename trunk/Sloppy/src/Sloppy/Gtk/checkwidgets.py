@@ -13,12 +13,11 @@ logger = logging.getLogger('gtk.checkwidgets')
 # TODO:
 #
 #   Display_Mapping_As_Combobox (!)
-#   Display_RGBColor (!!!)
 #   Display_Bool_As_Checkbutton => boring
 #
 
 
-class Color(Check):
+class RGBColor(Check):
 
     colors = {'black': 0xFFFFFF,
               'red': 0xFF0000,
@@ -280,7 +279,7 @@ Display_Number_As_Entry = Display_Anything_As_Entry
 Display_String_As_Entry = Display_Unicode_As_Entry = Display_Anything_As_Entry
 
 
-class Display_Color_As_Colorbutton(Display):
+class Display_RGBColor_As_Colorbutton(Display):
 
     def create_widget(self):
         return gtk.ColorButton()
@@ -312,7 +311,7 @@ class TestObject(HasChecks):
     a_third_float = Float(min=-5, max=12.874)
     what_an_integer = Integer(max=20)
 
-    a_color = Color(raw=True, doc="A color")
+    a_color = RGBColor(raw=True, doc="A color")
     
 
 obj = TestObject(is_valid=False)
@@ -332,7 +331,7 @@ cdict = {'is_valid': Display_Bool_As_Combobox,
          'another_float': Display_Number_As_Entry,
          'a_third_float': Display_Number_As_Spinbutton,
          'what_an_integer': Display_Integer_As_Spinbutton,
-         'a_color': Display_Color_As_Colorbutton}
+         'a_color': Display_RGBColor_As_Colorbutton}
 
 clist = []
 for key, connector in cdict.iteritems():
