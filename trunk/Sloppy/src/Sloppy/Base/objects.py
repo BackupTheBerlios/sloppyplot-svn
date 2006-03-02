@@ -101,8 +101,8 @@ class TextLabel(HasChecks):
 class Axis(HasChecks):
     " A single axis for a plot. "
     label = Unicode(blurb='Label')
-    start = Float(blurb='Start')
-    end = Float(blurb='End')    
+    start = Float(init=None, blurb='Start')
+    end = Float(init=None, blurb='End')    
     scale = Choice(PV['axis.scale'])
     format = String(blurb='Format')
 

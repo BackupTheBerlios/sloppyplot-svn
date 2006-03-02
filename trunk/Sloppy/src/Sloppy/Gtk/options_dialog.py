@@ -24,7 +24,7 @@ logger = logging.getLogger('gtk.importer_options_dlg')
 
 import gtk, gobject
 
-from Sloppy.Gtk import widget_factory, uihelper
+from Sloppy.Gtk import checkwidgets, uihelper
 
 
 class NoOptionsError(Exception):
@@ -59,7 +59,7 @@ class OptionsDialog(gtk.Dialog):
         if len(keys) == 0:
             raise NoOptionsError
 
-        self.factory = widget_factory.CWidgetFactory(owner)
+        self.factory = checkwidgets.DisplayFactory(owner)
         self.factory.add_keys(keys)
         table = self.factory.create_table()
         frame = uihelper.new_section(title, table)

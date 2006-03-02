@@ -27,7 +27,7 @@ logger = logging.getLogger('gtk.application')
 
 import gtk, gtk.glade, pango
 
-from Sloppy.Gtk import uihelper, widget_factory
+from Sloppy.Gtk import uihelper, checkwidgets
 from Sloppy.Base import globals
        
         
@@ -48,7 +48,7 @@ class ImportOptions(gtk.Dialog):
         #
         # set up widget factory
         #
-        self.factory = widget_factory.CWidgetFactory(self.importer)
+        self.factory = checkwidgets.DisplayFactory(self.importer)
         self.factory.add_keys(self.importer.public_props)
         table_options = self.factory.create_table()
         widget = uihelper.new_section("Import Options", table_options)

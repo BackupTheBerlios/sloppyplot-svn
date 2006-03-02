@@ -26,7 +26,7 @@ from Sloppy.Base import uwrap, globals, utils, error
 from Sloppy.Lib.Undo import UndoList, UndoInfo
 
 from Sloppy.Gtk.options_dialog import OptionsDialog
-from Sloppy.Gtk import uihelper, widget_factory, dataview, uidata
+from Sloppy.Gtk import uihelper, checkwidgets, dataview, uidata
 
 import logging
 logger = logging.getLogger('Gtk.datawin')
@@ -76,7 +76,7 @@ class ColumnInfoDialog(gtk.Dialog):
 
         hint = gtk.Label()
 
-        factory = widget_factory.CWidgetFactory(col_info)
+        factory = checkwidgets.DisplayFactory(col_info)
         factory.add_keys('label', 'designation')
         table = factory.create_table()
         factory.check_in()

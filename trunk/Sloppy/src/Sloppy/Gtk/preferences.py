@@ -27,7 +27,7 @@ Configuration dialog and widgets.
 import gtk
 from Sloppy.Base import globals, dataio, version, error, utils
 
-from Sloppy.Gtk import uihelper, widget_factory
+from Sloppy.Gtk import uihelper, checkwidgets
 from Sloppy.Lib.Check import Keyword
 
 
@@ -292,10 +292,10 @@ class ImportTemplatesPage(gtk.VBox):
         hint = gtk.Label()
         
         factorylist = []
-        factory1 = widget_factory.CWidgetFactory(template)
+        factory1 = checkwidgets.DisplayFactory(template)
         factory1.add_keys('blurb','extensions','skip_options')
         factorylist.append(factory1)    
-        factory2 = widget_factory.CWidgetFactory(importer)
+        factory2 = checkwidgets.DisplayFactory(importer)
         factory2.add_keys(importer.public_props)
         factorylist.append(factory2)
         
