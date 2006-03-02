@@ -31,7 +31,7 @@
   f.check_out()
 
 
-  f = ColumnFactory(mainobj, listkey)
+  f = ColumnFactory(mainobj, listkey, obj.__class__)
   f.add_keys(..keys()..)
   treeview = f.create_treeview()
   f.check_in()
@@ -76,22 +76,16 @@ class ColumnFactory:
         self.old_list = []
         
     def add_keys(self, *keys, **kwargs):
-        keys = list(keys)
-        while len(keys) > 0:
-            key = keys.pop()
+        for key in keys:
             if isinstance(key, basestring):
-                value = keys.pop()
                 self.keys.append(key)
-                self.columns[key] = value
             elif isinstance(key, (list, tuple)):
                 self.keys.extend(key)
-            #elif isinstance(key, dict):
-            #    self.columns.update(key)
             else:
-                raise TypeError("String, tuple or dict required.")
+                raise TypeError("String or tuple required.")
 
-        if len(kwargs) > 0:
-            self.add_columns(kwargs)
+        for key, value in kwargs.iteritems():
+            self.columns[key] = value
 
     def show(self, *keys):           
         if len(keys) == 0:
@@ -134,16 +128,13 @@ class ColumnFactory:
             if self.columns.has_key(key):
                 obj = self.columns[key]
                 if inspect.isfunction(obj) or inspect.ismethod(obj):
-                    column = obj(model, index)                    
+                    c = obj(model, index)
                 else:
-                    column = obj
+                    c = obj
             else:
-                print "ITEMCLASS IS ",self.itemclass, inspect.isclass(self.itemclass)
-                column = self.new_column(self.itemclass, key)
+                c = self.new_column(self.itemclass, key).create_column(model, index)
 
-            tv_column = column.create_column(model, index)                
-            self.columns[key] = column                
-            treeview.append_column(tv_column)
+            treeview.append_column(c)
             index += 1
             
         self.treeview = treeview
@@ -198,6 +189,8 @@ class ColumnFactory:
             return Column_Choice_As_Combobox(klass, key)
         elif keyklass == Mapping:
             return Column_Mapping_As_Combobox(klass, key)
+        elif keyklass == Bool:
+            return Column_Bool_As_Checkbutton(klass, key)
         else:
             return Column_Anything_As_Entry(klass, key)
     
@@ -283,7 +276,7 @@ class Column_Choice_As_Combobox(Column):
             new_text = None
         try:
             model[path][index] = self.check(new_text)            
-        except PropertyError:
+        except ValueError:
             print "Could not set combo to value '%s', %s" % (new_text, type(new_text))
 
     def cell_data_func(self, column, cell, model, iter, index):
@@ -328,7 +321,7 @@ class Column_Mapping_As_Combobox(Column):
             new_text = None
         try:
             model[path][index] = self.check(new_text)            
-        except PropertyError:
+        except ValueError:
             print "Could not set combo to value '%s', %s" % (new_text, type(new_text))
 
     def cell_data_func(self, column, cell, model, iter, index):
@@ -337,7 +330,38 @@ class Column_Mapping_As_Combobox(Column):
             user_value = ""
         cell.set_property('text', self.keys[user_value])
 
-    
+
+
+class Column_Bool_As_Checkbutton(Column):
+
+    def create_column(self, model, index):
+        cell = gtk.CellRendererToggle()
+
+        cell.set_property('activatable', True)
+        cell.connect('toggled', self.on_toggled, model, index)
+
+        column = gtk.TreeViewColumn(self.get_column_key())
+        column.pack_start(cell)
+        column.set_cell_data_func(cell, self.cell_data_func, index)
+
+        self.column = column
+        return column
+
+
+    def cell_data_func(self, column, cell, model, iter, index):
+        value = model.get_value(iter, index)
+        cell.set_property('active', bool(self.check(value)))
+
+
+    def on_toggled(self, cell, path, model, index):
+        value = not model[path][index]
+        try:
+            value = self.check(value)
+        except ValueError:
+            pass
+        else:        
+            model[path][index] = value
+
 
 
 
@@ -358,19 +382,16 @@ class DisplayFactory:
         self.displays = {}
         
     def add_keys(self, *keys, **kwargs):
-        keys = list(keys)
-        while len(keys) > 0:
-            key = keys.pop()
+        for key in keys:
             if isinstance(key, basestring):
-                value = keys.pop()
                 self.keys.append(key)
             elif isinstance(key, (list, tuple)):
                 self.keys.extend(key)
             else:
                 raise TypeError("String, tuple or dict required.")
 
-        if len(kwargs) > 0:
-            self.add_keys(kwargs)
+        for key, value in kwargs.iteritems():
+            self.displays[key] = value
 
 
     def _create_displays(self):
@@ -504,30 +525,6 @@ class Display:
         return self.obj.get(self.key)
 
 
-    
-
-
-class As_Combobox:
-    # prepare_widget should define and fill the dict self.values
-    # the model should be of the form str, object.
-
-    def create_widget(self):
-        return gtk.ComboBox()
-    
-    def get_widget_data(self):
-        index = self.widget.get_active()
-        if index < 0:
-            return Undefined
-        else:
-            model = self.widget.get_model()
-            return  model[index][1]
-
-    def set_widget_data(self, data):
-        try:
-            index = self.values.index(data)
-        except:
-            index = -1
-        self.widget.set_active(index)
 
 
 class As_Entry:
@@ -555,6 +552,29 @@ class As_Entry:
             data = unicode(data)
             
         self.widget.set_text(data)
+
+
+class As_Combobox:
+    # prepare_widget should define and fill the dict self.values
+    # the model should be of the form str, object.
+
+    def create_widget(self):
+        return gtk.ComboBox()
+    
+    def get_widget_data(self):
+        index = self.widget.get_active()
+        if index < 0:
+            return Undefined
+        else:
+            model = self.widget.get_model()
+            return  model[index][1]
+
+    def set_widget_data(self, data):
+        try:
+            index = self.values.index(data)
+        except:
+            index = -1
+        self.widget.set_active(index)
 
     
 
@@ -588,10 +608,10 @@ class Display_Choice_As_Combobox(As_Combobox, Display):
         cb.pack_start(cell, True)
         cb.add_attribute(cell, 'text', 0)
         model.clear()
-        self.values = {}
+        self.values = []
         for value in self.check.choices:
             model.append((unicode(value), value))
-            self.values[value] = value
+            self.values.append(value)
 
 
 class Display_Mapping_As_Combobox(As_Combobox, Display):
@@ -603,10 +623,10 @@ class Display_Mapping_As_Combobox(As_Combobox, Display):
         cb.pack_start(cell, True)
         cb.add_attribute(cell, 'text', 0)
         model.clear()
-        self.values = {}
+        self.values = []
         for key, value in self.check.mapping.iteritems():
             model.append((unicode(key), key))
-            self.values[value] = value
+            self.values.append(value)
             
 
 class Display_Anything_As_Entry(As_Entry, Display):
@@ -683,8 +703,8 @@ class Display_RGBColor_As_Colorbutton(Display):
         colorbutton.set_title(self.obj._checks[self.key].blurb or "Select Color")
 
     def set_widget_data(self, data):
-        print "DATA IS ", data
-        color = gtk.gdk.color_parse('#%s' % hex(data)[2:])
+        red, green, blue = (data&0xFF0000)>>16, (data&0xFF00)>>8, data&0xFF
+        color = gtk.gdk.Color(*[c*256 for c in (red, green, blue)])
         self.widget.set_color(color)
 
     def get_widget_data(self):
@@ -710,7 +730,7 @@ class TestObject(HasChecks):
     a_third_float = Float(init=7.0, min=-5, max=12.874)
     what_an_integer = Integer(init=19, max=20)
 
-    a_color = RGBColor(raw=True, init="black", doc="A color")
+    a_color = RGBColor(raw=True, init="lightgreen", doc="A color")
 
     a_mapping = Mapping({'One':1, 'Two':2, 'Three':3}, init='Three')
 
@@ -724,8 +744,8 @@ obj2 = TestObject(an_integer=5, a_mapping=1)
 main = MainObject(obj_list=[obj, obj2])
 
 
-if False:
-    df = DisplayFactory(obj)
+if True:
+    df = DisplayFactory(obj)        
     df.add_keys(obj._checks.keys())
     tv = df.create_table()
 else:
