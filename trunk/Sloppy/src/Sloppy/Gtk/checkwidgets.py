@@ -19,31 +19,34 @@
 # $Id$
 
 
+"""
 
-# similar interface to CWidgetFactory and CTreeeFactory.
-
-# WidgetFactory:
-#  - __init__(self, obj)
-
-#  - add_columns(self, *keys, **kwargs)
-
-#  - create_table(self)  _or_  create_vbox(self)
-#    (both use _create_connectors)
-
-#  - check_in/check_out
+  Both factories should have similar interfaces:
+  
+  f = DisplayFactory(obj)
+  f.add_keys(obj._checks.keys()
+  table = f.create_table()
+  f.check_in()
+  ...
+  f.check_out()
 
 
+  f = ColumnFactory(mainobj, listkey)
+  f.add_keys(..keys()..)
+  treeview = f.create_treeview()
+  f.check_in()
+  ...
+  f.check_out()
+  
 
-# TreeViewFactory
-#  - __init__(self, obj, listkey)
+  Since each factory keeps track of the created Column/Display
+  objects, it is also possible to show/hide these:
 
-#  - add_keys(self, *keys)
-
-# - show_columns/hide_columns(*keys) => specific to treeview factory
-# - new_row(self, item)
-
-#  - create_treeview(self)
-
+  f.show(*keys)
+  f.hide(*keys) 
+  
+"""
+ 
 
 import gtk, sys
 
@@ -110,7 +113,7 @@ class ColumnFactory:
         if len(kwargs) > 0:
             self.add_columns(kwargs)
 
-    def show_columns(self, *keys):           
+    def show(self, *keys):           
         if len(keys) == 0:
             keys = self.keys
 
@@ -122,7 +125,7 @@ class ColumnFactory:
             else:                
                 self.columns[key].set_property('visible', True)
 
-    def hide_columns(self, *keys):
+    def hide(self, *keys):
         if len(keys) == 0:
             keys = self.keys
         
