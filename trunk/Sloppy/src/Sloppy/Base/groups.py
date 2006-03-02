@@ -1,46 +1,49 @@
 
-from Sloppy.Lib.Props import *
+# Re-implementation of the Group class using the Check classes.
+
+from Sloppy.Lib.Check import *
 
 
 (MODE_CONSTANT, MODE_CYCLE, MODE_RANGE, MODE_CUSTOM) = range(4)
 
         
-class Group(HasProperties):
+class Group(HasChecks):
     """
 
     """
     
-    prop = VP(VInstance(VP),None)
-    allow_override = Boolean(True)
+    check = Instance(Check)
+    allow_override = Bool(init=True, required=True)
 
-    mode = VP(range(4))
+    mode = Choice(range(4))
     
-    constant_value = Property()
+    constant_value = Check()
 
-    cycle_list = Property()    
+    cycle_list = Check()    
 
     # TODO: replace with tuple??? or Range???
     # Range(min, max, steps) => but where should these be stored?
-    range_start = Float(1)
-    range_step = Float(1)
-    range_maxsteps = VP(Integer, None)
+    range_start = Float(init=1)
+    range_step = Float(init=1)
+    range_maxsteps = Integer(init=None)
 
-    on_custom = VP(default=lambda o,i:None)
+    on_custom = Check(on_init=lambda o,i:None)
 
     
-    def __init__(self, prop, **kwargs):
-        HasProperties.__init__(self, prop=prop)
+    def __init__(self, check, **kwargs):
+        HasChecks.__init__(self, check=check)
 
-        # The next properties need to be adjusted so that
-        # they do the same type check as the Property
+        # The next checks need to be adjusted so that
+        # they do the same type check as the Check
         # that they refer to.
-        self.props.constant_value = self.prop
-        self.props.cycle_list = List(self.prop)
+        cview = CheckView(self)
+        cview.constant_value = self.check
+        cview.cycle_list = List(self.check)
 
-        self.set_values(**kwargs)
+        self.set(**kwargs)
 
 
-    def get(self, obj, index, override_value=None, mode=None):
+    def get(self, obj, index, override_value=Undefined, mode=None):
         """ Return the group value for the object `obj` at position `index`.
 
         `override_value` should be the value to use if the group allows an override.
@@ -50,7 +53,7 @@ class Group(HasProperties):
         TODO: It is not possible to specify an override value of None!
         """
 
-        if override_value is not None and self.allow_override is True:
+        if override_value is not Undefined and self.allow_override is True:
             return override_value
         
         mapping = { MODE_CONSTANT: self.get_constant,
@@ -87,7 +90,7 @@ class Group(HasProperties):
     
 
 def test():
-    class TestContainer(HasProperties):
+    class TestContainer(HasChecks):
         an_int = Integer()
         a_string = String()
 
@@ -96,10 +99,10 @@ def test():
         
     tc = TestContainer(an_int=5, a_string="Niklas")
 
-    tc.group_int.set_values(constant_value=7,
-                            cycle_list=[5,3,1],
-                            range_start = 10,
-                            on_custom=lambda obj,i:i**2)
+    tc.group_int.set(constant_value=7,
+                     cycle_list=[5,3,1],
+                     range_start = 10,
+                     on_custom=lambda obj,i:i**2)
 
     for i in range(5):
         print "i = ", i

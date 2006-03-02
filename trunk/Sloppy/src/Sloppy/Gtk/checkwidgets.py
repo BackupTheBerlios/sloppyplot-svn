@@ -45,6 +45,8 @@
   f.hide(*keys) 
   
 """
+
+ # TODO: maybe rename Column To ColumnCreator ?
  
 
 import gtk, sys, inspect
@@ -87,27 +89,27 @@ class ColumnFactory:
         for key, value in kwargs.iteritems():
             self.columns[key] = value
 
-    def show(self, *keys):           
+    def show_keys(self, *keys):           
         if len(keys) == 0:
             keys = self.keys
 
         for key in keys:
             if key == '_all':
-                self.show_columns(*self.keys)
+                self.show_keys(*self.keys)
             elif isinstance(key, (list,tuple)):
-                self.show_columns(*key)
-            else:                
+                self.show_keys(*key)
+            else:
                 self.columns[key].set_property('visible', True)
 
-    def hide(self, *keys):
+    def hide_keys(self, *keys):
         if len(keys) == 0:
             keys = self.keys
         
         for key in keys:
             if key == '_all':
-                self.show_columns(*self.keys)
+                self.hide_keys(*self.keys)
             elif isinstance(key, (list,tuple)):
-                self.show_columns(*key)
+                self.hide_keys(*key)
             else:
                 self.columns[key].set_property('visible', False)
         
@@ -132,8 +134,10 @@ class ColumnFactory:
                 else:
                     c = obj
             else:
-                c = self.new_column(self.itemclass, key).create_column(model, index)
+                creator = self.new_column_creator(self.itemclass, key)
+                c = creator.create_column(model, index)
 
+            self.columns[key] = c
             treeview.append_column(c)
             index += 1
             
@@ -183,18 +187,18 @@ class ColumnFactory:
         undolist.append(ul)
 
 
-    def new_column(klass, key):
+    def new_column_creator(klass, key):
         keyklass = getattr(klass, key).__class__
         if keyklass == Choice:
-            return Column_Choice_As_Combobox(klass, key)
+            return ColumnCreator_Choice_As_Combobox(klass, key)
         elif keyklass == Mapping:
-            return Column_Mapping_As_Combobox(klass, key)
+            return ColumnCreator_Mapping_As_Combobox(klass, key)
         elif keyklass == Bool:
-            return Column_Bool_As_Checkbutton(klass, key)
+            return ColumnCreator_Bool_As_Checkbutton(klass, key)
         else:
-            return Column_Anything_As_Entry(klass, key)
+            return ColumnCreator_Anything_As_Entry(klass, key)
     
-    new_column = staticmethod(new_column)
+    new_column_creator = staticmethod(new_column_creator)
 
 
     
@@ -211,7 +215,7 @@ class Column(object):
 
 
 
-class Column_Anything_As_Entry(Column):
+class ColumnCreator_Anything_As_Entry(Column):
     
     def create_column(self, model, index):
         cell = gtk.CellRendererText()
@@ -242,7 +246,7 @@ class Column_Anything_As_Entry(Column):
         
 
 
-class Column_Choice_As_Combobox(Column):
+class ColumnCreator_Choice_As_Combobox(Column):
     
     def create_column(self, model, index):
         cell_model = self.new_cell_model()
@@ -286,7 +290,7 @@ class Column_Choice_As_Combobox(Column):
         cell.set_property('text', unicode(user_value))
 
 
-class Column_Mapping_As_Combobox(Column):
+class ColumnCreator_Mapping_As_Combobox(Column):
 
     def create_column(self, model, index):
         cell_model = self.new_cell_model()
@@ -332,7 +336,7 @@ class Column_Mapping_As_Combobox(Column):
 
 
 
-class Column_Bool_As_Checkbutton(Column):
+class ColumnCreator_Bool_As_Checkbutton(Column):
 
     def create_column(self, model, index):
         cell = gtk.CellRendererToggle()
@@ -470,7 +474,7 @@ class DisplayFactory:
         elif isinstance(check, Mapping):
             v = Display_Mapping_As_Combobox
         else:
-            raise ValueError("Unknown value check %s" % type(check))
+            v = Display_Anything_As_Entry
 
         return v(owner, key)
     
@@ -518,8 +522,7 @@ class Display:
     def check_out(self, undolist=[]):
         " Set value in object. "
         new_value = self.get_widget_data()
-        if new_value != self.last_value:
-            uwrap.smart_set(self.obj, self.key, new_value, undolist=undolist)
+        uwrap.smart_set(self.obj, self.key, new_value, undolist=undolist)
 
     def get_object_data(self):
         return self.obj.get(self.key)
@@ -719,54 +722,64 @@ class Display_RGBColor_As_Colorbutton(Display):
     
 #------------------------------------------------------------------------------
 
-class TestObject(HasChecks):
-    is_valid = Bool(init=True)
-    is_valid_or_none = Bool(init=None)
-    choices = Choice(['One', 'Two', 'Three'], init='Two')
-
-    an_integer = Integer(init=0)
-    a_float = Float(init=3.14)
-    another_float = Float(init=-7892, max=27.0)
-    a_third_float = Float(init=7.0, min=-5, max=12.874)
-    what_an_integer = Integer(init=19, max=20)
-
-    a_color = RGBColor(raw=True, init="lightgreen", doc="A color")
-
-    a_mapping = Mapping({'One':1, 'Two':2, 'Three':3}, init='Three')
-
-
-class MainObject(HasChecks):
-    obj_list = List(Instance(TestObject))
+def test():
     
+    class TestObject(HasChecks):
+        is_valid = Bool(init=True)
+        is_valid_or_none = Bool(init=None)
+        choices = Choice(['One', 'Two', 'Three'], init='Two')
 
-obj = TestObject(is_valid=False, a_mapping='One')
-obj2 = TestObject(an_integer=5, a_mapping=1)
-main = MainObject(obj_list=[obj, obj2])
+        an_integer = Integer(init=0)
+        a_float = Float(init=3.14)
+        another_float = Float(init=-7892, max=27.0)
+        a_third_float = Float(init=7.0, min=-5, max=12.874)
+        what_an_integer = Integer(init=19, max=20)
 
+        a_color = RGBColor(raw=True, init="lightgreen", doc="A color")
 
-if True:
-    df = DisplayFactory(obj)        
-    df.add_keys(obj._checks.keys())
-    tv = df.create_table()
-else:
-    df = ColumnFactory(main, 'obj_list', obj.__class__)
-    df.add_keys(obj._checks.keys())
-    tv = df.create_treeview()
-
-df.check_in()
-
-def quit(sender):
-    df.check_out()
-    print "VALUES ===>", obj._values
-    gtk.main_quit()
-    
-win = gtk.Window()
-win.set_size_request(480,320)
-win.connect('destroy', quit)
+        a_mapping = Mapping({'One':1, 'Two':2, 'Three':3}, init='Three')
 
 
-win.add(uihelper.add_scrollbars(tv))
-win.show_all()
+    class MainObject(HasChecks):
+        obj_list = List(Instance(TestObject))
 
-gtk.main()
+
+    obj = TestObject(is_valid=False, a_mapping='One')
+    obj2 = TestObject(an_integer=5, a_mapping=1)
+    main = MainObject(obj_list=[obj, obj2])
+
+
+    if True:
+        df = DisplayFactory(obj)        
+        df.add_keys(obj._checks.keys())
+        tv = df.create_table()
+    else:
+        df = ColumnFactory(main, 'obj_list', obj.__class__)
+        df.add_keys(obj._checks.keys())
+        tv = df.create_treeview()
+
+    df.check_in()
+
+    def quit(sender):
+        df.check_out()
+        print "VALUES ===>", obj._values
+        gtk.main_quit()
+
+    win = gtk.Window()
+    win.set_size_request(480,320)
+    win.connect('destroy', quit)
+
+
+    win.add(uihelper.add_scrollbars(tv))
+    win.show_all()
+
+    gtk.main()
+
+
+
+
+if __name__ == "__main__":
+    test()
+
+
     

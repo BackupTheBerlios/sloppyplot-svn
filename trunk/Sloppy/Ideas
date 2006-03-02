@@ -1,0 +1,16 @@
+
+- column.set_visible would be one way to limit the columns.
+
+
+
+---------------------
+
+Problem: Ich möchte gerne eine Art Benachrichtigung für Listen und
+Dicts.  Mit der aktuellen Implementierung geht das nicht, da
+diese nur feststellt, wenn die Liste als Ganzes gesetzt wird.
+
+Ich bin mittlerweile eh der Meinung, dass für solche Container
+Objekte die Zuordnung anders verlaufen müsste.
+
+ Liste sei ['A', 'B']
+

@@ -1,8 +1,63 @@
 (for 0.5.3):
 ============
 
+- FOCUS FOR THIS RELEASE: Toolbox! For my work I really need to get going
+  with the toolbox, otherwise SloppyPlot will not be of any use to me.
+
+  Situation right now: The toolbox keeps track of the active project,
+  the active backend in this project and the active layer in that backend.
+
+  -- set_project
+  -- set_backend
+  -- set_layer
+
+  My proposal: The active project and the active backend then should
+  be a property of the toolbox (even though I am not sure if the active
+  project is really necessary -- after all I am not even sure if there
+  will ever be more than one project in the same app).
+
+  _BUT_ the layer is not a property of the toolbox! It is a property 
+  of the matplotlib backend painter! YES, this means we have to use
+  the new implementation of the backend.
+
+  LayerTool
+  -- must react on change of backend
+  -- sets the Painter's active layer
+  -- reacts on change of the Painter's active layer
+
+  LineTool
+  -- must react on change of backend
+  -- reacts on change of the Painter's active layer
+
+  LabelTool
+  -- must react on change of backend
+  -- reacts on change of the Painter's active layer
+  -- sets and gets the active line in the LayerPainter
+
+  PeakFinder
+  -- must react on change of backend
+  -- gets its input from the active line in the LayerPainter of the
+     active layer
+
+
+Plot.layers: whenever a layer is added or removed, we must emit a 
+notify::layers signal with either 'added' or 'removed' keys and the
+corresponding layers.  The same would hold true for notify::lines
+for each layer.  So basically the question is: how can this signal
+emission be automated? Do we need an add_layers, remove_layers
+command and as a last resort, an update_layers, which determines
+the added or removed layers itself?
+
+
+SMALL CLEANUPS TO DO:
+=====================
+
+- DS => MSG
 - change headers (copyright)
 - set svn props properly
+- maybe move the importers and templates into the app, so we can
+  deprecate 'globals' and replace it by the app. OR simply rename
+  application to app, the app instance to app.instance and have
+  all vars that were in globals into app (app.templates, etc.)
 
 
-- column.set_visible would be one way to limit the columns.

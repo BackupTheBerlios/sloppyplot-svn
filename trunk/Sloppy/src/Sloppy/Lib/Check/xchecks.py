@@ -44,7 +44,7 @@ class RGBColor(Check):
          (4) as a 6-digit hex code (#rrggbb)
          (5) as an integer (=> no conversion)
 
-        Internally it is stored as a 24-bit number (corresponding to 4).
+        Internally it is stored as a 24-bit number.
         """
 
         if isinstance(value, int):

@@ -26,7 +26,7 @@ from Sloppy.Base import tree, utils
 
 from Sloppy.Lib.Signals import HasSignals
 from Sloppy.Lib.Undo import UndoInfo, UndoList, NullUndo, Journal
-from Sloppy.Lib.Props import HasProperties, String, Unicode, VP
+from Sloppy.Lib.Check import *
 
 import numpy
 
@@ -322,9 +322,9 @@ class Table(Dataset):
     about it.
     """
 
-    class Info(HasProperties):
-        label = Unicode()       
-        designation = VP(['X','Y','XERR', 'YERR', 'LABEL', None])
+    class Info(HasChecks):
+        label = Unicode(init="")       
+        designation = Choice(['X','Y','XERR', 'YERR', 'LABEL', None])
         query = String()
 
         public_props=['label', 'designation']

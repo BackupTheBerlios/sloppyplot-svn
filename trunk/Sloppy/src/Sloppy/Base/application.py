@@ -28,6 +28,7 @@ import Sloppy
 from Sloppy.Lib.Undo import *
 from Sloppy.Lib.Signals import HasSignals
 from Sloppy.Lib.ElementTree.ElementTree import Element, SubElement
+from Sloppy.Lib.Check import values_as_dict
 
 from Sloppy.Base.objects import Plot, Axis, Line, Layer, new_lineplot2d
 from Sloppy.Base.dataset import Dataset
@@ -359,7 +360,8 @@ class Application(object, HasSignals):
                 logger.debug("Writing template %s" % key)
                 eTemplate = SubElement(eTemplates, 'ImportTemplate')               
 
-                attrs = tpl.get_values(['blurb','importer_key','extensions','skip_options'], default=None)
+                keylist=['blurb','importer_key','extensions','skip_options']
+                attrs = values_as_dict(tpl, keylist, default=None)
                 attrs['key'] = key
                 iohelper.set_attributes(eTemplate, attrs)
                 iohelper.write_dict(eTemplate, 'Defaults', tpl.defaults)                

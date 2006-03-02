@@ -23,9 +23,11 @@ import inspect
 from containers import TypedList, TypedDict
 from defs import Undefined, CheckView
 
-__all__ = ['Undefined', 'Integer', 'Float', 'Bool', 'String', 'Unicode',
+__all__ = ['Undefined', 'Integer', 'Float', 'Bool', 'Boolean',
+           'String', 'Unicode', 'Keyword',
            'Instance', 'List', 'Dict', 'Choice', 'Mapping', 'HasChecks',
-           'AnyValue', 'CheckView', 'Check']
+           'AnyValue', 'CheckView', 'Check',
+           'values_as_dict']
 
 
 #------------------------------------------------------------------------------
@@ -44,13 +46,17 @@ class Check(object):
         # lambda function using the keyword 'on_init'.
         # If nothing is given, then the value is Undefined.
         init = kwargs.pop('init', Undefined)        
-        self.on_init = kwargs.pop('on_init', lambda obj: init)        
+        self.on_init = kwargs.pop('on_init', lambda obj, key: init)        
         
         self.__dict__.update(kwargs)
 
     def __call__(self, value):
         return self.check(value)
-        
+
+    def check(self, value):
+        " overwrite this method for your own custom check. "
+        return value
+    
     def get(self, obj, key):
         try:
             return obj.__dict__['_values'][key]
@@ -70,58 +76,80 @@ class AnyValue(Check):
     def check(self, value):
         return value
 
+   
+class TypeCheck(Check):
 
-def new_type_check(_type, _typename):
-    
-    class TypeCheck(Check):
+    def __init__(self, _type, _init, _typename, **kwargs):
+        self.min = kwargs.pop('min', None)            
+        self.max = kwargs.pop('max', None)            
+        self.strict = kwargs.pop('strict', False)            
+        self.required = kwargs.pop('required', False)
 
-        def __init__(self, **kwargs):
-            self.strict = False
-            self.required = False
-            self.min = None
-            self.max = None
-            Check.__init__(self, **kwargs)
+        if self.required is False:
+            if kwargs.has_key('init') is False:
+                kwargs['init'] = _init
+        self._type = _type
+        self._typename = _typename
 
-        def check(self, value):
-            
-            if value is None:
-                if self.required is False:
-                    return None
-                else:
-                    raise ValueError("is required and may not be None")
+        Check.__init__(self, **kwargs)
 
-            if self.strict is True:
-                if not isinstance(value, _type):       
-                    raise ValueError("must be %s" %  _typename)
+    def check(self, value):
+
+        if value is None:
+            if self.required is False:
+                return None
             else:
-                try:
-                    value = _type(value)
-                except ValueError:
-                    raise ValueError("cannot be converted to %s" % _typename)
+                raise ValueError("is required and may not be None")
 
-            if (self.min is not None and value < self.min):
-                raise ValueError("must be at least %s" % self.min)
-            if  (self.max is not None and value > self.max):
-                raise ValueError("may be at most %s" % self.max)
-            
-            return value
+        if self.strict is True:
+            if not isinstance(value, self._type):       
+                raise ValueError("must be %s" %  self._typename)
+        else:
+            try:
+                value = self._type(value)
+            except ValueError:
+                raise ValueError("cannot be converted to %s" % self._typename)
 
-    return TypeCheck
+        if (self.min is not None and value < self.min):
+            raise ValueError("must be at least %s" % self.min)
+        if  (self.max is not None and value > self.max):
+            raise ValueError("may be at most %s" % self.max)
+
+        return value
 
 
-Integer = new_type_check(int, 'an integer')
-Float = new_type_check(float, 'a float')
-Bool = new_type_check(bool, 'a boolean value')
+class Integer(TypeCheck):
+    def __init__(self, **kwargs):
+        TypeCheck.__init__(self, int, 0, 'an integer', **kwargs)
+        
+class Float(TypeCheck):
+    def __init__(self, **kwargs):
+        TypeCheck.__init__(self, float, 0.0, 'a float', **kwargs)
+
+class Boolean(TypeCheck):
+    def __init__(self, **kwargs):
+        TypeCheck.__init__(self, bool, None, 'a boolean value', **kwargs)
+Bool = Boolean
+
 
 # TODO: these might contain regular expressions
-Unicode = new_type_check(unicode, 'an unicode string')
-String = new_type_check(str, 'a string')
+class Unicode(TypeCheck):
+    def __init__(self, **kwargs):
+        TypeCheck.__init__(self, unicode, None, 'an unicode string', **kwargs)
+class String(TypeCheck):
+    def __init__(self, **kwargs):
+        TypeCheck.__init__(self, str, None, 'a string', **kwargs)
 
+# TODO:
+Keyword = String
 
 class Choice(Check):
 
     def __init__(self, choices, **kwargs):
         self.choices = choices
+        if kwargs.has_key('init') is False:
+            if len(choices) > 0:
+                kwargs['init'] = choices[0]
         Check.__init__(self, **kwargs)
         
     def check(self, value):
@@ -173,13 +201,32 @@ class Instance(Check):
                 raise ValueError("must be an instance of %s" % self.instance)
             
 
+
+def analyze_check_object(obj):
+    """ Return a valid Check instance.
+
+    - obj is a Check => return obj
+    - obj is an uninitialized Check class => return obj()
+    - obj is another class object => return Instance(obj)
+
+    Everything else raises a TypeError.    
+    """
+
+    if isinstance(obj, Check):
+        return obj
+    elif inspect.isclass(obj):
+        if issubclass(obj, Check):
+            return obj()
+        else:
+            return Instance(obj)
+    else:
+        raise TypeError("unknown check")
+    
+    
 class List(Check):
 
-    def __init__(self, check=AnyValue, **kwargs):
-        # make sure we have an instance, not a class
-        if inspect.isclass(check):
-            check = check()
-        self._check = check
+    def __init__(self, check=AnyValue, **kwargs):        
+        self._check = analyze_check_object(check)
             
         if kwargs.has_key('on_init') is False and \
            kwargs.has_key('init') is False:
@@ -219,15 +266,9 @@ class List(Check):
 
 class Dict(Check):
 
-    def __init__(self, keys=AnyValue, values=AnyValue, **kwargs):
-        # make sure we have an instance, not a class
-        if inspect.isclass(keys):
-            keys=keys()
-        self.key_check = keys
-
-        if inspect.isclass(values):
-            values=values()
-        self.value_check = values
+    def __init__(self, values=AnyValue, keys=AnyValue, **kwargs):
+        self.key_check = analyze_check_object(keys)
+        self.value_check = analyze_check_object(values)
         
         if kwargs.has_key('on_init') is False and \
            kwargs.has_key('init') is False:
@@ -292,7 +333,7 @@ class HasChecks(object):
                     if kwargs.has_key(key):
                         value = kwargs.pop(key)
                     else:
-                        value = item.on_init(self)
+                        value = item.on_init(self, key)
 
                     if value is not Undefined:
                         item.set(self, key, value)
@@ -342,7 +383,7 @@ class HasChecks(object):
         attribute names.
 
         Returns a single value if one attribute name is given and
-        returns a tuple of values if more than one name is given.
+        returns a list of values if more than one name is given.
         The keyword argument 'default' may be given as a value
         to be displayed for Undefined values.
         """
@@ -361,6 +402,14 @@ class HasChecks(object):
                 if value is Undefined:
                     value = default
                 values.append(value)
-            return tuple(values)
+            return values
 
 
+
+
+
+def values_as_dict(obj, keys, default=None):
+    rv = {}
+    for key in keys:
+        rv[key] = obj.get(key, default=default)
+    return rv

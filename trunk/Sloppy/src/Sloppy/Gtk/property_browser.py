@@ -18,7 +18,7 @@
 # $HeadURL$
 # $Id$
 
-from Sloppy.Lib.Props import HasProperties
+from Sloppy.Lib.Check import HasChecks
 from uihelper import add_scrollbars
 
 import gtk
@@ -27,8 +27,8 @@ import logging
 logger = logging.getLogger('Gtk.dlg_metadata')
 
 """
-A very simple implementation of a dialog to browse the propertys of
-a HasProperties object. Nothing fancy.
+A very simple implementation of a dialog to browse the attributes of
+a HasChecks object. Nothing fancy.
 """
 
 # TODO: implement support for lists and dictionaries!
@@ -55,7 +55,7 @@ class PropertyBrowser(gtk.TreeView):
                 if hasattr(item, 'browser_keylist'):
                     keys = item.browser_keylist.keys(item)
                 else:
-                    keys = item.get_keys()
+                    keys = item._checks.keys()
                     
                 # add properties
                 for key in keys:
@@ -86,7 +86,7 @@ class PropertyBrowser(gtk.TreeView):
         if key is None:
             text = ""
         else:
-            text = obj.get_value(key)
+            text = obj.get(key)
 
         cell.set_property('text', unicode(text))
 

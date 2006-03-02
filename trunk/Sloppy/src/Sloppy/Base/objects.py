@@ -28,60 +28,12 @@ from Sloppy.Base.dataset import Dataset
 
 from Sloppy.Lib.Signals import HasSignals
 from Sloppy.Lib.Undo import udict
-from Sloppy.Lib.Props import *
+from Sloppy.Lib.Check import *
 
 from groups import Group, MODE_CONSTANT, MODE_CYCLE
 
 
 
-# This is just for testing.
-class SPObject(HasProperties, HasSignals):
-
-    def __init__(self, *args, **kwargs):
-        object.__setattr__(self, 'do_notify', False)
-        HasProperties.__init__(self, *args, **kwargs)
-        self.do_notify = True
-        HasSignals.__init__(self)
-        self.sig_register('notify') 
-
-    def __setattr__(self, key, value):
-        if key in ('props', '_props','_values'):
-            raise RuntimeError("Attribute '%s' cannot be altered for HasProperties objects." % key)
-        
-        props = object.__getattribute__(self, '_props')
-        if props.has_key(key):
-            props[key].set_value(self, key, value)
-            if self.do_notify is True:
-                self.sig_emit('notify', {key:value})            
-        else:
-            object.__setattr__(self, key, value)
-
-    def set_values(self, *args, **kwargs):
-        # turn off notification until we have set all values
-        do_notify = self.do_notify
-        self.do_notify = False
-
-        try:
-            arglist = list(args)
-            updateinfo = {}
-
-            while len(arglist) > 1:
-                key = arglist.pop(0)
-                value = arglist.pop(0)
-                self.__setattr__(key, value)
-                updateinfo[key] = value
-
-            for (key, value) in kwargs.iteritems():
-                self.__setattr__(key, value)
-                updateinfo[key] = value
-        finally:
-            self.do_notify = do_notify
-
-        if self.do_notify is True:
-            self.sig_emit('notify', updateinfo)            
-
-        
-    
 
 # ----------------------------------------------------------------------
 #  PERMITTED VALUES
@@ -135,79 +87,77 @@ PV = {
 # BASE OBJECTS
 # 
 
-    
-class TextLabel(HasProperties):
+
+class TextLabel(HasChecks):
     " Single text label. "
-    text = Unicode('', blurb="Displayed Text")
-    x = Float(0.0, blurb="X-Position")
-    y = Float(0.0, blurb="Y-Position")
-    system = VP(PV['position_system'], blurb="Coordinate System")
-    valign = VP(PV['position_valign'], blurb="Vertical Alignment")
-    halign = VP(PV['position_halign'], blurb="Horizontal Aligment")    
+    text = Unicode(blurb="Displayed Text")
+    x = Float(blurb="X-Position")
+    y = Float(blurb="Y-Position")
+    system = Choice(PV['position_system'], blurb="Coordinate System")
+    valign = Choice(PV['position_valign'], blurb="Vertical Alignment")
+    halign = Choice(PV['position_halign'], blurb="Horizontal Aligment")    
 
 
-class Axis(HasProperties):
+class Axis(HasChecks):
     " A single axis for a plot. "
-    label = VP(Unicode, None, blurb='Label')
-
-    start = VP(Float, None, default=None, blurb='Start')
-    end = VP(Float, None, default=None, blurb='End')
-
-    scale = VP(PV['axis.scale'])
-    format = String('', blurb='Format')
+    label = Unicode(blurb='Label')
+    start = Float(blurb='Start')
+    end = Float(blurb='End')    
+    scale = Choice(PV['axis.scale'])
+    format = String(blurb='Format')
 
     
         
-class Line(HasProperties):
+class Line(HasChecks):
     " A single line or collection of points in a Plot. "
-    label = VP(Unicode, None)
-    visible = Boolean(True)
+    label = Unicode()
+    visible = Boolean(init=True)
     
-    style = VP([None] + PV['line.style'])
-    width = VP(FloatRange(0, 10), None, default=None)
-    color = VP([None] + PV['line.color'])
+    style = Choice([None] + PV['line.style'])
+    width = Float(min=0, max=10, init=None)
+    color = Choice([None] + PV['line.color'])
 
-    marker = VP([None] + PV['line.marker'])
-    marker_color = VP([None] + PV['line.marker_color'])
-    marker_size = FloatRange(0,None,default=1)        
+    marker = Choice([None] + PV['line.marker'])
+    marker_color = Choice([None] + PV['line.marker_color'])
+    marker_size = Float(min=0,max=None,init=1)        
     
     # source stuff (soon deprecated)
-    cx = VP(IntegerRange(0,None), None, default=0, blurb="x")
-    cy = VP(IntegerRange(0,None), None, default=1, blurb="y")
-    row_first = VP(IntegerRange(0,None), None, default=None, blurb="first row")
-    row_last = VP(IntegerRange(0,None), None, default=None, blurb="last row")
+    cx = Integer(min=0,mqax=None, init=0, blurb="x")
+    cy = Integer(min=0,max=None, init=1, blurb="y")
+    row_first = Integer(min=0,max=None,init=None, blurb="first row")
+    row_last = Integer(min=0,max=None,init=None, blurb="last row")
 
     #value_range = VP(transform=str)    
-    cxerr = VP(IntegerRange(0,None), None)
-    cyerr = VP(IntegerRange(0,None), None)
+    cxerr = Integer(min=0,max=None)
+    cyerr = Integer(min=0,max=None)
 
-    source = VP(VInstance(Dataset), None, default=None)    
+    source = Instance(Dataset)    
 
 
 
-class Legend(HasProperties):
+class Legend(HasChecks):
     " Plot legend. "
-    label = VP(Unicode, None, doc='Legend Label')
-    visible = Boolean(True)
-    border = Boolean(False)
-    position = VP(PV['legend.position'])   
-    x = FloatRange(0.0, 1.0, default=0.7)
-    y = FloatRange(0.0, 1.0, default=0.0)
+    label = Unicode(doc='Legend Label')
+    visible = Boolean(init=True, required=True)
+    border = Boolean(init=False, required=True)
+    position = Choice(PV['legend.position'])
+    x = Float(min=0.0, max=1.0, init=0.7)
+    y = Float(min=0.0, max=1.0, init=0.0)
 
 
 
-class Layer(HasProperties, HasSignals):
-    type = VP(PV['layer.type'])
-    title = VP(Unicode, None, blurb="Title")
-    lines = List(Line, blurb="Lines")
-    grid = Boolean(default=False, blurb="Grid", doc="Display a grid")
-    visible = Boolean(True, blurb="Visible")
-    legend = Instance(Legend, on_default=lambda: Legend())
+class Layer(HasChecks, HasSignals):
+    type = Choice(PV['layer.type'])
+    title = Unicode(init=None, blurb="Title")
+    lines = List(Instance(Line), blurb="Lines")
+    grid = Boolean(init=False, blurb="Grid", doc="Display a grid")
+    visible = Boolean(init=True, blurb="Visible")
+    legend = Instance(Legend, on_init=lambda o,k: Legend())
 
-    x = FloatRange(0.0, 1.0, default=0.11)
-    y = FloatRange(0.0, 1.0, default=0.125)
-    width = FloatRange(0.0, 1.0, default=0.775)
-    height = FloatRange(0.0, 1.0, default=0.79)
+    x = Float(min=0.0, max=1.0, init=0.11)
+    y = Float(min=0.0, max=1.0, init=0.125)
+    width = Float(min=0.0, max=1.0, init=0.775)
+    height = Float(min=0.0, max=1.0, init=0.79)
 
     group_style = Group(Line.style,
                         mode=MODE_CONSTANT,                            
@@ -234,11 +184,11 @@ class Layer(HasProperties, HasSignals):
                                constant_value=PV['line.marker_color'][0],
                                allow_override=True)
     
-    labels = List(TextLabel)
+    labels = List(Instance(TextLabel))
 
     # axes
-    xaxis = Instance(Axis, on_default=lambda: Axis())
-    yaxis = Instance(Axis, on_default=lambda: Axis())
+    xaxis = Instance(Axis, on_init=lambda o,k: Axis())
+    yaxis = Instance(Axis, on_init=lambda o,k: Axis())
     
     def get_axes(self):
         return {'x':self.xaxis, 'y':self.yaxis}
@@ -247,14 +197,14 @@ class Layer(HasProperties, HasSignals):
 
 
     def __init__(self, **kwargs):
-        HasProperties.__init__(self, **kwargs)
+        HasChecks.__init__(self, **kwargs)
 
         HasSignals.__init__(self)
         self.sig_register('notify')
         self.sig_register('notify::labels')
         
 
-class View(HasProperties):
+class View(HasChecks):
     start = Float(blurb='Start')
     end = Float(blurb='End')
     
@@ -263,21 +213,22 @@ class View(HasProperties):
 ###############################################################################
 
 
-class Plot(Node, SPObject):
+class Plot(Node, HasChecks, HasSignals):
 
     key = Keyword(blurb="Key") # TODO: remove this!
-
-    title = VP(Unicode, None, blurb="Title")
-    comment = Unicode(blurb="Comment")
     
-    labels = List(TextLabel)
-    layers = List(Layer, blurb="Layers")
+    title = Unicode(init=None, blurb="Title")
+    comment = Unicode(init=None, blurb="Comment")
+    
+    labels = List(Instance(TextLabel))
+    layers = List(Instance(Layer), blurb="Layers")
 
-    views = List(View, blurb="Views")   
+    views = List(Instance(View), blurb="Views")   
 
     
     def __init__(self, *args, **kwargs):
-        SPObject.__init__(self, *args, **kwargs)
+        HasChecks.__init__(self, *args, **kwargs)
+        HasSignals.__init__(self)
         Node.__init__(self)
 
         self.sig_register("closed")

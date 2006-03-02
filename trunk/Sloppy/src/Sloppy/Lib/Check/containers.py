@@ -142,7 +142,7 @@ class TypedList:
         return item       
     
     def remove(self, item):
-        i = self.data.index(index)
+        i = self.data.index(item)
         self.data.remove(item)
         self.on_update(self, {'removed': (i, 1, [item])})
         

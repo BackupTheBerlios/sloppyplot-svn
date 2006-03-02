@@ -1,8 +1,8 @@
-from Sloppy.Lib.Props import HasProperties, Unicode, Dictionary, Boolean
+from Sloppy.Lib.Check import *
         
-class NodeInfo(HasProperties):
+class NodeInfo(HasChecks):
     label = Unicode()
-    metadata = Dictionary(Unicode)
+    metadata = Dict(Unicode)
 
     
 

@@ -23,7 +23,7 @@ import gtk
 
 from Sloppy.Lib.Undo import UndoList, UndoInfo, NullUndo, ulist
 from Sloppy.Base import objects, globals, pdict, uwrap
-from Sloppy.Gtk import uihelper, widget_factory
+from Sloppy.Gtk import uihelper, checkwidgets
 
 
 
@@ -288,7 +288,7 @@ class LayerTab(AbstractTab):
 
         keys = ['title', 'visible', 'grid']
 
-        self.factory = widget_factory.CWidgetFactory(layer)
+        self.factory = checkwidgets.DisplayFactory(layer)
         self.factory.add_keys(keys)
         table = self.factory.create_table()
         frame = uihelper.new_section("Layer", table)
@@ -307,7 +307,7 @@ class LegendTab(AbstractTab):
         AbstractTab.__init__(self)
 
         keys = ['label', 'position', 'visible', 'border', 'x', 'y']
-        self.factory = widget_factory.CWidgetFactory(legend)
+        self.factory = checkwidgets.DisplayFactory(legend)
         self.factory.add_keys(keys)
         table = self.factory.create_table()
         frame = uihelper.new_section("Legend", table)
@@ -329,7 +329,7 @@ class AxesTab(AbstractTab):
         self.factorylist = []
         
         for key, axis in axesdict.iteritems():
-            factory = widget_factory.CWidgetFactory(axis)        
+            factory = checkwidgets.DisplayFactory(axis)       
             factory.add_keys(keys)          
             table = factory.create_table()            
             frame = uihelper.new_section(key, table)
@@ -361,8 +361,8 @@ class LineTab(AbstractTab):
         #
 
         keys = ['visible', 'label', 'style', 'width', 'color', 'marker', 'marker_color', 'marker_size', 'source', 'cx', 'cy', 'row_first', 'row_last']
-        self.factory = widget_factory.CTreeViewFactory(layer, 'lines')
-        self.factory.add_columns(keys, source=self.create_source_column)
+        self.factory = checkwidgets.ColumnFactory(layer, 'lines', objects.Line)
+        self.factory.add_keys(keys, source=self.create_source_column)
         self.treeview = self.factory.create_treeview()
         sw = uihelper.add_scrollbars(self.treeview)
 
@@ -565,8 +565,8 @@ class LineTab(AbstractTab):
         index = self.key_combo.get_active()
         if index > -1:
             keys = model[index][1]
-            self.factory.hide_columns()
-            self.factory.show_columns(keys)                   
+            self.factory.hide_keys()
+            self.factory.show_keys(keys)                   
 
 
 

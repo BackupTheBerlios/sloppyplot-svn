@@ -29,7 +29,7 @@ from shutil import rmtree
 
 from Sloppy.Lib.Undo import Journal, UndoInfo, NullUndo, UndoList, ulist
 from Sloppy.Lib.Signals import HasSignals
-from Sloppy.Lib.Props import *
+from Sloppy.Lib.Check import *
 
 from Sloppy.Base.objects import Plot, Axis, Line, Layer, new_lineplot2d
 from Sloppy.Base.dataset import Dataset, Table
@@ -63,7 +63,7 @@ SloppyPlot, you can extract the file from this archive by hand.
 }
 
 
-class Project(HasProperties, HasSignals):
+class Project(HasChecks, HasSignals):
 
     """
     A Project contains the plots, datasets and all other information
@@ -85,15 +85,15 @@ class Project(HasProperties, HasSignals):
     plots = List(Plot)
     datasets = List(Dataset)
 
-    root = Dictionary(tree.Node)
+    root = Dict(tree.Node)
     
     backends = List(Backend)
     
     
     def __init__(self,*args,**kwargs):
-        HasProperties.__init__(self, **kwargs)
-
+        HasChecks.__init__(self, **kwargs)
         HasSignals.__init__(self)
+        
         self.sig_register("close")
         self.sig_register("notify::plots")
         self.sig_register("notify::datasets")        

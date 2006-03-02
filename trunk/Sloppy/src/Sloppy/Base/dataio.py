@@ -21,7 +21,7 @@
 import os.path
 
 from Sloppy.Base import globals, dataset
-from Sloppy.Lib.Props import *
+from Sloppy.Lib.Check import *
 
 
 
@@ -56,7 +56,7 @@ class ExportError(Exception):
 
 
 
-class Importer(HasProperties):
+class Importer(HasChecks):
 
     """
 
@@ -79,9 +79,9 @@ class Importer(HasProperties):
     filemode = '' # set to 'b' for binary objects
 
     # Still experimental:
-    # These two properties can be used to interact with the application
-    app = VP(object)
-    progress_indicator = VP(object)
+    # These two attributes can be used to interact with the application
+    app = Instance(object)
+    progress_indicator = Instance(object)
     
     def read_dataset_from_stream(self,fd):
         return None
@@ -104,7 +104,7 @@ class Importer(HasProperties):
 
 
 
-class Exporter(HasProperties):
+class Exporter(HasChecks):
 
     filemode = '' # set to 'b' for binary objects
     
@@ -128,28 +128,28 @@ class Exporter(HasProperties):
 
 #------------------------------------------------------------------------------
 
-class IOTemplate(HasProperties):
+class IOTemplate(HasChecks):
 
     extensions = String(\
-        default="",
+        init="",
         blurb="File extensions",
         doc=DS['IOTemplate:extensions']
         )
     
     blurb = Unicode(\
-        blurb="Description",
+        init="Description",
         doc=DS['IOTemplate:blurb']
         )
 
     skip_options = Boolean(\
-        default=False,
+        init=False,
         blurb="Skip Options",
         doc=DS['IOTemplate:skip_options']
         ) 
 
-    defaults = Dictionary()    
-    importer_key = String()
-    immutable = Boolean(False) #
+    defaults = Dict()    
+    importer_key = String(required=True)
+    immutable = Boolean(init=False) #
     
 
     def new_instance(self):

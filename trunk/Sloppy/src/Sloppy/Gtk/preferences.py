@@ -28,7 +28,7 @@ import gtk
 from Sloppy.Base import globals, dataio, version, error, utils
 
 from Sloppy.Gtk import uihelper, widget_factory
-from Sloppy.Lib.Props import Keyword, PropertyError
+from Sloppy.Lib.Check import Keyword
 
 
 DS={
@@ -332,7 +332,7 @@ class ImportTemplatesPage(gtk.VBox):
 
                     try:
                         new_key = Keyword().check(new_key)
-                    except PropertyError:
+                    except ValueError:
                         hint.set_markup(DS['invalid_key'])
                         continue
 
