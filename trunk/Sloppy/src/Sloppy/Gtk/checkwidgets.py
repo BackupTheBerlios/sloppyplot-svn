@@ -37,7 +37,6 @@
   f.check_in()
   ...
   f.check_out()
-  
 
   Since each factory keeps track of the created Column/Display
   objects, it is also possible to show/hide these:
@@ -48,7 +47,7 @@
 """
  
 
-import gtk, sys
+import gtk, sys, inspect
 
 from Sloppy.Lib.Check import *
 from Sloppy.Lib.Undo import UndoList
@@ -58,43 +57,24 @@ import logging
 logger = logging.getLogger('gtk.checkwidgets')
 
 
+# TODO: For testing
+import uihelper
+
+
 ###############################################################################
 
 
    
 class ColumnFactory:
 
-    def __init__(self, obj, listkey):
-        self.obj = obj
+    def __init__(self, listowner, listkey, itemclass):
+        self.listowner = listowner
+        self.itemclass = itemclass
         self.listkey = listkey
         self.keys = []
         self.columns = {}
+        self.old_list = []
         
-        
-    def create_treeview(self):
-        model = gtk.ListStore(*([object]*(len(self.keys)+1)))
-        treeview = gtk.TreeView(model)
-        index = 0
-
-        for key in self.keys:
-            if self.columns.has_key(key):
-                boj = self.columns[key]
-                if inspect.isfunction(obj) or inspect.ismethod(obj):
-                    column = obj(model, index)
-                else:
-                    column = obj
-            else:
-                # TODO: create column
-                # TODO: add column to treeview
-                pass
-
-            self.columns[key] = column
-            treeview.append_column(column)
-            index +=1
-
-        return treeview
-
-
     def add_keys(self, *keys, **kwargs):
         keys = list(keys)
         while len(keys) > 0:
@@ -145,10 +125,6 @@ class ColumnFactory:
         return row
 
 
-    def _create_columns(self):
-        # TODO:
-        pass
-
     def create_treeview(self):
         model = gtk.ListStore(*([object]*(len(self.keys) + 1)))    
         treeview = gtk.TreeView(model)        
@@ -162,11 +138,12 @@ class ColumnFactory:
                 else:
                     column = obj
             else:
-                column = self.new_column(self.obj, key)
+                print "ITEMCLASS IS ",self.itemclass, inspect.isclass(self.itemclass)
+                column = self.new_column(self.itemclass, key)
 
+            tv_column = column.create_column(model, index)                
             self.columns[key] = column                
-            treeview.append_column(column)
-
+            treeview.append_column(tv_column)
             index += 1
             
         self.treeview = treeview
@@ -174,13 +151,13 @@ class ColumnFactory:
 
     
     def check_in(self):
-        itemlist = self.listowner.get_value(self.listkey)
+        itemlist = self.listowner.get(self.listkey)
         model = self.treeview.get_model()
         model.clear()
         for item in itemlist:
             row = []
             for key in self.keys:
-                row.append( item.get_value(key) )
+                row.append(item.get(key))
             model.append( row + [item] )
 
         self.old_list = itemlist
@@ -215,24 +192,155 @@ class ColumnFactory:
         undolist.append(ul)
 
 
-    def new_column(obj, key):
-        # TODO
-        return None
+    def new_column(klass, key):
+        keyklass = getattr(klass, key).__class__
+        if keyklass == Choice:
+            return Column_Choice_As_Combobox(klass, key)
+        elif keyklass == Mapping:
+            return Column_Mapping_As_Combobox(klass, key)
+        else:
+            return Column_Anything_As_Entry(klass, key)
+    
     new_column = staticmethod(new_column)
+
+
     
 
-class Renderer(object):
-    def __init__(self, obj, key):
-        self.check = obj._checks[key]
+class Column(object):
+    def __init__(self, klass, key):                 
+        self.check = getattr(klass, key)
         self.key = key
         self.cell = None # TODO
-
-    def create(self):
-        raise RuntimeError("create() needs to be implemented.")
 
     def get_column_key(self):
         key = self.check.blurb or self.key
         return key.replace('_', ' ')        
+
+
+
+class Column_Anything_As_Entry(Column):
+    
+    def create_column(self, model, index):
+        cell = gtk.CellRendererText()
+        cell.set_property('editable', True)
+        cell.connect('edited', self.on_edited, model, index)
+
+        column = gtk.TreeViewColumn(self.get_column_key())
+        column.pack_start(cell)
+        column.set_cell_data_func(cell, self.cell_data_func, index)
+
+        self.column = column
+        return column
+
+
+    def on_edited(self, cell, path, data, model, index):
+        try:
+            data = self.check(data)
+        except ValueError:
+            pass
+        else:
+            model[path][index] = data
+            
+    def cell_data_func(self, column, cell, model, iter, index):
+        value = model.get_value(iter, index)
+        if value is None:
+            value = ""
+        cell.set_property('text', unicode(value))
+        
+
+
+class Column_Choice_As_Combobox(Column):
+    
+    def create_column(self, model, index):
+        cell_model = self.new_cell_model()
+        
+        cell = gtk.CellRendererCombo()                        
+        cell.set_property('text-column', 0)
+        cell.set_property('model', cell_model)
+
+        # make editable
+        cell.set_property('editable', True)
+        cell.connect('edited', self.on_edited, model, index)
+        
+        column = gtk.TreeViewColumn(self.get_column_key())
+        column.pack_start(cell)
+        column.set_cell_data_func(cell, self.cell_data_func, index)
+
+        self.column = column
+        return column
+
+    def new_cell_model(self):        
+        cell_model = gtk.ListStore(str, object)
+        for value in self.check.choices:
+            if value is None:
+                cell_model.append(('', None))
+            else:
+                cell_model.append((unicode(value), value))
+        return cell_model
+
+    def on_edited(self, cell, path, new_text, model, index):
+        if len(new_text) == 0:
+            new_text = None
+        try:
+            model[path][index] = self.check(new_text)            
+        except PropertyError:
+            print "Could not set combo to value '%s', %s" % (new_text, type(new_text))
+
+    def cell_data_func(self, column, cell, model, iter, index):
+        user_value = model.get_value(iter, index)
+        if user_value is None:
+            user_value = ""
+        cell.set_property('text', unicode(user_value))
+
+
+class Column_Mapping_As_Combobox(Column):
+
+    def create_column(self, model, index):
+        cell_model = self.new_cell_model()
+        
+        cell = gtk.CellRendererCombo()                        
+        cell.set_property('text-column', 0)
+        cell.set_property('model', cell_model)
+
+        # make editable
+        cell.set_property('editable', True)
+        cell.connect('edited', self.on_edited, model, index)
+        
+        column = gtk.TreeViewColumn(self.get_column_key())
+        column.pack_start(cell)
+        column.set_cell_data_func(cell, self.cell_data_func, index)
+
+        self.column = column
+        return column
+
+    def new_cell_model(self):
+        self.keys = {}
+        cell_model = gtk.ListStore(str, object)
+        for key, value in self.check.mapping.iteritems():
+            if key is None:
+                key = ""            
+            cell_model.append((unicode(key), value))
+            self.keys[value] = unicode(key) # for reverse mapping
+        return cell_model
+
+    def on_edited(self, cell, path, new_text, model, index):
+        if len(new_text) == 0:
+            new_text = None
+        try:
+            model[path][index] = self.check(new_text)            
+        except PropertyError:
+            print "Could not set combo to value '%s', %s" % (new_text, type(new_text))
+
+    def cell_data_func(self, column, cell, model, iter, index):
+        user_value = model.get_value(iter, index)
+        if user_value is None:
+            user_value = ""
+        cell.set_property('text', self.keys[user_value])
+
+    
+
+
+
 
 
 
@@ -276,7 +384,6 @@ class DisplayFactory:
         self._create_displays()
         vbox = gtk.VBox()
         for d in self.displays.itervalues():
-            d.check_in()
             vbox.add(d.widget)
         return vbox
 
@@ -410,7 +517,7 @@ class As_Combobox:
     def get_widget_data(self):
         index = self.widget.get_active()
         if index < 0:
-            return Undefined            
+            return Undefined
         else:
             model = self.widget.get_model()
             return  model[index][1]
@@ -525,7 +632,6 @@ class Display_Anything_As_Entry(As_Entry, Display):
         return False    
                 
 
-
 class As_Spinbutton:
 
     def create_widget(self):
@@ -594,39 +700,40 @@ class Display_RGBColor_As_Colorbutton(Display):
 #------------------------------------------------------------------------------
 
 class TestObject(HasChecks):
-    is_valid = Bool()
-    is_valid_or_none = Bool()
-    choices = Choice(['One', 'Two', 'Three'])
+    is_valid = Bool(init=True)
+    is_valid_or_none = Bool(init=None)
+    choices = Choice(['One', 'Two', 'Three'], init='Two')
 
-    an_integer = Integer()
-    a_float = Float()
-    another_float = Float(max=27.0)
-    a_third_float = Float(min=-5, max=12.874)
-    what_an_integer = Integer(max=20)
+    an_integer = Integer(init=0)
+    a_float = Float(init=3.14)
+    another_float = Float(init=-7892, max=27.0)
+    a_third_float = Float(init=7.0, min=-5, max=12.874)
+    what_an_integer = Integer(init=19, max=20)
 
-    a_color = RGBColor(raw=True, doc="A color")
+    a_color = RGBColor(raw=True, init="black", doc="A color")
 
-    a_mapping = Mapping({'One':1, 'Two':2, 'Three':3})
+    a_mapping = Mapping({'One':1, 'Two':2, 'Three':3}, init='Three')
 
 
 class MainObject(HasChecks):
     obj_list = List(Instance(TestObject))
     
 
-obj = TestObject(is_valid=False)
-obj2 = TestObject(an_integer=5)
+obj = TestObject(is_valid=False, a_mapping='One')
+obj2 = TestObject(an_integer=5, a_mapping=1)
 main = MainObject(obj_list=[obj, obj2])
 
 
-if True:
+if False:
     df = DisplayFactory(obj)
     df.add_keys(obj._checks.keys())
     tv = df.create_table()
 else:
-    df = ColumnFactory(main, 'obj_list')
+    df = ColumnFactory(main, 'obj_list', obj.__class__)
     df.add_keys(obj._checks.keys())
     tv = df.create_treeview()
-    
+
+df.check_in()
 
 def quit(sender):
     df.check_out()
@@ -638,7 +745,7 @@ win.set_size_request(480,320)
 win.connect('destroy', quit)
 
 
-win.add(tv)
+win.add(uihelper.add_scrollbars(tv))
 win.show_all()
 
 gtk.main()

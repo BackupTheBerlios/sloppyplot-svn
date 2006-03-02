@@ -14,8 +14,7 @@ class Recipe(HasChecks):
     author = String(strict=True, doc="Name of the author")
     calories = Integer()
     comment = String(required=False)
-    skill = Mapping({'easy':1, 'intermediate':2, 'advanced':3},
-                    reverse=True, raw=True)
+    skill = Mapping({'easy':1, 'intermediate':2, 'advanced':3}, raw=True)
     category = Choice(['breakfast', 'lunch', 'dinner', 'snack'])
     is_tested = Bool()
     ingredients = List(Instance('Ingredient'))

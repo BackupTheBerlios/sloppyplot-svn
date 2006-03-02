@@ -134,20 +134,15 @@ class Mapping(Check):
 
     def __init__(self, mapping, **kwargs):
         self.mapping = mapping
-        self.reverse = False
         Check.__init__(self, **kwargs)        
             
     def check(self, value):
-        if value in self.mapping.keys():
+        if value in self.mapping.values():
+            return value
+        elif value in self.mapping.keys():
             return self.mapping[value]
-        elif self.reverse is True:
-            if value in self.mapping.values():
-                return value
-            else:
-                raise ValueError("must be one of %s or one of %s" %  (str(self.mapping.keys()), str(self.mapping.values())))
         else:
-            raise ValueError("must be one of %s" % str(self.mapping.keys()))
-
+            raise ValueError("must be one of %s or one of %s" %  (str(self.mapping.keys()), str(self.mapping.values())))
 
 
 class Instance(Check):
