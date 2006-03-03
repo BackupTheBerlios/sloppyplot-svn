@@ -52,6 +52,7 @@
 import gtk, sys, inspect
 
 from Sloppy.Lib.Check import *
+from Sloppy.Lib.Signals import *
 from Sloppy.Lib.Undo import UndoList
 from Sloppy.Base import uwrap
 
@@ -66,6 +67,16 @@ import uihelper
 ###############################################################################
 
 
+# TODO ColumnFactory
+# ------------------
+
+# set_object
+# model should only contain the object, nothing else.
+# It doesn't make a difference if we store all values in the model
+# or if we create a copy of the object!
+# (Well, it does if we don't use all of the object...)
+
+# on_update
    
 class ColumnFactory:
 
@@ -144,18 +155,40 @@ class ColumnFactory:
         self.treeview = treeview
         return self.treeview
 
-    
-    def check_in(self):
-        itemlist = self.listowner.get(self.listkey)
+
+
+    def set_object(self, obj):
+        # obj is the listowner
+        self.obj = obj
+        for creator in self.creators.itervalues():
+            creator.set_object(obj)
+
         model = self.treeview.get_model()
         model.clear()
-        for item in itemlist:
+
+        # hmmmm.... maybe this is not enough.
+        # I would need to create my own model,
+        # which synchronizes with the List
+        # object. I know, this is a lot of work,
+        # but at the moment I can't think of anything
+        # better.
+        for item in obj.get(self.listkey):
             row = []
             for key in self.keys:
                 row.append(item.get(key))
             model.append( row + [item] )
+            
+#     def check_in(self):
+#         itemlist = self.listowner.get(self.listkey)
+#         model = self.treeview.get_model()
+#         model.clear()
+#         for item in itemlist:
+#             row = []
+#             for key in self.keys:
+#                 row.append(item.get(key))
+#             model.append( row + [item] )
 
-        self.old_list = itemlist
+#         self.old_list = itemlist
         
 
     def check_out(self, undolist=[]):
@@ -373,6 +406,9 @@ class ColumnCreator_Bool_As_Checkbutton(Column):
 
 
 
+
+
+
 ###############################################################################
 ###############################################################################
 
@@ -469,7 +505,7 @@ class DisplayFactory:
         elif isinstance(check, Integer):
             v = Display_Integer_As_Spinbutton
         elif isinstance(check, Float):
-            v = Display_Number_As_Entry
+            v = Display_Anything_As_Entry
         elif isinstance(check, RGBColor):
             v = Display_RGBColor_As_Colorbutton
         elif isinstance(check, Mapping):
@@ -481,6 +517,10 @@ class DisplayFactory:
     
     new_display = staticmethod(new_display)    
         
+
+
+
+
 
 ###############################################################################
 
@@ -504,7 +544,7 @@ class Display:
     def init(self):
         pass
     
-    def set_object(self, obj):        
+    def set_object(self, obj):
         self.obj = obj
         self.set_widget_data(obj.get(self.key))
 
@@ -512,9 +552,9 @@ class Display:
         self.widget = widget
         self.prepare_widget(widget)
 
-    def on_update(self):
-        print "on update of ", self.key, "=", self.obj.get(self.key)
-        pass
+    def on_update(self, sender):
+        # this can be used as a hook for undo 
+        print "on update of ", sender.key, "=", self.obj.get(sender.key)
 
 
 
@@ -545,9 +585,9 @@ class As_Entry:
             print "Value Error", msg
             self.set_widget_data(obj_value)
         else:
-            self.set_widget_data(value)
+            ##self.set_widget_data(value)
             self.obj.set(self.key, value)
-            self.on_update()
+            self.on_update(self)
 
         return False
 
@@ -594,7 +634,7 @@ class As_Combobox:
             self.set_widget_data(obj_value)
         else:
             self.obj.set(self.key, value)
-            self.on_update()
+            self.on_update(self)
 
         return False
             
@@ -649,7 +689,7 @@ class As_Spinbutton:
             self.set_widget_data(obj_value)
         else:
             self.obj.set(self.key, value)
-            self.on_update()
+            self.on_update(self)
 
         return False
 
@@ -678,7 +718,7 @@ class As_Colorbutton:
             self.set_widget_data(obj_value)
         else:
             self.obj.set(self.key, value)
-            self.on_update()
+            self.on_update(self)
 
         return False
 
@@ -745,10 +785,6 @@ class Display_Integer_As_Spinbutton(Display_Number_As_Spinbutton):
         Display_Number_As_Spinbutton.prepare_widget(self, spinbutton)
         spinbutton.set_digits(0)
         
-
-Display_Number_As_Entry = Display_Anything_As_Entry
-Display_String_As_Entry = Display_Unicode_As_Entry = Display_Anything_As_Entry
-        
         
 class Display_RGBColor_As_Colorbutton(As_Colorbutton, Display):
 
@@ -774,7 +810,7 @@ class Display_RGBColor_As_Colorbutton(As_Colorbutton, Display):
 
 def test():
     
-    class TestObject(HasChecks):
+    class TestObject(HasChecks, HasSignals):
         is_valid = Bool(init=True)
         is_valid_or_none = Bool(init=None)
         choices = Choice(['One', 'Two', 'Three'], init='Two')
@@ -790,27 +826,63 @@ def test():
         a_mapping = Mapping({'One':1, 'Two':2, 'Three':3}, init='Three')
 
         a_string = String(init=None)
+
+        def __init__(self, **kwargs):
+            HasChecks.__init__(self, **kwargs)
+            HasSignals.__init__(self)
+            self.sig_register("notify")
+            self.on_update = self.emit_notify
+
+        def emit_notify(self, sender, key, value):
+            # TODO: who emits this twice?
+            print "emit notify"
+            self.sig_emit('notify', key, value)
         
 
     class MainObject(HasChecks):
         obj_list = List(Instance(TestObject))
 
 
-    obj = TestObject(is_valid=False, a_mapping='One')
-    obj2 = TestObject(an_integer=5, a_mapping=1)
+    obj = TestObject(a_string="object ONE", is_valid=False, a_mapping='One')
+    obj2 = TestObject(a_string="object TWO", an_integer=5, a_mapping=1)
     main = MainObject(obj_list=[obj, obj2])
 
+
+    # This is how the notification works:
+
+    # The object has an on_update function.
+    # This function is set to emit a signal 'notify'.
+    # If you want to be informed of changes to the object,
+    # just connect to the 'notify' signal via sig_connect.
+
+    # Each display should connect to the 'notify' signal
+    # of the object and call set_widget_data whenever
+    # the value changes. !!! CAREFUL!!!! If we do this,
+    # then a change of _one_ value will trigger all
+    # notifications for all Displays of that object.
+         
 
     if True:
         df = DisplayFactory(obj)        
         df.add_keys(obj._checks.keys())
         tv = df.create_table()
+        df.set_object(obj)
+
+        # (s,k,v = sender, key, value)
+        def on_notify(s,k,v):
+            df.displays[k].set_widget_data(v)
+            df2.displays[k].set_widget_data(v)
+        obj.sig_connect("notify", on_notify)#lambda s,k,v: self.set_widget_data(v))        
+
+        df2 = DisplayFactory(obj)        
+        df2.add_keys(obj._checks.keys())
+        tv2 = df2.create_table()
+        df2.set_object(obj)        
     else:
         df = ColumnFactory(main, 'obj_list', obj.__class__)
         df.add_keys(obj._checks.keys())
         tv = df.create_treeview()
 
-    df.set_object(obj)
 
     def quit(sender):
         print
@@ -830,14 +902,24 @@ def test():
         df.set_object(new_obj)
     btn = gtk.Button("toggle object")
     btn.connect("clicked", toggle)
+
+    def set_string(sender):
+        obj.set('a_string', 'Niklas')
+    btn2 = gtk.Button("Set a_string to Niklas")
+    btn2.connect("clicked", set_string)            
     
     win = gtk.Window()
-    win.set_size_request(480,320)
+    win.set_size_request(640,480)
     win.connect('destroy', quit)
 
+    hbox = gtk.HBox()
+    hbox.add(tv)
+    hbox.add(tv2)
+    
     vbox = gtk.VBox()
-    vbox.add(uihelper.add_scrollbars(tv, viewport=True))
+    vbox.add(uihelper.add_scrollbars(hbox, viewport=True))
     vbox.pack_end(btn, False, True)
+    vbox.pack_end(btn2, False, True)
     win.add(vbox)
     win.show_all()
 
