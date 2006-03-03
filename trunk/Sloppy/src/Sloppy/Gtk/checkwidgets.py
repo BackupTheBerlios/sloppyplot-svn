@@ -386,12 +386,11 @@ def as_class(obj):
                 
 class DisplayFactory:
 
-    def __init__(self, obj):
-        # TODO: change arg to klass
-        self.obj = obj
-        self.klass = as_class(obj)
+    def __init__(self, klass):           
+        self.klass = as_class(klass)
         self.keys = []
         self.displays = {}
+        self.instance = None
         
     def add_keys(self, *keys, **kwargs):
         for key in keys:
@@ -455,22 +454,12 @@ class DisplayFactory:
 
         return tw
         
-                    
-    def check_in(self):
-        # TODO: create copy of object and set these as source
-        # TODO: for the displays
+
+    def set_object(self, obj):
+        self.obj = obj
         for display in self.displays.itervalues():
-            display.set_source(self.obj)
+            display.set_object(self.obj)
     
-    def check_out(self, undolist=[]):
-        # TODO: merge copy and original back
-        pass
-    #ul = UndoList()    
-     #   for display in self.displays.itervalues():
-      #      display.check_out(undolist=ul)
-       # undolist.append(ul)
-
-
     def new_display(klass, key):
         check = getattr(klass, key)
         if isinstance(check, Bool):
@@ -515,16 +504,17 @@ class Display:
     def init(self):
         pass
     
-    def set_source(self, obj):        
+    def set_object(self, obj):        
         self.obj = obj
         self.set_widget_data(obj.get(self.key))
-
-    #----------------------------------------------------------------------
-    # UI Stuff
 
     def use_widget(self, widget):
         self.widget = widget
         self.prepare_widget(widget)
+
+    def on_update(self):
+        print "on update of ", self.key, "=", self.obj.get(self.key)
+        pass
 
 
 
@@ -541,6 +531,11 @@ class As_Entry:
         
     def on_focus_out_event(self, widget, event):
         value = self.get_widget_data()
+        obj_value = self.obj.get(self.key)
+
+        if unicode(value) == unicode(obj_value):
+            return False
+        
         if self.check.required is False and value == "":
             value = None
 
@@ -548,13 +543,15 @@ class As_Entry:
             value = self.check(value)
         except ValueError, msg:
             print "Value Error", msg
-            self.set_widget_data(self.obj.get(self.key))
+            self.set_widget_data(obj_value)
         else:
             self.set_widget_data(value)
             self.obj.set(self.key, value)
+            self.on_update()
 
         return False
-        
+
+      
 
 
 class As_Combobox:
@@ -586,14 +583,18 @@ class As_Combobox:
 
     def on_changed(self, widget):
         value = self.get_widget_data()
+        obj_value = self.obj.get(self.key)
+        if value == obj_value:
+            return False
+        
         try:
             value = self.check(value)
         except ValueError, msg:
             print "Value Error", msg
-            self.set_widget_data(self.obj.get(self.key))
+            self.set_widget_data(obj_value)
         else:
-            #self.set_widget_data(value)
             self.obj.set(self.key, value)
+            self.on_update()
 
         return False
             
@@ -610,6 +611,77 @@ class As_Combobox:
         except:
             index = -1
         self.widget.set_active(index)
+
+class As_Spinbutton:
+
+    def create_widget(self):
+        return gtk.SpinButton()
+
+    def prepare_widget(self, spinbutton):
+        spinbutton.set_numeric(False)
+        # should be customizable        
+        spinbutton.set_increments(1, 1)
+        spinbutton.set_digits(2) 
+
+        min, max = self.check.min, self.check.max
+        if min is None:
+            min = -sys.maxint
+        if max is None:
+            max = +sys.maxint            
+        spinbutton.set_range(min, max)
+
+        spinbutton.connect("focus-in-event", self.on_focus_in_event)
+
+    def on_focus_in_event(self, widget, event):
+        self.widget.connect("focus-out-event", self.on_focus_out_event)
+
+    def on_focus_out_event(self, widget, event):
+        self.widget.update()
+        value = self.get_widget_data()
+        obj_value = self.obj.get(self.key)
+        if value == obj_value:
+            return False
+        
+        try:
+            value = self.check(value)
+        except ValueError, msg:
+            print "Value Error", msg
+            self.set_widget_data(obj_value)
+        else:
+            self.obj.set(self.key, value)
+            self.on_update()
+
+        return False
+
+
+class As_Colorbutton:
+    
+    def create_widget(self):
+        return gtk.ColorButton()
+
+    def prepare_widget(self, colorbutton):
+        colorbutton.set_use_alpha(False)
+        colorbutton.set_title(self.check.blurb or "Select Color")
+
+        colorbutton.connect("color-set", self.on_color_set)       
+
+    def on_color_set(self, widget):
+        value = self.get_widget_data()
+        obj_value = self.obj.get(self.key)
+        if value == obj_value:
+            return False
+        
+        try:
+            value = self.check(value)
+        except ValueError, msg:
+            print "Value Error", msg
+            self.set_widget_data(obj_value)
+        else:
+            self.obj.set(self.key, value)
+            self.on_update()
+
+        return False
+
 
     
 
@@ -637,9 +709,9 @@ class Display_Anything_As_Entry(As_Entry, Display):
     def get_widget_data(self):
         value = self.widget.get_text()
         if value is Undefined:
-            value = ""
+            value = u""
 
-        if self.check.required is False and value=="":
+        if self.check.required is False and value==u"":
             return None
 
         return value
@@ -653,46 +725,6 @@ class Display_Anything_As_Entry(As_Entry, Display):
 
                 
 
-class As_Spinbutton:
-
-    def create_widget(self):
-        return gtk.SpinButton()
-
-    def prepare_widget(self, spinbutton):
-        spinbutton.set_numeric(False)
-        # should be customizable        
-        spinbutton.set_increments(1, 1)
-        spinbutton.set_digits(2) 
-
-        min, max = self.check.min, self.check.max
-        if min is None:
-            min = -sys.maxint
-        if max is None:
-            max = +sys.maxint            
-        spinbutton.set_range(min, max)
-
-        spinbutton.connect("focus-in-event", self.on_focus_in_event)
-
-    def on_focus_in_event(self, widget, event):
-        print "FOCUS IN"
-        self.widget.connect("focus-out-event", self.on_focus_out_event)
-
-    def on_focus_out_event(self, widget, event):
-        self.widget.update()
-        value = self.get_widget_data()
-        if self.check.required is False and value == "":
-            value = None
-
-        try:
-            value = self.check(value)
-        except ValueError, msg:
-            print "Value Error", msg
-            self.set_widget_data(self.obj.get(self.key))
-        else:
-            self.set_widget_data(value)
-            self.obj.set(self.key, value)
-
-        return False
     
            
         
@@ -716,16 +748,9 @@ class Display_Integer_As_Spinbutton(Display_Number_As_Spinbutton):
 
 Display_Number_As_Entry = Display_Anything_As_Entry
 Display_String_As_Entry = Display_Unicode_As_Entry = Display_Anything_As_Entry
-
-
-class Display_RGBColor_As_Colorbutton(Display):
-
-    def create_widget(self):
-        return gtk.ColorButton()
-
-    def prepare_widget(self, colorbutton):
-        colorbutton.set_use_alpha(False)
-        colorbutton.set_title(self.check.blurb or "Select Color")
+        
+        
+class Display_RGBColor_As_Colorbutton(As_Colorbutton, Display):
 
     def set_widget_data(self, data):
         red, green, blue = (data&0xFF0000)>>16, (data&0xFF00)>>8, data&0xFF
@@ -736,6 +761,9 @@ class Display_RGBColor_As_Colorbutton(Display):
         c = self.widget.get_color()
         v = (int(c.red/256.0)<<16) + (int(c.green/256.0)<<8) + (int(c.blue/256.0))
         return v
+    
+
+
 
 
 
@@ -761,6 +789,8 @@ def test():
 
         a_mapping = Mapping({'One':1, 'Two':2, 'Three':3}, init='Three')
 
+        a_string = String(init=None)
+        
 
     class MainObject(HasChecks):
         obj_list = List(Instance(TestObject))
@@ -780,19 +810,35 @@ def test():
         df.add_keys(obj._checks.keys())
         tv = df.create_treeview()
 
-    df.check_in()
+    df.set_object(obj)
 
     def quit(sender):
-        df.check_out()
-        print "VALUES ===>", obj._values
+        print
+        print "Obj1 ===>", obj._values
+        print
+        print "Obj2 ===>", obj2._values
+        print        
         gtk.main_quit()
 
+
+    def toggle(sender):
+        if df.obj is obj:
+            new_obj = obj2
+        else:
+            new_obj = obj
+        print "toggle", new_obj            
+        df.set_object(new_obj)
+    btn = gtk.Button("toggle object")
+    btn.connect("clicked", toggle)
+    
     win = gtk.Window()
     win.set_size_request(480,320)
     win.connect('destroy', quit)
 
-
-    win.add(uihelper.add_scrollbars(tv))
+    vbox = gtk.VBox()
+    vbox.add(uihelper.add_scrollbars(tv, viewport=True))
+    vbox.pack_end(btn, False, True)
+    win.add(vbox)
     win.show_all()
 
     gtk.main()
