@@ -375,13 +375,21 @@ class ColumnCreator_Bool_As_Checkbutton(Column):
 
 ###############################################################################
 ###############################################################################
-  
+
+def as_class(obj):
+    if inspect.isclass(obj):
+        return obj
+    else:
+        return obj.__class__
+
 
                 
 class DisplayFactory:
 
     def __init__(self, obj):
+        # TODO: change arg to klass
         self.obj = obj
+        self.klass = as_class(obj)
         self.keys = []
         self.displays = {}
         
@@ -400,7 +408,7 @@ class DisplayFactory:
 
     def _create_displays(self):
         for key in self.keys:
-            display = DisplayFactory.new_display(self.obj, key)
+            display = DisplayFactory.new_display(self.klass, key)
             display.create_widget()
             self.displays[key] = display
     
@@ -449,18 +457,22 @@ class DisplayFactory:
         
                     
     def check_in(self):
+        # TODO: create copy of object and set these as source
+        # TODO: for the displays
         for display in self.displays.itervalues():
-            display.check_in()
-
+            display.set_source(self.obj)
+    
     def check_out(self, undolist=[]):
-        ul = UndoList()    
-        for display in self.displays.itervalues():
-            display.check_out(undolist=ul)
-        undolist.append(ul)
+        # TODO: merge copy and original back
+        pass
+    #ul = UndoList()    
+     #   for display in self.displays.itervalues():
+      #      display.check_out(undolist=ul)
+       # undolist.append(ul)
 
 
-    def new_display(owner, key):
-        check = owner._checks[key]
+    def new_display(klass, key):
+        check = getattr(klass, key)
         if isinstance(check, Bool):
             v = Display_Bool_As_Combobox
         elif isinstance(check, Choice):
@@ -476,31 +488,30 @@ class DisplayFactory:
         else:
             v = Display_Anything_As_Entry
 
-        return v(owner, key)
+        return v(klass, key)
     
     new_display = staticmethod(new_display)    
         
 
 ###############################################################################
 
+    
 class Display:
     
-    def __init__(self, obj, key):
+    def __init__(self, klass, key):
         self.obj = None
         self.key = None
         self.check = None
-        self.set_source(obj, key)
-
-        self.last_value = Undefined
-        self.widget = None
-
+        self.key = key
+        self.klass = as_class(klass)
+        self.check = getattr(self.klass, key)
+        self.obj = None
         self.widget = self.create_widget()
         self.prepare_widget(self.widget)
 
-    def set_source(self, obj, key):        
+    def set_source(self, obj):        
         self.obj = obj
-        self.key = key
-        self.check = obj._checks[key]
+        self.set_widget_data(obj.get(self.key))
 
     #----------------------------------------------------------------------
     # UI Stuff
@@ -508,25 +519,6 @@ class Display:
     def use_widget(self, widget):
         self.widget = widget
         self.prepare_widget(widget)
-                
-    #----------------------------------------------------------------------
-    # Check In/Out
-    
-    def check_in(self):
-        " Retrieve value from object. "
-        value = self.get_object_data()
-        if value != self.last_value:
-            self.set_widget_data(value)
-            self.last_value = value
-
-    def check_out(self, undolist=[]):
-        " Set value in object. "
-        new_value = self.get_widget_data()
-        uwrap.smart_set(self.obj, self.key, new_value, undolist=undolist)
-
-    def get_object_data(self):
-        return self.obj.get(self.key)
-
 
 
 
@@ -535,26 +527,28 @@ class As_Entry:
     def create_widget(self):                      
         return gtk.Entry()
 
-    def get_widget_data(self):
-        value = self.widget.get_text()
-        if value is Undefined:
-            value = ""
+    def prepare_widget(self, entry):
+        entry.connect("focus-in-event", self.on_focus_in_event)
 
-        if self.check.required is False and value=="":
-            return None
-            
+    def on_focus_in_event(self, widget, event):
+        self.widget.connect("focus-out-event", self.on_focus_out_event)
+        
+    def on_focus_out_event(self, widget, event):
+        value = self.get_widget_data()
+        if self.check.required is False and value == "":
+            value = None
+
         try:
-            return self.check(value)
-        except ValueError:
-            self.set_widget_data(self.last_value)
-
-    def set_widget_data(self, data):
-        if data is Undefined or data is None:
-            data = u""
+            value = self.check(value)
+        except ValueError, msg:
+            print "Value Error", msg
+            self.set_widget_data(self.obj.get(self.key))
         else:
-            data = unicode(data)
-            
-        self.widget.set_text(data)
+            self.set_widget_data(value)
+            self.obj.set(self.key, value)
+
+        return False
+        
 
 
 class As_Combobox:
@@ -591,14 +585,16 @@ class Display_Bool_As_Combobox(As_Combobox, Display):
         combobox.add_attribute(cell, 'text', 0)
         
         adict = {'True': True, 'False': False}
-        if self.obj._checks[self.key].required is False:
+        if self.check.required is False:
             adict.update({'None': None})
         self.values = adict.values() # for reference
 
         model = combobox.get_model()
         model.clear()        
         for key, value in adict.iteritems():
-            model.append((key, value))            
+            model.append((key, value))
+
+        # TODO: focus-in-event
         
         
 
@@ -634,25 +630,23 @@ class Display_Mapping_As_Combobox(As_Combobox, Display):
 
 class Display_Anything_As_Entry(As_Entry, Display):
 
-    def prepare_widget(self, entry):
-        entry.connect("focus-in-event", self.on_focus_in_event)
+    def get_widget_data(self):
+        value = self.widget.get_text()
+        if value is Undefined:
+            value = ""
 
-    def on_focus_in_event(self, widget, event):
-        self.widget.connect("focus-out-event", self.on_focus_out_event)
-        
-    def on_focus_out_event(self, widget, event):
-        value = widget.get_text()
-        if self.check.required is False and value == "":
-            return
+        if self.check.required is False and value=="":
+            return None
 
-        try:
-            value = unicode(self.check(value))
-            self.last_value = value
-            self.set_widget_data(value)
-        except ValueError:
-            self.set_widget_data(self.last_value)
+        return value
 
-        return False    
+    def set_widget_data(self, data):
+        if data is Undefined or data is None:
+            data = u""
+        else:
+            data = unicode(data)            
+        self.widget.set_text(data)
+
                 
 
 class As_Spinbutton:
@@ -660,30 +654,54 @@ class As_Spinbutton:
     def create_widget(self):
         return gtk.SpinButton()
 
+    def prepare_widget(self, spinbutton):
+        spinbutton.set_numeric(False)
+        # should be customizable        
+        spinbutton.set_increments(1, 1)
+        spinbutton.set_digits(2) 
+
+        min, max = self.check.min, self.check.max
+        if min is None:
+            min = -sys.maxint
+        if max is None:
+            max = +sys.maxint            
+        spinbutton.set_range(min, max)
+
+        spinbutton.connect("focus-in-event", self.on_focus_in_event)
+
+    def on_focus_in_event(self, widget, event):
+        print "FOCUS IN"
+        self.widget.connect("focus-out-event", self.on_focus_out_event)
+
+    def on_focus_out_event(self, widget, event):
+        self.widget.update()
+        value = self.get_widget_data()
+        if self.check.required is False and value == "":
+            value = None
+
+        try:
+            value = self.check(value)
+        except ValueError, msg:
+            print "Value Error", msg
+            self.set_widget_data(self.obj.get(self.key))
+        else:
+            self.set_widget_data(value)
+            self.obj.set(self.key, value)
+
+        return False
+    
+           
+        
+class Display_Number_As_Spinbutton(As_Spinbutton, Display):
+    
     def get_widget_data(self):
         return self.widget.get_value()
     
     def set_widget_data(self, data):
         if data not in (None, Undefined):
             self.widget.set_value(float(data))
-        
-class Display_Number_As_Spinbutton(As_Spinbutton, Display):
-    
-    def prepare_widget(self, spinbutton):
-        check = self.obj._checks[self.key]
 
-        spinbutton.set_numeric(False)
 
-        # should be customizable        
-        spinbutton.set_increments(1, 1)
-        spinbutton.set_digits(2) 
-
-        min, max = check.min, check.max
-        if min is None:
-            min = -sys.maxint
-        if max is None:
-            max = +sys.maxint            
-        spinbutton.set_range(min, max)
 
 class Display_Integer_As_Spinbutton(Display_Number_As_Spinbutton):
 
@@ -703,7 +721,7 @@ class Display_RGBColor_As_Colorbutton(Display):
 
     def prepare_widget(self, colorbutton):
         colorbutton.set_use_alpha(False)
-        colorbutton.set_title(self.obj._checks[self.key].blurb or "Select Color")
+        colorbutton.set_title(self.check.blurb or "Select Color")
 
     def set_widget_data(self, data):
         red, green, blue = (data&0xFF0000)>>16, (data&0xFF00)>>8, data&0xFF
