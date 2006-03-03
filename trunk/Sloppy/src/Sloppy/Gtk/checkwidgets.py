@@ -835,7 +835,7 @@ def test():
 
         def emit_notify(self, sender, key, value):
             # TODO: who emits this twice?
-            print "emit notify"
+            print "emit notify", sender, key, value
             self.sig_emit('notify', key, value)
         
 
