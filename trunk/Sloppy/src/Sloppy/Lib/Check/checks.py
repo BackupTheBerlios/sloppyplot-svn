@@ -308,8 +308,9 @@ class HasChecks(object):
         # Initialize check dict and on_update slot
         object.__setattr__(self, '_checks', {})
         object.__setattr__(self, '_values', {})
-        object.__setattr__(self, '_raw_values', {})
+        object.__setattr__(self, '_raw_values', {})        
         object.__setattr__(self, 'on_update', lambda sender, key, value: None)
+        object.__setattr__(self, '_events', {})
         
         # We need to iterate over all Check instances and
         # set default values for them.
@@ -344,7 +345,7 @@ class HasChecks(object):
 
         # check retrieval
         self._checks = checks
-        
+
 
     def __getattribute__(self, key):
         check = object.__getattribute__(self, '_checks')
@@ -356,6 +357,10 @@ class HasChecks(object):
         checks = self._checks
         if checks.has_key(key):
             checks[key].set(self, key, value)
+            events = self._events
+            if events.has_key(key):
+                event = events[key]
+                event(self, key, value)
             self.on_update(self, key, value)
         else:
             object.__setattr__(self, key, value)

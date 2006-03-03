@@ -2,7 +2,7 @@
 # just some hand-written testing
 
 import testcases
-from check import *
+from checks import *
 
 recipe = testcases.Recipe()
 recipe2 = testcases.Recipe()
@@ -70,8 +70,10 @@ print "\n=== A Complicated Dict ===\n"
 
 class Timeline(HasChecks):
     years = Dict( values=String(), doc="Years and their events")
+    title = String()
 
 
+print "NEW TIMELINE"
 tl = Timeline(years={1974: 'some date', 2002: 'some other date'})
 
 print tl.years
@@ -83,12 +85,24 @@ print tl.years
 #tl.years['0BC'] = 'this year does not exist anyway' # '0BC' cannot be casted
 
 view = CheckView(recipe)
-print "SKILL:", view.values.skill, "-", view.checks.skill
-print view.checks.skill.doc
+#print "SKILL:", view.values.skill, "-", view.checks.skill
+#print view.checks.skill.doc
 
 print "possible to copy the dict?"
 copy = tl.__class__(**tl._values)
 print "the copy has the following values:", copy._values
+
+
+#####
+
+print "\n=== Notifications ===\n"
+
+def on_update(sender, key, value):
+    print "update event", sender, key, value
+
+tl._events['title'] = on_update
+
+tl.title = "Niklas"
 
 
 
