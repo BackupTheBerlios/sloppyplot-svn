@@ -506,9 +506,15 @@ class Display:
         self.klass = as_class(klass)
         self.check = getattr(self.klass, key)
         self.obj = None
+
+        self.init()
+        
         self.widget = self.create_widget()
         self.prepare_widget(self.widget)
 
+    def init(self):
+        pass
+    
     def set_source(self, obj):        
         self.obj = obj
         self.set_widget_data(obj.get(self.key))
@@ -552,19 +558,51 @@ class As_Entry:
 
 
 class As_Combobox:
-    # prepare_widget should define and fill the dict self.values
-    # the model should be of the form str, object.
 
     def create_widget(self):
         return gtk.ComboBox()
-    
+
+    def prepare_widget(self, cb):
+        model = gtk.ListStore(str, object)
+        cb.set_model(model)
+        cell = gtk.CellRendererText()
+        cb.pack_start(cell, True)
+        cb.add_attribute(cell, 'text', 0)
+        model.clear()
+        self.values = []
+
+        if hasattr(self, 'alist'):
+            for value in self.alist:
+                model.append((unicode(value), value))
+                self.values.append(value)
+        elif hasattr(self, 'adict'):
+            for key, value in self.adict.iteritems():
+                model.append((unicode(key), key))
+                self.values.append(value)
+        else:
+            raise RuntimeError("Combobox Display needs either alist or adict.")
+
+        cb.connect("changed", self.on_changed)
+
+    def on_changed(self, widget):
+        value = self.get_widget_data()
+        try:
+            value = self.check(value)
+        except ValueError, msg:
+            print "Value Error", msg
+            self.set_widget_data(self.obj.get(self.key))
+        else:
+            #self.set_widget_data(value)
+            self.obj.set(self.key, value)
+
+        return False
+            
     def get_widget_data(self):
         index = self.widget.get_active()
         if index < 0:
             return Undefined
         else:
-            model = self.widget.get_model()
-            return  model[index][1]
+            return self.values[index]
 
     def set_widget_data(self, data):
         try:
@@ -576,56 +614,22 @@ class As_Combobox:
     
 
 class Display_Bool_As_Combobox(As_Combobox, Display):
-            
-    def prepare_widget(self, combobox):
-        model = gtk.ListStore(str, object)
-        combobox.set_model(model)
-        cell = gtk.CellRendererText()
-        combobox.pack_start(cell, True)
-        combobox.add_attribute(cell, 'text', 0)
-        
+    def init(self):
         adict = {'True': True, 'False': False}
         if self.check.required is False:
             adict.update({'None': None})
-        self.values = adict.values() # for reference
-
-        model = combobox.get_model()
-        model.clear()        
-        for key, value in adict.iteritems():
-            model.append((key, value))
-
-        # TODO: focus-in-event
-        
-        
+        self.adict = adict
+       
 
 class Display_Choice_As_Combobox(As_Combobox, Display):
-        
-    def prepare_widget(self, cb):
-        model = gtk.ListStore(str, object)
-        cb.set_model(model)
-        cell = gtk.CellRendererText()
-        cb.pack_start(cell, True)
-        cb.add_attribute(cell, 'text', 0)
-        model.clear()
-        self.values = []
-        for value in self.check.choices:
-            model.append((unicode(value), value))
-            self.values.append(value)
-
+    def init(self):
+        self.alist = self.check.choices
 
 class Display_Mapping_As_Combobox(As_Combobox, Display):
+    def init(self):
+        self.adict = self.check.mapping
 
-    def prepare_widget(self, cb):
-        model = gtk.ListStore(str, object)
-        cb.set_model(model)
-        cell = gtk.CellRendererText()
-        cb.pack_start(cell, True)
-        cb.add_attribute(cell, 'text', 0)
-        model.clear()
-        self.values = []
-        for key, value in self.check.mapping.iteritems():
-            model.append((unicode(key), key))
-            self.values.append(value)
+
             
 
 class Display_Anything_As_Entry(As_Entry, Display):
