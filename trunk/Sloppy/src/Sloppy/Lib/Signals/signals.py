@@ -18,7 +18,7 @@
 # $HeadURL$
 # $Id$
 
-""" Signal/Slot mechanism for SloppyPlot. """
+""" Notification mechanism for SloppyPlot. """
 
 
 import weakref
@@ -83,15 +83,15 @@ class HasSignals:
 
     
     def sig_disconnect(self, cblist):
-        if not isinstance(cblist, (tuple, list)):
-            cblist = [cblist]            
+	if not isinstance(cblist, (list,tuple)):
+	    cblist = [cblist]
 
         for cb in cblist:
             logger.debug("Disconnecting callback '%s' of object '%s'." % (cb, object.__str__(self)))
             try:
                 self._callbacks.remove(cb)
-            except ValueError:
-                logger.debug("Could not remove signal %s" % cb)
+            except ValueError, msg:
+                logger.debug("Could not remove callback %s: %s" % (cb,msg))
 
 
     def sig_disconnect_all(self):
@@ -99,8 +99,8 @@ class HasSignals:
             logger.debug("Disconnecting callback '%s' of object '%s'." % (cb, object.__str__(self)))
             try:
                 self._callbacks.remove(cb)
-            except ValueError:
-                logger.debug("Could not remove signal %s" % cb)
+            except ValueError, msg:
+                logger.debug("Could not remove callback %s: %s" % (cb,msg))
 
 
     def sig_cblist(self, signal=None, receiver=None, func=None):
@@ -136,7 +136,7 @@ class HasSignals:
             receiver = cb.receiver()
             
             if receiver is None:
-                logger.debug("emit: receiver for signal is gone. signal marked for deletion.")
+                logger.debug("emit: receiver for signal is gone. callback marked for deletion.")
                 deprecated.append(cb)
                 continue
 

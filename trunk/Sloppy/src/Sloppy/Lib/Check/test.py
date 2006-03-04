@@ -18,7 +18,8 @@ print recipe.calories
 def on_update(sender, key, value):
     print "on update of ", sender
     print "  ", key, "=", value
-recipe.on_update = on_update
+eview = EventView(recipe)
+eview._any_ =  on_update
 
 recipe.author = "Niklas Volbers"
 recipe2.author = "Fred Weasley" # should not emit an update notification

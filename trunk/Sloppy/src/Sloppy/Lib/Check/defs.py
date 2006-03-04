@@ -40,3 +40,8 @@ class DictionaryLookup(object):
 class CheckView(DictionaryLookup):
     def __init__(self, obj):
         DictionaryLookup.__init__(self, obj._checks)
+
+
+class EventView(DictionaryLookup):
+    def __init__(self, obj):
+        DictionaryLookup.__init__(self, obj._events)

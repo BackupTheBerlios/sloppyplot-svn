@@ -21,12 +21,13 @@
 
 import inspect
 from containers import TypedList, TypedDict
-from defs import Undefined, CheckView
+from defs import Undefined, CheckView, EventView
 
 __all__ = ['Undefined', 'Integer', 'Float', 'Bool', 'Boolean',
            'String', 'Unicode', 'Keyword',
            'Instance', 'List', 'Dict', 'Choice', 'Mapping', 'HasChecks',
-           'AnyValue', 'CheckView', 'Check',
+           'AnyValue', 'Check',
+           'CheckView', 'EventView',
            'values_as_dict']
 
 
@@ -354,14 +355,14 @@ class HasChecks(object):
         return object.__getattribute__(self, key)
 
     def __setattr__(self, key, value):
-        checks = self._checks
+        checks, events = self._checks, self._events
         if checks.has_key(key):
             checks[key].set(self, key, value)
-            events = self._events
             if events.has_key(key):
-                event = events[key]
-                event(self, key, value)
-            self.on_update(self, key, value)
+                events[key](self, key, value)
+            if events.has_key('_any_'):
+                events['_any_'](self,key,value)
+            #self.on_update(self, key, value)
         else:
             object.__setattr__(self, key, value)
     

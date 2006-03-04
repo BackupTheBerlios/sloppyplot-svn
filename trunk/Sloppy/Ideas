@@ -1,4 +1,25 @@
 
+Ideen aus dem Handbuch für Traits:
+
+ - HasChecks sollte für jeden Check eine Benachrichtigung bereit-
+   stellen, denn:
+
+ - Event als Dummy-Check, der nicht wirklich einen Wert setzt, aber
+   eine Benachrichtigung aussendet -- genial.
+
+
+Sollen die Benachrichtigungen in einem Dict gespeichert werden
+oder direkt als attribut_changed ? Die gleiche Frage gilt für 
+die values. Eigentlich war ich mir ziemlich sicher, dass alles
+in ein dict kommt, aber ist das auch schnell genug? Bestimmt...
+
+
+
+
+
+
+
+-------------------------------
 - column.set_visible would be one way to limit the columns.
 
 
