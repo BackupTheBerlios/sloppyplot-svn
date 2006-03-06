@@ -53,7 +53,6 @@ import gtk, sys, inspect
 
 from Sloppy.Lib.Check import *
 from Sloppy.Lib.Signals import *
-from Sloppy.Lib.Events import *
 from Sloppy.Lib.Undo import UndoList
 from Sloppy.Base import uwrap
 
@@ -178,6 +177,8 @@ class ColumnFactory:
             for key in self.keys:
                 row.append(item.get(key))
             model.append( row + [item] )
+
+
             
 #     def check_in(self):
 #         itemlist = self.listowner.get(self.listkey)
@@ -517,7 +518,12 @@ class DisplayFactory:
         return v(klass, key)
     
     new_display = staticmethod(new_display)    
-        
+
+
+    def check_in(self, obj):
+        """ Copy the object and . """
+        # TODO
+        pass
 
 
 
@@ -535,6 +541,7 @@ class Display:
         self.key = key
         self.klass = as_class(klass)
         self.check = getattr(self.klass, key)
+        self.cb = None
         self.obj = None
 
         self.init()
@@ -549,13 +556,21 @@ class Display:
         self.obj = obj
         self.set_widget_data(obj.get(self.key))
 
+        if self.cb is not None:
+            obj.disconnect(self.cb)
+            self.cb = None            
+        update = lambda sender, value: self.set_widget_data(value)
+        obj.sig_connect('notify:%s'%self.key, update)
+
+
     def use_widget(self, widget):
         self.widget = widget
         self.prepare_widget(widget)
 
     def on_update(self, sender):
-        # this can be used as a hook for undo 
-        print "on update of ", sender.key, "=", self.obj.get(sender.key)
+        # this can be used as a hook for undo
+        pass
+        #print "on update of ", sender.key, "=", self.obj.get(sender.key)
 
 
 
@@ -580,6 +595,7 @@ class As_Entry:
         if self.check.required is False and value == "":
             value = None
 
+        print "Entry checks using %s" % self.check
         try:
             value = self.check(value)
         except ValueError, msg:
@@ -588,7 +604,7 @@ class As_Entry:
         else:
             ##self.set_widget_data(value)
             self.obj.set(self.key, value)
-            self.on_update(self)
+            #self.on_update(self)
 
         return False
 
@@ -811,7 +827,7 @@ class Display_RGBColor_As_Colorbutton(As_Colorbutton, Display):
 
 def test():
     
-    class TestObject(HasChecks):
+    class TestObject(HasChecks, HasSignals):
         is_valid = Bool(init=True)
         is_valid_or_none = Bool(init=None)
         choices = Choice(['One', 'Two', 'Three'], init='Two')
@@ -830,18 +846,25 @@ def test():
 
         def __init__(self, **kwargs):
             HasChecks.__init__(self, **kwargs)
-            self._events = {}
+            HasSignals.__init__(self)
 
+            self.sig_register('notify')
+            for key in self._checks.keys():
+                print 'Registering notify:%s'%key
+                self.sig_register('notify:%s'%key)
+
+            dispatch = lambda sender, key, value: self.sig_emit('notify:%s'%key, value)
+            self.sig_connect('notify', dispatch)
+                             
 
 
     class MainObject(HasChecks):
         obj_list = List(Instance(TestObject))
 
 
-    obj = TestObject(a_string="object ONE", is_valid=False, a_mapping='One')
-    obj2 = TestObject(a_string="object TWO", an_integer=5, a_mapping=1)
+    obj = TestObject(a_string="object ONE", is_valid=False)#, a_mapping='One')
+    obj2 = TestObject(a_string="object TWO", an_integer=5)#, a_mapping=1)
     main = MainObject(obj_list=[obj, obj2])
-
 
     # This is how the notification works:
 
@@ -866,21 +889,10 @@ def test():
         # (s,k,v = sender, key, value)
         def on_update(s,k,v):
             print "On notify"
-            s._events['notify'].trigger(k, v)
-            s._events["notify::%s" % k].trigger(v)
-            #df.displays[k].set_widget_data(v)
-            df2.displays[k].set_widget_data(v)
+            s.sig_emit('notify:%s'%k, v)
 
         obj.on_update = on_update
-        
-        obj._events['notify'] = Event(obj)
-        for key in obj._checks.keys():
-            obj._events['notify::%s'%key] = Event(obj)
-
-        for key in df.keys:
-            obj._events['notify::%s'%key].connect(lambda sender, value: df.displays[key].set_widget_data(value))
-  
-        
+        obj2.on_update = on_update               
 
         df2 = DisplayFactory(obj)        
         df2.add_keys(obj._checks.keys())
