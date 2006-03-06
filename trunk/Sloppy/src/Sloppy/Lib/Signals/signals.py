@@ -184,7 +184,9 @@ def test():
     tc.sig_connect("notify", tc2.on_notify)
     tc.sig_emit("notify", 10)
 
+    r = weakref.ref(tc2.on_notify)    
     del tc2
+    print "===>", r()
     tc.sig_emit("notify", 12)
 
     del receiver
