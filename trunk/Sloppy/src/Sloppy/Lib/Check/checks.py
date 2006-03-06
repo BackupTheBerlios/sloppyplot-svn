@@ -311,7 +311,6 @@ class HasChecks(object):
         object.__setattr__(self, '_values', {})
         object.__setattr__(self, '_raw_values', {})        
         object.__setattr__(self, 'on_update', lambda sender, key, value: None)
-        object.__setattr__(self, '_events', {})
         
         # We need to iterate over all Check instances and
         # set default values for them.
@@ -355,14 +354,10 @@ class HasChecks(object):
         return object.__getattribute__(self, key)
 
     def __setattr__(self, key, value):
-        checks, events = self._checks, self._events
+        checks = self._checks
         if checks.has_key(key):
             checks[key].set(self, key, value)
-            if events.has_key(key):
-                events[key](self, key, value)
-            if events.has_key('_any_'):
-                events['_any_'](self,key,value)
-            #self.on_update(self, key, value)
+            self.on_update(self, key, value)
         else:
             object.__setattr__(self, key, value)
     

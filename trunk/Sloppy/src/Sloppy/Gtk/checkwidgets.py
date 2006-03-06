@@ -53,6 +53,7 @@ import gtk, sys, inspect
 
 from Sloppy.Lib.Check import *
 from Sloppy.Lib.Signals import *
+from Sloppy.Lib.Events import *
 from Sloppy.Lib.Undo import UndoList
 from Sloppy.Base import uwrap
 
@@ -810,7 +811,7 @@ class Display_RGBColor_As_Colorbutton(As_Colorbutton, Display):
 
 def test():
     
-    class TestObject(HasChecks, HasSignals):
+    class TestObject(HasChecks):
         is_valid = Bool(init=True)
         is_valid_or_none = Bool(init=None)
         choices = Choice(['One', 'Two', 'Three'], init='Two')
@@ -829,15 +830,9 @@ def test():
 
         def __init__(self, **kwargs):
             HasChecks.__init__(self, **kwargs)
-            HasSignals.__init__(self)
-            self.sig_register("notify")
-            self.on_update = self.emit_notify
+            self._events = {}
 
-        def emit_notify(self, sender, key, value):
-            # TODO: who emits this twice?
-            print "emit notify", sender, key, value
-            self.sig_emit('notify', key, value)
-        
+
 
     class MainObject(HasChecks):
         obj_list = List(Instance(TestObject))
@@ -869,10 +864,23 @@ def test():
         df.set_object(obj)
 
         # (s,k,v = sender, key, value)
-        def on_notify(s,k,v):
-            df.displays[k].set_widget_data(v)
+        def on_update(s,k,v):
+            print "On notify"
+            s._events['notify'].trigger(k, v)
+            s._events["notify::%s" % k].trigger(v)
+            #df.displays[k].set_widget_data(v)
             df2.displays[k].set_widget_data(v)
-        obj.sig_connect("notify", on_notify)#lambda s,k,v: self.set_widget_data(v))        
+
+        obj.on_update = on_update
+        
+        obj._events['notify'] = Event(obj)
+        for key in obj._checks.keys():
+            obj._events['notify::%s'%key] = Event(obj)
+
+        for key in df.keys:
+            obj._events['notify::%s'%key].connect(lambda sender, value: df.displays[key].set_widget_data(value))
+  
+        
 
         df2 = DisplayFactory(obj)        
         df2.add_keys(obj._checks.keys())
