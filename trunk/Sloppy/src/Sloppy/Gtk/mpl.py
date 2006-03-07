@@ -514,9 +514,7 @@ class MatplotlibWidget(gtk.VBox):
             uwrap.set(axis, start=_start, end=_end, undolist=ul)
 
         set_axis(layer.xaxis, x0, x1)
-        set_axis(layer.yaxis, y0, y1)
-        
-        uwrap.emit_last( self.plot, "changed", undolist=ul )
+        set_axis(layer.yaxis, y0, y1)        
         
         undolist.append(ul)
 
@@ -557,17 +555,16 @@ class MatplotlibWidget(gtk.VBox):
 
     #------------------------------------------------------------------------------
 
-    # current layer: OK
     def on_action_ZoomRect(self, action):
 
         def finish_zooming(sender):
-            self.statusbar.pop(
-                self.statusbar.get_context_id('action-zoom'))
-
+            print "ZOOM FINISHED 1"
+            self.statusbar.pop(self.statusbar.get_context_id('action-zoom'))
             ul = UndoList().describe("Zoom Region")
             layer = self.backend.active_layer
             self.zoom_to_region(layer, sender.region, undolist=ul)
-            self.project.journal.add_undo(ul)           
+            self.project.journal.add_undo(ul)
+            print "ZOOM FINISHED 2"
 
         layer = self.backend.active_layer
         axes = self.backend.get_painter(layer).axes
@@ -576,7 +573,6 @@ class MatplotlibWidget(gtk.VBox):
         self.statusbar.push(
             self.statusbar.get_context_id('action-zoom'),
             "Use the left mouse button to zoom.")
-
         self.select(s)
 
 

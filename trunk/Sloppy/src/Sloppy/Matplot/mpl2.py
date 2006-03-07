@@ -168,6 +168,30 @@ class LayerPainter(Painter):
         # plot_painter := backend
         layer, plot_painter = self.obj, self.parent
         axes = self.axes
+
+        # axes
+        for (key, axis) in layer.axes.iteritems():
+            #:axis.label, :axis.scale, :axis.start,:axis.end
+            label, scale, start, end = axis.label, axis.scale, axis.start, axis.end
+            logger.debug("start = %s; end = %s" % (start, end))
+            
+            if key == 'x':
+                set_label = axes.set_xlabel
+                set_scale = axes.set_xscale
+                set_start = (lambda l: axes.set_xlim(xmin=l))
+                set_end = (lambda l: axes.set_xlim(xmax=l))
+            elif key == 'y':
+                set_label = axes.set_ylabel
+                set_scale = axes.set_yscale
+                set_start = (lambda l: axes.set_ylim(ymin=l))
+                set_end = (lambda l: axes.set_ylim(ymax=l))
+            else:
+                raise RuntimeError("Invalid axis key '%s'" % key)
+
+            if label is not None: set_label(label)
+            if scale is not None: set_scale(scale)
+            if start is not None: set_start(start)
+            if end is not None: set_end(end)
             
         # title
         title = layer.title
