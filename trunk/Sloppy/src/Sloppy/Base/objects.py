@@ -26,7 +26,7 @@ Collection of all basic data objects used for SloppyPlot.
 from Sloppy.Base.tree import Node
 from Sloppy.Base.dataset import Dataset
 
-from Sloppy.Lib.Signals import HasSignals
+from Sloppy.Lib.Signals import *
 from Sloppy.Lib.Undo import udict
 from Sloppy.Lib.Check import *
 
@@ -83,12 +83,43 @@ PV = {
 
 
 
+class SPObject(HasChecks):
+
+    def __init__(self, **kwargs):
+        HasChecks.__init__(self, **kwargs)
+
+        # set up available Signals
+        self.signals = {}            
+        self.signals['update'] = Signal()
+        for key in self._checks.keys():                
+            self.signals['update:%s'%key] = Signal()
+
+        # trigger Signals on attribute update
+        def dispatch(sender, key, value):
+            sender.signals['update:%s'%key].call(sender, value)
+        self.signals['update'].connect(dispatch)
+
+        def on_update(sender, key, value):
+            sender.signals['update'].call(sender, key,value)
+        self.on_update = on_update
+
+    # for compatibility
+    def sig_register(self, name):
+        self.signals[name] = Signal()
+
+    def sig_emit(self, name, *args, **kwargs):
+        self.signals[name].call(self, *args, **kwargs)
+
+    def sig_connect(self, name, func):
+        return self.signals[name].connect(func)
+
+        
 #------------------------------------------------------------------------------
 # BASE OBJECTS
 # 
 
 
-class TextLabel(HasChecks):
+class TextLabel(SPObject):
     " Single text label. "
     text = Unicode(blurb="Displayed Text")
     x = Float(blurb="X-Position")
@@ -98,7 +129,7 @@ class TextLabel(HasChecks):
     halign = Choice(PV['position_halign'], blurb="Horizontal Aligment")    
 
 
-class Axis(HasChecks):
+class Axis(SPObject):
     " A single axis for a plot. "
     label = Unicode(blurb='Label')
     start = Float(init=None, blurb='Start')
@@ -108,7 +139,7 @@ class Axis(HasChecks):
 
     
         
-class Line(HasChecks):
+class Line(SPObject):
     " A single line or collection of points in a Plot. "
     label = Unicode()
     visible = Boolean(init=True)
@@ -131,11 +162,11 @@ class Line(HasChecks):
     cxerr = Integer(min=0,max=None)
     cyerr = Integer(min=0,max=None)
 
-    source = Instance(Dataset)    
+    source = Instance(Dataset)
 
 
 
-class Legend(HasChecks):
+class Legend(SPObject):
     " Plot legend. "
     label = Unicode(doc='Legend Label')
     visible = Boolean(init=True, required=True)
@@ -146,7 +177,7 @@ class Legend(HasChecks):
 
 
 
-class Layer(HasChecks, HasSignals):
+class Layer(SPObject):
     type = Choice(PV['layer.type'])
     title = Unicode(init=None, blurb="Title")
     lines = List(Instance(Line), blurb="Lines")
@@ -194,17 +225,9 @@ class Layer(HasChecks, HasSignals):
         return {'x':self.xaxis, 'y':self.yaxis}
     axes = property(get_axes)
 
-
-
-    def __init__(self, **kwargs):
-        HasChecks.__init__(self, **kwargs)
-
-        HasSignals.__init__(self)
-        self.sig_register('notify')
-        self.sig_register('notify::labels')
         
 
-class View(HasChecks):
+class View(SPObject):
     start = Float(blurb='Start')
     end = Float(blurb='End')
     
@@ -213,7 +236,7 @@ class View(HasChecks):
 ###############################################################################
 
 
-class Plot(Node, HasChecks, HasSignals):
+class Plot(Node, SPObject):
 
     key = Keyword(blurb="Key") # TODO: remove this!
     
@@ -227,15 +250,11 @@ class Plot(Node, HasChecks, HasSignals):
 
     
     def __init__(self, *args, **kwargs):
-        HasChecks.__init__(self, *args, **kwargs)
-        HasSignals.__init__(self)
+        SPObject.__init__(self, *args, **kwargs)
         Node.__init__(self)
 
         self.sig_register("closed")
         self.sig_register("changed")
-
-        self.sig_register("notify::labels")
-        self.sig_register("notify::layers")
 
        
 #     #----------------------------------------------------------------------

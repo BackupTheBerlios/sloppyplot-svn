@@ -139,12 +139,12 @@ class ProjectTreeView( gtk.TreeView ):
         self.project = project
         self.populate_treeview()
 
-        # connect notify signals with update mechanism
+        # connect update signals with update mechanism
         if self.project is not None:
-            def on_notify(sender):
+            def on_update(sender):
                 self.populate_treeview()
-            project.sig_connect("notify::datasets", on_notify)
-            project.sig_connect("notify::plots", on_notify)
+            project.sig_connect("update:datasets", on_update)
+            project.sig_connect("update:plots", on_update)
 
 
     # ----------------------------------------------------------------------

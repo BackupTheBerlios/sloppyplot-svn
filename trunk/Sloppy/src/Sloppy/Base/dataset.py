@@ -52,9 +52,9 @@ class Dataset(tree.Node, HasSignals):
     
     
     def __init__(self, array=None):
-        tree.Node.__init__(self)
         HasSignals.__init__(self)
-       
+        tree.Node.__init__(self)
+        
         # TBR
         self.key = "" # TODO: should be moved to parent object!    
         self.change_counter = 0
@@ -62,7 +62,6 @@ class Dataset(tree.Node, HasSignals):
         self._import = None
 
         self.sig_register('closed')
-        self.sig_register('notify')
         self.sig_register('update-fields')
 
         self._array = None
@@ -72,13 +71,13 @@ class Dataset(tree.Node, HasSignals):
 
     def revert_change(self, undolist=[]):
         self.change_counter -= 1
-        self.sig_emit('notify')
-        undolist.append( UndoInfo(self.notify_change).describe("Notify") )
+        self.sig_emit('update')
+        undolist.append( UndoInfo(self.update_change).describe("Update") )
         
     def notify_change(self, undolist=[]):
         self.change_counter += 1
-        self.sig_emit('notify')        
-        undolist.append( UndoInfo(self.revert_change).describe("Notify") )
+        self.sig_emit('update')        
+        undolist.append( UndoInfo(self.revert_change).describe("Update") )
 
     def has_changes(self, counter):
         return self.change_counter != counter
@@ -590,7 +589,7 @@ class Table(Dataset):
         old_data = self._array[name].copy()
         self._array[name] = array
         undolist.append(UndoInfo(self.set_column, col, old_data))
-        self.sig_emit('notify')
+        self.sig_emit('update')
 
     def get_info(self, cindex):
         """

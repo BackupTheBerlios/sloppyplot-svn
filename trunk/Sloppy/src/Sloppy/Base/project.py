@@ -31,7 +31,7 @@ from Sloppy.Lib.Undo import Journal, UndoInfo, NullUndo, UndoList, ulist
 from Sloppy.Lib.Signals import HasSignals
 from Sloppy.Lib.Check import *
 
-from Sloppy.Base.objects import Plot, Axis, Line, Layer, new_lineplot2d
+from Sloppy.Base.objects import Plot, Axis, Line, Layer, new_lineplot2d, SPObject
 from Sloppy.Base.dataset import Dataset, Table
 from Sloppy.Base.backend import Backend
 
@@ -63,7 +63,7 @@ SloppyPlot, you can extract the file from this archive by hand.
 }
 
 
-class Project(HasChecks, HasSignals):
+class Project(SPObject):
 
     """
     A Project contains the plots, datasets and all other information
@@ -91,14 +91,9 @@ class Project(HasChecks, HasSignals):
     
     
     def __init__(self,*args,**kwargs):
-        HasChecks.__init__(self, **kwargs)
-        HasSignals.__init__(self)
+        SPObject.__init__(self, **kwargs)
+        self.sig_register('close')
         
-        self.sig_register("close")
-        self.sig_register("notify::plots")
-        self.sig_register("notify::datasets")        
-        self.sig_register("notify::backends")        
-            
         self.journal = Journal()
         self._archive = None
         self.app = None
@@ -170,7 +165,7 @@ class Project(HasChecks, HasSignals):
                 uwrap.set(dataset, 'key', new_key, undolist=ul)
             ulist.append( self.datasets, dataset, undolist=ul )
 
-        uwrap.emit_last(self, "notify::datasets", undolist=ul)            
+        uwrap.emit_last(self, "update:datasets", undolist=ul)            
         undolist.append(ul)
         
         cli_logger.info("Added %d dataset(s)." % len(datasets) )
@@ -196,7 +191,7 @@ class Project(HasChecks, HasSignals):
                 uwrap.set(plot, 'key', new_key, undolist=ul)
             ulist.append(self.plots, plot, undolist=ul)
 
-        uwrap.emit_last(self, "notify::plots", undolist=ul)
+        uwrap.emit_last(self, "update:plots", undolist=ul)
         undolist.append(ul)
 
         cli_logger.info("Added %d plot(s)." % len(plots) )
@@ -229,7 +224,7 @@ class Project(HasChecks, HasSignals):
         else:
             undolist.describe("Remove Datasets")
             
-        self.sig_emit("notify::datasets") 
+        self.sig_emit("update:datasets") 
 
 
     def remove_dataset(self, dataset, undolist=None):
@@ -259,7 +254,7 @@ class Project(HasChecks, HasSignals):
         else:
             undolist.describe("Remove Plots")
 
-        self.sig_emit("notify::plots")
+        self.sig_emit("update:plots")
 
 
     def remove_plot(self, plot, undolist=None):
@@ -292,7 +287,7 @@ class Project(HasChecks, HasSignals):
             return
             
         undolist.append(ui)        
-        self.sig_emit("notify::datasets")
+        self.sig_emit("update:datasets")
         
         return dataset
 
@@ -317,7 +312,7 @@ class Project(HasChecks, HasSignals):
             return
 
         undolist.append(ui)
-        self.sig_emit("notify::plots")
+        self.sig_emit("update:plots")
 
         return plot
     
@@ -376,7 +371,7 @@ class Project(HasChecks, HasSignals):
         key = pdict.unique_key(self.datasets, key)
         ds = Table()
         pdict.setitem(self.datasets, key, ds)
-        self.sig_emit("notify::datasets")
+        self.sig_emit("update:datasets")
 
         ui = UndoInfo(self.remove_objects, [ds], False)
         ui.describe("Create new Dataset '%s'" % key)
@@ -397,7 +392,7 @@ class Project(HasChecks, HasSignals):
         ui = UndoInfo(self.remove_plot, new_plot).describe("New Plot")
         undolist.append(ui)
 
-        self.sig_emit("notify::plots")
+        self.sig_emit("update:plots")
         
         return new_plot    
 
@@ -458,13 +453,13 @@ class Project(HasChecks, HasSignals):
         else:
             backend = globals.BackendRegistry[key](project=self, plot=plot)            
             self.backends.append(backend)
-            self.sig_emit('notify::backends')
+            self.sig_emit('update:backends')
             return backend
         
     def remove_backend(self, backend):
         try:
             self.backends.remove(backend)
-            self.sig_emit('notify::backends')
+            self.sig_emit('update:backends')
         except ValueError:
             logger.warn("remove_backend: Could not find Backend %s in Project." % backend)
             

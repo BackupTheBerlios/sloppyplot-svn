@@ -198,9 +198,9 @@ class AppWindow( gtk.Window ):
         window.connect('hide', on_window_visibility_toggled, t)
         window.connect('show', on_window_visibility_toggled, t)
 
-        def on_notify_project(sender, project, toolwin):
-            toolwin.set_project(project)
-        globals.app.sig_connect('notify::project', on_notify_project, window)
+        def on_update_project(sender, project):
+            window.set_project(project)
+        globals.app.sig_connect('update:project', on_update_project)
         
         return window
 

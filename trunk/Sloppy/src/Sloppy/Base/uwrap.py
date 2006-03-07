@@ -51,9 +51,6 @@ def set(container, *args, **kwargs):
 
     undolist.append( UndoInfo(set, container, **olditems) )      
 
-    if len(changeset) > 0 and isinstance(container, HasSignals):
-        container.sig_emit("notify", changeset)
-
 
 def smart_set(container, *args, **kwargs):
 
@@ -82,8 +79,6 @@ def smart_set(container, *args, **kwargs):
 
     if len(changed_props) > 0:
         undolist.append( UndoInfo(smart_set, container, **olditems) )
-        if len(changed_props) > 0 and isinstance(container, HasSignals):
-            container.sig_emit("notify", changed_props)
     else:
         undolist.append( NullUndo() )
 

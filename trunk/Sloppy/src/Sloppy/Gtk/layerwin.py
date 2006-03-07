@@ -73,7 +73,8 @@ class LayerWindow(gtk.Window):
         for tab in [LayerTab(layer),
                     AxesTab(layer.axes),
                     LegendTab(layer.legend),                    
-                    LineTab(layer)]:
+                    #LineTab(layer) # disabled due to missing factory support
+                    ]:
             nb.append_page(tab)
             nb.set_tab_label_text(tab, tab.title)
             self.tabdict[tab.title] = tab
@@ -271,7 +272,7 @@ class AbstractTab(gtk.VBox):
         self.factory = None
         
     def check_in(self):
-        self.factory.check_in()
+        self.factory.check_in(self.obj)
 
     def check_out(self, undolist=[]):
         ul = UndoList().describe("Multiple actions")
@@ -294,7 +295,7 @@ class LayerTab(AbstractTab):
         frame = uihelper.new_section("Layer", table)
         self.add(frame)
 
-        self.layer = layer
+        self.layer = self.obj = layer
         self.show_all()        
 
 
@@ -307,11 +308,13 @@ class LegendTab(AbstractTab):
         AbstractTab.__init__(self)
 
         keys = ['label', 'position', 'visible', 'border', 'x', 'y']
+
         self.factory = checkwidgets.DisplayFactory(legend)
         self.factory.add_keys(keys)
         table = self.factory.create_table()
         frame = uihelper.new_section("Legend", table)
         self.add(frame)
+        self.obj = legend
 
         self.show_all()
 
@@ -335,12 +338,13 @@ class AxesTab(AbstractTab):
             frame = uihelper.new_section(key, table)
             self.pack_start(frame, False, True)
             self.factorylist.append(factory)
+            self.obj = axis
 
         self.show_all()
 
     def check_in(self):
         for factory in self.factorylist:
-            factory.check_in()
+            factory.check_in(self.obj)
 
     def check_out(self, undolist=[]):
         for factory in self.factorylist:
@@ -365,6 +369,7 @@ class LineTab(AbstractTab):
         self.factory.add_keys(keys, source=self.create_source_column)
         self.treeview = self.factory.create_treeview()
         sw = uihelper.add_scrollbars(self.treeview)
+        #self.obj = 
 
         #
         # keybox = label + key_combo 

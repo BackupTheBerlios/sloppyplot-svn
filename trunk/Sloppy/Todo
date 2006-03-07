@@ -1,3 +1,9 @@
+
+- replace all occurences of update:backends with update signal of the list.
+  The SPObject must set the on_update method of all List and Dict objects
+  to emit the signal 'update:xxxx'.
+
+
 (for 0.5.3):
 ============
 

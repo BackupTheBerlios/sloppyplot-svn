@@ -106,7 +106,7 @@ class Application(object, HasSignals):
         # init signals
         HasSignals.__init__(self)
         self.sig_register('write-config')
-        self.sig_register('notify::project')
+        self.sig_register('update:project')
         self.sig_register('update-recent-files')
 
         # init path handler
@@ -221,7 +221,7 @@ class Application(object, HasSignals):
             project.sig_connect('close', detach_project)
 
         if has_changed is True:
-            self.sig_emit('notify::project', self._project)        
+            self.sig_emit('update:project', self._project)        
 
         return self._project
 

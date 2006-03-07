@@ -100,7 +100,7 @@ class Backend(object, HasSignals):
 
         HasSignals.__init__(self)
         self.sig_register("closed")
-        self.sig_register("notify::layer")
+        self.sig_register("update:layer")
         self.cblist = []
         
         # set options and merge keywords from BackendRegistry.register

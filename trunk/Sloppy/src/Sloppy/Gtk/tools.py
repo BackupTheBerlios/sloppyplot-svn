@@ -120,7 +120,7 @@ class Toolbox(gtk.Window):
         if project is not None:
             # update combobox again if plots change
             self.project_cblist.extend(
-                [project.sig_connect('notify::backends',
+                [project.sig_connect('update:backends',
                                  (lambda sender: self.update_combobox())),
                  #Signals.connect(project.app, 'backend-changed',
                  #                (lambda sender, backend: self.set_backend(backend)))
@@ -304,7 +304,7 @@ class LayerTool(Tool):
 
         # connect to change of current layer
         self.backend_cblist.append(
-            self.backend.sig_connect("notify::layer",
+            self.backend.sig_connect("update:layer",
                             (lambda sender, layer: self.set_layer(layer)))
             )
         
@@ -397,7 +397,7 @@ class LabelsTool(Tool):
         
         if layer is not None:
             self.layer_cblist.append(
-                self.layer.sig_connect("notify::labels", self.on_notify_labels)
+                self.layer.sig_connect("update:labels", self.on_update_labels)
                 )
         self.on_update_layer()
         
@@ -451,7 +451,7 @@ class LabelsTool(Tool):
         ul = UndoList().describe("Update label.")
         changeset['undolist'] = ul
         uwrap.set(label, **changeset)
-        uwrap.emit_last(self.backend.layer, 'notify::labels',
+        uwrap.emit_last(self.backend.layer, 'update:labels',
                         updateinfo={'edit' : label},
                         undolist=ul)
         
@@ -471,7 +471,7 @@ class LabelsTool(Tool):
             
         ul = UndoList().describe("New label.")
         ulist.append(self.layer.labels, label, undolist=ul)
-        uwrap.emit_last(self.layer, "notify::labels",
+        uwrap.emit_last(self.layer, "update:labels",
                         updateinfo={'add' : label},
                         undolist=ul)
         project.journal.append(ul)
@@ -488,11 +488,11 @@ class LabelsTool(Tool):
 
         ul = UndoList().describe("Remove label.")
         ulist.remove(self.layer.labels, label, undolist=ul)
-        uwrap.emit_last(self.layer, "notify::labels",
+        uwrap.emit_last(self.layer, "update:labels",
                         updateinfo={'remove' : label},
                         undolist=ul)
         project.journal.append(ul)
         
         
-    def on_notify_labels(self, layer, updateinfo=None):
+    def on_update_labels(self, layer, updateinfo=None):
         self.on_update_layer()

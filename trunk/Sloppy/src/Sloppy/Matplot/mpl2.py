@@ -28,7 +28,7 @@ logger = logging.getLogger('Backends.mpl2')
 
 #  So obviously each painter needs to connect to its object somehow
 #  and realize if it changes/if it is removed/if there's a new item.
-#  This _should_ be done with the 'notify' and the 'notify::obj' 
+#  This _should_ be done with the 'update' and the 'update:obj' 
 #  signals, where the second version is for altering lists and dicts.
 #  I should try this with the lines.
 
@@ -82,7 +82,7 @@ class Backend(backend.Backend):
         self.painters = {} # == layers
 
         self.active_layer = None
-        #self.plot.sig_connect('notify::layers', self.on_notify_layers)
+        #self.plot.sig_connect('update:layers', self.on_update_layers)
 
 
     def connect(self):
@@ -113,10 +113,10 @@ class Backend(backend.Backend):
         if layer == self.active_layer:
             return
 
-        self.sig_emit("notify", {'active_layer':layer})
+        self.sig_emit("update", {'active_layer':layer})
         self.active_layer = layer
 
-    def on_notify_layers(self, sender, updateinfo):
+    def on_update_layers(self, sender, updateinfo):
         print "layers have changed:", updateinfo
         removed = updateinfo.get('removed', [])
         if self.active_layer in removed:

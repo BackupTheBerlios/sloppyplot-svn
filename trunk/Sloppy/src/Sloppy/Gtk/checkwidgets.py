@@ -52,7 +52,7 @@
 import gtk, sys, inspect
 
 from Sloppy.Lib.Check import *
-from Sloppy.Lib.Signals.sig import *
+from Sloppy.Lib.Signals import *
 from Sloppy.Lib.Undo import UndoList
 from Sloppy.Base import uwrap
 
@@ -429,6 +429,7 @@ class DisplayFactory:
         self.keys = []
         self.displays = {}
         self.instance = None
+        self.original_instance = None
         
     def add_keys(self, *keys, **kwargs):
         for key in keys:
@@ -491,12 +492,12 @@ class DisplayFactory:
             n += 1
 
         return tw
-        
 
     def connect(self, obj):
-        self.obj = obj
+        self.instance = obj
         for display in self.displays.itervalues():
-            display.connect(self.obj)
+            # the displays are responsible for disconnecting the old obj
+            display.connect(obj)
     
     def new_display(klass, key):
         check = getattr(klass, key)
@@ -521,10 +522,24 @@ class DisplayFactory:
 
 
     def check_in(self, obj):
-        """ Copy the object and . """
-        # TODO
-        pass
+        """ Create a copy of the object and connect to it."""        
+        self.original_instance = obj
+        copy = obj.__class__(**obj._values)
+        self.connect(copy)
+        print "checked in ", copy, "and original instance is ", obj, "and instance is ", self.instance        
 
+    def check_out(self, undolist=[]):
+        # create changeset
+        new_values = self.instance._values
+        old_values = self.original_instance._values
+        changeset = {}
+        for key, value in new_values.iteritems():
+            if value != old_values[key]:
+                changeset[key] = value
+
+        changeset['undolist'] = undolist
+        uwrap.set(self.original_instance, **changeset)
+        
 
 
 
@@ -555,16 +570,15 @@ class Display:
     def connect(self, obj):
         if self.obj is not None:
             if self.cb is not None:
-                obj.disconnect(self.cb)
+                self.cb.disconnect()
                 self.cb = None            
             self.obj = None
 
         self.obj = obj
         if obj is not None:
             self.set_widget_data(obj.get(self.key))
-            update = lambda sender, value: self.set_widget_data(value)
-            obj.signals['update:%s'%self.key].connect(update)
-            # or obj.sigNotify.connect(update)
+            on_update_lambda = lambda sender, value: self.set_widget_data(value)        
+            obj.signals['update:%s'%self.key].connect(on_update_lambda)
         else:
             self.widget.set_sensitive(False)
 
@@ -606,7 +620,6 @@ class As_Entry:
         if self.check.required is False and value == "":
             value = None
 
-        print "Entry checks using %s" % self.check
         try:
             value = self.check(value)
         except ValueError, msg:
@@ -615,7 +628,7 @@ class As_Entry:
         else:
             ##self.set_widget_data(value)
             self.obj.set(self.key, value)
-            #self.on_update(self)
+            self.on_update(self)
 
         return False
 
@@ -858,13 +871,20 @@ def test():
         def __init__(self, **kwargs):
             HasChecks.__init__(self, **kwargs)
 
+            # set up available Signals
             self.signals = {}            
             self.signals['update'] = Signal()
             for key in self._checks.keys():                
                 self.signals['update:%s'%key] = Signal()
 
-            dispatch = lambda sender, key, value: self.signals['update:%s'%key].call(sender, value)
+            # trigger Signals on attribute update
+            def dispatch(sender, key, value):
+                sender.signals['update:%s'%key].call(sender, value)
             self.signals['update'].connect(dispatch)
+
+            def on_update(sender, key, value):
+                sender.signals['update'].call(sender, key,value)
+            self.on_update = on_update
                              
 
 
@@ -887,52 +907,16 @@ def test():
     # of the object and call set_widget_data whenever
     # the value changes.
 
-    if True:
-        df = DisplayFactory(obj)        
-        df.add_keys(obj._checks.keys())
-        tv = df.create_table()
-        df.connect(obj)
-
-        # (s,k,v = sender, key, value)
-        def on_update(s,k,v):
-            s.signals['update:%s'%k].call(s, v)
-
-        obj.on_update = on_update
-        obj2.on_update = on_update               
-
-        df2 = DisplayFactory(obj)        
-        df2.add_keys(obj._checks.keys())
-        tv2 = df2.create_table()
-        df2.connect(obj)        
-    else:
-        df = ColumnFactory(main, 'obj_list', obj.__class__)
-        df.add_keys(obj._checks.keys())
-        tv = df.create_treeview()
-
+    df = DisplayFactory(obj)        
+    df.add_keys(obj._checks.keys())
+    tv = df.create_table()
+    df.check_in(obj)
 
     def quit(sender):
+        df.check_out()
         print
         print "Obj1 ===>", obj._values
-        print
-        print "Obj2 ===>", obj2._values
-        print        
         gtk.main_quit()
-
-
-    def toggle(sender):
-        if df.obj is obj:
-            new_obj = obj2
-        else:
-            new_obj = obj
-        print "toggle", new_obj            
-        df.connect(new_obj)
-    btn = gtk.Button("toggle object")
-    btn.connect("clicked", toggle)
-
-    def set_string(sender):
-        obj.set('a_string', 'Niklas')
-    btn2 = gtk.Button("Set a_string to Niklas")
-    btn2.connect("clicked", set_string)            
     
     win = gtk.Window()
     win.set_size_request(640,480)
@@ -940,12 +924,9 @@ def test():
 
     hbox = gtk.HBox()
     hbox.add(tv)
-    hbox.add(tv2)
     
     vbox = gtk.VBox()
     vbox.add(uihelper.add_scrollbars(hbox, viewport=True))
-    vbox.pack_end(btn, False, True)
-    vbox.pack_end(btn2, False, True)
     win.add(vbox)
     win.show_all()
 

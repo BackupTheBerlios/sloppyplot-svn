@@ -47,13 +47,16 @@ class Signal:
     def connect(self, slot):
         self.disconnect(slot)
         if inspect.ismethod(slot):
-            self.slots.append(WeakMethod(slot))
+            wm = WeakMethod(slot)
+            self.slots.append(wm)
         else:
             o = _WeakMethod_FuncHost(slot)
-            self.slots.append(WeakMethod(o.func))
+            wm = WeakMethod(o.func)
+            self.slots.append(wm)
             # we stick a copy in here just to keep the instance alive
             self.funchost.append(o)
-
+        return wm
+    
     def disconnect(self, slot):
         try:
             for i in range(len(self.slots)):
@@ -69,7 +72,7 @@ class Signal:
         except:
             pass
 
-    def disconnectAll(self):
+    def disconnect_all(self):
         del self.slots
         del self.funchost
         self.slots = []
@@ -89,6 +92,8 @@ class WeakMethod:
 	def __call__(self, *args, **kwargs):
             if self.c() == None : return
             self.f(self.c(), *args, **kwargs)
+        def disconnect(self):
+            self.c = lambda: None
 
 
 
@@ -131,7 +136,7 @@ if __name__ == "__main__":
     # Disconnecting all signals
     print
     print "should see no messages"
-    b.sigClick.disconnectAll()
+    b.sigClick.disconnect_all()
     b.sigClick()
 
     # connecting multiple functions to a signal
@@ -152,7 +157,7 @@ if __name__ == "__main__":
     # signals disconnecting automatically
     print
     print "should see one message"
-    b.sigClick.disconnectAll()
+    b.sigClick.disconnect_all()
     b.sigClick.connect(l.onClick)
     b.sigClick.connect(l2.onClick)
     del l2    
@@ -164,3 +169,14 @@ if __name__ == "__main__":
     sig = Signal()
     sig.connect(listenWithArgs)
     sig("Hello, World!")
+    sig.disconnect(listenWithArgs)
+    
+    # disconnecting a signal by its WeakMethod object
+    print
+    print "should see one message"
+    l3 = Listener()
+    cb = b.sigClick.connect(l3.onClick)
+    b.sigClick
+    cb.disconnect()
+    b.sigClick()
+
