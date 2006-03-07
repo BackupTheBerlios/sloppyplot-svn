@@ -52,7 +52,7 @@
 import gtk, sys, inspect
 
 from Sloppy.Lib.Check import *
-from Sloppy.Lib.Signals import *
+from Sloppy.Lib.Signals.sig import *
 from Sloppy.Lib.Undo import UndoList
 from Sloppy.Base import uwrap
 
@@ -157,11 +157,11 @@ class ColumnFactory:
 
 
 
-    def set_object(self, obj):
+    def connect(self, obj):
         # obj is the listowner
         self.obj = obj
         for creator in self.creators.itervalues():
-            creator.set_object(obj)
+            creator.connect(obj)
 
         model = self.treeview.get_model()
         model.clear()
@@ -493,10 +493,10 @@ class DisplayFactory:
         return tw
         
 
-    def set_object(self, obj):
+    def connect(self, obj):
         self.obj = obj
         for display in self.displays.itervalues():
-            display.set_object(self.obj)
+            display.connect(self.obj)
     
     def new_display(klass, key):
         check = getattr(klass, key)
@@ -552,15 +552,26 @@ class Display:
     def init(self):
         pass
     
-    def set_object(self, obj):
-        self.obj = obj
-        self.set_widget_data(obj.get(self.key))
+    def connect(self, obj):
+        if self.obj is not None:
+            if self.cb is not None:
+                obj.disconnect(self.cb)
+                self.cb = None            
+            self.obj = None
 
-        if self.cb is not None:
-            obj.disconnect(self.cb)
-            self.cb = None            
-        update = lambda sender, value: self.set_widget_data(value)
-        obj.sig_connect('notify:%s'%self.key, update)
+        self.obj = obj
+        if obj is not None:
+            self.set_widget_data(obj.get(self.key))
+            update = lambda sender, value: self.set_widget_data(value)
+            obj.signals['update:%s'%self.key].connect(update)
+            # or obj.sigNotify.connect(update)
+        else:
+            self.widget.set_sensitive(False)
+
+
+
+    def disconnect(self):
+        self.connect(None)
 
 
     def use_widget(self, widget):
@@ -827,7 +838,7 @@ class Display_RGBColor_As_Colorbutton(As_Colorbutton, Display):
 
 def test():
     
-    class TestObject(HasChecks, HasSignals):
+    class TestObject(HasChecks):
         is_valid = Bool(init=True)
         is_valid_or_none = Bool(init=None)
         choices = Choice(['One', 'Two', 'Three'], init='Two')
@@ -846,15 +857,14 @@ def test():
 
         def __init__(self, **kwargs):
             HasChecks.__init__(self, **kwargs)
-            HasSignals.__init__(self)
 
-            self.sig_register('notify')
-            for key in self._checks.keys():
-                print 'Registering notify:%s'%key
-                self.sig_register('notify:%s'%key)
+            self.signals = {}            
+            self.signals['update'] = Signal()
+            for key in self._checks.keys():                
+                self.signals['update:%s'%key] = Signal()
 
-            dispatch = lambda sender, key, value: self.sig_emit('notify:%s'%key, value)
-            self.sig_connect('notify', dispatch)
+            dispatch = lambda sender, key, value: self.signals['update:%s'%key].call(sender, value)
+            self.signals['update'].connect(dispatch)
                              
 
 
@@ -862,34 +872,30 @@ def test():
         obj_list = List(Instance(TestObject))
 
 
-    obj = TestObject(a_string="object ONE", is_valid=False)#, a_mapping='One')
-    obj2 = TestObject(a_string="object TWO", an_integer=5)#, a_mapping=1)
+    obj = TestObject(a_string="object ONE", is_valid=False, a_mapping='One')
+    obj2 = TestObject(a_string="object TWO", an_integer=5, a_mapping=1)
     main = MainObject(obj_list=[obj, obj2])
 
     # This is how the notification works:
 
     # The object has an on_update function.
-    # This function is set to emit a signal 'notify'.
+    # This function is set to emit a signal 'update'.
     # If you want to be informed of changes to the object,
-    # just connect to the 'notify' signal via sig_connect.
+    # just connect to this signal.
 
-    # Each display should connect to the 'notify' signal
+    # Each display should connect to the 'update' signal
     # of the object and call set_widget_data whenever
-    # the value changes. !!! CAREFUL!!!! If we do this,
-    # then a change of _one_ value will trigger all
-    # notifications for all Displays of that object.
-         
+    # the value changes.
 
     if True:
         df = DisplayFactory(obj)        
         df.add_keys(obj._checks.keys())
         tv = df.create_table()
-        df.set_object(obj)
+        df.connect(obj)
 
         # (s,k,v = sender, key, value)
         def on_update(s,k,v):
-            print "On notify"
-            s.sig_emit('notify:%s'%k, v)
+            s.signals['update:%s'%k].call(s, v)
 
         obj.on_update = on_update
         obj2.on_update = on_update               
@@ -897,7 +903,7 @@ def test():
         df2 = DisplayFactory(obj)        
         df2.add_keys(obj._checks.keys())
         tv2 = df2.create_table()
-        df2.set_object(obj)        
+        df2.connect(obj)        
     else:
         df = ColumnFactory(main, 'obj_list', obj.__class__)
         df.add_keys(obj._checks.keys())
@@ -919,7 +925,7 @@ def test():
         else:
             new_obj = obj
         print "toggle", new_obj            
-        df.set_object(new_obj)
+        df.connect(new_obj)
     btn = gtk.Button("toggle object")
     btn.connect("clicked", toggle)
 
