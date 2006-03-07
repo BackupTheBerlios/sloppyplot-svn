@@ -27,7 +27,6 @@ class TypedList:
         self._check = check
         self.data = []
         self.on_update = lambda sender, updateinfo: None
-
         self.set_data(_list)
 
     def set_data(self, _list):
@@ -129,7 +128,9 @@ class TypedList:
     def append(self, item):
         item = self.check(item)
         self.data.append(item)
+        print "APPENDED", self.on_update
         self.on_update(self, {'added': (len(self.data)-1, 1, [item])})
+        print "LAMBDA?"
         
     def insert(self, i, item):
         item = self.check(item)
@@ -177,7 +178,7 @@ class TypedDict:
 
     def __init__(self, key_check, value_check, _dict=None):
         self.key_check = key_check
-        self.value_check = value_check        
+        self.value_check = value_check
         self.on_update = lambda sender, undoinfo: None
         self.data = {}
         if _dict is not None:

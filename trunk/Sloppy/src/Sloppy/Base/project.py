@@ -165,7 +165,7 @@ class Project(SPObject):
                 uwrap.set(dataset, 'key', new_key, undolist=ul)
             ulist.append( self.datasets, dataset, undolist=ul )
 
-        uwrap.emit_last(self, "update:datasets", undolist=ul)            
+        ##uwrap.emit_last(self, "update:datasets", undolist=ul)            
         undolist.append(ul)
         
         cli_logger.info("Added %d dataset(s)." % len(datasets) )
@@ -191,7 +191,8 @@ class Project(SPObject):
                 uwrap.set(plot, 'key', new_key, undolist=ul)
             ulist.append(self.plots, plot, undolist=ul)
 
-        uwrap.emit_last(self, "update:plots", undolist=ul)
+        print "ADDED PLOTS", plots, self.plots
+        ##uwrap.emit_last(self, "update:plots", undolist=ul)
         undolist.append(ul)
 
         cli_logger.info("Added %d plot(s)." % len(plots) )

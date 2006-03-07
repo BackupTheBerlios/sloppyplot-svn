@@ -103,6 +103,12 @@ class SPObject(HasChecks):
             sender.signals['update'].call(sender, key,value)
         self.on_update = on_update
 
+        # set up Signal dispatcher for List and Dict items                    
+        for key, check in self._checks.iteritems():
+            if isinstance(check, (List,Dict)):
+                dispatch = lambda sender, updateinfo: self.signals['update:%s'%key].call(sender, updateinfo) ; print "update:%s"%key
+                self._values[key].on_update = dispatch
+        
     # for compatibility
     def sig_register(self, name):
         self.signals[name] = Signal()

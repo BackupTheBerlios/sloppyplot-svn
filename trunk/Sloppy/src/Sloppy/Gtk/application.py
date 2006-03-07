@@ -934,6 +934,7 @@ def main(filename=None):
 
         ## FOR TESTING
         # TODO: maybe as command line option?
+        print "ADDING EXPERIMENTAL PLOT"
         app.core.add_experimental_plot(spj)
         spj.journal.clear()
     else:
