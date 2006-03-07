@@ -178,6 +178,7 @@ class Instance(Check):
 
     def __init__(self, instance, **kwargs):
         self.instance = instance
+        self.required = kwargs.get('required',False)
         Check.__init__(self, **kwargs)
 
     def check(self, value):
@@ -241,7 +242,7 @@ class List(Check):
 
         # Therefore, unless the current value is Undefined, we check
         # the value and then simply set the list items of the
-        # exisiting TypeDict.
+        # existing TypeDict.
         
         cv = self.check(value)
         try:
@@ -286,7 +287,7 @@ class Dict(Check):
             v = Undefined
 
         if v is Undefined:
-            obj.__dict__['_values'][key] = cv
+            obj.__dict__['_values'][key] = cv           
         else:
             v.set_data(cv.data)
             

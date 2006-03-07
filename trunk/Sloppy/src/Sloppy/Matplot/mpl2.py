@@ -16,7 +16,9 @@ else:
     from matplotlib.backends.backend_gtk import FigureCanvasGTK as FigureCanvas
 
 from Sloppy.Base import backend, objects, utils, globals
+from Sloppy.Base.objects import SPObject
 from Sloppy.Base.dataset import Dataset
+from Sloppy.Lib.Check import Instance
 
 import logging
 logger = logging.getLogger('Backends.mpl2')
@@ -78,12 +80,10 @@ linemarker_mappings = \
 
 class Backend(backend.Backend):
 
+    active_layer = Instance(objects.Layer, init=None)
+    
     def init(self):
         self.painters = {} # == layers
-
-        self.active_layer = None
-        #self.plot.sig_connect('update:layers', self.on_update_layers)
-
 
     def connect(self):
         self.figure = Figure(dpi=100, facecolor="white")
@@ -98,11 +98,17 @@ class Backend(backend.Backend):
             self.figure = None
         backend.Backend.disconnect(self)
 
-    def get_painter(self, obj, klass):
+    def get_painter(self, obj, klass=None):
         _id = id(obj)
-        if self.painters.has_key(_id) is False:
-            self.painters[_id] = klass(obj, parent=self)
-        return self.painters[_id]
+        try:
+            return self.painters[_id]
+        except KeyError, msg:
+            if klass is not None:
+                new_painter = klass(obj, parent=self)
+                self.painters[_id] = new_painter
+                return new_painter
+            else:
+                raise       
 
     def draw(self):
         for layer in self.plot.layers:
@@ -112,12 +118,10 @@ class Backend(backend.Backend):
     def set_active_layer(self, layer):
         if layer == self.active_layer:
             return
-
-        self.sig_emit("update", {'active_layer':layer})
         self.active_layer = layer
 
     def on_update_layers(self, sender, updateinfo):
-        print "layers have changed:", updateinfo
+        # TODO!!!!
         removed = updateinfo.get('removed', [])
         if self.active_layer in removed:
             self.set_active_layer(None)
@@ -126,9 +130,11 @@ class Backend(backend.Backend):
 
 #------------------------------------------------------------------------------
 
-class Painter:
+class Painter(SPObject):
 
     def __init__(self, obj, parent):
+        SPObject.__init__(self)
+        
         self.painters = {}
         self.parent = parent
         self.obj = obj
@@ -138,13 +144,20 @@ class Painter:
         
     def get_painter(self, obj, klass):
         _id = id(obj)
-        if self.painters.has_key(_id) is False:
-            self.painters[_id] = klass(obj, parent=self)
-        return self.painters[_id]
-
+        try:
+            return self.painters[_id]
+        except KeyError, msg:
+            if klass is not None:
+                new_painter = klass(obj, parent=self)
+                self.painters[_id] = new_painter
+                return new_painter
+            else:
+                raise
         
 class LayerPainter(Painter):
 
+    active_line = Instance(objects.Line, init=None)
+    
     def init(self):
         self.axes = self.init_axes()
 
@@ -301,4 +314,4 @@ class LegendPainter(Painter):
                  'visible' : visible}
         
 #------------------------------------------------------------------------------    
-globals.BackendRegistry['matplotlib2'] = Backend
+globals.BackendRegistry['matplotlib'] = Backend

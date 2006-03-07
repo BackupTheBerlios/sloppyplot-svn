@@ -6,11 +6,11 @@ license.
 """
 
 
-#========================================================
-# Implementation
-#========================================================
 from weakref import *
 import inspect
+
+import logging
+logger = logging.getLogger('Lib.Signals')
 
 class Signal:
     """
@@ -91,7 +91,11 @@ class WeakMethod:
             self.c = ref(f.im_self)
 	def __call__(self, *args, **kwargs):
             if self.c() == None : return
-            self.f(self.c(), *args, **kwargs)
+            try:
+                self.f(self.c(), *args, **kwargs)
+            except Exception, msg:
+                raise
+            #raise RuntimeError("Error while triggering signal (method %s): %s" % (self.c(), msg))
         def disconnect(self):
             self.c = lambda: None
 
@@ -108,13 +112,15 @@ class HasSignals:
         self.signals[name] = Signal()
 
     def sig_emit(self, name, *args, **kwargs):
-        self.signals[name].call(self, *args, **kwargs)
+        signal = self.signals[name]        
+        print "Signal %s emitted. %d slots available." % (name, len(signal.slots))
+        signal(self, *args, **kwargs)
 
     def sig_connect(self, name, func):
         return self.signals[name].connect(func)
 
-    def sig_disconnect(self, slot):
-        slot.disconnect()
+    def sig_disconnect(self, name, slot):
+        self.signals[name].disconnect(slot)
 
     def sig_disconnect_all(self):
         for signal in self.signals.itervalues():

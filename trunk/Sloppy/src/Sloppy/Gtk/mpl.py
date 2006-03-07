@@ -86,11 +86,14 @@ class MatplotlibWindow( gtk.Window ):
 
         gtk.Window.__init__(self)
         self.set_default_size(640,480)
-
         self.is_fullscreen = False
-        self.disabled_groups = list()
-        
+        self.disabled_groups = list()        
         self.mpl_widget = MatplotlibWidget(project, plot)
+
+        def new_lambda(backend):
+            return lambda a,b: project.set(active_backend=backend)
+        self.connect("focus-in-event", new_lambda(self.mpl_widget.backend))
+        
         
         # set up ui manager
         self.uimanager = gtk.UIManager()        
@@ -474,7 +477,7 @@ class MatplotlibWidget(gtk.VBox):
         self.backend.draw()
 
     def on_action_EditLayer(self, action):
-        globals.app.edit_layer( self.plot, self.backend.layer )
+        globals.app.edit_layer( self.plot, self.backend.active_layer )
 
     #----------------------------------------------------------------------
 
@@ -562,12 +565,12 @@ class MatplotlibWidget(gtk.VBox):
                 self.statusbar.get_context_id('action-zoom'))
 
             ul = UndoList().describe("Zoom Region")
-            layer = self.backend.axes_to_layer[sender.axes]
+            layer = self.backend.active_layer
             self.zoom_to_region(layer, sender.region, undolist=ul)
             self.project.journal.add_undo(ul)           
 
-        layer = self.backend.layer
-        axes = self.backend.layer_to_axes[layer]
+        layer = self.backend.active_layer
+        axes = self.backend.get_painter(layer).axes
         s = mpl_selector.SelectRegion(self.backend.figure, axes=axes)
         s.sig_connect('finished', finish_zooming)
         self.statusbar.push(
@@ -581,7 +584,7 @@ class MatplotlibWidget(gtk.VBox):
     def on_action_ZoomFit(self, action):
         self.abort_selection()
 
-        layer = self.backend.layer
+        layer = self.backend.active_layer
         if layer is not None:
             region = (None,None,None,None)
             self.zoom_to_region(layer, region, undolist=globals.app.project.journal)
@@ -591,7 +594,7 @@ class MatplotlibWidget(gtk.VBox):
     def on_action_ZoomIn(self, action):
         self.abort_selection()
 
-        layer = self.backend.layer
+        layer = self.backend.active_layer
         if layer is not None:
             axes = self.backend.layer_to_axes[layer]
             region = self.calculate_zoom_region(axes)
@@ -602,7 +605,7 @@ class MatplotlibWidget(gtk.VBox):
     def on_action_ZoomOut(self, action):
         self.abort_selection()
 
-        layer = self.backend.layer
+        layer = self.backend.active_layer
         if layer is not None:
             axes = self.backend.layer_to_axes[layer]
             region = self.calculate_zoom_region(axes, dx=-0.1, dy=-0.1)
@@ -617,7 +620,7 @@ class MatplotlibWidget(gtk.VBox):
             self.zoom_to_region(layer, sender.region, undolist=ul)
             self.project.journal.add_undo(ul)           
 
-        layer = self.backend.layer
+        layer = self.backend.active_layer
         axes = self.backend.layer_to_axes[layer]
         s = mpl_selector.MoveAxes(self.backend.figure, axes)
         s.sig_connect("finished", finish_moving)
@@ -628,7 +631,7 @@ class MatplotlibWidget(gtk.VBox):
     # current layer: OK
     def on_action_DataCursor(self, action):
 
-        layer = self.backend.layer
+        layer = self.backend.active_layer
         axes = self.backend.layer_to_axes[layer]
         s = mpl_selector.DataCursor(self.backend.figure, axes)
 
@@ -660,7 +663,7 @@ class MatplotlibWidget(gtk.VBox):
         def finish_select_line(sender):
             print "FINISHED SELECT LINE", sender.line
 
-        layer = self.backend.layer
+        layer = self.backend.active_layer
         axes = self.backend.layer_to_axes[layer]
         s = mpl_selector.SelectLine(self.backend.figure, axes,
                                     mode=mpl_selector.SELECTLINE_VERTICAL)
@@ -678,7 +681,7 @@ class MatplotlibWidget(gtk.VBox):
             self.zoom_to_region(layer, sender.region, undolist=ul)
             self.project.journal.add_undo(ul)           
 
-        layer = self.backend.layer
+        layer = self.backend.active_layer
         axes = self.backend.layer_to_axes[layer]
         s = mpl_selector.ZoomAxes(self.backend.figure, axes)
         s.sig_connect("finished", finish_moving)
@@ -747,7 +750,7 @@ class MatplotlibWidget(gtk.VBox):
         self.abort_selection()
 
         # we will simply take the first line available.
-        layer = self.backend.layer
+        layer = self.backend.active_layer
         line = layer.lines[0]
 
         print "USING LINE ", line

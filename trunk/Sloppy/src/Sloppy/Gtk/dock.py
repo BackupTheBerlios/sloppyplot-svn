@@ -407,9 +407,6 @@ class Dock( gtk.VBox ):
     def get_positions(self):
         def do_loop(item):
             rv = []
-            print 
-            print item.get_children()
-            print
             for child in item.get_children():                
                 if isinstance(child, gtk.VPaned):
                     rv.append(child.get_position())

@@ -26,9 +26,8 @@ See documentation of the Backend class for details.
 
 import logging, os
 
-from Sloppy.Lib.Signals import HasSignals
 from Sloppy.Base import objects
-
+from Sloppy.Base.objects import SPObject
 
 #------------------------------------------------------------------------------
 # Backend Error
@@ -42,7 +41,7 @@ class BackendError(Exception):
 # Backend
 #
 
-class Backend(object, HasSignals):
+class Backend(SPObject):
     """
     'Backend' is the abstract base class for any plotting backend.
     Any actual implementation should use this as a base class.
@@ -96,11 +95,9 @@ class Backend(object, HasSignals):
         initialization!
         """
 
-        object.__init__(self)
-
-        HasSignals.__init__(self)
+        SPObject.__init__(self)
+        
         self.sig_register("closed")
-        self.sig_register("update:layer")
         self.cblist = []
         
         # set options and merge keywords from BackendRegistry.register
@@ -114,8 +111,6 @@ class Backend(object, HasSignals):
         
         self.project = None
         self.plot = None
-
-        self._layer = None
         
         self.set(project,plot)
         

@@ -67,28 +67,15 @@ class Project(SPObject):
 
     """
     A Project contains the plots, datasets and all other information
-    that can be stored in the Project fileds (extension spj).
-
-    Developer's note: I always forget why I decided to make 'plots'
-      and 'datasets' lists and put the key into the objects, even
-      though it would be a lot easier to simply use a dictionary.
-      One of the reasons is that often I refer to a dataset or a plot
-      and it is very easy to get the key this way.
-      At some point I will simply change the lists to dictionaries
-      and make dataset.key and plot.key wrappers that retrieve
-      the key from the project.
+    that can be stored in the Project files (extension spj).
     """
     
     label = Unicode()
     comment = Unicode()
-
     plots = List(Plot)
-    datasets = List(Dataset)
-
-    root = Dict(tree.Node)
-    
+    datasets = List(Dataset)  
     backends = List(Backend)
-    
+    active_backend = Instance(Backend)
     
     def __init__(self,*args,**kwargs):
         SPObject.__init__(self, **kwargs)
@@ -96,8 +83,6 @@ class Project(SPObject):
         
         self.journal = Journal()
         self._archive = None
-        self.app = None
-
 
     def close(self):
         " Close project properly. "
@@ -114,7 +99,6 @@ class Project(SPObject):
             backend.disconnect()
        
         self.sig_emit('close')
-        self.app = None # TODO: this should be unnecessary if the app catches the signal
 
     #----------------------------------------------------------------------        
     __filename = None
@@ -165,7 +149,6 @@ class Project(SPObject):
                 uwrap.set(dataset, 'key', new_key, undolist=ul)
             ulist.append( self.datasets, dataset, undolist=ul )
 
-        ##uwrap.emit_last(self, "update:datasets", undolist=ul)            
         undolist.append(ul)
         
         cli_logger.info("Added %d dataset(s)." % len(datasets) )
@@ -191,8 +174,6 @@ class Project(SPObject):
                 uwrap.set(plot, 'key', new_key, undolist=ul)
             ulist.append(self.plots, plot, undolist=ul)
 
-        print "ADDED PLOTS", plots, self.plots
-        ##uwrap.emit_last(self, "update:plots", undolist=ul)
         undolist.append(ul)
 
         cli_logger.info("Added %d plot(s)." % len(plots) )
@@ -225,8 +206,6 @@ class Project(SPObject):
         else:
             undolist.describe("Remove Datasets")
             
-        self.sig_emit("update:datasets") 
-
 
     def remove_dataset(self, dataset, undolist=None):
         self.remove_datasets([dataset], undolist=undolist)
@@ -255,8 +234,6 @@ class Project(SPObject):
         else:
             undolist.describe("Remove Plots")
 
-        self.sig_emit("update:plots")
-
 
     def remove_plot(self, plot, undolist=None):
         self.remove_plots([plot], undolist=undolist)
@@ -284,12 +261,10 @@ class Project(SPObject):
         try:
             dataset.key = new_key
         except ValueError, msg:
-            self.app.error_msg(DS['invalid_key'] % new_key)            
+            globals.app.error_msg(DS['invalid_key'] % new_key)            
             return
             
-        undolist.append(ui)        
-        self.sig_emit("update:datasets")
-        
+        undolist.append(ui)         
         return dataset
 
 
@@ -309,12 +284,10 @@ class Project(SPObject):
         try:
             plot.key = new_key
         except ValueError:
-            self.app.error_msg(DS['invalid_key'] % new_key)
+            globals.app.error_msg(DS['invalid_key'] % new_key)
             return
 
         undolist.append(ui)
-        self.sig_emit("update:plots")
-
         return plot
     
     #----------------------------------------------------------------------
@@ -372,8 +345,6 @@ class Project(SPObject):
         key = pdict.unique_key(self.datasets, key)
         ds = Table()
         pdict.setitem(self.datasets, key, ds)
-        self.sig_emit("update:datasets")
-
         ui = UndoInfo(self.remove_objects, [ds], False)
         ui.describe("Create new Dataset '%s'" % key)
         undolist.append(ui)
@@ -391,10 +362,7 @@ class Project(SPObject):
         new_plot.key = pdict.unique_key(self.plots, "new lineplot2d")
         self.add_plot(new_plot)
         ui = UndoInfo(self.remove_plot, new_plot).describe("New Plot")
-        undolist.append(ui)
-
-        self.sig_emit("update:plots")
-        
+        undolist.append(ui)        
         return new_plot    
 
 
@@ -426,8 +394,7 @@ class Project(SPObject):
         if len(ul) > 2:
             ul.describe("Remove objects")            
         
-        undolist.append(ul)
-        
+        undolist.append(ul)        
         return None
 
 
@@ -452,15 +419,13 @@ class Project(SPObject):
         if len(matches) > 0:
             return matches[0]
         else:
-            backend = globals.BackendRegistry[key](project=self, plot=plot)            
+            backend = globals.BackendRegistry[key](project=self, plot=plot)
             self.backends.append(backend)
-            self.sig_emit('update:backends')
             return backend
         
     def remove_backend(self, backend):
         try:
             self.backends.remove(backend)
-            self.sig_emit('update:backends')
         except ValueError:
             logger.warn("remove_backend: Could not find Backend %s in Project." % backend)
             
@@ -489,20 +454,6 @@ class Project(SPObject):
         if verbose is True:
             print result
         return result
-
-
-    def list_backends(self, verbose=True):       
-        backends = globals.BackendRegistry.find_instances(project=self)
-            
-        rv = ["Listing %d Backends:" % len(backends)]
-        for backend in backends:
-            rv.append("  %s" % str(backend))
-
-        result = "\n".join(rv)
-        if verbose is True:
-            print result
-        else:
-            return result
 
 
     def list_journal(self, verbose=True):

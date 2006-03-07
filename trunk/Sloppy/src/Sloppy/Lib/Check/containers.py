@@ -34,8 +34,7 @@ class TypedList:
             olddata = self.data
             _list = self.check_list(_list)
             self.data = _list
-            self.on_update(self, {'removed': (0, len(olddata), olddata),
-                                  'added': (0, len(_list), _list)})
+            self.on_update(self, {'removed': (0, len(olddata), olddata), 'added': (0, len(_list), _list)})
 
     def check(self, item):
         try:
@@ -95,8 +94,7 @@ class TypedList:
         i = max(i, 0); j = max(j, 0)
         olditems = self.data[i:j]
         self.data[i:j] = self.check_list(other)
-        self.on_update(self, {'removed': (i, j-i, [olditems]),
-                              'added': (i, j-i, [items])})
+        self.on_update(self, {'removed': (i, j-i, [olditems]),'added': (i, j-i, [items])})
         
     def __delslice__(self, i, j):
         i = max(i, 0); j = max(j, 0)
@@ -128,9 +126,7 @@ class TypedList:
     def append(self, item):
         item = self.check(item)
         self.data.append(item)
-        print "APPENDED", self.on_update
         self.on_update(self, {'added': (len(self.data)-1, 1, [item])})
-        print "LAMBDA?"
         
     def insert(self, i, item):
         item = self.check(item)

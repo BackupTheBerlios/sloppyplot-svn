@@ -578,7 +578,7 @@ class Display:
         if obj is not None:
             self.set_widget_data(obj.get(self.key))
             on_update_lambda = lambda sender, value: self.set_widget_data(value)        
-            obj.signals['update:%s'%self.key].connect(on_update_lambda)
+            obj.signals['update::%s'%self.key].connect(on_update_lambda)
         else:
             self.widget.set_sensitive(False)
 
@@ -875,11 +875,11 @@ def test():
             self.signals = {}            
             self.signals['update'] = Signal()
             for key in self._checks.keys():                
-                self.signals['update:%s'%key] = Signal()
+                self.signals['update::%s'%key] = Signal()
 
             # trigger Signals on attribute update
             def dispatch(sender, key, value):
-                sender.signals['update:%s'%key].call(sender, value)
+                sender.signals['update::%s'%key].call(sender, value)
             self.signals['update'].connect(dispatch)
 
             def on_update(sender, key, value):

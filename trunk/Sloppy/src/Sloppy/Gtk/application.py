@@ -142,24 +142,33 @@ class GtkApplication(application.Application):
         # the plugins
         self.tools['LayerTool'] = tools.LayerTool
         self.tools['LabelsTool'] = tools.LabelsTool
+        self.tools['LinesTool'] = tools.LinesTool        
         
         self.tools_read_config()
         self.sig_connect("write-config", self.tools_write_config)
 
         
     def tools_read_config(self):
+        logger.debug("Reading Toolbox configuration")
+        
         # TODO: maybe put the toolbox into the application?
         toolbox = self.window.toolbox 
         
         eToolbox = self.eConfig.find('Toolbox')
-        if eToolbox is None:
+        if eToolbox is None or len(eToolbox.findall('Dock/Dockbook/Dockable')) == 0:
+            logger.debug("Using default Toolbox configuration")
             # basic setup (for now)
             book = dock.Dockbook()
             toolbox.dock.add(book)
-            lt = tools.LabelsTool()
-            book.add(lt)        
-            lt = tools.LayerTool()
+            lt = tools.LinesTool(toolbox)
             book.add(lt)
+            lt = tools.LabelsTool(toolbox)
+            book.add(lt)
+
+            book = dock.Dockbook()
+            toolbox.dock.add(book)
+            lt = tools.LayerTool(toolbox)
+            book.add(lt)            
             return        
 
         for eDockbook in eToolbox.findall('Dock/Dockbook'):
@@ -169,11 +178,13 @@ class GtkApplication(application.Application):
 
             for eDockable in eDockbook.findall('Dockable'):
                 try:                    
-                    tool = self.tools[eDockable.text]()
+                    tool = self.tools[eDockable.text](toolbox)
                     book.add(tool)
                     # TODO: size information is not used                    
-                except:
-                    logger.error("Could not init tool dock '%s', unknown class." % eDockable.text)
+                except Exception, msg:
+                    logger.error("Could not init tool dock '%s': %s" % (eDockable.text, msg))
+                else:
+                    print ">>> Tool added", eDockable.text
 
 
         
@@ -496,12 +507,6 @@ class GtkApplication(application.Application):
                 window = mpl.MatplotlibWindow(project=self.project, plot=plot)
                 ##window.set_transient_for(self.window)
                 self.window.subwindow_add(window)
-                # TESTING
-                # Of course, the toolbox might decide to not use the backend,
-                # e.g. if there is an 'auto' button and it is not pressed. So I will
-                # need to change that then.
-                window.connect("focus-in-event", (lambda a,b: self.window.toolbox.set_backend(window.get_backend())))
-
             window.show()
             window.present()
 

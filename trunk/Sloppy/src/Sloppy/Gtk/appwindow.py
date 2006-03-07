@@ -200,7 +200,7 @@ class AppWindow( gtk.Window ):
 
         def on_update_project(sender, project):
             window.set_project(project)
-        globals.app.sig_connect('update:project', on_update_project)
+        globals.app.sig_connect('update::project', on_update_project)
         
         return window
 

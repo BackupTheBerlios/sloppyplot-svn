@@ -139,7 +139,7 @@ class Backend( backend.Backend ):
     def set(self, project,plot):
         backend.Backend.set(self, project, plot)
         if self.project is not None:
-            # TODO: connect to update:layers of Plot
+            # TODO: connect to update::layers of Plot
             pass
 
     def disconnect(self):
@@ -190,7 +190,7 @@ class Backend( backend.Backend ):
             print "Connecting to update of ", layer
             self.layer_cblists[layer] = \
               [layer.sig_connect('update', self.on_update_layer),
-               layer.sig_connect('update:labels', self.on_update_labels)
+               layer.sig_connect('update::labels', self.on_update_labels)
                ]
 
             j += 1
@@ -525,6 +525,6 @@ class BackendWithWindow(Backend):
         
 
 #------------------------------------------------------------------------------
-globals.BackendRegistry['matplotlib'] = Backend
-globals.BackendRegistry['matplotlib/w'] = BackendWithWindow
+#globals.BackendRegistry['matplotlib'] = Backend
+#globals.BackendRegistry['matplotlib/w'] = BackendWithWindow
 

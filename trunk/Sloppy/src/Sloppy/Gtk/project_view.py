@@ -108,7 +108,6 @@ class ProjectTreeView( gtk.TreeView ):
         """
         Fill the TreeView with the objects from the given Plot.           
         """
-        print "POP", self.project
         model = self.main_model
         model.clear()
 
@@ -142,12 +141,11 @@ class ProjectTreeView( gtk.TreeView ):
 
         # connect update signals with update mechanism
         if self.project is not None:
-            print "REGISTERING"
-            def on_update(sender):
+            def on_update(sender, updateinfo):
                 print "--- update received ---"
                 self.populate_treeview()
-            project.sig_connect("update:datasets", on_update)
-            project.sig_connect("update:plots", on_update)
+            project.sig_connect("update::datasets", on_update)
+            project.sig_connect("update::plots", on_update)
 
 
     # ----------------------------------------------------------------------

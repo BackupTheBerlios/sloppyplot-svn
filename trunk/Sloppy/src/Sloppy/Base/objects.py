@@ -83,47 +83,45 @@ PV = {
 
 
 
-class SPObject(HasChecks):
-
+class SPObject(HasChecks, HasSignals):
+       
     def __init__(self, **kwargs):
         HasChecks.__init__(self, **kwargs)
-
-        # set up available Signals
-        self.signals = {}            
+        HasSignals.__init__(self)
+        
+        # set up available Signals       
         self.signals['update'] = Signal()
-        for key in self._checks.keys():                
-            self.signals['update:%s'%key] = Signal()
+
+        # The update::key signals are different for normal attributes
+        # and for List/Dict attributes, which have their own on_update
+        # method. It is necessary to use new_lambda, because in case of
+        #  self._values[key].on_update = lambda ....
+        # the lambda would be redefined with each iteration and
+        # every List/Dict object would emit the same signal.        
+        
+        def new_lambda(key):
+            return lambda sender, updateinfo: self.sig_emit('update::%s'%key, updateinfo)        
+
+        for key, check in self._checks.iteritems():
+            self.signals['update::%s'%key] = Signal()            
+            if isinstance(check, (List,Dict)):
+                self._values[key].on_update = new_lambda(key)                 
 
         # trigger Signals on attribute update
-        def dispatch(sender, key, value):
-            sender.signals['update:%s'%key].call(sender, value)
-        self.signals['update'].connect(dispatch)
-
         def on_update(sender, key, value):
-            sender.signals['update'].call(sender, key,value)
+            self.sig_emit('update', key, value)
+            self.sig_emit('update::%s'%key, value)
+            # the above form causes a notification message, the above one is quicker.            
+            ##sender.signals['update'](sender, key, value)
+            ##sender.signals['update::%s'%key](sender, value) # TODO: what about List/Dict?
         self.on_update = on_update
 
-        # set up Signal dispatcher for List and Dict items                    
-        for key, check in self._checks.iteritems():
-            if isinstance(check, (List,Dict)):
-                dispatch = lambda sender, updateinfo: self.signals['update:%s'%key].call(sender, updateinfo) ; print "update:%s"%key
-                self._values[key].on_update = dispatch
-        
-    # for compatibility
-    def sig_register(self, name):
-        self.signals[name] = Signal()
 
-    def sig_emit(self, name, *args, **kwargs):
-        self.signals[name].call(self, *args, **kwargs)
-
-    def sig_connect(self, name, func):
-        return self.signals[name].connect(func)
 
         
 #------------------------------------------------------------------------------
-# BASE OBJECTS
-# 
-
+#                                   BASE OBJECTS
+#------------------------------------------------------------------------------
 
 class TextLabel(SPObject):
     " Single text label. "

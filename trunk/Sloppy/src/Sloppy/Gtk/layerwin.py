@@ -43,7 +43,13 @@ class LayerWindow(gtk.Window):
         self.set_title("[Edit Plot Layer]")
         
         self.plot = plot
-        self.layer = layer       
+
+        if layer is None and len(self.plot.layers) > 0:
+            self.layer = self.plot.layers[0]
+            self.plot.active_layer = self.layer
+        else:
+            self.layer = layer
+        
 
         #
         # frame above notebook that holds the current tab name
