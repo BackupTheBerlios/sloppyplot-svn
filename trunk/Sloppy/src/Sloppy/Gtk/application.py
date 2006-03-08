@@ -169,13 +169,11 @@ class GtkApplication(application.Application):
             toolbox.dock.add(book)
             lt = tools.LayerTool(toolbox)
             book.add(lt)            
-            return        
-
+            return
+        
         for eDockbook in eToolbox.findall('Dock/Dockbook'):
-
             book = dock.Dockbook()
             toolbox.dock.add(book)
-
             for eDockable in eDockbook.findall('Dockable'):
                 try:                    
                     tool = self.tools[eDockable.text](toolbox)
@@ -185,6 +183,14 @@ class GtkApplication(application.Application):
                     logger.error("Could not init tool dock '%s': %s" % (eDockable.text, msg))
                 else:
                     print ">>> Tool added", eDockable.text
+
+        # restore size of toolbox
+        width = int(eToolbox.attrib.get('width', 240))
+        height = int(eToolbox.attrib.get('height', 480))
+        print
+        print "RESIZE TO ", width, height
+        print
+        toolbox.resize(width, height)
 
 
         
@@ -197,6 +203,11 @@ class GtkApplication(application.Application):
         else:
             eToolbox.clear()
 
+        # size of toolbox
+        width, height = toolbox.get_size()
+        eToolbox.attrib['width'] = str(width)
+        eToolbox.attrib['height'] = str(height)
+        
         # get information about dockables/dockbooks
         eDock = SubElement(eToolbox, "Dock")
         for dockbook in toolbox.dock.dockbooks:
@@ -942,6 +953,7 @@ def main(filename=None):
         print "ADDING EXPERIMENTAL PLOT"
         app.core.add_experimental_plot(spj)
         spj.journal.clear()
+        app.window.toolbox.show()
     else:
         try:
             logger.debug("Trying to load file %s" % filename)

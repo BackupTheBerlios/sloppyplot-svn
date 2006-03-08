@@ -56,7 +56,7 @@ class Toolbox(gtk.Window, SPObject):
     def __init__(self, project=None):
         SPObject.__init__(self)
         gtk.Window.__init__(self)
-        self.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_UTILITY)
+
 
         self.project = project or -1
         self.project_cblist = []
@@ -99,6 +99,20 @@ class Toolbox(gtk.Window, SPObject):
             return True # don't continue deletion
         self.connect('delete_event', _cb_delete_event)
 
+        # on hide => remember position
+        # on show => reset position
+        #self.position_x, self.position_y = 0,0
+        #def on_hide(widget, *args):
+        #    print "ON HIDE", self.get_position()
+        #    widget.position_x, widget.position_y = widget.get_position()
+        #def on_show(widget, *args):
+        #    print "ON SHOW"
+        #    widget.move(widget.position_x, widget.position_y)
+        #self.connect('hide', on_hide)
+        #self.connect('show', on_show)
+
+        ######
+            
         self.set_project(project)
 
         # move window to top right        
@@ -158,7 +172,6 @@ class Toolbox(gtk.Window, SPObject):
         current backend no longer exists in the list.
         """
 
-        print "----------------  update combobox ----------------------"
         model = self.combobox.get_model()
 
         # fill model with Backend objects and their keys

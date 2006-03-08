@@ -5,10 +5,7 @@
   with the toolbox, otherwise SloppyPlot will not be of any use to me.
 
 
-- active_layer should be set whenever we use some mpl function, i.e.
-  replace backend.active_layer with backend.request_active_layer.
-
-
+- update the whole plot via a signal ?
 
 
 

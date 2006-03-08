@@ -390,7 +390,7 @@ class MatplotlibWidget(gtk.VBox):
             # TODO: set canvas size depending on outer settings, on dpi
             # TODO: and zoom level
 
-            canvas_width, canvas_height = 800,600
+            canvas_width, canvas_height = 640,480
 
             testing = False
             if testing == True:
