@@ -114,18 +114,21 @@ class Backend(backend.Backend):
         for layer in self.plot.layers:
             painter = self.get_painter(layer, LayerPainter)
             painter.paint()
-
-    def set_active_layer(self, layer):
-        if layer == self.active_layer:
-            return
-        self.active_layer = layer
+        self.canvas.draw()            
 
     def on_update_layers(self, sender, updateinfo):
         # TODO!!!!
+        # check if active layer is still active
         removed = updateinfo.get('removed', [])
         if self.active_layer in removed:
             self.set_active_layer(None)
 
+    def request_active_layer(self):
+        """ Return the active layer or if it is None, try to set it first. """
+        if self.active_layer is None:
+            if len(self.plot.layers) > 0:
+                self.active_layer = self.plot.layers[0]
+        return self.active_layer
 
 
 #------------------------------------------------------------------------------
@@ -160,6 +163,7 @@ class LayerPainter(Painter):
     
     def init(self):
         self.axes = self.init_axes()
+        self.obj.sig_connect('update', self.on_update)
 
     def init_axes(self):
         return self.parent.figure.add_subplot('111')
@@ -168,8 +172,32 @@ class LayerPainter(Painter):
         # plot_painter := backend
         layer, plot_painter = self.obj, self.parent
         axes = self.axes
+            
+        # title
+        title = layer.title
+        if title is not None:
+            axes.set_title(title)
+
+        # grid
+        axes.grid(layer.grid)
+
+        # legend
+        legend = layer.legend        
+        if legend is None:
+            # remove any existing legend painter if obsolete
+            pass
+        else:
+            p = self.get_painter(legend, LegendPainter)
+            p.paint()
+            
+        # lines
+        for line in layer.lines:
+            painter = self.get_painter(line, LinePainter)
+            painter.paint()
 
         # axes
+        # This needs to be after lines, because painting the
+        # lines would reset the start and end.
         for (key, axis) in layer.axes.iteritems():
             #:axis.label, :axis.scale, :axis.start,:axis.end
             label, scale, start, end = axis.label, axis.scale, axis.start, axis.end
@@ -192,31 +220,12 @@ class LayerPainter(Painter):
             if scale is not None: set_scale(scale)
             if start is not None: set_start(start)
             if end is not None: set_end(end)
+
+    def on_update(self):
+        self.paint()
+        # TODO: maybe queue a redraw somehow?
+        self.parent.canvas.draw()
             
-        # title
-        title = layer.title
-        if title is not None:
-            axes.set_title(title)
-
-        # grid
-        axes.grid(layer.grid)
-
-        # legend
-        legend = layer.legend        
-        if legend is None:
-            # remove any existing legend painter if obsolete
-            pass
-        else:
-            p = self.get_painter(legend, LegendPainter)
-            p.paint()
-            
-        
-        for line in layer.lines:
-            painter = self.get_painter(line, LinePainter)
-            painter.paint()
-
-
-
 
 class LinePainter(Painter):
 

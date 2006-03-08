@@ -22,6 +22,7 @@ import os.path
 
 from Sloppy.Base import globals, dataset
 from Sloppy.Lib.Check import *
+from Sloppy.Base.objects import SPObject
 
 
 
@@ -56,7 +57,7 @@ class ExportError(Exception):
 
 
 
-class Importer(HasChecks):
+class Importer(SPObject):
 
     """
 
@@ -104,7 +105,7 @@ class Importer(HasChecks):
 
 
 
-class Exporter(HasChecks):
+class Exporter(SPObject):
 
     filemode = '' # set to 'b' for binary objects
     
@@ -128,7 +129,7 @@ class Exporter(HasChecks):
 
 #------------------------------------------------------------------------------
 
-class IOTemplate(HasChecks):
+class IOTemplate(SPObject):
 
     extensions = String(\
         init="",

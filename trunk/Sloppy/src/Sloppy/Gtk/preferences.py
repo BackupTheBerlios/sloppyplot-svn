@@ -28,7 +28,7 @@ import gtk
 from Sloppy.Base import globals, dataio, version, error, utils
 
 from Sloppy.Gtk import uihelper, checkwidgets
-from Sloppy.Lib.Check import Keyword
+from Sloppy.Lib.Check import Keyword, values_as_dict
 
 
 DS={
@@ -82,7 +82,7 @@ class ConfigurationDialog(gtk.Dialog):
             # some pages show only information and
             # might not provide a check_in.
             if hasattr(page, 'check_in'): 
-                page.check_in()        
+                page.check_in()
 
         # TODO: This does not work
         nb.set_current_page(0)
@@ -229,7 +229,7 @@ class ImportTemplatesPage(gtk.VBox):
     def check_in(self):
         for key,template in globals.import_templates.iteritems():
             if template.importer_key == 'ASCII':
-                self.model.append((key, template.copy()))
+                self.model.append((key, template.__class__(**template._values)))
 
     def check_out(self):
 
@@ -294,13 +294,15 @@ class ImportTemplatesPage(gtk.VBox):
         factorylist = []
         factory1 = checkwidgets.DisplayFactory(template)
         factory1.add_keys('blurb','extensions','skip_options')
-        factorylist.append(factory1)    
+        table1 = factory1.create_table()
+        factory1.check_in(template)
+        factorylist.append(factory1)
+        
         factory2 = checkwidgets.DisplayFactory(importer)
         factory2.add_keys(importer.public_props)
-        factorylist.append(factory2)
-        
-        table1 = factory1.create_table()
         table2 = factory2.create_table()
+        factory2.check_in(importer)
+        factorylist.append(factory2)            
 
         dlg.vbox.pack_start(key_box, True, True)
         dlg.vbox.pack_start(hint,False,True)       
@@ -308,18 +310,13 @@ class ImportTemplatesPage(gtk.VBox):
         dlg.vbox.pack_start(table1, True, True)
         dlg.vbox.pack_start(gtk.HSeparator(), False, True)
         dlg.vbox.pack_start(table2, True, True)
-
-        for factory in factorylist:
-            factory.check_in()
-
+        
         # gray out gui items if object is immutable
         if allow_edit is False:
-            hint.set_markup(DS['template_immutable'])            
-            for factory in factorylist:
-                for c in factory.clist:
-                    c.widget.set_sensitive(False)
-            key_entry.set_sensitive(False)
-
+            hint.set_markup(DS['template_immutable'])
+            key_box.set_sensitive(False)
+            table1.set_sensitive(False)
+            table2.set_sensitive(False) 
             
         dlg.show_all()
 
@@ -353,8 +350,8 @@ class ImportTemplatesPage(gtk.VBox):
                         factory.check_out()
 
                     # move importer data to template
-                    values = importer.get_values(importer.public_props, default=None)
-                    template.set_values(defaults=values)                    
+                    values = values_as_dict(importer, importer.public_props, default=None)
+                    template.set(defaults=values)                    
 
                     return new_key
 

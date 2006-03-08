@@ -24,7 +24,7 @@ import re
 from Sloppy.Base.dataset import Dataset, Table
 from Sloppy.Base import dataio, globals
 
-from Sloppy.Lib.Props import *
+from Sloppy.Lib.Check import *
 
 import numpy
 
@@ -51,111 +51,56 @@ class Importer(dataio.Importer):
 
     author = "Niklas Volbers"
 
-    #----------------------------------------------------------------------
-    # Properties
-    #
-
-    # Prefixes
-    #  header_
-    #  data_
-    #  result_
-
     # Suffixes
     #  ln  (linenumber)
     #  re  (regular expression)
     #  
 
     # Header
-    header_size = \
-     VP(
-        Integer,
-        VRange(0, None),
-        None,
-        default=None,
-        blurb="Header size",
-        doc="Number of header lines"
-        )
+    header_size = Integer(min=0, max=None, init=None,
+        blurb="Header size", doc="Number of header lines")
 
-    header_end_re = \
-     String(
-        default='\s*[+-]?\d+.*',
-        doc="Regular expression that indicates the end of the header (if header size is not set)"
-        )
+    header_end_re = String(init='\s*[+-]?\d+.*',
+        doc="Regular expression that indicates the end of the header (if header size is not set)")
 
-    header_include_end = \
-     Boolean(
-        default=False,
-        doc="Whether to include the last line of the header in the header"
-        )
+    header_include_end = Boolean(init=False,
+        doc="Whether to include the last line of the header in the header")
 
-    header_keys_ln = \
-      VP(
-        Integer,
-        VRange(0,None),
-        None,
-        default=None,
-        blurb="Key line",
-        doc="Number of the line that contains the column keys"
-        )
+    header_keys_ln = Integer(min=0, max=None, init=None,
+        blurb="Key line", doc="Number of the line that contains the column keys")
 
-    header_keysplit_re = \
-     String(
-        blurb="Key split expression",
-        default="\s*,\s*",
-        doc="Regular expression that splits up the column keys."
-        )
+    header_keysplit_re = String(init="\s*,\s*",
+        blurb="Key split expression", doc="Regular expression that splits up the column keys.")
 
-    header_keytrim_re = \
-     String(
+    header_keytrim_re = String(init='\s*[#]?\s*(?P<keys>.*)\s*[\r]+',        
         blurb="Key trim expression",
-        default='\s*[#]?\s*(?P<keys>.*)\s*[\r]+',
         doc="Regular expression that trims the key line before splitting it up"
         )
 
-    header_metadata_re = \
-     String(
+    header_metadata_re = String(init = '\s*[\#]?\s*(?P<key>.*?)\s*:\s*(?P<value>.*)\s*',        
         blurb="Header metadata expression",
-        default = '\s*[\#]?\s*(?P<key>.*?)\s*:\s*(?P<value>.*)\s*',
         doc = "Regular expression to match metadata key-value pairs."
         )
     
-    # Data 
 
-    
     # Other
 
     delimiter = String(blurb="Delimiter",
                        doc="Column delimiter that separates the columns")
        
-    ncols = \
-     VP(
-        Integer,
-        VRange(0,None),
-        None,
-        default=None,
-        blurb="Columns",
-        doc="Number of columns",
+    ncols = Integer(\
+        min=0, max=None, init=None,
+        blurb="Columns", doc="Number of columns")
+
+
+    dataset = Instance(Dataset, init=None)
+
+    designations = Choice(\
+        ['X', 'Y', 'X|Y', 'XY'], init='X|Y',        
+        blurb="Designations", doc=DS['import_ascii:designations']
         )
 
-
-    dataset = VP(Instance(Dataset), None, default=None)
-
-    designations = \
-     VP(['X', 'Y', 'X|Y', 'XY'], default='X|Y',        
-        blurb="Designations",
-        doc=DS['import_ascii:designations']
-        )
-
-    typecodes = \
-     VP(list, basestring,
-        default='d'
-        )
-
-    growth_offset = \
-     IntegerRange(
-        10,None,
-        default=100
-        )
+    growth_offset = Integer(min=10, max=None, init=100)
     
     #----
     public_props = ['delimiter', 'ncols', 'header_size',
@@ -309,7 +254,6 @@ class Importer(dataio.Importer):
         
         if ds._array == None:
             # determine optional arguments
-            typecodes = self.typecodes
             ncols = self.ncols
             
             # if no column count is given, try to

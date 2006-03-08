@@ -471,14 +471,23 @@ class MatplotlibWidget(gtk.VBox):
             self.cursor.sig_connect("move", (lambda sender,x,y: self.set_coords(x,y)))
             self.cursor.init()
 
+
+    def request_active_layer(self):
+        layer = self.backend.request_active_layer()
+        if layer is not None:
+            return layer
+        else:
+            globals.app.err_msg("No active layer!")
+            raise UserCancel
+    
         
     #----------------------------------------------------------------------
     def on_action_Replot(self, action):
         self.backend.draw()
 
     def on_action_EditLayer(self, action):
-        globals.app.edit_layer( self.plot, self.backend.active_layer )
-
+        globals.app.edit_layer(self.plot, self.request_active_layer())
+        
     #----------------------------------------------------------------------
 
     def zoom_to_region(self, layer, region, undolist=[]):
@@ -486,8 +495,7 @@ class MatplotlibWidget(gtk.VBox):
         ul = UndoList().describe("Zoom Region")
 
         x0 = min( region[0], region[2] )
-        x1 = max( region[0], region[2] )
-            
+        x1 = max( region[0], region[2] )            
         y0 = min( region[1], region[3] )
         y1 = max( region[1], region[3] )
 
@@ -497,8 +505,8 @@ class MatplotlibWidget(gtk.VBox):
         # then it is ok to zoom.
         if ((x0 is not None) and (x0 == x1)) or \
            ((y0 is not None) and (y0 == y1)):            
-            ul.append( NullUndo() )
-            return          
+            undolist.append(NullUndo())
+            return
 
         def set_axis(axis, start, end):
             if axis.start is not None and axis.end is not None:
@@ -510,11 +518,21 @@ class MatplotlibWidget(gtk.VBox):
                 _start, _end = end, start
             else:
                 _start, _end = start, end
-                
+
             uwrap.set(axis, start=_start, end=_end, undolist=ul)
 
+        # TODO_
+        # This emits a signal update::start and update::end
+        # for each manipulated axis. We might need an AxisPainter,
+        # then the notification makes sense. However, since we
+        # don't want to force two redraws, we might be able to
+        # block one of the signals and force a complete redraw
+        # of the axis.
         set_axis(layer.xaxis, x0, x1)
-        set_axis(layer.yaxis, y0, y1)        
+        set_axis(layer.yaxis, y0, y1)
+
+        self.backend.draw()
+        ###layer.signals['update'](layer, '__all__', None) #???
         
         undolist.append(ul)
 
@@ -558,77 +576,61 @@ class MatplotlibWidget(gtk.VBox):
     def on_action_ZoomRect(self, action):
 
         def finish_zooming(sender):
-            print "ZOOM FINISHED 1"
             self.statusbar.pop(self.statusbar.get_context_id('action-zoom'))
             ul = UndoList().describe("Zoom Region")
             layer = self.backend.active_layer
             self.zoom_to_region(layer, sender.region, undolist=ul)
             self.project.journal.add_undo(ul)
-            print "ZOOM FINISHED 2"
 
-        layer = self.backend.active_layer
+        layer = self.request_active_layer()
         axes = self.backend.get_painter(layer).axes
         s = mpl_selector.SelectRegion(self.backend.figure, axes=axes)
         s.sig_connect('finished', finish_zooming)
-        self.statusbar.push(
-            self.statusbar.get_context_id('action-zoom'),
-            "Use the left mouse button to zoom.")
+        self.statusbar.push(self.statusbar.get_context_id('action-zoom'),
+                            "Use the left mouse button to zoom.")
         self.select(s)
 
-
-    # current layer: OK
     def on_action_ZoomFit(self, action):
         self.abort_selection()
-
-        layer = self.backend.active_layer
+        layer = self.request_active_layer()
         if layer is not None:
             region = (None,None,None,None)
             self.zoom_to_region(layer, region, undolist=globals.app.project.journal)
-
-
-    # current layer: OK            
+    
     def on_action_ZoomIn(self, action):
         self.abort_selection()
-
-        layer = self.backend.active_layer
+        layer = self.request_active_layer()
         if layer is not None:
-            axes = self.backend.layer_to_axes[layer]
+            axes = self.backend.get_painter(layer).axes
             region = self.calculate_zoom_region(axes)
             self.zoom_to_region(layer, region, undolist=globals.app.project.journal)
-
         
-    # current layer: OK    
     def on_action_ZoomOut(self, action):
         self.abort_selection()
-
-        layer = self.backend.active_layer
+        layer = self.request_active_layer()
         if layer is not None:
-            axes = self.backend.layer_to_axes[layer]
+            axes = self.backend.get_painter(layer).axes
             region = self.calculate_zoom_region(axes, dx=-0.1, dy=-0.1)
             self.zoom_to_region(layer, region, undolist=globals.app.project.journal)
 
-    # current layer: OK
     def on_action_MoveAxes(self, action):
 
         def finish_moving(sender):
             ul = UndoList().describe("Move Graph")
-            layer = self.backend.axes_to_layer[sender.axes]
+            layer = self.backend.active_layer#axes_to_layer[sender.axes]
             self.zoom_to_region(layer, sender.region, undolist=ul)
             self.project.journal.add_undo(ul)           
 
-        layer = self.backend.active_layer
-        axes = self.backend.layer_to_axes[layer]
+        layer = self.request_active_layer()
+        axes = self.backend.get_painter(layer).axes
         s = mpl_selector.MoveAxes(self.backend.figure, axes)
         s.sig_connect("finished", finish_moving)
-
         self.select(s)
         
 
-    # current layer: OK
     def on_action_DataCursor(self, action):
-
-        layer = self.backend.active_layer
-        axes = self.backend.layer_to_axes[layer]
+        layer = self.request_active_layer()
+        axes = self.backend.get_painter(layer).axes
         s = mpl_selector.DataCursor(self.backend.figure, axes)
 
         def abort_selector(sender, context_id):
@@ -648,40 +650,35 @@ class MatplotlibWidget(gtk.VBox):
         context_id = self.statusbar.get_context_id("data_cursor")
         s.sig_connect("update-position", update_position, context_id)
         s.sig_connect("finished", finish_selector, context_id)
-        s.sig_connect("aborted", abort_selector, context_id)
-        
+        s.sig_connect("aborted", abort_selector, context_id)             
         self.select(s)
 
 
-    # current layer: OK
     def on_action_SelectLine(self, action):
             
         def finish_select_line(sender):
             print "FINISHED SELECT LINE", sender.line
 
-        layer = self.backend.active_layer
-        axes = self.backend.layer_to_axes[layer]
+        layer = self.request_active_layer()
+        axes = self.backend.get_painter(layer).axes
         s = mpl_selector.SelectLine(self.backend.figure, axes,
                                     mode=mpl_selector.SELECTLINE_VERTICAL)
-        s.sig_connect("finished", finish_select_line)
-        
+        s.sig_connect("finished", finish_select_line)        
         self.select(s)
 
 
-    # current layer: OK
     def on_action_ZoomAxes(self, action):
 
         def finish_moving(sender):
             ul = UndoList().describe("Zoom Axes")
-            layer = self.backend.axes_to_layer[sender.axes]
+            layer = self.backend.active_layer#axes_to_layer[sender.axes]
             self.zoom_to_region(layer, sender.region, undolist=ul)
             self.project.journal.add_undo(ul)           
 
-        layer = self.backend.active_layer
-        axes = self.backend.layer_to_axes[layer]
+        layer = self.request_active_layer()
+        axes = self.backend.get_painter(layer).axes
         s = mpl_selector.ZoomAxes(self.backend.figure, axes)
         s.sig_connect("finished", finish_moving)
-
         self.select(s)
         
         
@@ -698,22 +695,19 @@ class MatplotlibWidget(gtk.VBox):
 
 
     def select(self, selector):
-
         self.emit("edit-mode-started")
-
         self._current_selector = None
         
         def on_finish(sender):            
             # Be careful not to call self.abort_selection() in this place.
             print "---"
-            print "ABORTING"            
+            print "FINISHING"            
             self._current_selector = None
             self.btn_cancel.set_sensitive(False)
             self.emit("edit-mode-ended")
 
         self.btn_cancel.set_sensitive(True)
         self.btn_cancel.connect("clicked", (lambda sender: self.abort_selection()))
-
         selector.sig_connect("finished", on_finish)
         selector.sig_connect("aborted", on_finish)
         self._current_selector = selector
@@ -739,6 +733,9 @@ class MatplotlibWidget(gtk.VBox):
         globals.app.plot_postscript(self.project, self.plot)
         
 
+
+
+
     #
     # TESTING
     #
@@ -746,7 +743,7 @@ class MatplotlibWidget(gtk.VBox):
         self.abort_selection()
 
         # we will simply take the first line available.
-        layer = self.backend.active_layer
+        layer = self.request_active_layer()
         line = layer.lines[0]
 
         print "USING LINE ", line
