@@ -62,6 +62,7 @@ class Dataset(tree.Node, HasSignals):
         self._import = None
 
         self.sig_register('closed')
+        self.sig_register('update')
         self.sig_register('update-fields')
 
         self._array = None

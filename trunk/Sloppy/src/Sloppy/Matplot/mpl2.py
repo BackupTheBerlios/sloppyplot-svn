@@ -163,7 +163,7 @@ class LayerPainter(Painter):
     
     def init(self):
         self.axes = self.init_axes()
-        self.obj.sig_connect('update', self.on_update)
+        self.obj.sig_connect('update', self.on_update_layer)
 
     def init_axes(self):
         return self.parent.figure.add_subplot('111')
@@ -221,10 +221,17 @@ class LayerPainter(Painter):
             if start is not None: set_start(start)
             if end is not None: set_end(end)
 
-    def on_update(self):
-        self.paint()
+    def on_update_layer(self, sender, key, value):
+        if key == '__all__':
+            self.paint()
+        else:
+            # TODO: partial redraw
+            self.paint()
+
         # TODO: maybe queue a redraw somehow?
         self.parent.canvas.draw()
+
+
             
 
 class LinePainter(Painter):

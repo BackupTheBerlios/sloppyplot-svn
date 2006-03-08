@@ -5,8 +5,13 @@
   with the toolbox, otherwise SloppyPlot will not be of any use to me.
 
 
-- update the whole plot via a signal ?
+- Tools: Lines. It is still a little complex....
+  Maybe add buttons to add/remove lines and let double-click edit the line... :-)
+  After all, checkwidgets work.
 
+- Tools: The first layer should be selected as active by default.
+  This does not yet work perfectly. Maybe it is selected, but the tool waits
+  on an update signal?
 
 
 SMALL CLEANUPS TO DO:

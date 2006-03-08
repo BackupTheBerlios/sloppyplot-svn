@@ -117,6 +117,7 @@ class HasSignals:
         signal(self, *args, **kwargs)
 
     def sig_connect(self, name, func):
+        
         return self.signals[name].connect(func)
 
     def sig_disconnect(self, name, slot):

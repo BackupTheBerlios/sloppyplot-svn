@@ -24,7 +24,7 @@ from matplotlib.backends.backend_gtk import FileChooserDialog
 
 import uihelper, mpl_selector
 from Sloppy.Base import uwrap, globals
-from Sloppy.Lib.Undo import UndoList, NullUndo, ulist
+from Sloppy.Lib.Undo import UndoList, NullUndo, ulist, UndoInfo
 
 
 
@@ -491,9 +491,12 @@ class MatplotlibWidget(gtk.VBox):
     #----------------------------------------------------------------------
 
     def zoom_to_region(self, layer, region, undolist=[]):
-       
-        ul = UndoList().describe("Zoom Region")
 
+        old_region = (layer.xaxis.start,
+                      layer.yaxis.start,
+                      layer.xaxis.end,
+                      layer.yaxis.end)
+        
         x0 = min( region[0], region[2] )
         x1 = max( region[0], region[2] )            
         y0 = min( region[1], region[3] )
@@ -519,22 +522,23 @@ class MatplotlibWidget(gtk.VBox):
             else:
                 _start, _end = start, end
 
-            uwrap.set(axis, start=_start, end=_end, undolist=ul)
+            axis.start = _start
+            axis.end = _end            
 
-        # TODO_
+        # TODO:
         # This emits a signal update::start and update::end
         # for each manipulated axis. We might need an AxisPainter,
         # then the notification makes sense. However, since we
         # don't want to force two redraws, we might be able to
         # block one of the signals and force a complete redraw
         # of the axis.
+        # TODO: block signals update::xxx for layer
         set_axis(layer.xaxis, x0, x1)
         set_axis(layer.yaxis, y0, y1)
+        layer.sig_emit('update', '__all__', None)
 
-        self.backend.draw()
-        ###layer.signals['update'](layer, '__all__', None) #???
-        
-        undolist.append(ul)
+        ui = UndoInfo(self.zoom_to_region, layer, old_region).describe("Zoom Region")
+        undolist.append(ui)
 
     def axes_from_xy(self, x, y):
         " x,y should be plot coordinates, not screen coordinates. "
