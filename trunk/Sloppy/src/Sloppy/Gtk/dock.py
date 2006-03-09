@@ -271,7 +271,6 @@ if gtk.pygtk_version[1] < 8:
 
 class Dock( gtk.VBox ):
 
-
     __gsignals__ = {
         'book-added' : (gobject.SIGNAL_RUN_FIRST , gobject.TYPE_NONE,
                         (gobject.TYPE_OBJECT,)),
@@ -280,8 +279,9 @@ class Dock( gtk.VBox ):
         }
 
 
-    def __init__(self):
-        gtk.VBox.__init__(self, False) # False? How to avoid spacing?
+    def __init__(self, dock_name = "unnamed dock"):        
+        gtk.VBox.__init__(self, False)
+        self.set_data('name', dock_name)
 
         self.dockbooks = []
         

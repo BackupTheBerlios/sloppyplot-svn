@@ -96,10 +96,6 @@ class MatplotlibWindow( gtk.Window ):
         accel_group = self.uimanager.get_accel_group()
         self.add_accel_group(accel_group)
 
-        # connect the ESC-key to the mpl widget's cancel button 
-        key, modifier = gtk.accelerator_parse('Escape')
-        self.mpl_widget.btn_cancel.add_accelerator("activate", accel_group, key, modifier, gtk.ACCEL_VISIBLE)
-
 
     def disable_interaction(self, widget):
         " Disable most user interaction. "        
@@ -217,11 +213,6 @@ class MatplotlibWidget(gtk.VBox):
         ##self.statusbar = gtk.Statusbar()
         ##self.statusbar.show()
 
-        # cancel button
-        self.btn_cancel = gtk.Button(stock=gtk.STOCK_CANCEL)
-        self.btn_cancel.set_sensitive(False)
-        self.btn_cancel.show()
-
         # coords
         self.coords = gtk.Label()
         self.coords.show()
@@ -232,7 +223,7 @@ class MatplotlibWidget(gtk.VBox):
         
         vbox = self.vbox = gtk.VBox()
         hbox = gtk.HBox()
-        hbox.pack_start(self.btn_cancel, False, padding=4)
+        ##hbox.pack_start(self.btn_cancel, False, padding=4)
         hbox.pack_start(self.coords, False, padding=4)
         ##hbox.pack_start(self.statusbar, padding=4)
         hbox.show()
@@ -572,23 +563,21 @@ class MatplotlibWidget(gtk.VBox):
         for ag in self.get_actiongroups():
             ag.set_sensitive(True)
 
-        self.btn_cancel.set_sensitive(False)
-
+        globals.app.emit('end-user-action')
 
     def select(self, selector):
         self.emit("edit-mode-started")
         self._current_selector = None
-        
+            
         def on_finish(sender):            
             # Be careful not to call self.abort_selection() in this place.
             print "---"
             print "FINISHING"            
             self._current_selector = None
-            self.btn_cancel.set_sensitive(False)
+            globals.app.sig_emit('end-user-action')
             self.emit("edit-mode-ended")
 
-        self.btn_cancel.set_sensitive(True)
-        self.btn_cancel.connect("clicked", (lambda sender: self.abort_selection()))
+        globals.app.sig_emit('begin-user-action', on_finish)
         selector.sig_connect("finished", on_finish)
         selector.sig_connect("aborted", on_finish)
         self._current_selector = selector

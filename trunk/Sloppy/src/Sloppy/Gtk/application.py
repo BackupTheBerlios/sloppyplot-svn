@@ -66,7 +66,11 @@ class GtkApplication(application.Application):
     active_backend = Instance(backend.Backend, required=False, init=None)
 
     
-    def init(self):        
+    def init(self):
+        self.sig_register('begin-user-action')
+        self.sig_register('cancel-user-action')
+        self.sig_register('end-user-action')
+        
         self.window = AppWindow()
         self._clipboard = gtk.Clipboard()  # not implemented yet
         self._current_plot = None
@@ -78,6 +82,9 @@ class GtkApplication(application.Application):
         self.init_plugins()
         self.init_tools()
 
+        tools.dock_read_config(globals.app.eConfig, self.window.toolbox,
+                               default=['ProjectView'])
+        #                                        'LayerTool'])
 
     def register_stock(self):
         """
@@ -144,80 +151,11 @@ class GtkApplication(application.Application):
         # one solution would be to source the corresponding
         # module from the application, like it is done with
         # the plugins
+        self.tools['ProjectView'] = project_view.ProjectView
         self.tools['LayerTool'] = tools.LayerTool
         self.tools['LabelsTool'] = tools.LabelsTool
         self.tools['LinesTool'] = tools.LinesTool        
         
-        self.tools_read_config()
-        self.sig_connect("write-config", self.tools_write_config)
-
-        
-    def tools_read_config(self):
-        logger.debug("Reading tools configuration")
-        
-        # TODO: maybe put the toolbox into the application?
-        toolbox = self.window.toolbox
-        
-        eToolbox = self.eConfig.find('Toolbox')
-        if eToolbox is None or len(eToolbox.findall('Dock/Dockbook/Dockable')) == 0:
-            logger.debug("Using default Toolbox configuration")
-
-            # basic setup (for now)           
-            book = dock.Dockbook()
-            toolbox.add(book)
-            lt = tools.LinesTool()
-            book.add(lt)
-            lt = tools.LabelsTool()
-            book.add(lt)
-
-            book = dock.Dockbook()
-            toolbox.add(book)
-            lt = project_view.ProjectView()
-            book.add(lt)
-
-            book = dock.Dockbook()
-            toolbox.add(book)
-            lt = tools.LayerTool()
-            book.add(lt)
-            
-            return
-        
-        for eDockbook in eToolbox.findall('Dock/Dockbook'):
-            book = dock.Dockbook()
-            toolbox.add(book)
-            for eDockable in eDockbook.findall('Dockable'):
-                try:                    
-                    tool = self.tools[eDockable.text]()
-                    book.add(tool)
-                    # TODO: size information is not used                    
-                except Exception, msg:
-                    logger.error("Could not init tool dock '%s': %s" % (eDockable.text, msg))
-                else:
-                    print ">>> Tool added", eDockable.text
-
-
-
-        
-    def tools_write_config(self, app):
-        toolbox = self.window.toolbox
-        
-        eToolbox = app.eConfig.find("Toolbox")
-        if eToolbox is None:
-            eToolbox = SubElement(app.eConfig, "Toolbox")
-        else:
-            eToolbox.clear()
-        
-        # get information about dockables/dockbooks
-        eDock = SubElement(eToolbox, "Dock")
-        for dockbook in toolbox.dockbooks:
-            eDockbook = SubElement(eDock, "Dockbook")        
-            for dockable in dockbook.get_children():
-                eDockable = SubElement(eDockbook, "Dockable")
-                ##width, height = dockable.size_request()            
-                ##eDockable.attrib['width'] = str(width)
-                ##eDockable.attrib['height'] = str(height)
-                eDockable.text = dockable.__class__.__name__
-
     
     # ----------------------------------------------------------------------
     # Project

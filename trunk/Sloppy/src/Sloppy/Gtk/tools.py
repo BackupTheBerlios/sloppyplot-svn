@@ -33,162 +33,60 @@ import logging
 logger = logging.getLogger('Gtk.tools')
 
 #------------------------------------------------------------------------------
-# Toolbox
-#
-
-class Toolbox(gtk.Window, SPObject):
-
-    """ The Toolbox holds a dock with a number of Tools.
-
-    Each Tool refers to a backend and the Toolbox has the task to set
-    these two values for all of its tools.
-
-    The Toolbox provides a combobox, so that the user may switch the
-    active backend.
+       
+def dock_read_config(eConfig, adock, default=[]):
+    dock_name = adock.get_data('name')
     
-    @ivar project: project.
-    @ivar backend: currently active backend as displayed in the Toolbox combo.    
-    """
-
-    active_backend = Instance(Backend)
-    
-
-    def __init__(self):
-        SPObject.__init__(self)
-        gtk.Window.__init__(self)
-
-        self.project = None
-        self.project_cblist = []
-        self.backend_cblist = []        
+    eDock = eConfig.find(dock_name)
+    if eDock is None or len(eDock.findall('Dockbook/Dockable')) == 0:
+        logger.debug("Using default Dock configuration")
+        for item in default:
+            book = dock.Dockbook()
+            adock.add(book)
+            tool = globals.app.tools[item]()
+            book.add(tool)
+        return
         
-        #
-        # create gui
-        #
-
-        # create combobox
-        model = gtk.ListStore(object, str) # object := Backend, Plot-Title
-        combobox = gtk.ComboBox(model)
-        cell = gtk.CellRendererText()
-        combobox.pack_start(cell, True)
-        combobox.add_attribute(cell, 'text', 1)
-
-        def changed_cb(entry):
-            backend = uihelper.get_active_combobox_item(entry)
-            self.set_backend(backend)
-        combobox.connect('changed', changed_cb)
-        combobox.show()
-
-        self.combobox = combobox
-
-        # create dock
-        self.dock = dock.Dock()    
-
-        # stuff combo and dock together
-        vbox = gtk.VBox()
-        vbox.pack_start(self.combobox,False,True)
-        vbox.pack_end(self.dock,True,True)
-        self.add(vbox)
-        self.vbox = vbox
-
-        # We add a handler to skip delete-events, i.e. if the
-        # user clicks on the close button of the toolbox, then
-        # it is only hidden.
-        def _cb_delete_event(widget, *args):
-            self.hide()
-            return True # don't continue deletion
-        self.connect('delete_event', _cb_delete_event)
-
-        ######
-            
-        self.set_project(globals.app.project)
-
-        # move window to top right        
-        # TODO: From my understanding, the following code should be
-        #  self.set_gravity(gtk.gdk.GRAVITY_NORTH_EAST)
-        #  self.move(gtk.gdk.screen_width(), 0)
-        # However, at least with metacity (gnome) this does not work.    
-        width, height = self.get_size()
-        self.set_gravity(gtk.gdk.GRAVITY_NORTH_EAST)
-        self.move(gtk.gdk.screen_width() - width, 0)
-
-        self.vbox.show_all()
-                      
-
-    def set_project(self, project):
-        if project == self.project:
-            return
-
-        for cb in self.project_cblist:
-            cb.disconnect()
-        self.project_cblist = []
-
-        if project is not None:
-            cb1 = project.sig_connect('update::backends', self.on_update_backends)
-            cb2 = project.sig_connect('update::active_backend', lambda sender, value: self.set_backend(value))                    
-            self.project_cblist.extend([cb1,cb2])
-
-        self.project = project
-        self.update_combobox()
-        
-
-    def set_backend(self, backend):
-        """ Set the backend to the new value. """
-        if self.active_backend != backend:
-            for cb in self.backend_cblist:
-                cb.disconnect()
-            self.backend_cblist = []
-
-            self.active_backend = backend
-            
-            # Adjust the active index of the combobox so that the new
-            # backend is displayed.
-            if self.active_backend is None:
-                index = -1
+    for eDockbook in eDock.findall('Dockbook'):
+        book = dock.Dockbook()
+        adock.add(book)
+        for eDockable in eDockbook.findall('Dockable'):
+            try:                    
+                tool = globals.app.tools[eDockable.text]()
+                book.add(tool)
+                # TODO: size information is not used                    
+            except Exception, msg:
+                logger.error("Could not init tool dock '%s': %s" % (eDockable.text, msg))
             else:
-                model = self.combobox.get_model()
-                index = self.project.backends.index(backend)
-            self.combobox.set_active(index)
-                              
+                print ">>> Tool added", eDockable.text
 
-    
-    def update_combobox(self):
-        """
-        Fill the combobox with all available matplotlib backends.
-        This method might change the current backend, e.g. if the former
-        current backend no longer exists in the list.
-        """
-
-        model = self.combobox.get_model()
-
-        # fill model with Backend objects and their keys
-        model.clear()
-        if self.project is not None:
-            for backend in self.project.find_backends(key='matplotlib'):
-                model.append((backend, backend.plot.key))
-            self.combobox.set_sensitive(True)
-            
-            # make current Backend the active one
-            try:
-                index = self.project.backends.index(self.active_backend)
-                self.combobox.set_active(index)
-            except ValueError:
-                self.combobox.set_active(-1)
-            
-        else:
-            self.combobox.set_sensitive(False)
-
-    def on_update_backends(self, sender, updateinfo):
-        self.update_combobox()
-
-
-
+    adock.show_all()
 
         
+def dock_write_config(eConfig, adock):
+    dock_name = adock.get_data('name')
+
+    eDock = eConfig.find(dock_name)
+    if eDock is None:
+        eDock = SubElement(eConfig, dock_name)
+    else:
+        eDock.clear()
+        
+    # get information about dockables/dockbooks
+    for dockbook in adock.dockbooks:
+        eDockbook = SubElement(eDock, "Dockbook")        
+        for dockable in dockbook.get_children():
+            eDockable = SubElement(eDockbook, "Dockable")
+            ##width, height = dockable.size_request()            
+            ##eDockable.attrib['width'] = str(width)
+            ##eDockable.attrib['height'] = str(height)
+            eDockable.text = dockable.__class__.__name__
+
+
+
 #------------------------------------------------------------------------------
 # Tool and derived classes
 #
-
-
 class Tool(dock.Dockable):
 
     """ Dockable base class for any tool that edits part of a Plot. """

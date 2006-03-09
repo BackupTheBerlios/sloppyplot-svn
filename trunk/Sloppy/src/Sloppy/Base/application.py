@@ -122,11 +122,11 @@ class Application(SPObject):
         # init recent files
         self.recent_files = []
         self.read_recentfiles()
-        self.sig_connect("write-config", lambda sender: self.write_recentfiles())
+        self.sig_connect("write-config", self.write_config_recentfiles)
 
         # read in existing templates
         self.read_templates()
-        self.sig_connect("write-config", lambda sender: self.write_templates())
+        self.sig_connect("write-config", self.write_config_templates)
 
         # init() is a good place for initialization of derived class
         self.plugins = {}
@@ -144,7 +144,7 @@ class Application(SPObject):
         self.set_project(None, confirm=True)
 
 	# inform all other objects to update the config file elements
-        self.sig_emit("write-config")
+        self.sig_emit("write-config", self.eConfig)
         config.write_configfile(self.eConfig, self.path.config)
         
 
@@ -308,11 +308,11 @@ class Application(SPObject):
             ruf.append( eFile.text )
         self.recent_files = ruf
 
-    def write_recentfiles(self):    
+    def write_config_recentfiles(self, app, eConfig):    
 
-        eRecentFiles = self.eConfig.find("RecentFiles")
+        eRecentFiles = eConfig.find("RecentFiles")
         if eRecentFiles is None:
-            eRecentFiles = SubElement(self.eConfig, "RecentFiles")
+            eRecentFiles = SubElement(eConfig, "RecentFiles")
         else:
             eRecentFiles.clear()
         
@@ -349,12 +349,10 @@ class Application(SPObject):
         globals.import_templates.update(templates)
             
 
-    def write_templates(self):
-        logger.debug("Writing templates.")
-        
-        eTemplates = self.eConfig.find('IOTemplates')
+    def write_config_templates(self, sender, eConfig):       
+        eTemplates = eConfig.find('IOTemplates')
         if eTemplates is None:
-            eTemplates = SubElement(self.eConfig, 'IOTemplates')
+            eTemplates = SubElement(eConfig, 'IOTemplates')
         else:
             eTemplates.clear()            
                 

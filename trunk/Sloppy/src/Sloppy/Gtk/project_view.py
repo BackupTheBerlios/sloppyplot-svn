@@ -40,7 +40,7 @@ class ProjectView(Tool):
         ('RenameItem', 'sloppy-rename', 'Rename', 'F2', 'Rename', 'action_RenameItem')
         ]
 
-    name = "Project Overview"
+    name = "Project"
 
     def __init__(self):
         Tool.__init__(self)

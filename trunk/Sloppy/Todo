@@ -1,11 +1,13 @@
 (for 0.5.3):
 ============
 
+- toggle sidepane and remember this in the config file
 
-- If we always have one active backend, then all tools should refer to it, 
-  which is Application.active_backend.
+- allow to add tools from the popup of a Tool handle
 
+- remember heights of the dockbooks
 
+- open the first available plot for testing
 
 - For the Line Options Dialog to work, we need to finish some checkwidgets:
   - line.source is an Instance

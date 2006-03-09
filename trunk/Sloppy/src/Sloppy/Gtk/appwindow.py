@@ -26,52 +26,36 @@ from Sloppy.Lib.ElementTree.ElementTree import Element, SubElement
 from Sloppy.Base import utils, error, version, config, globals
 from Sloppy.Base.objects import Plot
 from Sloppy.Base.dataset import Dataset
+from Sloppy.Lib.Signals import HasSignals
+
 
 import logging
 logger = logging.getLogger('Gtk.appwindow')
 
 #------------------------------------------------------------------------------
 
-class AppWindow( gtk.Window ):
+class AppWindow( gtk.Window, HasSignals ):
+
 
     def __init__(self):
+        HasSignals.__init__(self)
         gtk.Window.__init__(self, gtk.WINDOW_TOPLEVEL)
+        self.set_icon(self.render_icon('sloppy-Plot', gtk.ICON_SIZE_BUTTON))
+        self.connect("delete-event", (lambda sender, event: globals.app.quit()))
+        
         self.is_fullscreen = False
 	self._windows = list() # keeps track of all subwindows
-
         self._windowlist_merge_id = None
         self._recentfiles_merge_id = None
 
-        globals.app.sig_connect("write-config", self.write_appwindow_config)
         
-        # restore position
-        self.set_gravity(gtk.gdk.GRAVITY_NORTH_WEST)
-        self.move(0,0)        
-
-        #
-        # Set window size, either from config file or set to default.
-        #
-        eWindow = globals.app.eConfig.find('AppWindow')
-        if eWindow is not None:
-            width = int(eWindow.attrib.get('width', 640))
-            height = int(eWindow.attrib.get('height',480))
-        else:
-            width, height = 640,480
-        self.set_size_request(width, height)
-    
-        # set window icon
-        icon = self.render_icon('sloppy-Plot', gtk.ICON_SIZE_BUTTON)
-        self.set_icon(icon)
-
-        self.connect("delete-event", (lambda sender, event: globals.app.quit()))
-        #self.connect("destroy", (lambda sender: globals.app.quit()))
-
-
         #
         # Create GUI
         #       
-        self.toolbox = dock.Dock()
+        self.toolbox = dock.Dock('Sidepane')
         self.toolbox.show()
+        globals.app.sig_connect('write-config',
+          lambda sender, eConfig: tools.dock_write_config(eConfig, self.toolbox))
         
         self.uimanager = uim = gtk.UIManager()        
         uihelper.add_actions(uim, "Application", self.actions_application, globals.app)
@@ -93,13 +77,20 @@ class AppWindow( gtk.Window ):
         self.toolbar = self.uimanager.get_widget('/MainToolbar')
         self.toolbar.set_style(gtk.TOOLBAR_ICONS)
         self.toolbar.show()        
+
+        self.init_actions()
         
         self.statusbar = gtk.Statusbar()
         self.statusbar.set_has_resize_grip(True)        
         self.statusbar.show()
-
         self.progressbar = gtk.ProgressBar()        
         self.progressbar.hide()
+
+        notification_area = gtk.HBox()
+        notification_area.pack_start(self.btn_cancel,False,True)
+        notification_area.pack_start(self.statusbar,True,True)
+        notification_area.pack_start(self.progressbar,False,True)
+        notification_area.show()
     
         self.plotbook  = gtk.Notebook()
         self.plotbook.show()
@@ -110,26 +101,46 @@ class AppWindow( gtk.Window ):
         ##plot_area.pack_end(self.statusbar,False, True)
         plot_area.show()
         
-        hpaned = gtk.HPaned()
-        hpaned.pack1(self.toolbox, False, True)
-        hpaned.pack2(plot_area, True, True)
+        self.hpaned = hpaned = gtk.HPaned()
+        hpaned.pack1(plot_area, True, True)
+        hpaned.pack2(self.toolbox, False, True)        
         hpaned.show()
 
         vbox = gtk.VBox()        
         vbox.pack_start(self.menubar, expand=False)
         vbox.pack_start(self.toolbar, expand=False)        
         vbox.pack_start(hpaned, True, True)
-        vbox.pack_start(self.progressbar, False, False)
-        vbox.pack_end(self.statusbar, False, True)
+        vbox.pack_start(notification_area, False, False)
+        ##vbox.pack_end(self.statusbar, False, True)
         vbox.show()
-
         self.add(vbox)
-        self.show()        
 
         #---
-        self._refresh_windowlist()
         globals.app.sig_connect("update-recent-files", lambda sender: self._refresh_recentfiles())
 
+        #
+        # Restore window size and position. The size is taken
+        # either from config file or set to default.
+        #
+        self.set_gravity(gtk.gdk.GRAVITY_NORTH_WEST)
+        self.move(0,0)        
+        
+        eWindow = globals.app.eConfig.find('AppWindow')
+        if eWindow is not None:
+            width = int(eWindow.attrib.get('width', 480))
+            height = int(eWindow.attrib.get('height',320))
+            position = eWindow.attrib.get('sidepane', width-120)
+            self.hpaned.set_position(int(position))            
+        else:
+            width, height = 640,480
+        self.set_size_request(480,320)
+        self.resize(width, height)
+
+    
+        # register for config file
+        globals.app.sig_connect("write-config", self.write_config)        
+
+        self.show()        
 
     
     def _construct_logwindow(self):
@@ -157,6 +168,44 @@ class AppWindow( gtk.Window ):
         logwindow.connect('show', cb_logwindow_hideshow, t)
         
         return logwindow
+
+
+    #------------------------------------------------------------------------------
+    # Actions
+
+    def init_actions(self):
+        globals.app.sig_connect('begin-user-action', self.on_begin_action)
+        globals.app.sig_connect('end-user-action', self.on_end_action)     
+
+        # cancel button
+        self.btn_cancel = gtk.Button(stock=gtk.STOCK_CANCEL)
+        self.btn_cancel.set_sensitive(False)
+        self.btn_cancel.show()
+        ##self.btn_cancel.hide()
+
+        # connect the ESC-key to the cancel button 
+        key, modifier = gtk.accelerator_parse('Escape')
+        accel_group = self.uimanager.get_accel_group()        
+        self.btn_cancel.add_accelerator("activate", accel_group, key, modifier, gtk.ACCEL_VISIBLE)
+
+
+    def on_begin_action(self, sender, on_cancel_action=None):
+        self.btn_cancel.set_sensitive(True)
+        ##self.btn_cancel.show()
+        self.btn_cancel.connect('clicked', \
+          lambda sender: globals.app.sig_emit('cancel-user-action'))
+
+        def stop(sender):            
+            self.btn_cancel.set_sensitive(False)
+            if on_cancel_action is not None:
+                on_cancel_action(sender)
+        globals.app.sig_connect('cancel-user-action', stop)
+        
+        return False # TODO: disconnect on False
+
+    def on_end_action(self, sender):        
+        self.btn_cancel.set_sensitive(False)
+        ##self.btn_cancel.hide()
 
 
     #-----------------------------------------------------------------------
@@ -228,45 +277,6 @@ class AppWindow( gtk.Window ):
         elif undo_state is True:
             globals.app.status_msg("Finished: %s" % project.journal.undo_text())
 
-            
-        
-
-    def _refresh_windowlist(self):      
-
-        # We are going to recreate the actiongroup 'WindowList'.
-        # To avoid adding this actiongroup multiple times, we need
-        # to remove it first.
-        if self._windowlist_merge_id is not None:
-            ag = uihelper.get_action_group(self.uimanager, "DynamicWindowList")
-            self.uimanager.remove_action_group(ag)
-            self.uimanager.remove_ui(self._windowlist_merge_id)
-            
-        # Create action groups list from windowlist.
-        # The corresponding ui string is created as well.
-        ui = ""
-        ag =  gtk.ActionGroup('DynamicWindowList')
-        for window in self._windows:            
-            title = window.get_title() or "noname"
-            logger.debug("Window title is %s" % title)
-            action = gtk.Action(id(window), title, None, None)
-            action.connect('activate', self._cb_subwindow_present, window)
-            ag.add_action(action)
-            ui+="<menuitem action='%s'/>\n" % id(window)
-        self.uimanager.insert_action_group(ag,0)
-
-        # Wrap UI description.
-        ui="""
-        <ui>
-          <menubar name='MainMenu'>
-            <menu action='ViewMenu'>
-            %s
-            </menu>
-          </menubar>
-        </ui>
-        """ % ui
-                       
-        self._windowlist_merge_id = self.uimanager.add_ui_from_string(ui)                      
-
 
     def _refresh_recentfiles(self):
        
@@ -328,13 +338,10 @@ class AppWindow( gtk.Window ):
     def subwindow_add(self, window):
         window.connect("destroy", self.subwindow_detach)
         self._windows.append(window)
-        window.connect("notify::title", self._refresh_windowlist)
-        self._refresh_windowlist()
         return window
 
     def subwindow_detach(self, window):
         self._windows.remove(window)
-        self._refresh_windowlist()
     def subwindow_present(self, window):
         window.present()
 
@@ -410,13 +417,18 @@ class AppWindow( gtk.Window ):
         dialog.run()
         dialog.destroy()
 
-    # for config file
-    def write_appwindow_config(self, app):
-        eAppWindow = app.eConfig.find('AppWindow')
-        if eAppWindow is None:
-            eAppWindow = SubElement(app.eConfig, "AppWindow")
+
+    def write_config(self, app, eConfig):
+        eWindow = eConfig.find('AppWindow')
+        if eWindow is None:
+            eWindow = SubElement(eConfig, "AppWindow")
         else:
-            eAppWindow.clear()
+            eWindow.clear()
+
+        width, height = self.get_size()
+        eWindow.attrib['width'] = str(width)
+        eWindow.attrib['height'] = str(height)
+        eWindow.attrib['sidepane'] = str(self.hpaned.get_position())
 
         
     #----------------------------------------------------------------------
