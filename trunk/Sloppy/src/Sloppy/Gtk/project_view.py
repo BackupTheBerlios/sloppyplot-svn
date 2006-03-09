@@ -33,6 +33,110 @@ logger = logging.getLogger('Gtk.treeview')
 #------------------------------------------------------------------------------
 
 
+class ProjectView(gtk.VBox):
+
+    def __init__(self):
+        # create gui (a treeview in a scrolled window with a
+        # buttonbox underneath)
+        treeview = ProjectTreeView()
+        scrollwindow = uihelper.add_scrollbars(treeview)
+        
+        buttons = [(gtk.STOCK_ADD, lambda sender: None),
+                   (gtk.STOCK_REMOVE, lambda sender: None),
+                   (gtk.STOCK_GO_UP, lambda sender: None),#self.on_move_selection, -1),
+                   (gtk.STOCK_GO_DOWN, lambda sender: None)]#self.on_move_selection, +1)]        
+        buttonbox = uihelper.construct_hbuttonbox(buttons, labels=False)
+        
+        self.pack_start(scrollwindow, True, True)
+        self.pack_start(buttonbox, False, True)
+        self.show_all()
+        
+        self.buttonbox = buttonbox
+        self.treeview = treeview
+        self.scrollwindow = scrollwindow
+
+        # connect to callbacks
+        treeview.connect( "row-activated", self.on_row_activated )
+        treeview.connect( "button-press-event", self.on_button_press_event )
+        treeview.connect( "popup-menu", self.on_popup_menu, 3, 0 )
+
+
+    def on_action_RenameItem(self, action):
+        self.treeview.start_editing_key()
+
+        
+    def on_row_activated(self,widget,*udata):
+        """
+        plot -> plot item
+        dataset -> edit dataset
+        """
+        (plots, datasets) = widget.get_selected_plds()
+        for plot in plots:
+            globals.app.plot(plot)
+        for ds in datasets:
+            globals.app.edit_dataset(ds)
+
+        
+    def on_button_press_event(self, widget, event):
+        " RMB: Pop up a menu if plot is active object. "
+        if event.button != 3:
+            return False
+
+        # RMB has been clicked -> popup menu
+
+        # Different cases are possible
+        # - The user has not yet selected anything.
+        #   In this case, we select the row on which the cursor
+        #   resides.
+        # - The user has made a selection.
+        #   In this case, we will leave it as it is.
+
+        # get mouse coords and corresponding path
+        x = int(event.x)
+        y = int(event.y)
+        time = event.time
+        try:
+            path, col, cellx, celly = widget.get_path_at_pos(x, y)
+        except TypeError:
+            # => user clicked on empty space -> offer creation of objects
+            pass                
+        else:
+            # If user clicked on a row, then select it.
+            selection = widget.get_selection()
+            if selection.count_selected_rows() == 0:              
+                widget.grab_focus()
+                widget.set_cursor( path, col, 0)
+
+        return self.popup_menu(widget,event.button,event.time)
+                
+            
+
+    def on_popup_menu(self, widget, button, time):
+        " Returns True if a popup has been popped up. "
+        # create popup menu according to object type
+        objects = widget.get_selected_objects()
+        if len(objects) == 0:
+            popup = self.uimanager.get_widget('/popup_empty')
+        else:
+            object = objects[0]
+            if isinstance(object,Plot):
+                popup = self.uimanager.get_widget('/popup_plot')
+            elif isinstance(object,Dataset):
+                popup = self.uimanager.get_widget('/popup_dataset')
+            else:
+                return False
+
+        if popup is not None:
+            popup.popup(None,None,None,button,time)
+            return True
+        else:
+            return False
+
+
+
+
+
+
 class ProjectTreeView( gtk.TreeView ):
 
     (MODEL_KEY, MODEL_OBJECT, MODEL_CLASSNAME) = range(3)

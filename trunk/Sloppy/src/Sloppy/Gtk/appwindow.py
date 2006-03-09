@@ -132,6 +132,7 @@ class AppWindow( gtk.Window ):
         uihelper.add_actions(uim, "Debug", self.actions_debug, globals.app)
         uihelper.add_actions(uim, "UndoRedo", self.actions_undoredo, globals.app)
         uihelper.add_actions(uim, "RecentFiles", self.actions_recentfiles, globals.app)
+        uihelper.add_actions(uim, "ProjectView", self.actions_projectview, globals.app)
 
         return uim
         
@@ -152,22 +153,11 @@ class AppWindow( gtk.Window ):
         self.toolbar = toolbar
         return toolbar
 
-    def _construct_treeview(self):       
-        tv = project_view.ProjectTreeView()
-        tv.connect( "row-activated", self._cb_row_activated )
-        tv.connect( "button-press-event", self._cb_button_pressed )
-        tv.connect( "popup-menu", self.popup_menu, 3, 0 )
-        tv.show()
-
-        # the tv is put into a scrolled window
-        tv_window = gtk.ScrolledWindow()
-        tv_window.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
-        tv_window.add(tv)
-        tv_window.show()
-
-        self.treeview = tv
-        self.treeview_window = tv_window
-        return (tv, tv_window)
+    def _construct_treeview(self):
+        pview = project_view.ProjectView()        
+        self.treeview = pview.treeview
+        self.treeview_window = pview.scrollwindow
+        return (self.treeview, self.treeview_window)
 
         
     def _construct_statusbar(self):
@@ -465,79 +455,7 @@ class AppWindow( gtk.Window ):
         else:
             self.fullscreen()
         self.is_fullscreen = not self.is_fullscreen
-
-        
-    def _cb_rename_item(self, action):
-        self.treeview.start_editing_key()
-
-        
-    def _cb_row_activated(self,widget,*udata):
-        """
-        plot -> plot item
-        dataset -> edit dataset
-        """
-        (plots, datasets) = widget.get_selected_plds()
-        for plot in plots:
-            globals.app.plot(plot)
-        for ds in datasets:
-            globals.app.edit_dataset(ds)
-
-        
-    def _cb_button_pressed(self, widget, event):
-        " RMB: Pop up a menu if plot is active object. "
-        if event.button != 3:
-            return False
-
-        # RMB has been clicked -> popup menu
-
-        # Different cases are possible
-        # - The user has not yet selected anything.
-        #   In this case, we select the row on which the cursor
-        #   resides.
-        # - The user has made a selection.
-        #   In this case, we will leave it as it is.
-
-        # get mouse coords and corresponding path
-        x = int(event.x)
-        y = int(event.y)
-        time = event.time
-        try:
-            path, col, cellx, celly = widget.get_path_at_pos(x, y)
-        except TypeError:
-            # => user clicked on empty space -> offer creation of objects
-            pass                
-        else:
-            # If user clicked on a row, then select it.
-            selection = widget.get_selection()
-            if selection.count_selected_rows() == 0:              
-                widget.grab_focus()
-                widget.set_cursor( path, col, 0)
-
-        return self.popup_menu(widget,event.button,event.time)
-                
-            
-
-    def popup_menu(self, widget, button, time):
-        " Returns True if a popup has been popped up. "
-        # create popup menu according to object type
-        objects = widget.get_selected_objects()
-        if len(objects) == 0:
-            popup = self.uimanager.get_widget('/popup_empty')
-        else:
-            object = objects[0]
-            if isinstance(object,Plot):
-                popup = self.uimanager.get_widget('/popup_plot')
-            elif isinstance(object,Dataset):
-                popup = self.uimanager.get_widget('/popup_dataset')
-            else:
-                return False
-
-        if popup is not None:
-            popup.popup(None,None,None,button,time)
-            return True
-        else:
-            return False
-
+    
 
     def _cb_help_about(self, action):
         " Display a help dialog with version and copyright information. "
@@ -599,8 +517,11 @@ class AppWindow( gtk.Window ):
         ('Preferences', gtk.STOCK_PREFERENCES, '_Preferences...', '<control>P', "Modify Preferences", 'on_action_Preferences'),
         ]
 
-    actions_appwin = [        
-        ('RenameItem', 'sloppy-rename', 'Rename', 'F2', 'Rename', '_cb_rename_item'),
+    actions_projectview = [
+        ('RenameItem', 'sloppy-rename', 'Rename', 'F2', 'Rename', '_cb_rename_item')
+        ]
+        
+    actions_appwin = [                
         ('About', gtk.STOCK_ABOUT, '_About', None, 'About application', '_cb_help_about'),
         ('ToggleFullscreen', None, 'Fullscreen Mode', 'F11', '', 'on_action_ToggleFullscreen')        
         ]
