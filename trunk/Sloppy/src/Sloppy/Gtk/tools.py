@@ -357,6 +357,8 @@ class LinesTool(Tool):
         self.line = None
         self.line_signals = []
 
+        # GUI: treeview with buttons below
+        
         # model: (object) = (layer object)
         model = gtk.ListStore(object)        
         treeview = gtk.TreeView(model)
@@ -375,9 +377,23 @@ class LinesTool(Tool):
         treeview.append_column(column)
         treeview.connect("row-activated", self.on_row_activated)
         treeview.connect("cursor-changed", self.on_cursor_changed)
-        treeview.show()
-        self.add(treeview)        
+        
+        buttons = [(gtk.STOCK_ADD, lambda sender: None),
+                   (gtk.STOCK_REMOVE, lambda sender: None),
+                   (gtk.STOCK_GO_UP, lambda sender: None),#self.on_move_selection, -1),
+                   (gtk.STOCK_GO_DOWN, lambda sender: None)]#self.on_move_selection, +1)]        
+        buttonbox = uihelper.construct_hbuttonbox(buttons, labels=False)
+
+        box = gtk.VBox()
+        box.pack_start(treeview, True, True)
+        box.pack_start(buttonbox, False, True)
+        self.add(box)
+        self.show_all()
+
         self.treeview = treeview
+        self.buttonbox = buttonbox
+        self.box = box
+
 
             
     def on_update_active_backend(self, sender, backend):
@@ -487,18 +503,30 @@ class LinesTool(Tool):
     def on_row_activated(self, treeview, *udata):
         model, iter = treeview.get_selection().get_selected()
         line = model.get_value(iter, 0)
-        
+        self.edit(line)        
         # TODO: edit line  (maybe put this function somewhere else?)
 
-        win = gtk.Window()
-        self.factory = checkwidgets.DisplayFactory(line)
-        self.factory.add_keys(line._checks.keys())
-        table = self.factory.create_table()
-        frame = uihelper.new_section("Line", table)
-        self.factory.check_in(line)
-        win.add(frame)
-        win.show_all()
+    ########
+    def edit(self, line):
+        dialog = options_dialog.OptionsDialog(line)
+        try:           
+            response = dialog.run()
+            if response == gtk.RESPONSE_ACCEPT:
+                dialog.check_out()
+                return dialog.owner
+            else:
+                raise error.UserCancel
 
+        finally:
+            dialog.destroy()
+
+#         win = gtk.Window()
+#         self.factory = checkwidgets.DisplayFactory(line)
+#         self.factory.add_keys(line._checks.keys())
+#         table = self.factory.create_table()
+#         frame = uihelper.new_section("Line", table)
+#         self.factory.check_in(line)
+            
         
 
         

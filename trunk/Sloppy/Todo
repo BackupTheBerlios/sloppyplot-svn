@@ -5,9 +5,49 @@
   with the toolbox, otherwise SloppyPlot will not be of any use to me.
 
 
-- Tools: Lines. It is still a little complex....
-  Maybe add buttons to add/remove lines and let double-click edit the line... :-)
-  After all, checkwidgets work.
+- For the Line Options Dialog to work, we need to finish some checkwidgets:
+  - line.source is an Instance
+
+  It should be possible to specify complex views, something like this:
+  
+  section 'general'
+   label
+   style
+   
+  section 'source'
+   cx, cy
+   cxerr, cyerr
+
+   ....
+
+  But maybe then it would be easier to just use the widget factory and
+  do the layout myself.
+
+  layout = [('General Settings', ('style', 'label')),
+              ('Source', ('source')),
+              ('Marker', ())]
+
+  This would make a nice layout list.
+  So maybe checkwidgets could store the original sections/keys as 
+  self.layout and create the self.keys as it is now.
+
+  Of course it should still be possible to define Connectors individually:
+
+    obj.add_keys(layout, source=MyConnector)
+
+  The only thing that is missing then is using several objects in one
+  factory. This might be a little more complicated. Basically, instead
+  of passing the object or the object's class, we need to pass a dict
+  and specify a name for each object:
+
+    obj.check_in({'obj1': obj1, 'obj2': obj2}, default='obj1'}
+
+  and we can then refer to the keys as
+   
+    'source' = obj1.source
+    'obj2:key' = obj2.key
+
+  This looks like a nice interface!
 
 - Tools: The first layer should be selected as active by default.
   This does not yet work perfectly. Maybe it is selected, but the tool waits
