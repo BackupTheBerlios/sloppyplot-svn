@@ -231,6 +231,13 @@ class GtkApplication(application.Application):
         (unless there were no changes).
         """
 
+
+# class ProjectCheck(Check):
+
+#     def check(self, value):
+# TODO: how can we access the old value in the check? DARN!
+# But maybe we can simply put this question into an action?
+#
         if self._project is not None:
             if self._project.journal.can_undo() and confirm is True:        
                 msg = \
@@ -258,6 +265,10 @@ class GtkApplication(application.Application):
                     # everything else -> abort action
                     raise error.UserCancel
 
+        # THIS WOULD BE CONNECTED TO THE update::project EVENT.
+        # self.sig_connect('update::project', self.on_update_project)
+        # def on_update_project(self, sender, project):
+        
         # set new project
         application.Application.set_project(self, project)
 
