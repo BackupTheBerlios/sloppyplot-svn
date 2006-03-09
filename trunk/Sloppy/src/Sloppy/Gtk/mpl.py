@@ -44,8 +44,7 @@ class MatplotlibWindow( gtk.Window ):
         ],
         'ViewMenu':
         [
-        ('ViewMenu', None, '_View'),
-        ('Fullscreen', None, 'Fullscreen Mode', 'F11', '', '_cb_fullscreen')
+        ('ViewMenu', None, '_View')
         ]
         }
 
@@ -57,25 +56,12 @@ class MatplotlibWindow( gtk.Window ):
           <separator/>
           <menuitem action='Close'/>
         </menu>
-        <menu action='EditMenu'>
-          <menuitem action='Undo'/>
-          <menuitem action='Redo'/>
-        </menu>
         <menu action='DisplayMenu'/>
         <menu action='AnalysisMenu'/>       
-        <menu action='ViewMenu'>
-          <menuitem action='ToggleToolbox'/>
-          <separator/>
-          <menuitem action='Fullscreen'/>
-        </menu>
       </menubar>
       <toolbar name='MainToolbar'>
         <placeholder name='MainToolbarEdit'/>
-        <toolitem action='ToggleToolbox'/>
         <separator/>
-        <toolitem action='Undo'/>
-        <toolitem action='Redo'/>
-        <separator/>              
       </toolbar>
     </ui>
     """
@@ -86,7 +72,6 @@ class MatplotlibWindow( gtk.Window ):
 
         gtk.Window.__init__(self)
         self.set_default_size(640,480)
-        self.is_fullscreen = False
         self.disabled_groups = list()        
         self.mpl_widget = MatplotlibWidget(project, plot)
 
@@ -97,26 +82,23 @@ class MatplotlibWindow( gtk.Window ):
         
         # set up ui manager
         self.uimanager = gtk.UIManager()        
-       
-        # add undo/redo ui from application window
-        ag = uihelper.get_action_group(globals.app.window.uimanager, 'UndoRedo')
-        self.uimanager.insert_action_group(ag,0)
-        
+              
         # add action group from window
         for ag in uihelper.construct_actiongroups(self.actions_dict, map=self):
             self.uimanager.insert_action_group(ag,0)
 
-        # add action group for toolbox
-        toolbox = globals.app.window.toolbox
-        def on_toggled(action, window):
-            if action.get_active() is True:
-                window.show()
-            else:
-                window.hide()
-        t = gtk.ToggleAction('ToggleToolbox', 'Toolbox', 'ToggleToolbox visibility', gtk.STOCK_PROPERTIES)
-        t.connect("toggled", on_toggled, toolbox)
-        uihelper.get_action_group(self.uimanager, 'ViewMenu').add_action(t)
-        t.set_active(toolbox.get_property('visible'))
+        # TODO: offer this in the appwindow
+#         # add action group for toolbox
+#         toolbox = globals.app.window.toolbox
+#         def on_toggled(action, window):
+#             if action.get_active() is True:
+#                 window.show()
+#             else:
+#                 window.hide()
+#         t = gtk.ToggleAction('ToggleToolbox', 'Toolbox', 'ToggleToolbox visibility', gtk.STOCK_PROPERTIES)
+#         t.connect("toggled", on_toggled, toolbox)
+#         uihelper.get_action_group(self.uimanager, 'ViewMenu').add_action(t)
+#         t.set_active(toolbox.get_property('visible'))
 
         # ...and now that all action groups are created,
         # we can create the actual ui for the window 
@@ -201,13 +183,6 @@ class MatplotlibWindow( gtk.Window ):
     #----------------------------------------------------------------------
     # CALLBACKS
     
-    def _cb_fullscreen(self, action):
-        " Toggle fullscreen mode. "
-        if self.is_fullscreen is True:
-            self.unfullscreen()
-        else:
-            self.fullscreen()
-        self.is_fullscreen = not self.is_fullscreen
 
     def _cb_close(self, action):
         self.destroy()
@@ -234,7 +209,6 @@ class MatplotlibWidget(gtk.VBox):
         [
         ('PlotMenu', None, '_Plot'),
         ('Replot', 'sloppy-replot', '_Replot', '<control>R', 'Replot', 'on_action_Replot'),
-        ('EditLayer', gtk.STOCK_PROPERTIES, '_Edit Layer', '<control>E', 'Edit Layer', 'on_action_EditLayer'),
         ('ExportViaMPL', gtk.STOCK_SAVE_AS, 'Export via matplotlib...', None, 'Export via Matplotlib', 'on_action_ExportViaMPL'),
         ('ExportViaGnuplot', gtk.STOCK_SAVE_AS, 'Export via gnuplot...', None, 'Export via Gnuplot', 'on_action_ExportViaGnuplot'),
         ],
@@ -262,7 +236,6 @@ class MatplotlibWidget(gtk.VBox):
         <menu action='PlotMenu'>
           <placeholder name='PlotMenuActions'>
             <menuitem action='Replot'/>
-            <menuitem action='EditLayer'/>
             <separator/>
             <menuitem action='ExportViaMPL'/>
             <menuitem action='ExportViaGnuplot'/>
@@ -284,7 +257,6 @@ class MatplotlibWidget(gtk.VBox):
       </menubar>      
       <toolbar name='MainToolbar'>
         <placeholder name='MainToolbarEdit'>
-        <toolitem action='EditLayer'/>
         </placeholder>
         <toolitem action='ZoomRect'/>
         <separator/>              
@@ -387,18 +359,12 @@ class MatplotlibWidget(gtk.VBox):
         # TODO: connect to plot's title    
 
         if plot is not None:
+            backend = self.project.request_backend('matplotlib', plot=plot)
+
             # TODO: set canvas size depending on outer settings, on dpi
             # TODO: and zoom level
-
-            canvas_width, canvas_height = 640,480
-
-            testing = False
-            if testing == True:
-                backend = self.project.request_backend('matplotlib2', plot=plot)
-            else:
-                backend = self.project.request_backend('matplotlib', plot=plot)
-                
-            backend.canvas.set_size_request(canvas_width, canvas_height)
+            ##canvas_width, canvas_height = 640,480                
+            ##backend.canvas.set_size_request(canvas_width, canvas_height)
 
             # [NV] I disabled rulers again to get ready for the next release.
             if False:
@@ -484,9 +450,6 @@ class MatplotlibWidget(gtk.VBox):
     #----------------------------------------------------------------------
     def on_action_Replot(self, action):
         self.backend.draw()
-
-    def on_action_EditLayer(self, action):
-        globals.app.edit_layer(self.plot, self.request_active_layer())
         
     #----------------------------------------------------------------------
 

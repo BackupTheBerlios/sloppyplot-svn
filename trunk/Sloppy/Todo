@@ -54,6 +54,13 @@
   on an update signal?
 
 
+- Tab-MDI: 
+  -- make project_view independent, i.e. let it manage its popup-menus
+  -- add buttons to project_view to add datasets/plots and remove items.
+  -- maybe make project_view a dock?  
+  -- use subwidgets approach for plot windows.
+
+
 SMALL CLEANUPS TO DO:
 =====================
 

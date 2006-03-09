@@ -37,31 +37,37 @@ class AppWindow( gtk.Window ):
 
     def __init__(self):
         gtk.Window.__init__(self, gtk.WINDOW_TOPLEVEL)
-
+        self.is_fullscreen = False
 	self._windows = list() # keeps track of all subwindows
 
         self._windowlist_merge_id = None
         self._recentfiles_merge_id = None
 
         globals.app.sig_connect("write-config", self.write_appwindow_config)
-
+        
         # restore position
         self.set_gravity(gtk.gdk.GRAVITY_NORTH_WEST)
         self.move(0,0)        
 
-        # TODO: read config data
+        #
+        # Set window size, either from config file or set to default.
+        #
         eWindow = globals.app.eConfig.find('AppWindow')
         if eWindow is not None:
-            try:
-                x = int(eWindow.attrib['width'])
-                y = int(eWindow.attrib['height'])
-                self.set_size_request(width, height)
-            except KeyError:
-                pass
+            width = int(eWindow.attrib.get('width', 640))
+            height = int(eWindow.attrib.get('height',480))
+        else:
+            width, height = 640,480
+        self.set_size_request(width, height)
 
+        
+        #
+        # set window icon
+        #
         icon = self.render_icon('sloppy-Plot', gtk.ICON_SIZE_BUTTON)
         self.set_icon(icon)
 
+        
         self.connect("delete-event", (lambda sender, event: globals.app.quit()))
         #self.connect("destroy", (lambda sender: globals.app.quit()))
 
@@ -84,7 +90,7 @@ class AppWindow( gtk.Window ):
 
         hpaned = gtk.HPaned()
         hpaned.pack1(self.treeview_window, True, True)
-#        hpaned.pack2(self.plotbook, True, True)
+        hpaned.pack2(self.plotbook, True, True)
         hpaned.show()
 
 
@@ -274,8 +280,6 @@ class AppWindow( gtk.Window ):
         actions = ['/MainMenu/FileMenu/FileSave',
                    '/MainMenu/FileMenu/FileSaveAs',
                    '/MainMenu/EditMenu',
-                   '/MainMenu/DatasetMenu',
-                   '/MainMenu/PlotMenu',
                    '/MainMenu/FileMenu/FileClose']
         for action_name in actions:
             action = uim.get_action(action_name)
@@ -454,6 +458,14 @@ class AppWindow( gtk.Window ):
     # ----------------------------------------------------------------------
     # MISC CALLBACKS
 
+
+    def on_action_ToggleFullscreen(self, action):
+        if self.is_fullscreen is True:
+            self.unfullscreen()
+        else:
+            self.fullscreen()
+        self.is_fullscreen = not self.is_fullscreen
+
         
     def _cb_rename_item(self, action):
         self.treeview.start_editing_key()
@@ -557,14 +569,6 @@ class AppWindow( gtk.Window ):
         else:
             eAppWindow.clear()
 
-        # according to the pygtk documentation, we should never
-        # use self.get_size(), though I don't see any other way
-        # to obtain the window size.  I guess I need to ask about this.
-        
-        #width, height = self.get_position()
-        #eAppWindow.attrib['width'] = str(width)
-        #eAppWindow.attrib['height'] = str(height)
-
         
     #----------------------------------------------------------------------
 
@@ -583,11 +587,9 @@ class AppWindow( gtk.Window ):
         ('EditPaste', gtk.STOCK_PASTE, 'Paste', '<control>Y', 'Paste Selection', '_cb_edit_paste'),
         ('Delete', gtk.STOCK_DELETE, 'Delete', 'Delete', 'Delete Selection', '_cb_delete'),
         ('ViewMenu', None, '_View'),
-        ('PlotMenu', None, '_Plot'),
         ('Plot', None, '_Plot', '<control>P', 'Plot the currently selected object with the default backend.', '_cb_plot'),
         ('PlotBackendMenu', None, 'Plot via backend'),
         ('NewPlot', None, 'New Plot', None, 'Create new Plot', '_cb_new_plot'),
-        ('DatasetMenu', None, 'Dataset'),
         ('DatasetToPlot', None, 'Create Plot from Dataset', None, 'Create a new Plot object from the current Dataset', 'on_action_DatasetToPlot'),
         ('DatasetAddToPlot', None, 'Add Datasets to Plot', None, 'Add Datasets to Plot', '_cb_add_datasets_to_plot'),
         ('DatasetImport', None, 'Import Dataset', '<control>I', 'Import a dataset', '_cb_import_dataset'),
@@ -599,7 +601,8 @@ class AppWindow( gtk.Window ):
 
     actions_appwin = [        
         ('RenameItem', 'sloppy-rename', 'Rename', 'F2', 'Rename', '_cb_rename_item'),
-        ('About', gtk.STOCK_ABOUT, '_About', None, 'About application', '_cb_help_about')
+        ('About', gtk.STOCK_ABOUT, '_About', None, 'About application', '_cb_help_about'),
+        ('ToggleFullscreen', None, 'Fullscreen Mode', 'F11', '', 'on_action_ToggleFullscreen')        
         ]
     
     actions_matplotlib = [

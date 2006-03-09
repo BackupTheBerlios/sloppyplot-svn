@@ -501,25 +501,25 @@ class GtkApplication(application.Application):
 
         elif backend_name == 'matplotlib':
 
-#             # as widget
-#             widget = self.window.find_plotwidget(project=self.project,plot=plot)
-#             if widget is None:
-#                 widget = MatplotlibWidget(self, project=self.project, plot=plot)
-#                 self.window.add_plotwidget(widget)
-#             widget.show()
+            # as widget
+            widget = self.window.find_plotwidget(project=self.project,plot=plot)
+            if widget is None:
+                widget = mpl.MatplotlibWidget(project=self.project, plot=plot)
+                self.window.add_plotwidget(widget)
+            widget.show()
 
-            # as window
-            window = self.window.subwindow_match( \
-                (lambda win: isinstance(win, mpl.MatplotlibWindow) \
-                 and win.get_project() == self.project \
-                 and win.get_plot() == plot) )
+#             # as window
+#             window = self.window.subwindow_match( \
+#                 (lambda win: isinstance(win, mpl.MatplotlibWindow) \
+#                  and win.get_project() == self.project \
+#                  and win.get_plot() == plot) )
 
-            if window is None:
-                window = mpl.MatplotlibWindow(project=self.project, plot=plot)
-                ##window.set_transient_for(self.window)
-                self.window.subwindow_add(window)
-            window.show()
-            window.present()
+#             if window is None:
+#                 window = mpl.MatplotlibWindow(project=self.project, plot=plot)
+#                 ##window.set_transient_for(self.window)
+#                 self.window.subwindow_add(window)
+#             window.show()
+#             window.present()
 
         else:
             raise RuntimeError("Unknown backend %s" % backend_name)

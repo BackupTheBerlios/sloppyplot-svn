@@ -12,6 +12,8 @@ uistring_appwindow = \
         <separator/>
         <menuitem action='RecentFilesClear'/>            
       </menu>
+      <separator/>      
+      <menuitem action='DatasetImport'/>      
       <separator/>
       <menuitem action='FileSave'/>
       <menuitem action='FileSaveAs'/>
@@ -23,34 +25,13 @@ uistring_appwindow = \
       <menuitem action='Undo'/>
       <menuitem action='Redo'/>
       <separator/>
-      <menuitem action='Edit'/>
-      <menuitem action='RenameItem'/>          
-      <menuitem action='Delete'/>
-      <separator/>
       <menuitem action='Preferences'/>
-    </menu>
-    <menu action='DatasetMenu'>
-      <menuitem action='NewDataset'/>   
-      <menuitem action='DatasetImport'/>
-      <separator/>
-      <menuitem action='DatasetToPlot'/>
-      <menuitem action='DatasetAddToPlot'/>
-    </menu>
-    <menu action='PlotMenu'>
-      <menuitem action='Plot'/>
-      <menu action='PlotBackendMenu'>
-         <menuitem action='PlotBackendGnuplot'/>
-         <menuitem action='PlotBackendMatplotlib'/>
-      </menu>
-      <menuitem action='ExportViaGnuplot'/>
-      <separator/>
-      <menuitem action='NewPlot'/>
-      <menuitem action='DatasetToPlot'/>
     </menu>
     <menu action='ViewMenu'>
       <menuitem action='ToggleToolbox'/>
       <menuitem action='ToggleLogwindow'/>          
       <separator/>
+      <menuitem action='ToggleFullscreen'/>
     </menu>        
     <menu action='HelpMenu'>
       <menuitem action='About'/>
@@ -63,8 +44,6 @@ uistring_appwindow = \
     <separator/>
     <toolitem action='Undo'/>
     <toolitem action='Redo'/>
-    <separator/>
-    <toolitem action='Quit'/>
   </toolbar>
   <popup name="popup_plot">
     <menuitem action='Plot'/>
