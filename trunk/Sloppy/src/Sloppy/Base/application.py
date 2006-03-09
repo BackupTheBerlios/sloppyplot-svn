@@ -30,7 +30,7 @@ from Sloppy.Lib.Signals import HasSignals
 from Sloppy.Lib.ElementTree.ElementTree import Element, SubElement
 from Sloppy.Lib.Check import values_as_dict
 
-from Sloppy.Base.objects import Plot, Axis, Line, Layer, new_lineplot2d
+from Sloppy.Base.objects import Plot, Axis, Line, Layer, new_lineplot2d, SPObject
 from Sloppy.Base.dataset import Dataset
 from Sloppy.Base.project import Project
 from Sloppy.Base.projectio import load_project, save_project, ParseError
@@ -73,7 +73,7 @@ class PathHandler:
 
 
 #------------------------------------------------------------------------------        
-class Application(object, HasSignals):
+class Application(SPObject):
 
     """
     The Application object manages all application-wide settings.
@@ -100,13 +100,17 @@ class Application(object, HasSignals):
     """
     
     def __init__(self):
-        object.__init__(self)
+        SPObject.__init__(self)        
         globals.app = self
-       
+        self._project = None
+        
         # init signals
-        HasSignals.__init__(self)
         self.sig_register('write-config')
+
+        # TODO:
         self.sig_register('update::project')
+        
+        # TODO: update::recent_files
         self.sig_register('update-recent-files')
 
         # init path handler
@@ -130,7 +134,6 @@ class Application(object, HasSignals):
         self.init()        
 
         # After everything is initialized, we can set up the project.
-        self._project = None
         self.set_project(None)
         
         # welcome message

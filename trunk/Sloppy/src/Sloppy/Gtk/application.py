@@ -36,9 +36,10 @@ from Sloppy.Gtk.layerwin import LayerWindow
 from Sloppy.Gtk.property_browser import PropertyBrowserDialog
 from Sloppy.Gtk.options_dialog import OptionsDialog, NoOptionsError
 from Sloppy.Gtk import tools, dock
+from Sloppy.Gtk import project_view as project_view
 
 from Sloppy.Base import \
-     utils, error, application, globals, pdict, uwrap, dataio
+     utils, error, application, globals, pdict, uwrap, dataio, backend
 from Sloppy.Base.objects import Plot, Axis, Line, Layer, new_lineplot2d
 from Sloppy.Base.dataset import Dataset
 from Sloppy.Base.project import Project
@@ -47,7 +48,7 @@ from Sloppy.Base.projectio import load_project, save_project, ParseError
 from Sloppy.Gnuplot.terminal import PostscriptTerminal
 
 from Sloppy.Lib.ElementTree.ElementTree import Element, SubElement
-
+from Sloppy.Lib.Check import Instance
 
 #------------------------------------------------------------------------------
 # GtkApplication, the main object
@@ -61,14 +62,17 @@ class GtkApplication(application.Application):
     and ui_string of this module.  Furthermore, it provides basic
     functions to work with the project.
     """
+
+    active_backend = Instance(backend.Backend, required=False, init=None)
+
     
-    def init(self):
+    def init(self):        
         self.window = AppWindow()
         self._clipboard = gtk.Clipboard()  # not implemented yet
         self._current_plot = None
         self.path.icon_dir = os.path.join(self.path.base_dir, 'Gtk','Icons')
-        self.register_stock()      
-
+        self.register_stock()
+        
         self.tools = {}
         
         self.init_plugins()
@@ -149,34 +153,41 @@ class GtkApplication(application.Application):
 
         
     def tools_read_config(self):
-        logger.debug("Reading Toolbox configuration")
+        logger.debug("Reading tools configuration")
         
         # TODO: maybe put the toolbox into the application?
-        toolbox = self.window.toolbox 
+        toolbox = self.window.toolbox
         
         eToolbox = self.eConfig.find('Toolbox')
         if eToolbox is None or len(eToolbox.findall('Dock/Dockbook/Dockable')) == 0:
             logger.debug("Using default Toolbox configuration")
-            # basic setup (for now)
+
+            # basic setup (for now)           
             book = dock.Dockbook()
-            toolbox.dock.add(book)
-            lt = tools.LinesTool(toolbox)
+            toolbox.add(book)
+            lt = tools.LinesTool()
             book.add(lt)
-            lt = tools.LabelsTool(toolbox)
+            lt = tools.LabelsTool()
             book.add(lt)
 
             book = dock.Dockbook()
-            toolbox.dock.add(book)
-            lt = tools.LayerTool(toolbox)
-            book.add(lt)            
+            toolbox.add(book)
+            lt = project_view.ProjectView()
+            book.add(lt)
+
+            book = dock.Dockbook()
+            toolbox.add(book)
+            lt = tools.LayerTool()
+            book.add(lt)
+            
             return
         
         for eDockbook in eToolbox.findall('Dock/Dockbook'):
             book = dock.Dockbook()
-            toolbox.dock.add(book)
+            toolbox.add(book)
             for eDockable in eDockbook.findall('Dockable'):
                 try:                    
-                    tool = self.tools[eDockable.text](toolbox)
+                    tool = self.tools[eDockable.text]()
                     book.add(tool)
                     # TODO: size information is not used                    
                 except Exception, msg:
@@ -184,13 +195,6 @@ class GtkApplication(application.Application):
                 else:
                     print ">>> Tool added", eDockable.text
 
-        # restore size of toolbox
-        width = int(eToolbox.attrib.get('width', 240))
-        height = int(eToolbox.attrib.get('height', 480))
-        print
-        print "RESIZE TO ", width, height
-        print
-        toolbox.resize(width, height)
 
 
         
@@ -202,21 +206,16 @@ class GtkApplication(application.Application):
             eToolbox = SubElement(app.eConfig, "Toolbox")
         else:
             eToolbox.clear()
-
-        # size of toolbox
-        width, height = toolbox.get_size()
-        eToolbox.attrib['width'] = str(width)
-        eToolbox.attrib['height'] = str(height)
         
         # get information about dockables/dockbooks
         eDock = SubElement(eToolbox, "Dock")
-        for dockbook in toolbox.dock.dockbooks:
+        for dockbook in toolbox.dockbooks:
             eDockbook = SubElement(eDock, "Dockbook")        
             for dockable in dockbook.get_children():
                 eDockable = SubElement(eDockbook, "Dockable")
-                width, height = dockable.size_request()            
-                eDockable.attrib['width'] = str(width)
-                eDockable.attrib['height'] = str(height)
+                ##width, height = dockable.size_request()            
+                ##eDockable.attrib['width'] = str(width)
+                ##eDockable.attrib['height'] = str(height)
                 eDockable.text = dockable.__class__.__name__
 
     
@@ -261,7 +260,6 @@ class GtkApplication(application.Application):
 
         # set new project
         application.Application.set_project(self, project)
-        self.window.treeview.set_project(project)
 
         # assign project label to window title
         if project:
@@ -483,21 +481,6 @@ class GtkApplication(application.Application):
             backend.draw()
             return
 
-        # TODO: open Gnuplot window
-
-        # add_subwindow
-        # match_subwindow
-        # request_subwindow
-
-        # evtl. schon als Toolbox ???
-        
-#             window = self.window.subwindow_match( \
-#                 (lambda win: isinstance(win, GnuplotWindow) and \
-#                  win.project == self.project and \
-#                  win.plot == plot) )
-#             if window is None:
-#                 window = GnuplotWindow(self, project=self.project, plot=plot)
-#                 self.window.subwindow_add( window )
 
         elif backend_name == 'matplotlib':
 
@@ -508,22 +491,12 @@ class GtkApplication(application.Application):
                 self.window.add_plotwidget(widget)
             widget.show()
 
-#             # as window
-#             window = self.window.subwindow_match( \
-#                 (lambda win: isinstance(win, mpl.MatplotlibWindow) \
-#                  and win.get_project() == self.project \
-#                  and win.get_plot() == plot) )
-
-#             if window is None:
-#                 window = mpl.MatplotlibWindow(project=self.project, plot=plot)
-#                 ##window.set_transient_for(self.window)
-#                 self.window.subwindow_add(window)
-#             window.show()
-#             window.present()
+            backend = widget.backend
 
         else:
             raise RuntimeError("Unknown backend %s" % backend_name)
-        
+
+        self.active_backend = backend
 
     def plot_current_objects(self, backend_name='matplotlib', undolist=[]):
         (plots, datasets) = self.window.treeview.get_selected_plds()

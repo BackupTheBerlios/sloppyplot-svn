@@ -21,8 +21,7 @@
 
 import os, gtk
 
-from Sloppy.Gtk import uihelper, uidata, logwin, tools, mpl
-from Sloppy.Gtk import project_view as project_view
+from Sloppy.Gtk import uihelper, uidata, logwin, tools, mpl, dock
 from Sloppy.Lib.ElementTree.ElementTree import Element, SubElement
 from Sloppy.Base import utils, error, version, config, globals
 from Sloppy.Base.objects import Plot
@@ -59,146 +58,78 @@ class AppWindow( gtk.Window ):
         else:
             width, height = 640,480
         self.set_size_request(width, height)
-
-        
-        #
+    
         # set window icon
-        #
         icon = self.render_icon('sloppy-Plot', gtk.ICON_SIZE_BUTTON)
         self.set_icon(icon)
 
-        
         self.connect("delete-event", (lambda sender, event: globals.app.quit()))
         #self.connect("destroy", (lambda sender: globals.app.quit()))
 
-        self.uimanager = self._construct_uimanager()
-        self._construct_logwindow()
-        self.toolbox = self._construct_toolbox()
 
-        # and build ui
-        self.uimanager.add_ui_from_string(uidata.uistring_appwindow)
-        self.add_accel_group(self.uimanager.get_accel_group())
+        #
+        # Create GUI
+        #       
+        self.toolbox = dock.Dock()
+        self.toolbox.show()
         
-        self._construct_menubar()
-        self._construct_toolbar()
-        self._construct_treeview()
-        self._construct_statusbar()
-        self._construct_progressbar()
-
-        self.plotbook  = gtk.Notebook()
-        self.plotbook.show()
-
-        hpaned = gtk.HPaned()
-        hpaned.pack1(self.treeview_window, True, True)
-        hpaned.pack2(self.plotbook, True, True)
-        hpaned.show()
-
-
-        #bottombox = gtk.HBox()
-        #bottombox.pack_start(self.progressbar,False,True)
-        #bottombox.show()
-        
-        ##vpaned = gtk.VPaned()
-        ##vpaned.pack1(self.treeview_window,True,True)
-        ###vpaned.pack2(self.logwidget,False,True)
-        ##vpaned.show()
-        
-        # Set up vbox to hold everything...
-        vbox = gtk.VBox()
-        vbox.pack_start(self.menubar, expand=False)
-        vbox.pack_start(self.toolbar, expand=False)        
-        ###vbox.pack_start(self.treeview_window, expand=True, fill=True)
-        vbox.pack_start(hpaned, True, True)        
-        vbox.pack_start(self.progressbar, False, False)
-        vbox.pack_end(self.statusbar,False, True)
-        vbox.show()
-
-        # ...and add vbox to the window.
-        self.add( vbox )        
-        self.show()        
-
-
-        self._refresh_windowlist()
-        globals.app.sig_connect("update-recent-files", lambda sender: self._refresh_recentfiles())
-
-    def _construct_uimanager(self):
-
-        uim = gtk.UIManager()
-        
+        self.uimanager = uim = gtk.UIManager()        
         uihelper.add_actions(uim, "Application", self.actions_application, globals.app)
         uihelper.add_actions(uim, "AppWin", self.actions_appwin, self)
         uihelper.add_actions(uim, "Matplotlib", self.actions_matplotlib, globals.app)
         uihelper.add_actions(uim, "Gnuplot", self.actions_gnuplot, globals.app)
         uihelper.add_actions(uim, "Debug", self.actions_debug, globals.app)
         uihelper.add_actions(uim, "UndoRedo", self.actions_undoredo, globals.app)
-        uihelper.add_actions(uim, "RecentFiles", self.actions_recentfiles, globals.app)
-        uihelper.add_actions(uim, "ProjectView", self.actions_projectview, globals.app)
+        uihelper.add_actions(uim, "RecentFiles", self.actions_recentfiles, globals.app)     
 
-        return uim
+        self._construct_logwindow()
+       
+        self.uimanager.add_ui_from_string(uidata.uistring_appwindow)
+        self.add_accel_group(self.uimanager.get_accel_group())
+
+        self.menubar = self.uimanager.get_widget('/MainMenu')
+        self.menubar.show()
+
+        self.toolbar = self.uimanager.get_widget('/MainToolbar')
+        self.toolbar.set_style(gtk.TOOLBAR_ICONS)
+        self.toolbar.show()        
         
+        self.statusbar = gtk.Statusbar()
+        self.statusbar.set_has_resize_grip(True)        
+        self.statusbar.show()
 
-    def _construct_menubar(self):
-        menubar = self.uimanager.get_widget('/MainMenu')
-        menubar.show()
+        self.progressbar = gtk.ProgressBar()        
+        self.progressbar.hide()
+    
+        self.plotbook  = gtk.Notebook()
+        self.plotbook.show()
 
-        self.menubar = menubar
-        return menubar
-
-
-    def _construct_toolbar(self):        
-        toolbar = self.uimanager.get_widget('/MainToolbar')
-        toolbar.set_style(gtk.TOOLBAR_ICONS)
-        toolbar.show()
+        plot_area = gtk.VBox()
+        plot_area.pack_start(self.plotbook, True, True)
+        ##plot_area.pack_start(self.progressbar, False, False)
+        ##plot_area.pack_end(self.statusbar,False, True)
+        plot_area.show()
         
-        self.toolbar = toolbar
-        return toolbar
+        hpaned = gtk.HPaned()
+        hpaned.pack1(self.toolbox, False, True)
+        hpaned.pack2(plot_area, True, True)
+        hpaned.show()
 
-    def _construct_treeview(self):
-        pview = project_view.ProjectView()        
-        self.treeview = pview.treeview
-        self.treeview_window = pview.scrollwindow
-        return (self.treeview, self.treeview_window)
+        vbox = gtk.VBox()        
+        vbox.pack_start(self.menubar, expand=False)
+        vbox.pack_start(self.toolbar, expand=False)        
+        vbox.pack_start(hpaned, True, True)
+        vbox.pack_start(self.progressbar, False, False)
+        vbox.pack_end(self.statusbar, False, True)
+        vbox.show()
 
-        
-    def _construct_statusbar(self):
-        statusbar = gtk.Statusbar()
-        statusbar.set_has_resize_grip(True)        
-        statusbar.show()
+        self.add(vbox)
+        self.show()        
 
-        self.statusbar = statusbar
-        return statusbar
+        #---
+        self._refresh_windowlist()
+        globals.app.sig_connect("update-recent-files", lambda sender: self._refresh_recentfiles())
 
-    def _construct_progressbar(self):
-        progressbar = gtk.ProgressBar()        
-        progressbar.hide()
-        self.progressbar = progressbar
-        return progressbar
-        
-
-    def _construct_toolbox(self):
-
-        window = tools.Toolbox(None)
-        window.set_transient_for(self)
-        window.set_destroy_with_parent(True)
-        window.hide()
-
-        def cb_toggle_window(action, window):
-            if action.get_active() is True: window.show()
-            else: window.hide()        
-        t = gtk.ToggleAction('ToggleToolbox', 'Show Toolbox', None, None)
-        t.connect("toggled", cb_toggle_window, window)
-        uihelper.get_action_group(self.uimanager, 'Application').add_action(t)
-
-        def on_window_visibility_toggled(window, action):
-            action.set_active(window.get_property('visible'))
-        window.connect('hide', on_window_visibility_toggled, t)
-        window.connect('show', on_window_visibility_toggled, t)
-
-        def on_update_project(sender, project):
-            window.set_project(project)
-        globals.app.sig_connect('update::project', on_update_project)
-        
-        return window
 
     
     def _construct_logwindow(self):
@@ -430,14 +361,14 @@ class AppWindow( gtk.Window ):
         n = self.plotbook.append_page(widget)
         self.plotbook.set_tab_label_text(widget, "Plot")
 
-        # TODO: this signal should be a gobject signal
-        # TODO: Does this actually work?
-        widget.connect("closed", self.detach_plotwidget)       
+        ### TODO: this signal should be a gobject signal
+        ### TODO: Does this actually work?
+        ##widget.connect("closed", self.detach_plotwidget)       
 
-        for ag in widget.get_actiongroups():            
+        for ag in widget.actiongroups:            
             self.uimanager.insert_action_group(ag,0)            
         self.add_accel_group(self.uimanager.get_accel_group())
-        self.uimanager.add_ui_from_string(widget.get_uistring())
+        self.uimanager.add_ui_from_string(widget.uistring)
 
 
     def detach_plotwidget(self, widget):
@@ -517,10 +448,6 @@ class AppWindow( gtk.Window ):
         ('Preferences', gtk.STOCK_PREFERENCES, '_Preferences...', '<control>P', "Modify Preferences", 'on_action_Preferences'),
         ]
 
-    actions_projectview = [
-        ('RenameItem', 'sloppy-rename', 'Rename', 'F2', 'Rename', '_cb_rename_item')
-        ]
-        
     actions_appwin = [                
         ('About', gtk.STOCK_ABOUT, '_About', None, 'About application', '_cb_help_about'),
         ('ToggleFullscreen', None, 'Fullscreen Mode', 'F11', '', 'on_action_ToggleFullscreen')        

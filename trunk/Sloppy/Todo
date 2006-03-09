@@ -1,8 +1,10 @@
 (for 0.5.3):
 ============
 
-- FOCUS FOR THIS RELEASE: Toolbox! For my work I really need to get going
-  with the toolbox, otherwise SloppyPlot will not be of any use to me.
+
+- If we always have one active backend, then all tools should refer to it, 
+  which is Application.active_backend.
+
 
 
 - For the Line Options Dialog to work, we need to finish some checkwidgets:

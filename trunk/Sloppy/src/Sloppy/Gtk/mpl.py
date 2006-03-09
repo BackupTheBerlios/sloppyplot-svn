@@ -30,23 +30,6 @@ from Sloppy.Lib.Undo import UndoList, NullUndo, ulist, UndoInfo
 
 class MatplotlibWindow( gtk.Window ):
 
-    actions_dict = {
-        'MenuPlaceholders':
-        [
-        ('EditMenu', None, '_Edit'),
-        ('PlotMenu', None, '_Plot'),
-        ('DisplayMenu', None, '_Display'),
-        ('AnalysisMenu', None, '_Analysis')
-        ],        #
-        'MatplotlibWindow':
-        [
-        ('Close', gtk.STOCK_CLOSE, '_Close', 'q', 'Close this Window', '_cb_close')
-        ],
-        'ViewMenu':
-        [
-        ('ViewMenu', None, '_View')
-        ]
-        }
 
     uistring = """
     <ui>
@@ -116,39 +99,6 @@ class MatplotlibWindow( gtk.Window ):
         # connect the ESC-key to the mpl widget's cancel button 
         key, modifier = gtk.accelerator_parse('Escape')
         self.mpl_widget.btn_cancel.add_accelerator("activate", accel_group, key, modifier, gtk.ACCEL_VISIBLE)
-        
-        # construct menubar 
-        menubar = self.uimanager.get_widget('/MainMenu')
-        menubar.show()
-
-        # construct toolbar
-        toolbar = self.uimanager.get_widget('/MainToolbar')
-        toolbar.set_style(gtk.TOOLBAR_ICONS)
-        toolbar.show()        
-
-        # put everything in a vertical box
-        vbox = gtk.VBox()
-        vbox.pack_start(menubar, False, True)
-        vbox.pack_start(toolbar, False, True)
-        vbox.pack_start(self.mpl_widget, True, True)
-        self.add(vbox)
-
-        #self.set_title( "Plot: %s" % plot.key )
-        
-        self.mpl_widget.show()
-        vbox.show()
-
-        self.mpl_widget.connect("edit-mode-started", self.disable_interaction)
-        self.mpl_widget.connect("edit-mode-ended", self.enable_interaction)
-                                      
-        self.connect("destroy", (lambda sender: self.destroy()))
-        self.mpl_widget.connect("destroy", (lambda sender: self.destroy()))
-        
-
-    def destroy(self):
-        self.mpl_widget.set_plot(None)
-        gtk.Window.destroy(self)
-
 
 
     def disable_interaction(self, widget):
@@ -169,24 +119,6 @@ class MatplotlibWindow( gtk.Window ):
         self.disabled_groups = list()
 
         
-
-    def get_project(self):
-        return self.mpl_widget.project
-
-    def get_plot(self):
-        return self.mpl_widget.plot
-
-    def get_backend(self):
-        return self.mpl_widget.backend
-
-
-    #----------------------------------------------------------------------
-    # CALLBACKS
-    
-
-    def _cb_close(self, action):
-        self.destroy()
-
 
 
 
@@ -271,13 +203,29 @@ class MatplotlibWidget(gtk.VBox):
         gtk.VBox.__init__(self)
 
         self._current_selector = None
+
+        # construct action groups
+        actiongroups = list()
+        for key, actions in self.actions_dict.iteritems():
+            ag = gtk.ActionGroup(key)
+            ag.add_actions( uihelper.map_actions(actions, self) )
+            actiongroups.append(ag)
+        self.actiongroups = actiongroups
         
-        self._construct_actiongroups()        
-        self.statusbar = self._construct_statusbar()
-        self.coords = self._construct_coords()
+        ### statusbar
+        self.statusbar = globals.app.window.statusbar
+        ##self.statusbar = gtk.Statusbar()
+        ##self.statusbar.show()
 
-        self.btn_cancel = self._construct_cancel_button()
+        # cancel button
+        self.btn_cancel = gtk.Button(stock=gtk.STOCK_CANCEL)
+        self.btn_cancel.set_sensitive(False)
+        self.btn_cancel.show()
 
+        # coords
+        self.coords = gtk.Label()
+        self.coords.show()
+        
         self.context_id = self.statusbar.get_context_id("coordinates")
         #self.statusbar.push(self.context_id, "X: 10, Y: 20")
         #self.statusbar.pop(self.context_id)
@@ -286,7 +234,7 @@ class MatplotlibWidget(gtk.VBox):
         hbox = gtk.HBox()
         hbox.pack_start(self.btn_cancel, False, padding=4)
         hbox.pack_start(self.coords, False, padding=4)
-        hbox.pack_start(self.statusbar, padding=4)
+        ##hbox.pack_start(self.statusbar, padding=4)
         hbox.show()
         vbox.pack_end(hbox, False, True)
         vbox.show()
@@ -311,42 +259,6 @@ class MatplotlibWidget(gtk.VBox):
         self.fileselect = FileChooserDialog(title='Save the figure', parent=None)
 
 
-
-    def _construct_actiongroups(self):
-        actiongroups = list()
-        for key, actions in self.actions_dict.iteritems():
-            ag = gtk.ActionGroup(key)
-            ag.add_actions( uihelper.map_actions(actions, self) )
-            actiongroups.append(ag)
-        self.actiongroups = actiongroups
-
-    def get_actiongroups(self):
-        return self.actiongroups
-
-    def get_uistring(self):
-        return self.uistring
-
-
-
-
-    def _construct_statusbar(self):
-        statusbar = gtk.Statusbar()
-        statusbar.show()
-        return statusbar
-
-    def _construct_coords(self):
-        label = gtk.Label()
-        label.show()
-        return label 
-
-    def _construct_cancel_button(self):
-        button = gtk.Button(stock=gtk.STOCK_CANCEL)
-        button.set_sensitive(False)
-        button.show()
-        return button
-        
-        
-
     #----------------------------------------------------------------------
     def set_coords(self, x, y):
         if x is not None and y is not None:
@@ -363,8 +275,10 @@ class MatplotlibWidget(gtk.VBox):
 
             # TODO: set canvas size depending on outer settings, on dpi
             # TODO: and zoom level
-            ##canvas_width, canvas_height = 640,480                
-            ##backend.canvas.set_size_request(canvas_width, canvas_height)
+
+            # minium canvas size
+            canvas_width, canvas_height = 320,240
+            backend.canvas.set_size_request(canvas_width, canvas_height)
 
             # [NV] I disabled rulers again to get ready for the next release.
             if False:

@@ -24,31 +24,38 @@ import sys, glob, os.path
 from Sloppy.Base.objects import *
 from Sloppy.Base.dataset import *
 from Sloppy.Base import pdict, uwrap, globals
-from Sloppy.Gtk import uihelper
+from Sloppy.Gtk import uihelper, uidata
+from Sloppy.Gtk.tools import Tool
 
 from Sloppy.Lib.Props.main import PropertyError
 
 import logging
-logger = logging.getLogger('Gtk.treeview')
+logger = logging.getLogger('Gtk.project_view')
 #------------------------------------------------------------------------------
 
 
-class ProjectView(gtk.VBox):
+class ProjectView(Tool):
+
+    actions = [
+        ('RenameItem', 'sloppy-rename', 'Rename', 'F2', 'Rename', 'action_RenameItem')
+        ]
+
+    name = "Project Overview"
 
     def __init__(self):
+        Tool.__init__(self)
+        
         # create gui (a treeview in a scrolled window with a
         # buttonbox underneath)
         treeview = ProjectTreeView()
         scrollwindow = uihelper.add_scrollbars(treeview)
         
         buttons = [(gtk.STOCK_ADD, lambda sender: None),
-                   (gtk.STOCK_REMOVE, lambda sender: None),
-                   (gtk.STOCK_GO_UP, lambda sender: None),#self.on_move_selection, -1),
-                   (gtk.STOCK_GO_DOWN, lambda sender: None)]#self.on_move_selection, +1)]        
+                   (gtk.STOCK_REMOVE, lambda sender: None)]
         buttonbox = uihelper.construct_hbuttonbox(buttons, labels=False)
-        
+
         self.pack_start(scrollwindow, True, True)
-        self.pack_start(buttonbox, False, True)
+        #self.pack_start(buttonbox, False, True)        
         self.show_all()
         
         self.buttonbox = buttonbox
@@ -60,8 +67,15 @@ class ProjectView(gtk.VBox):
         treeview.connect( "button-press-event", self.on_button_press_event )
         treeview.connect( "popup-menu", self.on_popup_menu, 3, 0 )
 
+        # create actions for ui manager
+        uimanager = globals.app.window.uimanager
+        uihelper.add_actions(uimanager, "ProjectView", self.actions, self)
+        uimanager.add_ui_from_string(uidata.uistring_project_view)
+        
+##        globals.app.window.add_accel_group(self.uimanager.get_accel_group())
 
-    def on_action_RenameItem(self, action):
+
+    def action_RenameItem(self, action):
         self.treeview.start_editing_key()
 
         
@@ -107,22 +121,24 @@ class ProjectView(gtk.VBox):
                 widget.grab_focus()
                 widget.set_cursor( path, col, 0)
 
-        return self.popup_menu(widget,event.button,event.time)
-                
+        return self.on_popup_menu(widget,event.button,event.time)            
             
 
     def on_popup_menu(self, widget, button, time):
         " Returns True if a popup has been popped up. "
+
+        uim = globals.app.window.uimanager
+        
         # create popup menu according to object type
         objects = widget.get_selected_objects()
         if len(objects) == 0:
-            popup = self.uimanager.get_widget('/popup_empty')
+            popup = uim.get_widget('/popup_empty')
         else:
             object = objects[0]
             if isinstance(object,Plot):
-                popup = self.uimanager.get_widget('/popup_plot')
+                popup = uim.get_widget('/popup_plot')
             elif isinstance(object,Dataset):
-                popup = self.uimanager.get_widget('/popup_dataset')
+                popup = uim.get_widget('/popup_dataset')
             else:
                 return False
 
@@ -155,8 +171,8 @@ class ProjectTreeView( gtk.TreeView ):
     def __init__(self, project=None):
        
         # init TreeView
-        gtk.TreeView.__init__( self )
-        self.set_headers_visible( True )
+        gtk.TreeView.__init__(self)
+        self.set_headers_visible(False)
         self.get_selection().set_mode(gtk.SELECTION_MULTIPLE)
 
         self.set_size_request(width=200, height=200)
@@ -166,10 +182,14 @@ class ProjectTreeView( gtk.TreeView ):
         self.init_view_columns()
         self.init_dragndrop()
         
-        # set_project will fill the treeview with contents
+        # keep project current
+        self.project = None
+        globals.app.sig_connect('update::project',\
+          lambda sender, value: self.set_project(value))
         self.set_project(project)
         
-
+        
+        
     def init_model(self):
         """        
         Init the TreeView model.        
@@ -230,26 +250,28 @@ class ProjectTreeView( gtk.TreeView ):
 
         self.collapse_all()
 
+
     def set_project(self, project):
         """
         Assign a project to the TreeView and repopulate the tree.  If
         no project is given, the TreeView will be empty.
         """
-        if project is not None:
-            self.set_property('sensitive',True)
-        else:
-            self.set_property('sensitive',False)
-            
-        self.project = project        
-        self.populate_treeview()
-
+        if project == self.project:
+            return
+        
         # connect update signals with update mechanism
-        if self.project is not None:
+        if project is not None:
+            self.set_property('sensitive',True)            
             def on_update(sender, updateinfo):
-                print "--- update received ---"
                 self.populate_treeview()
             project.sig_connect("update::datasets", on_update)
             project.sig_connect("update::plots", on_update)
+        else:
+            self.set_property('sensitive',False)
+
+        self.project = project                    
+        self.populate_treeview()
+
 
 
     # ----------------------------------------------------------------------

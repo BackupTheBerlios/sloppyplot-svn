@@ -28,7 +28,6 @@ uistring_appwindow = \
       <menuitem action='Preferences'/>
     </menu>
     <menu action='ViewMenu'>
-      <menuitem action='ToggleToolbox'/>
       <menuitem action='ToggleLogwindow'/>          
       <separator/>
       <menuitem action='ToggleFullscreen'/>
@@ -45,6 +44,11 @@ uistring_appwindow = \
     <toolitem action='Undo'/>
     <toolitem action='Redo'/>
   </toolbar>
+</ui>
+"""
+
+uistring_project_view = \
+"""
   <popup name="popup_plot">
     <menuitem action='Plot'/>
     <menu action='PlotBackendMenu'>
@@ -74,9 +78,7 @@ uistring_appwindow = \
     <menuitem action='NewDataset'/>
     <menuitem action='NewPlot'/>
   </popup>
-</ui>
-"""
-
+"""                      
 
 uistring_datawin = \
 """

@@ -53,14 +53,13 @@ class Toolbox(gtk.Window, SPObject):
     active_backend = Instance(Backend)
     
 
-    def __init__(self, project=None):
+    def __init__(self):
         SPObject.__init__(self)
         gtk.Window.__init__(self)
 
-
-        self.project = project or -1
+        self.project = None
         self.project_cblist = []
-        self.backend_cblist = []
+        self.backend_cblist = []        
         
         #
         # create gui
@@ -99,21 +98,9 @@ class Toolbox(gtk.Window, SPObject):
             return True # don't continue deletion
         self.connect('delete_event', _cb_delete_event)
 
-        # on hide => remember position
-        # on show => reset position
-        #self.position_x, self.position_y = 0,0
-        #def on_hide(widget, *args):
-        #    print "ON HIDE", self.get_position()
-        #    widget.position_x, widget.position_y = widget.get_position()
-        #def on_show(widget, *args):
-        #    print "ON SHOW"
-        #    widget.move(widget.position_x, widget.position_y)
-        #self.connect('hide', on_hide)
-        #self.connect('show', on_show)
-
         ######
             
-        self.set_project(project)
+        self.set_project(globals.app.project)
 
         # move window to top right        
         # TODO: From my understanding, the following code should be
@@ -123,7 +110,6 @@ class Toolbox(gtk.Window, SPObject):
         width, height = self.get_size()
         self.set_gravity(gtk.gdk.GRAVITY_NORTH_EAST)
         self.move(gtk.gdk.screen_width() - width, 0)
-
 
         self.vbox.show_all()
                       
@@ -206,26 +192,18 @@ class Toolbox(gtk.Window, SPObject):
 class Tool(dock.Dockable):
 
     """ Dockable base class for any tool that edits part of a Plot. """
-        
-    def __init__(self, toolbox):
+
+    name = "Unnamed Tool"
+    stock_id = gtk.STOCK_EDIT
+    
+    def __init__(self):
         dock.Dockable.__init__(self)
-        self.toolbox = None
-        self.toolbox_signals = []
 
         self.backend = None
         self.backend_signals = []
         
         self.init()
-        self.set_toolbox(toolbox)
-
-    def set_toolbox(self, toolbox):
-        for signal in self.toolbox_signals:
-            signal.disconnect()
-            
-        s1 = toolbox.sig_connect('update::active_backend', self.on_update_active_backend)
-        self.toolbox_signals = [s1]
-        
-        self.toolbox = toolbox
+        globals.app.sig_connect('update::active_backend', self.on_update_active_backend)        
         
     def init(self):
         pass
@@ -386,7 +364,7 @@ class LinesTool(Tool):
 
         box = gtk.VBox()
         box.pack_start(treeview, True, True)
-        box.pack_start(buttonbox, False, True)
+#        box.pack_start(buttonbox, False, True)
         self.add(box)
         self.show_all()
 
