@@ -25,106 +25,36 @@ from matplotlib.backends.backend_gtk import FileChooserDialog
 import uihelper, mpl_selector
 from Sloppy.Base import uwrap, globals
 from Sloppy.Lib.Undo import UndoList, NullUndo, ulist, UndoInfo
+from Sloppy.Gtk import uidata
 
 
+#     def disable_interaction(self, widget):
+#         " Disable most user interaction. "        
+#         actiongroups = self.uimanager.get_action_groups()
+#         for actiongroup in actiongroups:
+#             if actiongroup.get_name() in ['ViewMenu']:
+#                 continue
+#             if actiongroup.get_sensitive() is True:
+#                 actiongroup.set_sensitive(False)
+#                 self.disabled_groups.append(actiongroup)               
 
-class MatplotlibWindow( gtk.Window ):
+#     def enable_interaction(self, widget):
+#         " Re-enable all interaction disabled by disable_interaction. "
+#         for actiongroup in self.disabled_groups:
+#             actiongroup.set_sensitive(True)
+#         self.disabled_groups = list()
 
+# To enable mplwidget ui:
+#  add actiongroups to uimanager
+#  merge ui string
 
-    uistring = """
-    <ui>
-      <menubar name='MainMenu'>
-        <menu action='PlotMenu'>
-          <placeholder name='PlotMenuActions'/>
-          <separator/>
-          <menuitem action='Close'/>
-        </menu>
-        <menu action='DisplayMenu'/>
-        <menu action='AnalysisMenu'/>       
-      </menubar>
-      <toolbar name='MainToolbar'>
-        <placeholder name='MainToolbarEdit'/>
-        <separator/>
-      </toolbar>
-    </ui>
-    """
-
-
-    
-    def __init__(self, project, plot):
-
-        gtk.Window.__init__(self)
-        self.set_default_size(640,480)
-        self.disabled_groups = list()        
-        self.mpl_widget = MatplotlibWidget(project, plot)
-
-        def new_lambda(backend):
-            return lambda a,b: project.set(active_backend=backend)
-        self.connect("focus-in-event", new_lambda(self.mpl_widget.backend))
-        
-        
-        # set up ui manager
-        self.uimanager = gtk.UIManager()        
-              
-        # add action group from window
-        for ag in uihelper.construct_actiongroups(self.actions_dict, map=self):
-            self.uimanager.insert_action_group(ag,0)
-
-        # TODO: offer this in the appwindow
-#         # add action group for toolbox
-#         toolbox = globals.app.window.toolbox
-#         def on_toggled(action, window):
-#             if action.get_active() is True:
-#                 window.show()
-#             else:
-#                 window.hide()
-#         t = gtk.ToggleAction('ToggleToolbox', 'Toolbox', 'ToggleToolbox visibility', gtk.STOCK_PROPERTIES)
-#         t.connect("toggled", on_toggled, toolbox)
-#         uihelper.get_action_group(self.uimanager, 'ViewMenu').add_action(t)
-#         t.set_active(toolbox.get_property('visible'))
-
-        # ...and now that all action groups are created,
-        # we can create the actual ui for the window 
-        self.uimanager.add_ui_from_string(self.uistring)
-
-        # add ui information from subwidget
-        for ag in self.mpl_widget.get_actiongroups():
-            self.uimanager.insert_action_group(ag,0)
-        self.uimanager.add_ui_from_string(self.mpl_widget.get_uistring())
-
-        # and set up accelerators for all of the above
-        accel_group = self.uimanager.get_accel_group()
-        self.add_accel_group(accel_group)
-
-
-    def disable_interaction(self, widget):
-        " Disable most user interaction. "        
-        actiongroups = self.uimanager.get_action_groups()
-        for actiongroup in actiongroups:
-            if actiongroup.get_name() in ['ViewMenu']:
-                continue
-            if actiongroup.get_sensitive() is True:
-                actiongroup.set_sensitive(False)
-                self.disabled_groups.append(actiongroup)               
-
-
-    def enable_interaction(self, widget):
-        " Re-enable all interaction disabled by disable_interaction. "
-        for actiongroup in self.disabled_groups:
-            actiongroup.set_sensitive(True)
-        self.disabled_groups = list()
-
-        
-
-
-
-
-
+# To disable mplwidget ui
+#  remove actiongroups
+#  unmerge ui via merge id
 
 
 
 class MatplotlibWidget(gtk.VBox):
-
 
     __gsignals__ = {
         'edit-mode-started' : (gobject.SIGNAL_RUN_FIRST , gobject.TYPE_NONE, ()),
@@ -157,42 +87,6 @@ class MatplotlibWidget(gtk.VBox):
         ('ZoomAxes', None, 'Zoom Axes', 'z', '', 'on_action_ZoomAxes')
         ]
         }
-
-    uistring = """
-    <ui>    
-      <menubar name='MainMenu'>      
-        <menu action='PlotMenu'>
-          <placeholder name='PlotMenuActions'>
-            <menuitem action='Replot'/>
-            <separator/>
-            <menuitem action='ExportViaMPL'/>
-            <menuitem action='ExportViaGnuplot'/>
-          </placeholder>
-        </menu>        
-        <menu action='AnalysisMenu'>
-          <menuitem action='DataCursor'/>
-        </menu>        
-        <menu action='DisplayMenu'>
-          <menuitem action='ZoomRect'/>
-          <menuitem action='ZoomIn'/>
-          <menuitem action='ZoomOut'/>
-          <menuitem action='ZoomFit'/>
-          <menuitem action='ZoomAxes'/>          
-          <separator/>
-          <menuitem action='MoveAxes'/>
-          <menuitem action='SelectLine'/>
-        </menu>        
-      </menubar>      
-      <toolbar name='MainToolbar'>
-        <placeholder name='MainToolbarEdit'>
-        </placeholder>
-        <toolitem action='ZoomRect'/>
-        <separator/>              
-        <toolitem action='Replot'/>
-      </toolbar>
-    </ui>
-    """
-
 
 
     def __init__(self, project, plot):
@@ -250,6 +144,12 @@ class MatplotlibWidget(gtk.VBox):
         self.fileselect = FileChooserDialog(title='Save the figure', parent=None)
 
 
+    def get_actiongroups(self):
+        return self.actiongroups
+
+    def get_uistring(self):
+        return uidata.uistring_mplwidget
+    
     #----------------------------------------------------------------------
     def set_coords(self, x, y):
         if x is not None and y is not None:
@@ -563,7 +463,7 @@ class MatplotlibWidget(gtk.VBox):
         for ag in self.get_actiongroups():
             ag.set_sensitive(True)
 
-        globals.app.emit('end-user-action')
+        globals.app.sig_emit('end-user-action')
 
     def select(self, selector):
         self.emit("edit-mode-started")

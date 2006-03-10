@@ -1,8 +1,6 @@
 (for 0.5.3):
 ============
 
-- toggle sidepane and remember this in the config file
-
 - allow to add tools from the popup of a Tool handle
 
 - remember heights of the dockbooks
@@ -58,11 +56,11 @@
   on an update signal?
 
 
-- Tab-MDI: 
-  -- make project_view independent, i.e. let it manage its popup-menus
-  -- add buttons to project_view to add datasets/plots and remove items.
-  -- maybe make project_view a dock?  
-  -- use subwidgets approach for plot windows.
+-- add buttons to project_view to add datasets/plots and remove items.
+
+- menus should appear in correct order again.
+
+- 
 
 
 SMALL CLEANUPS TO DO:

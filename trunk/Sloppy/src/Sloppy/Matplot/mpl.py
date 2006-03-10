@@ -99,14 +99,6 @@ linemarker_mappings = \
  }
 
 
-#
-# Note about updateinfo:
-#
-# {'add': x, 'remove': y, 'edit': z}
-#
-# where  x,y,z are either single objects or a list of objects.
-#
-
 
 class Backend( backend.Backend ):
 
@@ -124,7 +116,7 @@ class Backend( backend.Backend ):
     def connect(self):
         logger.debug("Opening matplotlib session.")        
 
-        self.figure = Figure(dpi=100, facecolor="white")  # figsize=(5,4), dpi=100)        
+        self.figure = Figure(dpi=100), facecolor="white")  # figsize=(5,4), dpi=100)        
         self.canvas = FigureCanvas(self.figure)
         self.canvas.show()
 

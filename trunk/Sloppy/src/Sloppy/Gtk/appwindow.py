@@ -52,11 +52,13 @@ class AppWindow( gtk.Window, HasSignals ):
         #
         # Create GUI
         #       
-        self.toolbox = dock.Dock('Sidepane')
-        self.toolbox.show()
-        globals.app.sig_connect('write-config',
-          lambda sender, eConfig: tools.dock_write_config(eConfig, self.toolbox))
-        
+
+        # The action for the uimanager are created first. However,
+        # since some actions are not yet defined (e.g. those defined
+        # by 'set_up_visibility_toggle', this will be done after the
+        # rest of the GUI initialization.
+
+        # -- UIManager --
         self.uimanager = uim = gtk.UIManager()        
         uihelper.add_actions(uim, "Application", self.actions_application, globals.app)
         uihelper.add_actions(uim, "AppWin", self.actions_appwin, self)
@@ -64,34 +66,58 @@ class AppWindow( gtk.Window, HasSignals ):
         uihelper.add_actions(uim, "Gnuplot", self.actions_gnuplot, globals.app)
         uihelper.add_actions(uim, "Debug", self.actions_debug, globals.app)
         uihelper.add_actions(uim, "UndoRedo", self.actions_undoredo, globals.app)
-        uihelper.add_actions(uim, "RecentFiles", self.actions_recentfiles, globals.app)     
+        uihelper.add_actions(uim, "RecentFiles", self.actions_recentfiles, globals.app)         
 
-        self._construct_logwindow()
-       
+        # -- Sidepane --
+        self.toolbox = dock.Dock('Sidepane')
+        globals.app.sig_connect('write-config',
+          lambda sender, eConfig: tools.dock_write_config(eConfig, self.toolbox))
+        self.set_up_visibility_toggle(self.toolbox, 'ToggleSidepane', 'Show Sidepane', 'F9')
+        self.toolbox.show()
+        
+        # -- Logwindow --
+        # logwindow is hidden by default. See _construct_uimanager if
+        # you want to change this default
+        self.logwindow = logwindow = logwin.LogWindow()
+        logwindow.set_transient_for(self)
+        logwindow.set_destroy_with_parent(True)
+        self.set_up_visibility_toggle(self.logwindow, 'ToggleLogwindow', 'Show Logwindow')
+        logwindow.hide()        
+
+        # create ui and accelerators
+        # TODO: set_up_visibility_toggle should maybe also add the ui string
+        # This way, all actions are already defined and we can put this
+        # add_ui_from string above.
         self.uimanager.add_ui_from_string(uidata.uistring_appwindow)
         self.add_accel_group(self.uimanager.get_accel_group())
 
-        self.menubar = self.uimanager.get_widget('/MainMenu')
-        self.menubar.show()
+        # -- Menubar --
+        self.menubar = menubar = self.uimanager.get_widget('/MainMenu')
+        menubar.show()
 
-        self.toolbar = self.uimanager.get_widget('/MainToolbar')
-        self.toolbar.set_style(gtk.TOOLBAR_ICONS)
-        self.toolbar.show()        
+        # -- Toolbar --
+        self.toolbar = toolbar = self.uimanager.get_widget('/MainToolbar')
+        toolbar.set_style(gtk.TOOLBAR_ICONS)
+        toolbar.show()        
 
-        self.init_actions()
-        
-        self.statusbar = gtk.Statusbar()
-        self.statusbar.set_has_resize_grip(True)        
-        self.statusbar.show()
-        self.progressbar = gtk.ProgressBar()        
-        self.progressbar.hide()
+        self.init_user_actions()
 
+        # -- Statusbar and Progressbar --
+        self.statusbar = statusbar = gtk.Statusbar()
+        statusbar.set_has_resize_grip(True)        
+        statusbar.show()
+
+        self.progressbar = progressbar = gtk.ProgressBar()        
+        progressbar.hide()
+
+        # -- Notification Area --
         notification_area = gtk.HBox()
         notification_area.pack_start(self.btn_cancel,False,True)
         notification_area.pack_start(self.statusbar,True,True)
         notification_area.pack_start(self.progressbar,False,True)
         notification_area.show()
-    
+
+        # -- Plotbook --
         self.plotbook  = gtk.Notebook()
         self.plotbook.show()
 
@@ -114,6 +140,8 @@ class AppWindow( gtk.Window, HasSignals ):
         ##vbox.pack_end(self.statusbar, False, True)
         vbox.show()
         self.add(vbox)
+
+
 
         #---
         globals.app.sig_connect("update-recent-files", lambda sender: self._refresh_recentfiles())
@@ -142,70 +170,64 @@ class AppWindow( gtk.Window, HasSignals ):
 
         self.show()        
 
+
     
-    def _construct_logwindow(self):
+    def set_up_visibility_toggle(self, widget, action_name, description, accel=None):
 
-        def cb_logwindow_hideshow(window, action):
-            action.set_active(window.get_property('visible'))
+        def toggle_visibility(action, widget):
+            if action.get_active() is True:
+                widget.show()
+            else:
+                widget.hide()
 
-        # logwindow is hidden by default. See _construct_uimanager if
-        # you want to change this default
-        logwindow = logwin.LogWindow()
-        logwindow.set_transient_for(self)
-        logwindow.set_destroy_with_parent(True)
-        logwindow.hide()
+        def on_hide_or_show(widget, action):
+            action.set_active(widget.get_property('visible'))
 
-        # logwindow specific
-        def cb_toggle_logwindow(action, logwindow):
-            if action.get_active() is True: logwindow.show()
-            else: logwindow.hide()
+        t = gtk.ToggleAction(action_name, description, None, None)
+        t.connect("toggled", toggle_visibility, widget)
+        uihelper.get_action_group(self.uimanager, 'Application').add_action_with_accel(t, accel)
 
-        t = gtk.ToggleAction('ToggleLogwindow', 'Show Logwindow', None, None)
-        t.connect("toggled", cb_toggle_logwindow, logwindow)
-        uihelper.get_action_group(self.uimanager, 'Application').add_action(t)
+        widget.connect('hide', on_hide_or_show, t)
+        widget.connect('show', on_hide_or_show, t)
 
-        logwindow.connect('hide', cb_logwindow_hideshow, t)
-        logwindow.connect('show', cb_logwindow_hideshow, t)
         
-        return logwindow
+
+
 
 
     #------------------------------------------------------------------------------
     # Actions
 
-    def init_actions(self):
-        globals.app.sig_connect('begin-user-action', self.on_begin_action)
-        globals.app.sig_connect('end-user-action', self.on_end_action)     
+    def init_user_actions(self):
+        globals.app.sig_connect('begin-user-action', self.on_begin_user_action)
+        globals.app.sig_connect('end-user-action', self.on_end_user_action)     
 
         # cancel button
-        self.btn_cancel = gtk.Button(stock=gtk.STOCK_CANCEL)
-        self.btn_cancel.set_sensitive(False)
-        self.btn_cancel.show()
-        ##self.btn_cancel.hide()
+        self.btn_cancel = btn = gtk.Button(stock=gtk.STOCK_CANCEL)
+        btn.set_sensitive(False)
+        btn.show()
 
         # connect the ESC-key to the cancel button 
         key, modifier = gtk.accelerator_parse('Escape')
         accel_group = self.uimanager.get_accel_group()        
-        self.btn_cancel.add_accelerator("activate", accel_group, key, modifier, gtk.ACCEL_VISIBLE)
+        btn.add_accelerator("activate", accel_group, key, modifier, gtk.ACCEL_VISIBLE)
 
 
-    def on_begin_action(self, sender, on_cancel_action=None):
+    def on_begin_user_action(self, sender, on_cancel_user_action=None):
         self.btn_cancel.set_sensitive(True)
-        ##self.btn_cancel.show()
         self.btn_cancel.connect('clicked', \
           lambda sender: globals.app.sig_emit('cancel-user-action'))
 
         def stop(sender):            
             self.btn_cancel.set_sensitive(False)
-            if on_cancel_action is not None:
-                on_cancel_action(sender)
+            if on_cancel_user_action is not None:
+                on_cancel_user_action(sender)
         globals.app.sig_connect('cancel-user-action', stop)
         
         return False # TODO: disconnect on False
 
-    def on_end_action(self, sender):        
+    def on_end_user_action(self, sender):        
         self.btn_cancel.set_sensitive(False)
-        ##self.btn_cancel.hide()
 
 
     #-----------------------------------------------------------------------
@@ -372,10 +394,10 @@ class AppWindow( gtk.Window, HasSignals ):
         ### TODO: Does this actually work?
         ##widget.connect("closed", self.detach_plotwidget)       
 
-        for ag in widget.actiongroups:            
+        for ag in widget.get_actiongroups():
             self.uimanager.insert_action_group(ag,0)            
         self.add_accel_group(self.uimanager.get_accel_group())
-        self.uimanager.add_ui_from_string(widget.uistring)
+        self.uimanager.add_ui_from_string(widget.get_uistring())
 
 
     def detach_plotwidget(self, widget):
@@ -462,7 +484,7 @@ class AppWindow( gtk.Window, HasSignals ):
 
     actions_appwin = [                
         ('About', gtk.STOCK_ABOUT, '_About', None, 'About application', '_cb_help_about'),
-        ('ToggleFullscreen', None, 'Fullscreen Mode', 'F11', '', 'on_action_ToggleFullscreen')        
+        ('ToggleFullscreen', None, 'Fullscreen Mode', 'F11', '', 'on_action_ToggleFullscreen')
         ]
     
     actions_matplotlib = [

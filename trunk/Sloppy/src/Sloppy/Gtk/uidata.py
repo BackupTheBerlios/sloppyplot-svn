@@ -27,11 +27,15 @@ uistring_appwindow = \
       <separator/>
       <menuitem action='Preferences'/>
     </menu>
+    <placeholder name='PlotMenu'/>
+    <placeholder name='AnalysisMenu'/>    
+    <placeholder name='DisplayMenu'/>        
     <menu action='ViewMenu'>
-      <menuitem action='ToggleLogwindow'/>          
+      <menuitem action='ToggleLogwindow'/>
+      <menuitem action='ToggleSidepane'/>          
       <separator/>
       <menuitem action='ToggleFullscreen'/>
-    </menu>        
+    </menu>
     <menu action='HelpMenu'>
       <menuitem action='About'/>
     </menu>
@@ -43,6 +47,48 @@ uistring_appwindow = \
     <separator/>
     <toolitem action='Undo'/>
     <toolitem action='Redo'/>
+  </toolbar>
+</ui>
+"""
+
+uistring_mplwidget = \
+"""
+<ui>    
+  <menubar name='MainMenu'>
+    <placeholder name='PlotMenu'>
+      <menu action='PlotMenu'>
+        <menuitem action='Replot'/>
+        <separator/>
+        <menuitem action='ExportViaMPL'/>
+        <menuitem action='ExportViaGnuplot'/>
+      </menu>                
+    </placeholder>
+
+    <placeholder name='AnalysisMenu'>    
+    <menu action='AnalysisMenu'>
+      <menuitem action='DataCursor'/>
+    </menu>
+    </placeholder>
+    <placeholder name='DisplayMenu'>    
+    <menu action='DisplayMenu'>
+      <menuitem action='ZoomRect'/>
+      <menuitem action='ZoomIn'/>
+      <menuitem action='ZoomOut'/>
+      <menuitem action='ZoomFit'/>
+      <menuitem action='ZoomAxes'/>          
+      <separator/>
+      <menuitem action='MoveAxes'/>
+      <menuitem action='SelectLine'/>
+    </menu>
+    </placeholder>
+  </menubar>      
+
+  <toolbar name='MainToolbar'>
+    <placeholder name='MainToolbarEdit'>
+    </placeholder>
+    <toolitem action='ZoomRect'/>
+    <separator/>              
+    <toolitem action='Replot'/>
   </toolbar>
 </ui>
 """
