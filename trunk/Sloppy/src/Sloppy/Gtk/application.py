@@ -48,7 +48,7 @@ from Sloppy.Base.projectio import load_project, save_project, ParseError
 from Sloppy.Gnuplot.terminal import PostscriptTerminal
 
 from Sloppy.Lib.ElementTree.ElementTree import Element, SubElement
-from Sloppy.Lib.Check import Instance
+from Sloppy.Lib.Check import Instance, List, values_as_dict
 
 #------------------------------------------------------------------------------
 # GtkApplication, the main object
@@ -64,7 +64,8 @@ class GtkApplication(application.Application):
     """
 
     active_backend = Instance(backend.Backend, required=False, init=None)
-
+    selected_plots = List(Instance(Plot))
+    selected_datasets = List(Instance(Dataset))
     
     def init(self):
         self.sig_register('begin-user-action')
@@ -362,7 +363,7 @@ class GtkApplication(application.Application):
     #----------------------------------------------------------------------
     
     def _cb_edit(self, action):
-        plots, datasets = self.window.treeview.get_selected_plds()
+        plots, datasets = self.selected_plots, self.selected_datasets
         if len(plots) > 0:
             self.edit_layer(plots[0])
         else:
@@ -448,13 +449,13 @@ class GtkApplication(application.Application):
         self.active_backend = backend
 
     def plot_current_objects(self, backend_name='matplotlib', undolist=[]):
-        (plots, datasets) = self.window.treeview.get_selected_plds()
+        plots, datasets = self.selected_plots, self.selected_datasets
         for plot in plots:
             self.plot(plot, backend_name)
 
 
     def on_action_export_via_gnuplot(self, action):
-        plots = self.window.treeview.get_selected_plots()
+        plots = self.selected_plots
         if len(plots) > 0:
             self.plot_postscript(self.project, plots[0])
 
@@ -716,7 +717,7 @@ class GtkApplication(application.Application):
                 if result == gtk.RESPONSE_ACCEPT:
                     # save template as 'recently used'
                     template = dataio.IOTemplate()
-                    template.defaults = dialog.importer.get_values(include=dialog.importer.public_props)
+                    template.defaults = values_as_dict(dialog.importer, dialog.importer.public_props)
                     template.blurb = "Recently used Template"
                     template.importer_key = dialog.template.importer_key
                     template.write_config = True
@@ -741,19 +742,18 @@ class GtkApplication(application.Application):
 
     def on_action_DatasetToPlot(self, action):
         pj = self._check_project()
-        datasets = self.window.treeview.get_selected_datasets()
-        self.core.create_plot_from_datasets(pj, datasets)
+        self.core.create_plot_from_datasets(pj, self.selected_datasets)
                      
 
     def _cb_add_datasets_to_plot(self, action):
         pj = self._check_project()
-        (plots, datasets) = self.window.treeview.get_selected_plds()
+        plots, datasets = self.selected_plots, self.selected_datasets
         if len(plots) == 1 and len(datasets) > 0:
             pj.add_datasets_to_plot(datasets, plots[0])
 
     def _cb_delete(self, widget):
         pj = self._check_project()
-        objects = self.window.treeview.get_selected_objects()
+        objects = self.selected_datasets + self.selected_plots
         pj.remove_objects(objects)        
 
 
@@ -793,7 +793,7 @@ class GtkApplication(application.Application):
 
 
     def on_action_ViewMetadata(self, action):
-        objects = self.window.treeview.get_selected_objects()
+        objects = self.selected_plots + self.selected_datasets
         if len(objects) == 1:
             obj = objects[0]
             # distinguish between old-style object

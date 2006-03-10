@@ -26,7 +26,7 @@ def gtk_init(app):
 #----------------------------------------------------------------------
 
 def _cb_create_pfc(action):
-    dslist = globals.app.window.treeview.get_selected_datasets()
+    dslist = globals.app.selected_datasets
     project = globals.app.project
 
     ul = UndoList().describe("Create Profiles (PFC)")
@@ -36,7 +36,7 @@ def _cb_create_pfc(action):
 
 
 def _cb_create_spc(action):
-    dslist = globals.app.window.treeview.get_selected_datasets()
+    dslist = globals.app.selected_datasets
     project = globals.app.project
 
     ul = UndoList().describe("Create Spectra (SPC)")
@@ -64,7 +64,7 @@ def create_pfc(dataset, undolist=None):
     if undolist is None:
         undolist = project.journal
 
-    table = dataset.get_data()   # TODO: check for Table
+    table = dataset
     if table is None:
         logger.info("No dataset selected.")
         return
@@ -108,8 +108,8 @@ def create_spc(dataset, undolist=None):
     if undolist is None:
         undolist = project.journal
 
-    table = dataset.get_data()   # TODO: check for Table (get_table?)
-
+    table = dataset
+    
     p = Plot( key = pdict.unique_key(project.plots, "spectrum_%s" % dataset.key),
               layers = [Layer(type='line2d',
                               lines=[Line( label=dataset.key,

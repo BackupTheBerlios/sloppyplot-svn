@@ -53,7 +53,7 @@ class ImportOptions(gtk.Dialog):
         table_options = self.factory.create_table()
         widget = uihelper.new_section("Import Options", table_options)
         self.vbox.pack_start(widget,False,True)
-        self.factory.check_in()
+        self.factory.check_in(self.importer)
 
 
         #

@@ -405,24 +405,27 @@ class MatplotlibWidget(gtk.VBox):
         axes = self.backend.get_painter(layer).axes
         s = mpl_selector.DataCursor(self.backend.figure, axes)
 
-        def abort_selector(sender, context_id):
+        def abort_selector(sender):
+            context_id = self.statusbar.get_context_id("data_cursor")            
             self.statusbar.pop(context_id)
             
-        def finish_selector(sender, context_id):
+        def finish_selector(sender):
+            context_id = self.statusbar.get_context_id("data_cursor")            
             self.statusbar.pop(context_id)
             xvalue, yvalue = sender.point
 
-        def update_position(sender, line, index, point, context_id):
+        def update_position(sender, line, index, point):
             # Note that 'line' is a Line2d instance from matplotlib!
             x, y = point
+            context_id = self.statusbar.get_context_id("data_cursor")            
             self.statusbar.pop(context_id)
             self.statusbar.push(context_id, "X: %f, Y: %f (value #%s)" %
                                 (x, y, index))
 
         context_id = self.statusbar.get_context_id("data_cursor")
-        s.sig_connect("update-position", update_position, context_id)
-        s.sig_connect("finished", finish_selector, context_id)
-        s.sig_connect("aborted", abort_selector, context_id)             
+        s.sig_connect("update-position", update_position)
+        s.sig_connect("finished", finish_selector)
+        s.sig_connect("aborted", abort_selector)             
         self.select(s)
 
 

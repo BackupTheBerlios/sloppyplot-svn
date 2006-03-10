@@ -84,7 +84,7 @@ class ProjectView(Tool):
         plot -> plot item
         dataset -> edit dataset
         """
-        (plots, datasets) = widget.get_selected_plds()
+        plots, datasets = self.treeview.get_selected_plds()
         for plot in plots:
             globals.app.plot(plot)
         for ds in datasets:
@@ -142,6 +142,10 @@ class ProjectView(Tool):
             else:
                 return False
 
+        # update the information of the application which
+        # objects are selected.
+        globals.app.selected_plots, globals.app.selected_datasets = self.treeview.get_selected_plds()
+        
         if popup is not None:
             popup.popup(None,None,None,button,time)
             return True
@@ -174,8 +178,7 @@ class ProjectTreeView( gtk.TreeView ):
         gtk.TreeView.__init__(self)
         self.set_headers_visible(False)
         self.get_selection().set_mode(gtk.SELECTION_MULTIPLE)
-
-        self.set_size_request(width=200, height=200)
+        ##self.set_size_request(width=200, height=200)
 
         # init everything
         self.init_model()
@@ -186,8 +189,7 @@ class ProjectTreeView( gtk.TreeView ):
         self.project = None
         globals.app.sig_connect('update::project',\
           lambda sender, value: self.set_project(value))
-        self.set_project(project)
-        
+        self.set_project(project)        
         
         
     def init_model(self):
@@ -322,7 +324,7 @@ class ProjectTreeView( gtk.TreeView ):
     # ----------------------------------------------------------------------
     #  object retrieval
     # ----------------------------------------------------------------------
-
+        
     def get_selected_objects(self):
         " Return the list of currently selected objects. "
         (model, pathlist) = self.get_selection().get_selected_rows()

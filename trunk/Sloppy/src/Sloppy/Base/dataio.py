@@ -176,11 +176,11 @@ def importer_template_from_filename(filename):
     Return a list of templates that matches the given filename based
     on the extension.
     """   
+    matches = []
     path, ext = os.path.splitext(filename)
     if len(ext) > 1: ext = ext[1:].lower()
     else: return matches
 
-    matches = []
     for key, template in globals.import_templates.iteritems():
         if ext in template.extensions.split(','):
             matches.append(key)

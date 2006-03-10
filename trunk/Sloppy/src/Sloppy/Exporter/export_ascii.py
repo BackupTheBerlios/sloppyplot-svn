@@ -23,7 +23,7 @@ import logging
 logger = logging.getLogger("exporter.export_ascii")
 
 from Sloppy.Base import dataio, globals
-from Sloppy.Lib.Props import *
+from Sloppy.Lib.Check import *
 
 import numpy
 
@@ -35,7 +35,7 @@ class Exporter(dataio.Exporter):
     author = "Niklas Volbers"
     blurb = "ASCII"
 
-    delimiter = VP(basestring, default='\t')
+    delimiter = String(default='\t')
     
     def write_dataset_to_stream(self, fd, dataset):
         a = dataset._array

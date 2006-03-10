@@ -25,6 +25,7 @@ from Sloppy.Base.project import Project
 from Sloppy.Base.objects import Legend, Axis, Plot, Layer, Line, TextLabel
 from Sloppy.Base import pdict, iohelper, error, globals, utils
 from Sloppy.Base.dataio import read_dataset_from_stream
+from Sloppy.Lib.Check import values_as_dict
 
 from Sloppy.Lib.ElementTree.ElementTree import ElementTree, Element, SubElement, parse
 
@@ -104,7 +105,7 @@ def new_table(spj, element):
             key = eAttribute.attrib['key']
             value = eAttribute.text
             if value is not None:
-                info.set_value(key, value)       
+                info.set(key, value)       
         info_dict[name] = info
         
         
@@ -117,7 +118,7 @@ def new_table(spj, element):
         key = eItem.attrib['key']
         value = eItem.text
         if value is not None:
-            tbl.node_info.set_value(key, value)
+            tbl.node_info.set(key, value)
 
     for eItem in element.findall('NodeInfo/MetaItem'):
         key = eItem.attrib['key']
@@ -191,7 +192,7 @@ def new_layer(spj, element):
 #                 group_properties[key] = groupclass(**eGroup.attrib)
 #                 print "CYCLE LIST", group_properties[key].cycle_list
 
-#     layer.set_values(**group_properties)
+#     layer.set(**group_properties)
 
     # TODO: test type and _then_ assign the data    
     for eLine in element.findall('Line'):        
@@ -302,7 +303,7 @@ def toElement(project):
                 dt = tbl.get_column_dtype(n)
                 SIV(eColumn, 'format', '%s%s' % (dt.kind, str(dt.itemsize)))
                 info = tbl.get_info(n)
-                for k,v in info.get_values().iteritems():
+                for k,v in info._values.iteritems():
                     if v is not None:
                         eAttribute = SubElement(eColumn, 'Attribute')
                         SIV(eAttribute, 'key', k)
@@ -314,9 +315,9 @@ def toElement(project):
             SIV(eTable, 'fileformat', 'CSV' )
 
             # write node information
-            node_items = tbl.node_info.get_keys()
+            node_items = tbl.node_info._checks.keys()
             node_items.remove('metadata')
-            iohelper.write_dict(eTable, 'NodeInfo', tbl.node_info.get_values(include=node_items))
+            iohelper.write_dict(eTable, 'NodeInfo', values_as_dict(tbl.node_info, node_items))
             iohelper.write_dict(eTable, 'NodeInfo', tbl.node_info.metadata)
         else:
             logger.error("Cannot save Dataset %s of type %s" % (ds.key, ds.__class__.__name__))
@@ -336,7 +337,7 @@ def toElement(project):
         for layer in plot.layers:
             
             eLayer = SubElement(eLayers, "Layer")
-            attrs = layer.get_values(['type', 'grid', 'title', 'visible'], default=None)            
+            attrs = values_as_dict(layer, ['type', 'grid', 'title', 'visible'], default=None)            
             iohelper.set_attributes(eLayer, attrs)
 
 #             # group properties
@@ -362,7 +363,7 @@ def toElement(project):
             # axes
             for (key, axis) in layer.axes.iteritems():
                 eAxis = SubElement(eLayer, "Axis")
-                attrs = axis.get_values(['label', 'scale', 'start', 'end', 'format'],default=None)
+                attrs = values_as_dict(axis,['label', 'scale', 'start', 'end', 'format'],default=None)
                 attrs['key'] = key
                 iohelper.set_attributes(eAxis, attrs)
 
@@ -370,7 +371,7 @@ def toElement(project):
             legend = layer.legend
             if legend is not None:
                 eLegend = SubElement(eLayer, "Legend")
-                attrs = legend.get_values(['label','position','visible','border','x','y'],default=None)
+                attrs = values_as_dict(legend, ['label','position','visible','border','x','y'],default=None)
                 iohelper.set_attributes(eLegend, attrs)
 
             # lines
@@ -388,7 +389,7 @@ def toElement(project):
                     else:
                         logger.warn("Invalid line source. Skipped source.")
                 
-                attrs = line.get_values(['width','label','style','marker','visible', 'color','marker_color', 'marker_size', 'cx','cy','row_first','row_last','cxerr','cyerr'],default=None)
+                attrs = values_as_dict(line, ['width','label','style','marker','visible', 'color','marker_color', 'marker_size', 'cx','cy','row_first','row_last','cxerr','cyerr'],default=None)
                 iohelper.set_attributes(eLine, attrs)
 
             # layer.labels
@@ -396,7 +397,7 @@ def toElement(project):
                 eLabels = SubElement(eLayer, "Labels")
                 for label in layer.labels:
                     eLabel = SubElement(eLabels, "Label")
-                    attrs = label.get_values(['x','y','system','valign','halign'],default=None)
+                    attrs = values_as_dict(label, ['x','y','system','valign','halign'],default=None)
                     iohelper.set_attributes(eLabel, attrs)
                     eLabel.text = label.get('text')
 
