@@ -14,11 +14,6 @@
 
 - open the first available plot for testing
 
-- group styles don't work -- why?
-
-- make sure that "False" and "True" values are saved/loaded correctly.
-
-
 
 - For the Line Options Dialog to work, we need to finish some checkwidgets:
   - line.source is an Instance

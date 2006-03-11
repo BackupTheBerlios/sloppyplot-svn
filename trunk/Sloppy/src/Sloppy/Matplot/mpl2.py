@@ -18,7 +18,7 @@ else:
 from Sloppy.Base import backend, objects, utils, globals
 from Sloppy.Base.objects import SPObject
 from Sloppy.Base.dataset import Dataset
-from Sloppy.Lib.Check import Instance
+from Sloppy.Lib.Check import Instance, Undefined
 
 import logging
 logger = logging.getLogger('Backends.mpl2')
@@ -265,7 +265,7 @@ class LinePainter(Painter):
         index = layer.lines.index(line)
 
         # style, layer.group_style
-        style = layer.group_style.get(line, index, line.style)
+        style = layer.group_style.get(line, index, override=line.style or Undefined)
 
         global linestyle_mappings
         try: style = linestyle_mappings[style]
@@ -273,7 +273,7 @@ class LinePainter(Painter):
 
         #:line.marker
         #:layer.group_marker
-        marker = layer.group_marker.get(line, index, line.marker)
+        marker = layer.group_marker.get(line, index, override=line.marker or Undefined)
 
         global linemarker_mappings
         try: marker = linemarker_mappings[marker]
@@ -281,14 +281,14 @@ class LinePainter(Painter):
         
         #:line.width
         #:layer.group_width
-        width = layer.group_width.get(line, index, line.width) or 1.0
+        width = layer.group_width.get(line, index, override=line.width or Undefined)
         
         #:line.color
         #:layer.group_color
-        color = layer.group_color.get(line, index, line.color) or 'black'
+        color = layer.group_color.get(line, index, override=line.color or Undefined)
 
         #:line.marker_color
-        marker_color = layer.group_marker_color.get(line, index, line.marker_color) or 'black'
+        marker_color = layer.group_marker_color.get(line, index, override=line.marker_color or Undefined)
 
         #:line.marker_siize
         marker_size = line.marker_size or 1

@@ -43,18 +43,16 @@ class Group(HasChecks):
         self.set(**kwargs)
 
 
-    def get(self, obj, index, override_value=Undefined, mode=None):
+    def get(self, obj, index, override=Undefined, mode=None):
         """ Return the group value for the object `obj` at position `index`.
 
-        `override_value` should be the value to use if the group allows an override.
-        Otherwise the group determines the value from the given `obj`, `index`
-        and `mode`.  If no mode is given, then the preset mode is used.
-
-        TODO: It is not possible to specify an override value of None!
+        Possible keyword arguments:
+        * 'override': used if the group's allow_override is set to True
+        * 'mode': used to specify a different group mode.
         """
 
-        if override_value is not Undefined and self.allow_override is True:
-            return override_value
+        if override is not Undefined and self.allow_override is True:
+            return override
         
         mapping = { MODE_CONSTANT: self.get_constant,
                     MODE_CYCLE: self.get_cycle,
@@ -102,7 +100,8 @@ def test():
     tc.group_int.set(constant_value=7,
                      cycle_list=[5,3,1],
                      range_start = 10,
-                     on_custom=lambda obj,i:i**2)
+                     on_custom=lambda obj,i:i**2,
+                     mode = MODE_CYCLE)
 
     for i in range(5):
         print "i = ", i
@@ -110,6 +109,7 @@ def test():
         print "  cycle: ", tc.group_int.get_cycle(tc, i)
         print "  range: ", tc.group_int.get_range(tc, i)
         print "  custom: ", tc.group_int.get_custom(tc, i)
+        print "  get: ", tc.group_int.get(tc, i)
         
 
 

@@ -130,6 +130,19 @@ class Float(TypeCheck):
 class Boolean(TypeCheck):
     def __init__(self, **kwargs):
         TypeCheck.__init__(self, bool, None, 'a boolean value', **kwargs)
+
+    def check(self, value):
+        # if checking is not strict, allow any string like
+        # "FaLs", "FALSE", "TRUe", "T", ...
+        if isinstance(value, basestring) and self.strict is False:
+            v = value.lower()
+            if "false".startswith(v):
+                return False
+            elif "true".startswith(v):
+                return True
+        else:
+            return TypeCheck.check(self, value)
+        
 Bool = Boolean
 
 
