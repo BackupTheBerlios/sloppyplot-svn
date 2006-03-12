@@ -10,6 +10,8 @@
 
 - allow to add tools from the popup of a Tool handle !!!!
 
+- put Dataset into notebooks as well.  This will unify the undo.
+
 - remember heights of the dockbooks
 
 - open the first available plot for testing
