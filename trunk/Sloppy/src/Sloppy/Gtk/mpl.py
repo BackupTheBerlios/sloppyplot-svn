@@ -25,7 +25,6 @@ from matplotlib.backends.backend_gtk import FileChooserDialog
 import uihelper, mpl_selector
 from Sloppy.Base import uwrap, globals
 from Sloppy.Lib.Undo import UndoList, NullUndo, ulist, UndoInfo
-from Sloppy.Gtk import uidata
 
 
 #     def disable_interaction(self, widget):
@@ -148,7 +147,7 @@ class MatplotlibWidget(gtk.VBox):
         return self.actiongroups
 
     def get_uistring(self):
-        return uidata.uistring_mplwidget
+        return globals.app.get_uistring('plot-widget')
     
     #----------------------------------------------------------------------
     def set_coords(self, x, y):

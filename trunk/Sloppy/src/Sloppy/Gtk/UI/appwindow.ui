@@ -1,0 +1,47 @@
+<ui>
+  <menubar name='MainMenu'>
+    <menu action='FileMenu'>
+      <menuitem action='FileNew'/>
+      <menuitem action='FileOpen'/>
+      <menu action='RecentFilesMenu'>
+        <placeholder name='RecentFilesList'/>
+        <separator/>
+        <menuitem action='RecentFilesClear'/>            
+      </menu>
+      <separator/>      
+      <menuitem action='DatasetImport'/>      
+      <separator/>
+      <menuitem action='FileSave'/>
+      <menuitem action='FileSaveAs'/>
+      <separator/>
+      <menuitem action='FileClose'/>
+      <menuitem action='Quit'/>
+    </menu>
+    <menu action='EditMenu'>        
+      <menuitem action='Undo'/>
+      <menuitem action='Redo'/>
+      <separator/>
+      <menuitem action='Preferences'/>
+    </menu>
+    <placeholder name='PlotMenu'/>
+    <placeholder name='AnalysisMenu'/>    
+    <placeholder name='DisplayMenu'/>        
+    <menu action='ViewMenu'>
+      <menuitem action='ToggleLogwindow'/>
+      <menuitem action='ToggleSidepane'/>          
+      <separator/>
+      <menuitem action='ToggleFullscreen'/>
+    </menu>
+    <menu action='HelpMenu'>
+      <menuitem action='About'/>
+    </menu>
+  </menubar>
+  <toolbar name='MainToolbar'>
+    <toolitem action='FileNew'/>
+    <toolitem action='FileOpen'/>
+    <toolitem action='FileSave'/>
+    <separator/>
+    <toolitem action='Undo'/>
+    <toolitem action='Redo'/>
+  </toolbar>
+</ui>

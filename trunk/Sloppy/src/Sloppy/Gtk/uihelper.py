@@ -30,9 +30,9 @@ logger = logging.getLogger('gtk.uihelper')
 
 import urllib, glob, os
 
-
 SECTION_SPACING=8
 
+    
 
 def get_file_path_from_dnd_dropped_uri(uri):
     # thanks to the pygtk FAQ entry 23.31
@@ -100,22 +100,6 @@ def get_action_group(uimanager, key):
         return None   
 
 
-
-def add_scrollbars(widget, viewport=False, show=True):    
-    " Returns a scrollbar window that wraps the given widget. "
-    # TODO: recognize if the viewport is required!!!
-    sw = gtk.ScrolledWindow()
-    sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-    if viewport is True:
-        print "Adding with viewport"
-        sw.add_with_viewport(widget)
-    else:
-        sw.add(widget)
-    if show is True:
-        sw.show()
-    return sw
-
-
 def construct_actiongroups(actions_dict, map):
     actiongroups = list()
     for key, actions in actions_dict.iteritems():
@@ -124,6 +108,9 @@ def construct_actiongroups(actions_dict, map):
         actiongroups.append(ag)
     return actiongroups
 
+
+
+# Testing ----------------------------------------------------------------------
 
 
 def setup_test_window(widget):
@@ -225,6 +212,22 @@ def new_section(frame_title, child):
     frame.add(alignment)
 
     return frame
+
+
+def add_scrollbars(widget, viewport=False, show=True):    
+    " Returns a scrollbar window that wraps the given widget. "
+    # TODO: recognize if the viewport is required!!!
+    sw = gtk.ScrolledWindow()
+    sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+    if viewport is True:
+        print "Adding with viewport"
+        sw.add_with_viewport(widget)
+    else:
+        sw.add(widget)
+    if show is True:
+        sw.show()
+    return sw
+
 
 
 def register_stock_icons(imgdir, prefix=""):

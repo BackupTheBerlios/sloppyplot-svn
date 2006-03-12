@@ -21,7 +21,7 @@
 
 import os, gtk
 
-from Sloppy.Gtk import uihelper, uidata, logwin, tools, mpl, dock
+from Sloppy.Gtk import uihelper, logwin, tools, mpl, dock
 from Sloppy.Lib.ElementTree.ElementTree import Element, SubElement
 from Sloppy.Base import utils, error, version, config, globals
 from Sloppy.Base.objects import Plot
@@ -88,7 +88,7 @@ class AppWindow( gtk.Window, HasSignals ):
         # TODO: set_up_visibility_toggle should maybe also add the ui string
         # This way, all actions are already defined and we can put this
         # add_ui_from string above.
-        self.uimanager.add_ui_from_string(uidata.uistring_appwindow)
+        self.uimanager.add_ui_from_string(globals.app.get_uistring('appwindow'))
         self.add_accel_group(self.uimanager.get_accel_group())
 
         # -- Menubar --

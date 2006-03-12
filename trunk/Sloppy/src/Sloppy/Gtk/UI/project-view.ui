@@ -1,0 +1,29 @@
+  <popup name="popup_plot">
+    <menuitem action='Plot'/>
+    <menu action='PlotBackendMenu'>
+       <menuitem action='PlotBackendGnuplot'/>
+       <menuitem action='PlotBackendMatplotlib'/>
+    </menu>
+    <menuitem action='ExportViaGnuplot'/>
+    <separator/>
+    <menuitem action='Edit'/>
+    <menuitem action='RenameItem'/>
+    <menuitem action='ViewMetadata'/>        
+    <separator/>        
+    <menuitem action='Delete'/>
+  </popup>
+  <popup name="popup_dataset">
+    <menuitem action='Edit'/>
+    <menuitem action='RenameItem'/>
+    <menuitem action='ViewMetadata'/>
+    <separator/>      
+    <menuitem action='DatasetToPlot'/>
+    <menuitem action='DatasetAddToPlot'/>
+    <separator/>
+    <menuitem action='Delete'/>
+    <separator/>
+  </popup>
+  <popup name="popup_empty">
+    <menuitem action='NewDataset'/>
+    <menuitem action='NewPlot'/>
+  </popup>

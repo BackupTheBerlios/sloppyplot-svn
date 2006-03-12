@@ -861,10 +861,25 @@ class GtkApplication(application.Application):
             gtk.main_iteration()
 
 
+    def get_uistring(self, resource):
+        """ Return ui string for the given resource.
+
+        E.g. resource='appwindow' returns the contents of the file
+        'UI/appwindow.ui' (if available).
+        """
+        path = os.path.join(self.path.internal_path, 'Gtk', 'UI', "%s.ui"%resource)
+        fd = open(path, 'r')
+        try:
+            ui = fd.read()
+        finally:
+            fd.close()
+
+        return ui
+
 # ======================================================================    
 
 def main(filename=None):
-
+    
     app = GtkApplication()
 
     if filename is None:

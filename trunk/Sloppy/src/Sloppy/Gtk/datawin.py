@@ -26,7 +26,7 @@ from Sloppy.Base import uwrap, globals, utils, error
 from Sloppy.Lib.Undo import UndoList, UndoInfo
 
 from Sloppy.Gtk.options_dialog import OptionsDialog
-from Sloppy.Gtk import uihelper, checkwidgets, dataview, uidata
+from Sloppy.Gtk import uihelper, checkwidgets, dataview
 
 import logging
 logger = logging.getLogger('Gtk.datawin')
@@ -393,8 +393,6 @@ class DatasetWindow( gtk.Window ):
         #
         ('AnalysisMenu', None, '_Analysis')
         ]
-
-    ui = uidata.uistring_datawin         
         
     def __init__(self, project, dataset=None):
         gtk.Window.__init__(self)
@@ -404,6 +402,7 @@ class DatasetWindow( gtk.Window ):
         self.cblist = []
 
         # GUI elements
+        self.ui = globals.app.get_uistring('datawin')
         self.uimanager = self._construct_uimanager()
 
         self.menubar = self.uimanager.get_widget('/MainMenu')

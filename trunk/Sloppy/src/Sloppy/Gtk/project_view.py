@@ -24,7 +24,7 @@ import sys, glob, os.path
 from Sloppy.Base.objects import *
 from Sloppy.Base.dataset import *
 from Sloppy.Base import pdict, uwrap, globals
-from Sloppy.Gtk import uihelper, uidata
+from Sloppy.Gtk import uihelper
 from Sloppy.Gtk.tools import Tool
 
 from Sloppy.Lib.Props.main import PropertyError
@@ -70,7 +70,7 @@ class ProjectView(Tool):
         # create actions for ui manager
         uimanager = globals.app.window.uimanager
         uihelper.add_actions(uimanager, "ProjectView", self.actions, self)
-        uimanager.add_ui_from_string(uidata.uistring_project_view)
+        uimanager.add_ui_from_string(globals.app.get_uistring('project-view'))
         
 ##        globals.app.window.add_accel_group(self.uimanager.get_accel_group())
 
