@@ -156,6 +156,40 @@ class GtkApplication(application.Application):
         self.tools['LayerTool'] = tools.LayerTool
         self.tools['LabelsTool'] = tools.LabelsTool
         self.tools['LinesTool'] = tools.LinesTool        
+
+        return
+
+        # TODO
+
+        logger.debug("Initializing Tools.")
+        
+        def init_tool(toolpath, tool_name):            
+            d = os.path.join(toolpath, tool_name)
+            if (not os.path.isdir(d)) or (not "__init__.py" in os.listdir(d)):
+                return
+            
+            exec("import Sloppy.Plugins.%s as plugin" % plugin_name ) in locals()
+
+            for attr in ['name','authors','blurb','version','license']:
+                if not hasattr(plugin, attr):
+                    raise AttributeError("Plugin is lacking required attribute '%s'" % attr)
+            self.plugins[plugin.name] = plugin
+            logger.info("Plugin %s loaded." % item)
+
+            # the core plugin is special and deserves a little shortcut
+            # notation
+            if plugin.name == 'core':
+                self.core = plugin
+                
+
+        # Currently only the system location for plugins is scanned.
+        # TODO: add place for user plugins
+        for path in [self.path.plugins]:
+            for item in os.listdir(path):
+                try:
+                    init_plugin(self.path.plugins, item)
+                except Exception, msg:
+                    logger.error("Failed to load Plugin %s: %s" % (item, msg))        
         
     
     # ----------------------------------------------------------------------
