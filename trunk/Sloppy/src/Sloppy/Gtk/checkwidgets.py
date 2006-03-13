@@ -23,7 +23,7 @@ import gtk, sys, inspect
 
 from Sloppy.Lib.Check import *
 from Sloppy.Lib.Signals import *
-from Sloppy.Lib.Undo import UndoList
+from Sloppy.Lib.Undo import UndoList, UndoInfo
 from Sloppy.Base import uwrap
 
 import logging
@@ -42,22 +42,24 @@ def as_class(obj):
         return obj.__class__
 
 
-                
+               
 class DisplayFactory:
 
-    def __init__(self, klass):           
-        self.klass = as_class(klass)
-        self.keys = []
+
+    def __init__(self, klass):
+        self.klass = klass
+        self.keys = [] 
+        self.obj = None
+        self.original_obj = None
         self.displays = {}
-        self.instance = None
-        self.original_instance = None
         
-    def add_keys(self, *keys, **kwargs):
+        
+    def add_keys(self, *keys, **kwargs):            
         for key in keys:
             if isinstance(key, basestring):
-                self.keys.append(key)
+                self.keys.append(key)                
             elif isinstance(key, (list, tuple)):
-                self.keys.extend(key)
+                self.add_keys(*key)
             else:
                 raise TypeError("String, tuple or dict required.")
 
@@ -70,7 +72,63 @@ class DisplayFactory:
             display = DisplayFactory.new_display(self.klass, key)
             display.create_widget()
             self.displays[key] = display
+
+
+    def _create_table_from_keys(self, keys):
+        table = gtk.Table(rows=len(self.keys), columns=2)
+        tooltips = gtk.Tooltips()
+
+        n = 0
+        for key in keys:
+            display = self.displays[key]
+            # attach widget
+            table.attach(display.widget, 1,2,n,n+1,
+                         xoptions=gtk.EXPAND|gtk.FILL,
+                         yoptions=0, xpadding=5, ypadding=1)
+
+            # attach label (put into an event box to display the tooltip)
+            label = gtk.Label(key)
+            label.set_alignment(1.0, 0)
+            #label.set_justify(gtk.JUSTIFY_RIGHT)
+
+            ebox = gtk.EventBox()
+            ebox.add(label)
+            ebox.show()
+            if display.check.doc is not None:
+                tooltips.set_tip(ebox, display.check.doc)
+
+            table.attach(ebox, 0,1,n,n+1,
+                         xoptions=gtk.FILL, yoptions=0,
+                         xpadding=5, ypadding=1)
+            n += 1
+
+        return table
+
     
+    def create_sections(self, *layout):
+
+        if not isinstance(layout, (list,tuple)):
+            raise RuntimeError("Must be a list or tuple.")
+
+        vbox = gtk.VBox()
+        
+        for section in layout:
+            name = section[0]
+            keys = section[1:]
+
+            for key in keys:
+                if self.displays.has_key(key) is True:
+                    continue # don't create Display twice                  
+                
+                display = DisplayFactory.new_display(self.klass, key)
+                display.create_widget()
+                self.displays[key] = display
+
+            w = uihelper.new_section(name, self._create_table_from_keys(keys))
+            vbox.pack_start(w, False, True)
+
+        return vbox   
+
             
     def create_vbox(self):
         self._create_displays()
@@ -79,17 +137,18 @@ class DisplayFactory:
             vbox.add(d.widget)
         return vbox
 
+
     def create_table(self):
         self._create_displays()
         
-        tw = gtk.Table(rows=len(self.keys), columns=2)
+        table = gtk.Table(rows=len(self.keys), columns=2)
         tooltips = gtk.Tooltips()
 
         n = 0
         for key in self.keys:
             display = self.displays[key]
             # attach widget
-            tw.attach(display.widget, 1,2,n,n+1,
+            table.attach(display.widget, 1,2,n,n+1,
                       xoptions=gtk.EXPAND|gtk.FILL,
                       yoptions=0, xpadding=5, ypadding=1)
 
@@ -106,19 +165,22 @@ class DisplayFactory:
             if display.check.doc is not None:
                 tooltips.set_tip(ebox, display.check.doc)
 
-            tw.attach(ebox, 0,1,n,n+1,
+            table.attach(ebox, 0,1,n,n+1,
                       xoptions=gtk.FILL, yoptions=0,
                       xpadding=5, ypadding=1)
 
             n += 1
 
-        return tw
+        return table
+
 
     def connect(self, obj):
-        self.instance = obj
+        # The displays 'connect' is responsible for
+        # disconnecting the old obj.
         for display in self.displays.itervalues():
-            # the displays are responsible for disconnecting the old obj
             display.connect(obj)
+        self.obj = obj
+            
     
     def new_display(klass, key):
         check = getattr(klass, key)
@@ -143,24 +205,26 @@ class DisplayFactory:
 
 
     def check_in(self, obj):
-        """ Create a copy of the object and connect to it."""        
-        self.original_instance = obj
-        copy = obj.__class__(**obj._values)
+        """ Create a copy of the objects and connect to them."""
+        self.original_obj = obj
+        copy = obj.__class__(**obj._values)            
         self.connect(copy)
-        print "checked in ", copy, "and original instance is ", obj, "and instance is ", self.instance        
+        
 
     def check_out(self, undolist=[]):
         # create changeset
-        new_values = self.instance._values
-        old_values = self.original_instance._values
+        new_values = self.obj._values
+        old_values = self.original_obj._values
+
         changeset = {}
+        reverse_changeset = {}
         for key, value in new_values.iteritems():
             if value != old_values[key]:
                 changeset[key] = value
-
-        changeset['undolist'] = undolist
-        uwrap.set(self.original_instance, **changeset)
-        
+                reverse_changeset[value] = key
+           
+        self.obj.set(**changeset)
+        undolist.append(UndoInfo(self.obj.set, **reverse_changeset))
 
 
 
@@ -528,9 +592,10 @@ def test():
     # of the object and call set_widget_data whenever
     # the value changes.
 
-    df = DisplayFactory(obj)        
+    df = DisplayFactory(obj)    
     df.add_keys(obj._checks.keys())
-    tv = df.create_table()
+    tv = df.create_sections( ['Section One', 'a_string'],
+                             ['Section Two', 'an_integer', 'a_string'] )
     df.check_in(obj)
 
     def quit(sender):
@@ -538,6 +603,7 @@ def test():
         print
         print "Obj1 ===>", obj._values
         gtk.main_quit()
+
     
     win = gtk.Window()
     win.set_size_request(640,480)

@@ -153,8 +153,7 @@ class ProjectView(Tool):
             return False
 
 
-
-
+##globals.app.register_tool('ProjectView')
 
 
 class ProjectTreeView( gtk.TreeView ):

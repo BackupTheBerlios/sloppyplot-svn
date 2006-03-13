@@ -79,7 +79,7 @@ class ColumnInfoDialog(gtk.Dialog):
         factory = checkwidgets.DisplayFactory(col_info)
         factory.add_keys('label', 'designation')
         table = factory.create_table()
-        factory.check_in()
+        factory.check_in(col_info)
 
         vbox = gtk.VBox()
         vbox.pack_start(name_box, True, True)
