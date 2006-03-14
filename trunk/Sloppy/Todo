@@ -31,7 +31,6 @@
 SMALL CLEANUPS TO DO:
 =====================
 
-- DS => MSG
 - change headers (copyright)
 - set svn props properly
 - maybe move the importers and templates into the app, so we can

@@ -44,7 +44,7 @@ logger = logging.getLogger('Base.project')
 
 
 
-DS = {
+MSG = {
 'invalid_key':
 "Invalid Plot key '%s'. Please use only alphanumeric characters, blanks and underscores (_).",
 
@@ -261,7 +261,7 @@ class Project(SPObject):
         try:
             dataset.key = new_key
         except ValueError, msg:
-            globals.app.error_msg(DS['invalid_key'] % new_key)            
+            globals.app.error_msg(MSG['invalid_key'] % new_key)            
             return
             
         undolist.append(ui)         
@@ -284,7 +284,7 @@ class Project(SPObject):
         try:
             plot.key = new_key
         except ValueError:
-            globals.app.error_msg(DS['invalid_key'] % new_key)
+            globals.app.error_msg(MSG['invalid_key'] % new_key)
             return
 
         undolist.append(ui)

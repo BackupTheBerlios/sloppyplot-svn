@@ -31,7 +31,7 @@ from Sloppy.Gtk import uihelper, checkwidgets
 from Sloppy.Lib.Check import Keyword, values_as_dict
 
 
-DS={
+MSG={
 'template_immutable': "<i>This is an internal template\nwhich cannot be altered.</i>",
 'template_immutable_nomarkup': "This is an internal template\nwhich cannot be altered.",
 'empty_key': "<b>Empty key not allowed. Try again.</b>",
@@ -313,7 +313,7 @@ class ImportTemplatesPage(gtk.VBox):
         
         # gray out gui items if object is immutable
         if allow_edit is False:
-            hint.set_markup(DS['template_immutable'])
+            hint.set_markup(MSG['template_immutable'])
             key_box.set_sensitive(False)
             table1.set_sensitive(False)
             table2.set_sensitive(False) 
@@ -330,7 +330,7 @@ class ImportTemplatesPage(gtk.VBox):
                     try:
                         new_key = Keyword().check(new_key)
                     except ValueError:
-                        hint.set_markup(DS['invalid_key'])
+                        hint.set_markup(MSG['invalid_key'])
                         continue
 
                     # if key is equal to the suggested key, use it
@@ -338,11 +338,11 @@ class ImportTemplatesPage(gtk.VBox):
                         pass
                     elif len(new_key) == 0:
                         # don't allow empty keys                        
-                        hint.set_markup(DS['empty_key'])                        
+                        hint.set_markup(MSG['empty_key'])                        
                         continue                            
                     elif new_key in keys:
                         # otherwise check if key does not yet exist                        
-                        hint.set_markup(DS['existing_key'])
+                        hint.set_markup(MSG['existing_key'])
                         continue
 
                     # check out
@@ -381,7 +381,7 @@ class ImportTemplatesPage(gtk.VBox):
 
         template = model.get_value(iter, self.MODEL_OBJECT)
         if template.immutable is True:
-            globals.app.error_msg(DS['template_immutable_nomarkup'])
+            globals.app.error_msg(MSG['template_immutable_nomarkup'])
         else:
             model.remove(iter)
 

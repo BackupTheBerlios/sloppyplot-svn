@@ -27,7 +27,7 @@ from Sloppy.Base.objects import SPObject
 
 
 #------------------------------------------------------------------------------
-DS={\
+MSG={\
 
 'IOTemplate:extensions':
 """File extensions for which this template should be used,
@@ -134,18 +134,18 @@ class IOTemplate(SPObject):
     extensions = String(\
         init="",
         blurb="File extensions",
-        doc=DS['IOTemplate:extensions']
+        doc=MSG['IOTemplate:extensions']
         )
     
     blurb = Unicode(\
         init="Description",
-        doc=DS['IOTemplate:blurb']
+        doc=MSG['IOTemplate:blurb']
         )
 
     skip_options = Boolean(\
         init=False,
         blurb="Skip Options",
-        doc=DS['IOTemplate:skip_options']
+        doc=MSG['IOTemplate:skip_options']
         ) 
 
     defaults = Dict()    

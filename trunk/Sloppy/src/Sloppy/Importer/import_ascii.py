@@ -33,7 +33,7 @@ logger = logging.getLogger('import.ascii')
 
 
 #------------------------------------------------------------------------------
-DS={
+MSG={
 'import_ascii:designations':
 """Designations for the imported columns.
 If more than the given columns exists, then
@@ -97,7 +97,7 @@ class Importer(dataio.Importer):
 
     designations = Choice(\
         ['X', 'Y', 'X|Y', 'XY'], init='X|Y',        
-        blurb="Designations", doc=DS['import_ascii:designations']
+        blurb="Designations", doc=MSG['import_ascii:designations']
         )
 
     growth_offset = Integer(min=10, max=None, init=100)

@@ -115,7 +115,7 @@ if __name__ == "__main__":
     from Sloppy.Base.dataset import Dataset
     from Sloppy.Base.objects import Plot, Layer
 
-#    ds = Dataset(key="DS1724", label="a sample dataset",
+#    ds = Dataset(key="MSG1724", label="a sample dataset",
 #                 metadata={'Whatever':42, 'However': 24},
 #                 data = None)
 
