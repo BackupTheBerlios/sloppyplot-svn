@@ -82,8 +82,7 @@ class GtkApplication(application.Application):
         self.init_plugins()
 
         tools.dock_read_config(globals.app.eConfig, self.window.toolbox,
-                               default=['ProjectView'])
-        #                                        'LayerTool'])
+                               default=['ProjectTool', 'LayersTool'])
 
     def register_stock(self):
         """

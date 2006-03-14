@@ -3,7 +3,7 @@ import gtk
 from Sloppy.Gtk import tools
 
 
-class LayerTool(tools.Tool):
+class LayersTool(tools.Tool):
 
     name = "Layers"
     stock_id = gtk.STOCK_EDIT
@@ -109,4 +109,4 @@ class LayerTool(tools.Tool):
 
 
 #------------------------------------------------------------------------------
-tools.register_tool(LayerTool, 'LayerTool')
+tools.register_tool(LayersTool)

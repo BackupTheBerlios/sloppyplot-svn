@@ -42,6 +42,7 @@ def dock_read_config(eConfig, adock, default=[]):
     eDock = eConfig.find(dock_name)
     if eDock is None or len(eDock.findall('Dockbook/Dockable')) == 0:
         logger.debug("Using default Dock configuration")
+        default.reverse()
         for item in default:
             book = dock.Dockbook()
             adock.add(book)

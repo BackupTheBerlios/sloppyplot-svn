@@ -457,4 +457,4 @@ class ProjectTreeView( gtk.TreeView ):
 
 
 #------------------------------------------------------------------------------
-tools.register_tool(ProjectTool, 'ProjectView')
+tools.register_tool(ProjectTool)

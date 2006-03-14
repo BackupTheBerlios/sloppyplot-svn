@@ -188,4 +188,4 @@ class LinesTool(tools.Tool):
 
 
 #------------------------------------------------------------------------------
-tools.register_tool(LinesTool, 'LinesTool')
+tools.register_tool(LinesTool)

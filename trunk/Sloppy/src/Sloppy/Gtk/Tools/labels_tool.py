@@ -166,4 +166,4 @@ class LabelsTool(tools.Tool):
 
 
 #------------------------------------------------------------------------------
-tools.register_tool(LabelsTool, 'LabelsTool')
+tools.register_tool(LabelsTool)
