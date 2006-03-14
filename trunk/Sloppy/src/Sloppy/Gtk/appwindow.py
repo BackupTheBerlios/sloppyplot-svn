@@ -213,16 +213,12 @@ class AppWindow( gtk.Window, HasSignals ):
         btn.add_accelerator("activate", accel_group, key, modifier, gtk.ACCEL_VISIBLE)
 
 
-    def on_begin_user_action(self, sender, on_cancel_user_action=None):
+    def on_begin_user_action(self, sender):
         self.btn_cancel.set_sensitive(True)
         self.btn_cancel.connect('clicked', \
           lambda sender: globals.app.sig_emit('cancel-user-action'))
-
-        def stop(sender):            
-            self.btn_cancel.set_sensitive(False)
-            if on_cancel_user_action is not None:
-                on_cancel_user_action(sender)
-        globals.app.sig_connect('cancel-user-action', stop)
+        globals.app.sig_connect('cancel-user-action',
+                                lambda sender: self.btn_cancel.set_sensitive(False))
         
         return False # TODO: disconnect on False
 

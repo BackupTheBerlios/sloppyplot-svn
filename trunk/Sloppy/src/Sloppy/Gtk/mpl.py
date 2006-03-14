@@ -488,7 +488,8 @@ class MatplotlibWidget(gtk.VBox):
             globals.app.sig_emit('end-user-action')
             self.emit("edit-mode-ended")
 
-        globals.app.sig_emit('begin-user-action', on_finish)
+        globals.app.sig_emit('begin-user-action')
+        globals.app.sig_connect('cancel-user-action', lambda sender: self.abort_selection())
         selector.sig_connect("finished", on_finish)
         selector.sig_connect("aborted", on_finish)
         self._current_selector = selector
