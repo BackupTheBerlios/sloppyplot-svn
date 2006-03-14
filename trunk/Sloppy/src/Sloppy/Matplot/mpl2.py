@@ -16,9 +16,9 @@ else:
     from matplotlib.backends.backend_gtk import FigureCanvasGTK as FigureCanvas
 
 from Sloppy.Base import backend, objects, utils, globals
-from Sloppy.Base.objects import SPObject
+from Sloppy.Base.objects import SPObject, Line
 from Sloppy.Base.dataset import Dataset
-from Sloppy.Lib.Check import Instance, Undefined
+from Sloppy.Lib.Check import Instance, Undefined, Dict, AnyValue
 
 import logging
 logger = logging.getLogger('Backends.mpl2')
@@ -160,6 +160,7 @@ class Painter(SPObject):
 class LayerPainter(Painter):
 
     active_line = Instance(objects.Line, init=None)
+    line_cache = Dict(keys=Instance(Line))
     
     def init(self):
         self.axes = self.init_axes()
@@ -180,16 +181,7 @@ class LayerPainter(Painter):
 
         # grid
         axes.grid(layer.grid)
-
-        # legend
-        legend = layer.legend        
-        if legend is None:
-            # remove any existing legend painter if obsolete
-            pass
-        else:
-            p = self.get_painter(legend, LegendPainter)
-            p.paint()
-            
+           
         # lines
         for line in layer.lines:
             painter = self.get_painter(line, LinePainter)
@@ -220,6 +212,19 @@ class LayerPainter(Painter):
             if scale is not None: set_scale(scale)
             if start is not None: set_start(start)
             if end is not None: set_end(end)
+
+        # legend
+        # Since the legend labels are constructed from the matplotlib
+        # line objects, it is necessary to construct the legend after
+        # the lines are plotted
+        legend = layer.legend        
+        if legend is None:
+            # remove any existing legend painter if obsolete
+            pass
+        else:
+            p = self.get_painter(legend, LegendPainter)
+            p.paint()
+
 
     def on_update_layer(self, sender, key, value):
         if key == '__all__':
@@ -293,6 +298,14 @@ class LinePainter(Painter):
         #:line.marker_siize
         marker_size = line.marker_size or 1
 
+
+        # remove line if it already exists
+        if layer_painter.line_cache.has_key(line):
+            obj = layer_painter.line_cache.pop(line)
+            if obj in axes.lines:
+                axes.lines.remove(obj)
+
+            
         # plot line!
         try:
             l, = axes.plot( xdata, ydata,
@@ -303,10 +316,27 @@ class LinePainter(Painter):
                             markerfacecolor=marker_color,
                             markeredgecolor=marker_color,
                             markersize=marker_size)
-                            
+            layer_painter.line_cache[line] = l
         except Exception, msg:
             raise
 
+        # label
+        label = self.get_line_label(line, dataset=ds, cy=cy)
+        if label is not None:
+            l.set_label(label)
+
+
+    def get_line_label(self, line, dataset=None, cy=None):
+        label = line.label
+        if label is None:
+            if dataset is not None and cy is not None:
+                info = dataset.get_info(cy)
+                label = info.label or dataset.get_name(cy) or None
+            else:
+                label = line.label
+        return label
+
+        
         
 
 
@@ -319,6 +349,7 @@ class LegendPainter(Painter):
         border = kwargs.pop('border')
         visible = kwargs.pop('visible')
         handles, labels = kwargs.pop('handles'), kwargs.pop('labels')
+        print "labels", labels
         _legend = layer_painter.axes.legend(handles, labels, **kwargs)        
         _legend.draw_frame(border)
         _legend.set_visible(visible)
@@ -344,10 +375,10 @@ class LegendPainter(Painter):
             position = (legend.x, legend.y)
 
         # create legend entries from line labels
-        lines = layer_painter.obj.lines
-        labels = [l.label or "--" for l in lines]
+        line_cache = layer_painter.axes.lines
+        labels = [l.get_label() for l in line_cache]
 
-        return  {'handles' : lines,
+        return  {'handles' : line_cache,
                  'labels' : labels,
                  'loc' : position,
                  'border' : border,

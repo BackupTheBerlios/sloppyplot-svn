@@ -53,6 +53,7 @@ class Dockable( gtk.VBox ):
         menu_button = gtk.Button('*')
         menu_button.unset_flags(gtk.CAN_FOCUS)
         menu_button.set_relief(gtk.RELIEF_NONE)
+        menu_button.connect('clicked', self.on_menu_button_clicked)
         menu_button.show()
 
 #         image = gtk.image_new_from_stock(gtk.STOCK_MEDIA_PREVIOUS, gtk.ICON_SIZE_MENU)
@@ -77,7 +78,7 @@ class Dockable( gtk.VBox ):
         title_box = gtk.HBox()
         title_box.pack_start( title_label, True, True )
         title_box.pack_end( close_button, False, True )
-        #title_box.pack_end( menu_button, False, True )
+        title_box.pack_end( menu_button, False, True )                
         title_box.show()
 
         event_box = gtk.EventBox()
@@ -151,6 +152,8 @@ class Dockable( gtk.VBox ):
     def dnd_drag_drop(self, sender, context, x, y, timestamp):
         return self.dockbook.tab_dnd_drag_drop(sender, context, x, y, timestamp)
 
+    def on_menu_button_clicked(self, sender):
+        pass
         
 
 # register only for pygtk < 2.8

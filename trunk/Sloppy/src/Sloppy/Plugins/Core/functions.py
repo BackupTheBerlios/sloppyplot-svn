@@ -125,3 +125,30 @@ def add_experimental_plot(project, undolist=None):
     undolist.append(ul)
 
 
+def new_lineplot2d(**kwargs):
+    """
+    Create a one-layer line plot with the given keyword arguments.
+    Arguments that do not match a Plot property are passed on to
+    the Layer.
+    """
+
+    plot = Plot()
+    
+    # pass only those keywords to the plot that are meaningful
+    plot_kwargs = dict()
+    for key in plot._checks.keys():
+        if kwargs.has_key(key):
+            plot_kwargs[key] = kwargs.pop(key)
+    plot.set(**plot_kwargs)
+
+    # ...and then create the appropriate layer, assuming
+    # that all remaining keyword arguments are meant for the layer
+    kwargs.update( {'type' : 'line2d'} )
+    plot.layers = [Layer(**kwargs)]
+    
+    return plot
+    
+
+
+
+

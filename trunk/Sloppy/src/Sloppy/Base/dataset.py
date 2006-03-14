@@ -322,7 +322,7 @@ class Table(Dataset):
     about it.
     """
 
-    class Info(HasSignals):
+    class Info(HasChecks, HasSignals):
         label = Unicode(init="")       
         designation = Choice(['X','Y','XERR', 'YERR', 'LABEL', None])
         query = String()

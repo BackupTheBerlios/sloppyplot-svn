@@ -31,7 +31,7 @@ from Sloppy.Lib.Undo import Journal, UndoInfo, NullUndo, UndoList, ulist
 from Sloppy.Lib.Signals import HasSignals
 from Sloppy.Lib.Check import *
 
-from Sloppy.Base.objects import Plot, Axis, Line, Layer, new_lineplot2d, SPObject
+from Sloppy.Base.objects import Plot, Axis, Line, Layer, SPObject
 from Sloppy.Base.dataset import Dataset, Table
 from Sloppy.Base.backend import Backend
 
@@ -76,6 +76,7 @@ class Project(SPObject):
     datasets = List(Dataset)  
     backends = List(Backend)
     active_backend = Instance(Backend)
+    active_object = AnyValue(required=False, init=None)
     
     def __init__(self,*args,**kwargs):
         SPObject.__init__(self, **kwargs)
@@ -358,7 +359,7 @@ class Project(SPObject):
         if undolist is None:
             undolist = self.journal
         
-        new_plot = new_lineplot2d()
+        new_plot = globals.app.core.new_lineplot2d()
         new_plot.key = pdict.unique_key(self.plots, "new lineplot2d")
         self.add_plot(new_plot)
         ui = UndoInfo(self.remove_plot, new_plot).describe("New Plot")

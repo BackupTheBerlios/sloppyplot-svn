@@ -1,10 +1,10 @@
 
 import gtk
 from Sloppy.Gtk import tools
+from Sloppy.Base import globals
 
 
-
-class LinesTool(tools.Tool):
+class LinesTool(tools.BackendTool):
 
     name = "Lines"
     stock_id = gtk.STOCK_PROPERTIES

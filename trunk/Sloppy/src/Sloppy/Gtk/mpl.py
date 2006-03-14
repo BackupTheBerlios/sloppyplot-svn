@@ -142,7 +142,14 @@ class MatplotlibWidget(gtk.VBox):
         # TODO: such a method in the shell frontend as well.
         self.fileselect = FileChooserDialog(title='Save the figure', parent=None)
 
+        # set active_object on focus        
+        self.connect('focus-in-event', self.on_focus_in_event)
 
+
+    def on_focus_in_event(self, event):
+        if self.plot is not None:
+            self.project.active_object = self.plot
+        
     def get_actiongroups(self):
         return self.actiongroups
 
@@ -240,6 +247,8 @@ class MatplotlibWidget(gtk.VBox):
             self.cursor = mpl_selector.Cursor(self.backend.figure)
             self.cursor.sig_connect("move", (lambda sender,x,y: self.set_coords(x,y)))
             self.cursor.init()
+
+            self.project.active_object = self.plot
 
 
     def request_active_layer(self):

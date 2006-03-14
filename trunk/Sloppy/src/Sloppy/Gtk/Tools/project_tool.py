@@ -26,6 +26,7 @@ from Sloppy.Base.dataset import *
 from Sloppy.Base import pdict, uwrap, globals
 from Sloppy.Gtk import uihelper
 from Sloppy.Gtk import tools
+from Sloppy.Base import globals
 
 from Sloppy.Lib.Props.main import PropertyError
 

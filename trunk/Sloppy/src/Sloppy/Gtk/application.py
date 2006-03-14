@@ -40,7 +40,7 @@ from Sloppy.Gtk.Tools import *
 
 from Sloppy.Base import \
      utils, error, application, globals, pdict, uwrap, dataio, backend
-from Sloppy.Base.objects import Plot, Axis, Line, Layer, new_lineplot2d
+from Sloppy.Base.objects import Plot, Axis, Line, Layer
 from Sloppy.Base.dataset import Dataset
 from Sloppy.Base.project import Project
 from Sloppy.Base.projectio import load_project, save_project, ParseError
@@ -48,7 +48,7 @@ from Sloppy.Base.projectio import load_project, save_project, ParseError
 from Sloppy.Gnuplot.terminal import PostscriptTerminal
 
 from Sloppy.Lib.ElementTree.ElementTree import Element, SubElement
-from Sloppy.Lib.Check import Instance, List, values_as_dict
+from Sloppy.Lib.Check import Instance, List, values_as_dict, AnyValue
 
 
 #------------------------------------------------------------------------------
@@ -82,7 +82,7 @@ class GtkApplication(application.Application):
         self.init_plugins()
 
         tools.dock_read_config(globals.app.eConfig, self.window.toolbox,
-                               default=['ProjectTool', 'LayersTool'])
+                               default=['ProjectTool', 'LayersTool','LabelsTool'])
 
     def register_stock(self):
         """
@@ -381,8 +381,7 @@ class GtkApplication(application.Application):
 
     def _cb_new_plot(self,widget):
         pj = self._check_project()
-        
-        plot = new_lineplot2d(key='empty plot')
+        plot = self.core.new_lineplot2d(key='empty plot')
         pj.add_plots([plot])
         
 

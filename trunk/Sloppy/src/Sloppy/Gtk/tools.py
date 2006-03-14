@@ -100,14 +100,24 @@ class Tool(dock.Dockable):
     def __init__(self):
         dock.Dockable.__init__(self)
 
+    def on_menu_button_clicked(self, sender):
+        uim = globals.app.window.uimanager
+        popup = uim.get_widget('/popup_empty')        
+        popup.popup(None,None,None,3,0)
+
+
+
+
+class BackendTool(Tool):
+
+    def __init__(self):
+        dock.Dockable.__init__(self)
+
         self.backend = None
         self.backend_signals = []
+        globals.app.sig_connect('update::active_backend', self.on_update_active_backend)
         
         self.init()
-        globals.app.sig_connect('update::active_backend', self.on_update_active_backend)        
-        
-    def init(self):
-        pass
 
     def update_active_backend(self, backend):
         if backend == self.backend:
@@ -116,9 +126,8 @@ class Tool(dock.Dockable):
         
     def on_update_active_backend(self, sender, backend):
         self.update_active_backend(backend)
+        
     
-
-#------------------------------------------------------------------------------
 
 # Global Tools Registry
 ToolRegistry = {}

@@ -223,8 +223,11 @@ class DisplayFactory:
                 changeset[key] = value
                 reverse_changeset[value] = key
            
-        self.obj.set(**changeset)
-        undolist.append(UndoInfo(self.obj.set, **reverse_changeset))
+        #self.obj.set(changeset)
+        #undolist.append(UndoInfo(self.obj.set, reverse_changeset))
+        changeset['undolist'] = undolist
+        uwrap.set(self.obj, **changeset)
+        
 
 
 

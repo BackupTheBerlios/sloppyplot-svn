@@ -1,17 +1,17 @@
 
 import gtk
 from Sloppy.Gtk import tools
+from Sloppy.Base import globals
 
-
-class LabelsTool(tools.Tool):
+class LabelsTool(tools.BackendTool):
 
     name = "Labels"
     stock_id = gtk.STOCK_EDIT
 
 
 
-#     def __init__(self):
-#         Tool.__init__(self)
+    def init(self):
+        pass
 #         self.set_size_request(-1,200)
        
 #         #

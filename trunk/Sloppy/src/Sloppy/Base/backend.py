@@ -215,6 +215,7 @@ class Backend(SPObject):
         else:
             return line.cx, line.cy
 
+    # TO BE REMOVED: Should be in the individual painters
     def get_line_label(self, line, dataset=None, cy=None):
         #:line.label:OK
         label = line.label

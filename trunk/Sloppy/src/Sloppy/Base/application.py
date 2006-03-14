@@ -30,7 +30,7 @@ from Sloppy.Lib.Signals import HasSignals
 from Sloppy.Lib.ElementTree.ElementTree import Element, SubElement
 from Sloppy.Lib.Check import values_as_dict
 
-from Sloppy.Base.objects import Plot, Axis, Line, Layer, new_lineplot2d, SPObject
+from Sloppy.Base.objects import Plot, Axis, Line, Layer, SPObject
 from Sloppy.Base.dataset import Dataset
 from Sloppy.Base.project import Project
 from Sloppy.Base.projectio import load_project, save_project, ParseError
