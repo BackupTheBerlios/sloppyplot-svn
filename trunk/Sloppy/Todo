@@ -16,12 +16,6 @@
 
 - open the first available plot for testing
 
-- Tools: The first layer should be selected as active by default.
-  This does not yet work perfectly. Maybe it is selected, but the tool waits
-  on an update signal?
-
-
--- add buttons to project_view to add datasets/plots and remove items.
 
 
 

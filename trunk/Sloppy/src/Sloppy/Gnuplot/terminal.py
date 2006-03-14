@@ -20,17 +20,18 @@
 
 
 
-from Sloppy.Lib.Props import *
+from Sloppy.Lib.Check import *
+from Sloppy.Base.objects import SPObject
+
 
 import logging
 import os.path
 
 
 
-class Terminal:
+class Terminal(SPObject):
     def build(self, backend): pass
                   
-
 
 class DumbTerminal(Terminal):
 
@@ -47,59 +48,43 @@ class XTerminal(Terminal):
         return cmd_list
 
    
-class PostscriptTerminal(Terminal, HasProperties):
+class PostscriptTerminal(Terminal):
 
-    mode = VP(\
-      ['eps', 'landscape', 'portrait'],
-      blurb="mode",
-      doc="Output mode"
-      )    
-    enhanced = VP(\
-      ['enhanced', 'noenhanced'],
-      blurb="PS mode",
-      doc="Enable subscripts, superscripts, mixed fonts"
-      )    
-    color = VP(\
-      ['color','monochrome'],
-      blurb="color mode",
-      doc="Color mode"
-      )
-    blacktext = Boolean(\
-      blurb="black text only",
-      doc="all text in black, even in color mode"
-      )
-    solid = VP(\
-      ['solid', 'dashed'],
-      blurb="Line style"
-      )
-    dashlength = VP(FloatRange(0.0, None), None, default=None,
-      blurb="dash length",
-      doc = "Scales the length of dashed-line segments"
-      )
-    linewidth = VP(FloatRange(0.0,None), None, default=None,
-      blurb="line width",
-      doc = "Scales all linewidths"
-      )
-    duplexing = VP(\
-      ['defaultplex', 'simplex', 'duplex']
-      )
-    rounded = VP(\
-      ['rounded', 'butt'],
-      blurb="Cap style",
-      doc="Whether line caps and line joins should be rounded"
-      )
-    fontname = VP(String,None,default=None,
-      blurb="font name",
-      doc="Name of a valid PostScript font"
-      )
-    fontsize = VP(FloatRange(0.0, None), None, default=None,
-      blurb="font size",
-      doc="Size of the font in PostScript points."
-      )
-    timestamp = Boolean(\
-      blurb="add timestamp",
-      doc="Whether to add a timestamp"
-      )
+    mode = Choice(['eps', 'landscape', 'portrait'],
+                  blurb="mode", doc="Output mode")
+    
+    enhanced = Choice(['enhanced', 'noenhanced'],
+                      blurb="PS mode", doc="Enable subscripts, superscripts, mixed fonts")
+
+    color = Choice(['color','monochrome'],
+                   blurb="color mode", doc="Color mode")
+    
+    blacktext = Boolean(blurb="black text only",
+                        doc="all text in black, even in color mode")
+    
+    solid = Choice(['solid', 'dashed'], blurb="Line style")
+    
+    dashlength = Float(min=0.0, max=None, default=None,
+                       blurb="dash length",
+                       doc = "Scales the length of dashed-line segments")
+    
+    linewidth = Float(min=0.0, max=None, default=None,
+                      blurb="line width", doc = "Scales all linewidths")
+    
+    duplexing = Choice(['defaultplex', 'simplex', 'duplex'])
+    
+    rounded = Choice(['rounded', 'butt'], blurb="Cap style",
+                     doc="Whether line caps and line joins should be rounded")
+    
+    fontname = String(default=None, blurb="font name",
+                      doc="Name of a valid PostScript font")
+    
+    fontsize = Float(min=0.0, max=None, default=None,
+                     blurb="font size",
+                     doc="Size of the font in PostScript points.")
+    
+    timestamp = Boolean(blurb="add timestamp",
+                        doc="Whether to add a timestamp")
 
     public_props = ['mode', 'enhanced',
                     'duplexing', 'fontname', 'fontsize',

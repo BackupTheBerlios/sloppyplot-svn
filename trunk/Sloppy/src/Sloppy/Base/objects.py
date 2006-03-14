@@ -76,8 +76,7 @@ PV = {
         "pentagon symbols",
         "vertical line symbols",
         "horizontal line symbols"
-        "steps"]
-    
+        "steps"]    
 }
 
 

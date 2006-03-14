@@ -34,8 +34,10 @@ logger = logging.getLogger('Gnuplot.gnuplot')
 from Sloppy.Base import objects, globals
 from Sloppy.Base.dataset import Dataset
 from Sloppy.Base import utils, backend
+from Sloppy.Lib.Check import Undefined
 
 from Sloppy.Gnuplot.terminal import XTerminal, DumbTerminal, PostscriptTerminal
+
 
 """
 Maybe it is even simpler!
@@ -93,7 +95,7 @@ class Backend(backend.Backend):
         # alive until we actively disconnect it.
         # TODO: how do we actually disconnect?
         cmd_list = ["gnuplot"]
-        if self.options.get('persist',False):
+        if self.options.get('persist', False):
             logger.debug("Enabling persistance!")
             cmd_list[0] += ' -persist'
                    
@@ -228,7 +230,7 @@ class Backend(backend.Backend):
     def export_datasets(self):
         # Export Datasets to temporary directory, so that
         # gnuplot can access them.
-        exporter = globals.exporter_registry['ASCII']()
+        exporter = globals.exporter_registry['ASCII'](delimiter=",")
         
         destdir = self.tmpdir
         for (source, value) in self.exports.iteritems():
@@ -281,8 +283,8 @@ class Backend(backend.Backend):
             else: cmd.append('unset %slabel' % key)
 
             # axis range
-            start = axis.get_value('start', '')
-            end = axis.get_value('end','*')
+            start = axis.get('start', default='')
+            end = axis.get('end', default='*')
             cmd.append('set %srange [%s:%s]' % (key,start,end))
 
             # axis scale
@@ -330,20 +332,24 @@ class Backend(backend.Backend):
 
                 #:line.style
                 #:layer.group_style
-                style = layer.group_style.get(line, index, line.style)
+                style = layer.group_style.get(line, index,
+                                              override=line.style or Undefined)
 
                 #:line.marker
                 #:layer.group_marker
-                marker = layer.group_marker.get(line, index, line.marker)
+                marker = layer.group_marker.get(line, index,
+                                                override=line.marker or Undefined)
                 print "-------", marker
                 
                 #:line.width
                 #:layer.group_width                
-                width = layer.group_width.get(line, index, line.width)
+                width = layer.group_width.get(line, index,
+                                              override=line.width or Undefined)
 
                 #:line.color
                 #:layer.group_color
-                color = layer.group_color.get(line, index, line.color)
+                color = layer.group_color.get(line, index,
+                                              override=line.color or Undefined)
 
                 #
                 # with-clause
@@ -393,6 +399,7 @@ class Backend(backend.Backend):
                  "vertical line symbols"   : "pt 2",
                  "horizontal line symbols" : "pt 3"
                  }
+               
                 if marker == 'None':
                     with = with.replace('linespoints', 'lines')
                     point_type = ''

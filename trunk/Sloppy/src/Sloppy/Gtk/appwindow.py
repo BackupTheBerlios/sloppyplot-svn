@@ -480,6 +480,7 @@ class AppWindow( gtk.Window, HasSignals ):
         ('ViewMetadata', None, 'View Metadata', None, 'View Metadata', 'on_action_ViewMetadata'),
         #
         ('Preferences', gtk.STOCK_PREFERENCES, '_Preferences...', '<control>P', "Modify Preferences", 'on_action_Preferences'),
+        ('NewMenu', None, '_New'),
         ]
 
     actions_appwin = [                

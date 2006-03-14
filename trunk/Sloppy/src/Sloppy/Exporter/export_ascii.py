@@ -49,6 +49,10 @@ class Exporter(dataio.Exporter):
         # TODO: types or just one for all columns
         types  = [dataset.get_column_type(i) for i in range(dataset.ncols)]
         types = [type_map[t] for t in types]
+        print
+        
+        print "delimiter ", self.delimiter
+        print
         exp = self.delimiter.join(types) + '\n'
 
         for row in a:
