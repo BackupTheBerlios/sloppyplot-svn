@@ -1,10 +1,10 @@
 
 import gtk
-from Sloppy.Gtk.tool import Tool
+from Sloppy.Gtk import tools
 
 
 
-class LinesTool(Tool):
+class LinesTool(tools.Tool):
 
     name = "Lines"
     stock_id = gtk.STOCK_PROPERTIES
@@ -185,3 +185,7 @@ class LinesTool(Tool):
 #         table = self.factory.create_table()
 #         frame = uihelper.new_section("Line", table)
 #         self.factory.check_in(line)
+
+
+#------------------------------------------------------------------------------
+tools.register_tool(LinesTool, 'LinesTool')

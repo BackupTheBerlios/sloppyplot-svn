@@ -36,7 +36,7 @@ from Sloppy.Gtk.layerwin import LayerWindow
 from Sloppy.Gtk.property_browser import PropertyBrowserDialog
 from Sloppy.Gtk.options_dialog import OptionsDialog, NoOptionsError
 from Sloppy.Gtk import tools, dock
-from Sloppy.Gtk import project_view as project_view
+from Sloppy.Gtk.Tools import *
 
 from Sloppy.Base import \
      utils, error, application, globals, pdict, uwrap, dataio, backend
@@ -49,6 +49,7 @@ from Sloppy.Gnuplot.terminal import PostscriptTerminal
 
 from Sloppy.Lib.ElementTree.ElementTree import Element, SubElement
 from Sloppy.Lib.Check import Instance, List, values_as_dict
+
 
 #------------------------------------------------------------------------------
 # GtkApplication, the main object
@@ -77,11 +78,8 @@ class GtkApplication(application.Application):
         self._current_plot = None
         self.path.icon_dir = os.path.join(self.path.base_dir, 'Gtk','Icons')
         self.register_stock()
-        
-        self.tools = {}
-        
+               
         self.init_plugins()
-        self.init_tools()
 
         tools.dock_read_config(globals.app.eConfig, self.window.toolbox,
                                default=['ProjectView'])
@@ -131,66 +129,8 @@ class GtkApplication(application.Application):
                         
         # merge plugin ui
         merge_id = self.window.uimanager.add_ui_from_string(plugin_ui)
+       
 
-    def register_tool(self, klass, name=None):
-        " Helper functions for plugins. "
-        if name is None:
-            name = klass.__name__
-        if self.tools.has_key(name):
-            logger.error("Tool %s is already registered." % name)
-            return
-        
-        self.tools[name] = klass        
-        
-
-    # Tool Handling --------------------------------------------------------
-
-    def init_tools(self):
-        # TODO:
-        # we register these two tools here.
-        # this should be done somewhere else.
-        # one solution would be to source the corresponding
-        # module from the application, like it is done with
-        # the plugins
-        self.tools['ProjectView'] = project_view.ProjectView
-        self.tools['LayerTool'] = tools.LayerTool
-        self.tools['LabelsTool'] = tools.LabelsTool
-        self.tools['LinesTool'] = tools.LinesTool        
-
-        return
-
-        # TODO
-
-        logger.debug("Initializing Tools.")
-        
-        def init_tool(toolpath, tool_name):            
-            d = os.path.join(toolpath, tool_name)
-            if (not os.path.isdir(d)) or (not "__init__.py" in os.listdir(d)):
-                return
-            
-            exec("import Sloppy.Plugins.%s as plugin" % plugin_name ) in locals()
-
-            for attr in ['name','authors','blurb','version','license']:
-                if not hasattr(plugin, attr):
-                    raise AttributeError("Plugin is lacking required attribute '%s'" % attr)
-            self.plugins[plugin.name] = plugin
-            logger.info("Plugin %s loaded." % item)
-
-            # the core plugin is special and deserves a little shortcut
-            # notation
-            if plugin.name == 'core':
-                self.core = plugin
-                
-
-        # Currently only the system location for plugins is scanned.
-        # TODO: add place for user plugins
-        for path in [self.path.plugins]:
-            for item in os.listdir(path):
-                try:
-                    init_plugin(self.path.plugins, item)
-                except Exception, msg:
-                    logger.error("Failed to load Plugin %s: %s" % (item, msg))        
-        
     
     # ----------------------------------------------------------------------
     # Project

@@ -4,7 +4,7 @@ import main
 import gtk
 
 from Sloppy.Lib.Props import *
-from Sloppy.Gtk.tools import Tool
+from Sloppy.Gtk import tools
 #----------------------------------------------------------------------
 
 # we need to specify a x column and a y column
@@ -18,14 +18,14 @@ from Sloppy.Gtk.tools import Tool
 #    changes.
 
 
-class PeakFinderTool(Tool):
+class PeakFinderTool(tools.Tool):
 
     name = "PeakFinder"
     stock_id = gtk.STOCK_EDIT
 
     
     def __init__(self):
-        Tool.__init__(self)
+        tools.Tool.__init__(self)
 
         # model: (object) = (...)
         model = gtk.ListStore(object)        
@@ -45,12 +45,4 @@ class PeakFinderTool(Tool):
 
 
 def gtk_init(app):
-    app.register_tool(PeakFinderTool, 'PeakFinder')
-
-    
-        
-
-
-
-        
-
+    tools.register_tool(PeakFinderTool, 'PeakFinder')
