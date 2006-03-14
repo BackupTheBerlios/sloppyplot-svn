@@ -78,11 +78,50 @@ class GtkApplication(application.Application):
         self._current_plot = None
         self.path.icon_dir = os.path.join(self.path.base_dir, 'Gtk','Icons')
         self.register_stock()
-               
+        self.popup_info = None
+        
+        # === Plugins ===
         self.init_plugins()
 
-        tools.dock_read_config(globals.app.eConfig, self.window.toolbox,
-                               default=['ProjectTool', 'LayersTool','LabelsTool'])
+        # === Tools ===
+
+        # TODO: The add_tool function is called if you add a Tool
+        # from any Tool's popup menu. The popup
+        # menu triggers the action, which emits the action's 'connect'
+        # signal, which calls 'add_tool'. But there seems to be
+        # no way of knowing which Tool triggered the action. So
+        # currently I am using the application's popup_info field
+        # to get that information ;-)
+        #
+        def add_tool(sender, toolklass):
+            print "toolklass is ", toolklass
+            print "and the sender is ", sender
+            new_tool = toolklass()
+            tool = globals.app.popup_info
+            print "popped up by ", tool
+            book = tool.dockbook
+            book.add(new_tool)
+            index = book.get_children().index(new_tool)
+            book.set_current_page(index)
+
+        ag = gtk.ActionGroup("ToolConfig")
+        for key, toolklass in tools.ToolRegistry.iteritems():
+            aw = uihelper.ActionWrapper(key, toolklass.name, stock_id=toolklass.stock_id)
+            aw.connect(add_tool, toolklass)
+            ag.add_action(aw.action)
+        self.window.uimanager.insert_action_group(ag, -1)
+
+        ui = '<popup name="popup_toolconfig">'
+        ui += '  <menuitem action="ToolConfiguration"/><separator/>'
+        for key, tool in tools.ToolRegistry.iteritems():
+            ui += '<menuitem action="%s"/>' % key
+        ui += '</popup>'
+                        
+        # merge plugin ui
+        merge_id = self.window.uimanager.add_ui_from_string(ui)
+
+        self.window.sidepane.read_config(globals.app.eConfig,                                         
+          default=['ProjectTool', 'LayersTool','LabelsTool'])
 
     def register_stock(self):
         """
@@ -862,7 +901,7 @@ def main(filename=None):
         print "ADDING EXPERIMENTAL PLOT"
         app.core.add_experimental_plot(spj)
         spj.journal.clear()
-        app.window.toolbox.show()
+        app.window.sidepane.show()
     else:
         try:
             logger.debug("Trying to load file %s" % filename)

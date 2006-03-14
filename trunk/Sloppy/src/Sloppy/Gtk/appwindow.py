@@ -69,11 +69,9 @@ class AppWindow( gtk.Window, HasSignals ):
         uihelper.add_actions(uim, "RecentFiles", self.actions_recentfiles, globals.app)         
 
         # -- Sidepane --
-        self.toolbox = dock.Dock('Sidepane')
-        globals.app.sig_connect('write-config',
-          lambda sender, eConfig: tools.dock_write_config(eConfig, self.toolbox))
-        self.set_up_visibility_toggle(self.toolbox, 'ToggleSidepane', 'Show Sidepane', 'F9')
-        self.toolbox.show()
+        self.sidepane = tools.ToolBox('Sidepane')
+        self.set_up_visibility_toggle(self.sidepane, 'ToggleSidepane', 'Show Sidepane', 'F9')
+        self.sidepane.show()
         
         # -- Logwindow --
         # logwindow is hidden by default. See _construct_uimanager if
@@ -129,7 +127,7 @@ class AppWindow( gtk.Window, HasSignals ):
         
         self.hpaned = hpaned = gtk.HPaned()
         hpaned.pack1(plot_area, True, True)
-        hpaned.pack2(self.toolbox, False, True)        
+        hpaned.pack2(self.sidepane, False, True)        
         hpaned.show()
 
         vbox = gtk.VBox()        
@@ -477,6 +475,8 @@ class AppWindow( gtk.Window, HasSignals ):
         #
         ('Preferences', gtk.STOCK_PREFERENCES, '_Preferences...', '<control>P', "Modify Preferences", 'on_action_Preferences'),
         ('NewMenu', None, '_New'),
+        #
+        ('ToolConfiguration', None, 'Toolbox Configuration')
         ]
 
     actions_appwin = [                

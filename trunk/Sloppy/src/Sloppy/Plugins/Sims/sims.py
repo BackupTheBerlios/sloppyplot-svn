@@ -3,7 +3,7 @@
 from Sloppy.Base import pdict, uwrap, globals
 from Sloppy.Base.objects import Plot, Line, Axis, Layer, Legend
 from Sloppy.Base.dataset import Dataset
-from Sloppy.Gtk import plugin
+from Sloppy.Gtk import uihelper
 from Sloppy.Lib.Undo import UndoList, ulist
 
 import logging
@@ -14,10 +14,10 @@ logger = logging.getLogger('plugin.sims')
 
 def gtk_init(app):
     
-    a = plugin.ActionWrapper('CreatePFC', "Create a SIMS profile from Dataset")
+    a = uihelper.ActionWrapper('CreatePFC', "Create a SIMS profile from Dataset")
     a.connect(_cb_create_pfc)
 
-    b = plugin.ActionWrapper('CreateSPC', 'Create a SIMS spectrum from Dataset')
+    b = uihelper.ActionWrapper('CreateSPC', 'Create a SIMS spectrum from Dataset')
     b.connect(_cb_create_spc)
 
     app.register_actions([a,b])

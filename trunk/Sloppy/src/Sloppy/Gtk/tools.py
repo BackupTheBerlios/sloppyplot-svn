@@ -33,57 +33,87 @@ import logging
 logger = logging.getLogger('Gtk.tools')
 
 
+#------------------------------------------------------------------------------
+# Global Tools Registry
+#
+ToolRegistry = {}
 
-#------------------------------------------------------------------------------      
-def dock_read_config(eConfig, adock, default=[]):
+def register_tool(klass, name=None):
+    " Helper functions for plugins. "
     global ToolRegistry
-    dock_name = adock.get_data('name')
-    
-    eDock = eConfig.find(dock_name)
-    if eDock is None or len(eDock.findall('Dockbook/Dockable')) == 0:
-        logger.debug("Using default Dock configuration")
-        default.reverse()
-        for item in default:
-            book = dock.Dockbook()
-            adock.add(book)
-            tool = ToolRegistry[item]()
-            book.add(tool)
+    if name is None:
+        name = klass.__name__
+    if ToolRegistry.has_key(name):
+        logger.error("Tool %s is already registered." % name)
         return
         
-    for eDockbook in eDock.findall('Dockbook'):
-        book = dock.Dockbook()
-        adock.add(book)
-        for eDockable in eDockbook.findall('Dockable'):
-            try:                    
-                tool = ToolRegistry[eDockable.text]()
+    ToolRegistry[name] = klass        
+        
+
+#------------------------------------------------------------------------------      
+# Toolbox configuration
+#
+# Todo: maybe use ToolBox as a child of Dock and put these
+# config methods into the ToolBox.
+#
+
+class ToolBox(dock.Dock):
+
+    def __init__(self, dock_name = "unnamed dock"):
+        dock.Dock.__init__(self, dock_name)
+
+        globals.app.sig_connect('write-config',
+          lambda sender, eConfig: self.write_config(eConfig))
+
+    def read_config(self, eConfig, default=[]):
+        global ToolRegistry
+        dock_name = self.get_data('name')
+
+        eDock = eConfig.find(dock_name)
+        if eDock is None or len(eDock.findall('Dockbook/Dockable')) == 0:
+            logger.debug("Using default Dock configuration")
+            default.reverse()
+            for item in default:
+                book = dock.Dockbook()
+                self.add(book)
+                tool = ToolRegistry[item]()
                 book.add(tool)
-                # TODO: size information is not used                    
-            except Exception, msg:
-                logger.error("Could not init tool dock '%s': %s" % (eDockable.text, msg))
-            else:
-                print ">>> Tool added", eDockable.text
+            return
 
-    adock.show_all()
+        for eDockbook in eDock.findall('Dockbook'):
+            book = dock.Dockbook()
+            self.add(book)
+            for eDockable in eDockbook.findall('Dockable'):
+                try:                    
+                    tool = ToolRegistry[eDockable.text]()
+                    book.add(tool)
+                    # TODO: size information is not used                    
+                except Exception, msg:
+                    logger.error("Could not init tool dock '%s': %s" % (eDockable.text, msg))
+                else:
+                    print ">>> Tool added", eDockable.text
+
+        self.show_all()
 
         
-def dock_write_config(eConfig, adock):
-    dock_name = adock.get_data('name')
+    def write_config(self, eConfig):
+        dock_name = self.get_data('name')
 
-    eDock = eConfig.find(dock_name)
-    if eDock is None:
-        eDock = SubElement(eConfig, dock_name)
-    else:
-        eDock.clear()
-        
-    # get information about dockables/dockbooks
-    for dockbook in adock.dockbooks:
-        eDockbook = SubElement(eDock, "Dockbook")        
-        for dockable in dockbook.get_children():
-            eDockable = SubElement(eDockbook, "Dockable")
-            ##width, height = dockable.size_request()            
-            ##eDockable.attrib['width'] = str(width)
-            ##eDockable.attrib['height'] = str(height)
-            eDockable.text = dockable.__class__.__name__
+        eDock = eConfig.find(dock_name)
+        if eDock is None:
+            eDock = SubElement(eConfig, dock_name)
+        else:
+            eDock.clear()
+
+        # get information about dockables/dockbooks
+        for dockbook in self.dockbooks:
+            eDockbook = SubElement(eDock, "Dockbook")        
+            for dockable in dockbook.get_children():
+                eDockable = SubElement(eDockbook, "Dockable")
+                ##width, height = dockable.size_request()            
+                ##eDockable.attrib['width'] = str(width)
+                ##eDockable.attrib['height'] = str(height)
+                eDockable.text = dockable.__class__.__name__
 
 
 
@@ -101,10 +131,16 @@ class Tool(dock.Dockable):
         dock.Dockable.__init__(self)
 
     def on_menu_button_clicked(self, sender):
+        globals.app.popup_info = self        
         uim = globals.app.window.uimanager
-        popup = uim.get_widget('/popup_empty')        
+        popup = uim.get_widget('/popup_toolconfig')
         popup.popup(None,None,None,3,0)
 
+    def close_button_clicked(self, sender):
+        if len(self.dockbook.get_children()) == 1 and len(self.dockbook.dock.dockbooks) == 1:
+            return False
+        else:
+            dock.Dockable.close_button_clicked(self, sender)
 
 
 
@@ -129,17 +165,3 @@ class BackendTool(Tool):
         
     
 
-# Global Tools Registry
-ToolRegistry = {}
-
-def register_tool(klass, name=None):
-    " Helper functions for plugins. "
-    global ToolRegistry
-    if name is None:
-        name = klass.__name__
-    if ToolRegistry.has_key(name):
-        logger.error("Tool %s is already registered." % name)
-        return
-        
-    ToolRegistry[name] = klass        
-        

@@ -64,7 +64,6 @@ class Dockable( gtk.VBox ):
         close_button.unset_flags(gtk.CAN_FOCUS)
         close_button.set_relief(gtk.RELIEF_NONE)
         close_button.show()
-
         close_button.connect("clicked", self.close_button_clicked)
 
         image = gtk.image_new_from_stock(gtk.STOCK_CLOSE, gtk.ICON_SIZE_MENU)
@@ -154,7 +153,10 @@ class Dockable( gtk.VBox ):
 
     def on_menu_button_clicked(self, sender):
         pass
-        
+
+    def get_dock(self):
+        return self.dockbook.dock
+
 
 # register only for pygtk < 2.8
 if gtk.pygtk_version[1] < 8:
@@ -304,7 +306,7 @@ class Dock( gtk.VBox ):
             book = self.dockbooks[0]
             book.add(item)
         elif isinstance(item, Dockbook):
-            self.add_book(item)
+            self.add_book(item)            
         else:
             raise TypeError("Item is of type %s but should be either Dockable or Dockbook" % type(item))
 

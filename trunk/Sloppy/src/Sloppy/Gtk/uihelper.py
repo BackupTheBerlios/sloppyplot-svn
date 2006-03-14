@@ -256,3 +256,14 @@ def get_active_combobox_item(widget, column_index=0):
         model = widget.get_model()
         iter = model.get_iter((index,))
         return model.get_value(iter, column_index)
+
+
+#------------------------------------------------------------------------------
+
+class ActionWrapper:
+    def __init__(self, name, label, tooltip=None, stock_id=None):
+        self.action = gtk.Action(name,label,tooltip,stock_id)        
+        self.name = name
+        
+    def connect(self, cb, *args, **kwargs):
+        self.action.connect('activate', cb, *args, **kwargs)

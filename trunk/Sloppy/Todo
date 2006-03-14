@@ -1,6 +1,8 @@
 (for 0.5.3):
 ============
 
+- fix dragging of dockables
+
 - bugfix for data cursor: if mpl handles the left/right, then don't let
   gtk handle it!
 
@@ -8,15 +10,13 @@
   bar of the app (maybe via a signal: 'push-status', context, msg and
   for the special case of coordinates: 'push-coordinates', x, y)
 
-- allow to add tools from the popup of a Tool handle !!!!
-
 - put Dataset into notebooks as well.  This will unify the undo.
 
 - remember heights of the dockbooks
 
 - open the first available plot for testing
 
-
+- check_out doesn't work (try modifiying the title of the layer)
 
 
 
