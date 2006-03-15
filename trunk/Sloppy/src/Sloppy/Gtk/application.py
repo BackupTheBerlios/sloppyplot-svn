@@ -35,7 +35,7 @@ from Sloppy.Gtk.appwindow import AppWindow
 from Sloppy.Gtk.layerwin import LayerWindow
 from Sloppy.Gtk.property_browser import PropertyBrowserDialog
 from Sloppy.Gtk.options_dialog import OptionsDialog, NoOptionsError
-from Sloppy.Gtk import tools, dock
+from Sloppy.Gtk import toolbox, dock
 from Sloppy.Gtk.Tools import *
 
 from Sloppy.Base import \
@@ -105,7 +105,7 @@ class GtkApplication(application.Application):
             book.set_current_page(index)
 
         ag = gtk.ActionGroup("ToolConfig")
-        for key, toolklass in tools.ToolRegistry.iteritems():
+        for key, toolklass in toolbox.ToolRegistry.iteritems():
             aw = uihelper.ActionWrapper(key, toolklass.name, stock_id=toolklass.stock_id)
             aw.connect(add_tool, toolklass)
             ag.add_action(aw.action)
@@ -113,7 +113,7 @@ class GtkApplication(application.Application):
 
         ui = '<popup name="popup_toolconfig">'
         ui += '  <menuitem action="ToolConfiguration"/><separator/>'
-        for key, tool in tools.ToolRegistry.iteritems():
+        for key, tool in toolbox.ToolRegistry.iteritems():
             ui += '<menuitem action="%s"/>' % key
         ui += '</popup>'
                         

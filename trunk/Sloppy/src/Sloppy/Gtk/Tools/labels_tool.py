@@ -1,9 +1,9 @@
 
 import gtk
-from Sloppy.Gtk import tools
+from Sloppy.Gtk import toolbox
 from Sloppy.Base import globals
 
-class LabelsTool(tools.BackendTool):
+class LabelsTool(toolbox.BackendTool):
 
     name = "Labels"
     stock_id = gtk.STOCK_EDIT
@@ -166,4 +166,4 @@ class LabelsTool(tools.BackendTool):
 
 
 #------------------------------------------------------------------------------
-tools.register_tool(LabelsTool)
+toolbox.register_tool(LabelsTool)

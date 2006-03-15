@@ -1,9 +1,9 @@
 
 import gtk
-from Sloppy.Gtk import tools, uihelper
+from Sloppy.Gtk import toolbox, uihelper, options_dialog
 from Sloppy.Base import globals
 
-class LinesTool(tools.BackendTool):
+class LinesTool(toolbox.BackendTool):
 
     name = "Lines"
     stock_id = gtk.STOCK_PROPERTIES
@@ -187,4 +187,4 @@ class LinesTool(tools.BackendTool):
 
 
 #------------------------------------------------------------------------------
-tools.register_tool(LinesTool)
+toolbox.register_tool(LinesTool)

@@ -1,9 +1,9 @@
 
 import gtk
-from Sloppy.Gtk import tools
+from Sloppy.Gtk import toolbox
 from Sloppy.Base import globals
 
-class LayersTool(tools.BackendTool):
+class LayersTool(toolbox.BackendTool):
 
     name = "Layers"
     stock_id = gtk.STOCK_EDIT
@@ -109,4 +109,4 @@ class LayersTool(tools.BackendTool):
 
 
 #------------------------------------------------------------------------------
-tools.register_tool(LayersTool)
+toolbox.register_tool(LayersTool)

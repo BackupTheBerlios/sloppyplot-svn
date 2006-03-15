@@ -25,7 +25,7 @@ from Sloppy.Base.objects import *
 from Sloppy.Base.dataset import *
 from Sloppy.Base import pdict, uwrap, globals
 from Sloppy.Gtk import uihelper
-from Sloppy.Gtk import tools
+from Sloppy.Gtk import toolbox
 from Sloppy.Base import globals
 
 from Sloppy.Lib.Props.main import PropertyError
@@ -35,7 +35,7 @@ logger = logging.getLogger('Gtk.Tool.project_tool')
 #------------------------------------------------------------------------------
 
 
-class ProjectTool(tools.Tool):
+class ProjectTool(toolbox.Tool):
 
     actions = [
         ('RenameItem', 'sloppy-rename', 'Rename', 'F2', 'Rename', 'action_RenameItem')
@@ -44,7 +44,7 @@ class ProjectTool(tools.Tool):
     name = "Project"
 
     def __init__(self):
-        tools.Tool.__init__(self)
+        toolbox.Tool.__init__(self)
         
         # create gui (a treeview in a scrolled window with a
         # buttonbox underneath)
@@ -459,4 +459,4 @@ class ProjectTreeView( gtk.TreeView ):
 
 
 #------------------------------------------------------------------------------
-tools.register_tool(ProjectTool)
+toolbox.register_tool(ProjectTool)

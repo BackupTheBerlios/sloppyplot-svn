@@ -21,7 +21,7 @@
 
 import os, gtk
 
-from Sloppy.Gtk import uihelper, logwin, tools, mpl, dock
+from Sloppy.Gtk import uihelper, logwin, toolbox, mpl, dock
 from Sloppy.Lib.ElementTree.ElementTree import Element, SubElement
 from Sloppy.Base import utils, error, version, config, globals
 from Sloppy.Base.objects import Plot
@@ -69,7 +69,7 @@ class AppWindow( gtk.Window, HasSignals ):
         uihelper.add_actions(uim, "RecentFiles", self.actions_recentfiles, globals.app)         
 
         # -- Sidepane --
-        self.sidepane = tools.ToolBox('Sidepane')
+        self.sidepane = toolbox.ToolBox('Sidepane')
         self.set_up_visibility_toggle(self.sidepane, 'ToggleSidepane', 'Show Sidepane', 'F9')
         self.sidepane.show()
         

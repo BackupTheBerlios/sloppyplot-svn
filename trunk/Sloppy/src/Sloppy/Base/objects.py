@@ -108,12 +108,47 @@ class SPObject(HasChecks, HasSignals):
 
         # trigger Signals on attribute update
         def on_update(sender, key, value):
-            self.sig_emit('update::%s'%key, value)
-            self.sig_emit('update', key, value)            
-            # the above form causes a notification message, the above one is quicker.            
-            ##sender.signals['update'](sender, key, value)
-            ##sender.signals['update::%s'%key](sender, value) # TODO: what about List/Dict?
+            self.sig_emit('update::%s'%key, value)           
+            self.sig_emit('update', key)
         self.on_update = on_update
+
+
+    def set(self, *args, **kw):
+        """ Set the given attribute(s) to specified value(s).
+
+        You may pass an even number of arguments, where one
+        argument is the attribute name and the next one the
+        attribute value. You may also pass this as keyword
+        argument, i.e. use the key=value notation.
+
+        Returns a dictionary of changed keys with their old values.
+        """
+        checks = self._checks
+        changes = {}
+
+        # Make sure that all the given keys are valid
+        for arg in args:
+            arglist = list(args)
+            while len(arglist) > 1:
+                key = arglist.pop(0)
+                value = arglist.pop(0)
+                if checks.has_key(key) is False:
+                    raise KeyError(key)
+                changes[key] = value
+                            
+        for key, value in kw.iteritems():
+            if checks.has_key(key) is False:
+                    raise KeyError(key)
+            changes[key] = value
+
+        # assign changes to object; old values are saved 
+        changeset = {}
+        for key, value in changes.iteritems():
+            changeset[key] = self._values[key]
+            checks[key].set(self, key, value) # TODO: maybe catch exceptions?
+
+        self.sig_emit('update', *changeset.keys())
+        return changeset
 
 
 

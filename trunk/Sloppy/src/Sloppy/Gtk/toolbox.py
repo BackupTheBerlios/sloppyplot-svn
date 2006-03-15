@@ -30,7 +30,7 @@ from Sloppy.Gtk import uihelper, dock, options_dialog, checkwidgets
 
 
 import logging
-logger = logging.getLogger('Gtk.tools')
+logger = logging.getLogger('Gtk.toolbox')
 
 
 #------------------------------------------------------------------------------

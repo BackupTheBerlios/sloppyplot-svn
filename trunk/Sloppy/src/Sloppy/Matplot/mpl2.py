@@ -171,59 +171,7 @@ class LayerPainter(Painter):
         return self.parent.figure.add_subplot('111')
 
     def paint(self):
-        # plot_painter := backend
-        layer, plot_painter = self.obj, self.parent
-        axes = self.axes
-            
-        # title
-        title = layer.title
-        axes.set_title(title or '') # matplotlib doesn't like None as title
-
-        # grid
-        axes.grid(layer.grid)
-           
-        # lines
-        for line in layer.lines:
-            painter = self.get_painter(line, LinePainter)
-            painter.paint()
-
-        # axes
-        # This needs to be after lines, because painting the
-        # lines would reset the start and end.
-        for (key, axis) in layer.axes.iteritems():
-            #:axis.label, :axis.scale, :axis.start,:axis.end
-            label, scale, start, end = axis.label, axis.scale, axis.start, axis.end
-            logger.debug("start = %s; end = %s" % (start, end))
-            
-            if key == 'x':
-                set_label = axes.set_xlabel
-                set_scale = axes.set_xscale
-                set_start = (lambda l: axes.set_xlim(xmin=l))
-                set_end = (lambda l: axes.set_xlim(xmax=l))
-            elif key == 'y':
-                set_label = axes.set_ylabel
-                set_scale = axes.set_yscale
-                set_start = (lambda l: axes.set_ylim(ymin=l))
-                set_end = (lambda l: axes.set_ylim(ymax=l))
-            else:
-                raise RuntimeError("Invalid axis key '%s'" % key)
-
-            if label is not None: set_label(label)
-            if scale is not None: set_scale(scale)
-            if start is not None: set_start(start)
-            if end is not None: set_end(end)
-
-        # legend
-        # Since the legend labels are constructed from the matplotlib
-        # line objects, it is necessary to construct the legend after
-        # the lines are plotted
-        legend = layer.legend        
-        if legend is None:
-            # remove any existing legend painter if obsolete
-            pass
-        else:
-            p = self.get_painter(legend, LegendPainter)
-            p.paint()
+        self.on_update_layer(self.obj._checks.keys())
 
 
     def on_update_title(self, sender, new_title):
@@ -234,13 +182,67 @@ class LayerPainter(Painter):
         self.axes.set_title(title or '')
 
 
-    def on_update_layer(self, sender, key, value):
-        if key == '__all__':
-            self.paint()
-        else:
-            # TODO: partial redraw
-            self.paint()
+    def on_update_layer(self, sender, *keys):
 
+        # plot_painter := backend
+        layer, plot_painter = self.obj, self.parent
+        axes = self.axes
+        
+        # title
+        if 'title' in keys:
+            title = layer.title
+            axes.set_title(title or '') # matplotlib doesn't like None as title
+
+        # grid
+        if 'grid' in keys:
+            axes.grid(layer.grid)
+
+        
+        # lines -- these should be updated by update::lines !!!
+        for line in layer.lines:
+            painter = self.get_painter(line, LinePainter)
+            painter.paint()
+
+        # axes
+        # This needs to be after lines, because painting the
+        # lines would reset the start and end.
+        if 'xaxis' in keys or 'yaxis' in keys:
+            for (key, axis) in layer.axes.iteritems():
+                #:axis.label, :axis.scale, :axis.start,:axis.end
+                label, scale, start, end = axis.label, axis.scale, axis.start, axis.end
+                logger.debug("start = %s; end = %s" % (start, end))
+
+                if key == 'x':
+                    set_label = axes.set_xlabel
+                    set_scale = axes.set_xscale
+                    set_start = (lambda l: axes.set_xlim(xmin=l))
+                    set_end = (lambda l: axes.set_xlim(xmax=l))
+                elif key == 'y':
+                    set_label = axes.set_ylabel
+                    set_scale = axes.set_yscale
+                    set_start = (lambda l: axes.set_ylim(ymin=l))
+                    set_end = (lambda l: axes.set_ylim(ymax=l))
+                else:
+                    raise RuntimeError("Invalid axis key '%s'" % key)
+
+                if label is not None: set_label(label)
+                if scale is not None: set_scale(scale)
+                if start is not None: set_start(start)
+                if end is not None: set_end(end)
+
+        # legend
+        # Since the legend labels are constructed from the matplotlib
+        # line objects, it is necessary to construct the legend after
+        # the lines are plotted
+        if 'legend' in keys:
+            legend = layer.legend        
+            if legend is None:
+                # remove any existing legend painter if obsolete
+                pass
+            else:
+                p = self.get_painter(legend, LegendPainter)
+                p.paint()
+            
         # TODO: maybe queue a redraw somehow?
         self.parent.canvas.draw()
 

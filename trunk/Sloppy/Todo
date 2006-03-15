@@ -16,33 +16,6 @@
 
 - open the first available plot for testing
 
-- check_out doesn't work (try modifiying the title of the layer)
-
-
-About handling little changes:
-
-  SPObject emits two signals, whenever a checked attribute is changed:
-  'update::attribute' where attribute is the name of the changed
-  attribute and 'update' which includes the attribute name in the
-  callbacks argument.
-
-  ATTEMPT ONE
-  -----------
-
-  Imagine that we had another signal 'before-update', similiar to 'update':
-
-  - 'before-update': obj.updated_attrs = ... (list of updated attributes)
-  - each 'update::xxx' handles one attribute and if it can handle it
-    successfully, removes the item from obj.updated_attrs
-  - 'update' checks if there are items left in obj.updated_attrs and if
-    not, updates everything
-
-
-  ATTEMPT TWO
-  -----------
-
-
-
 
 SMALL CLEANUPS TO DO:
 =====================
