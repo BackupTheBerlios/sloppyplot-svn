@@ -1,8 +1,7 @@
 
 import gtk
-from Sloppy.Gtk import tools
+from Sloppy.Gtk import tools, uihelper
 from Sloppy.Base import globals
-
 
 class LinesTool(tools.BackendTool):
 

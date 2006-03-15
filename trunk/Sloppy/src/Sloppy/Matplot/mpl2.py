@@ -165,6 +165,7 @@ class LayerPainter(Painter):
     def init(self):
         self.axes = self.init_axes()
         self.obj.sig_connect('update', self.on_update_layer)
+        self.obj.sig_connect('update::title', self.on_update_title)
 
     def init_axes(self):
         return self.parent.figure.add_subplot('111')
@@ -176,8 +177,7 @@ class LayerPainter(Painter):
             
         # title
         title = layer.title
-        if title is not None:
-            axes.set_title(title)
+        axes.set_title(title or '') # matplotlib doesn't like None as title
 
         # grid
         axes.grid(layer.grid)
@@ -224,6 +224,14 @@ class LayerPainter(Painter):
         else:
             p = self.get_painter(legend, LegendPainter)
             p.paint()
+
+
+    def on_update_title(self, sender, new_title):
+        print "UPDATING TITLE"
+        print "UPDATE ITSELF SHOULD QUEUE THE REDRAW"
+        # title
+        title = new_title
+        self.axes.set_title(title or '')
 
 
     def on_update_layer(self, sender, key, value):

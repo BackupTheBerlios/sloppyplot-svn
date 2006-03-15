@@ -108,8 +108,8 @@ class SPObject(HasChecks, HasSignals):
 
         # trigger Signals on attribute update
         def on_update(sender, key, value):
-            self.sig_emit('update', key, value)
             self.sig_emit('update::%s'%key, value)
+            self.sig_emit('update', key, value)            
             # the above form causes a notification message, the above one is quicker.            
             ##sender.signals['update'](sender, key, value)
             ##sender.signals['update::%s'%key](sender, value) # TODO: what about List/Dict?

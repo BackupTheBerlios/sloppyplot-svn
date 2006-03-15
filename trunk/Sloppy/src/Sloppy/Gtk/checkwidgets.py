@@ -217,16 +217,12 @@ class DisplayFactory:
         old_values = self.original_obj._values
 
         changeset = {}
-        reverse_changeset = {}
         for key, value in new_values.iteritems():
             if value != old_values[key]:
                 changeset[key] = value
-                reverse_changeset[value] = key
-           
-        #self.obj.set(changeset)
-        #undolist.append(UndoInfo(self.obj.set, reverse_changeset))
+
         changeset['undolist'] = undolist
-        uwrap.set(self.obj, **changeset)
+        uwrap.set(self.original_obj, **changeset)
         
 
 
