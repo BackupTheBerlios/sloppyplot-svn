@@ -144,6 +144,10 @@ class Painter(SPObject):
 
         if hasattr(self, 'init'):
             self.init()
+
+    def paint(self):
+        # update all
+        self.update(self.obj, self.obj._checks.keys())
         
     def get_painter(self, obj, klass):
         _id = id(obj)
@@ -156,6 +160,13 @@ class Painter(SPObject):
                 return new_painter
             else:
                 raise
+
+    def get_backend(self):
+        obj = self
+        while not isinstance(obj, Backend):
+            obj = obj.parent
+        return obj
+    
         
 class LayerPainter(Painter):
 
@@ -164,25 +175,20 @@ class LayerPainter(Painter):
     
     def init(self):
         self.axes = self.init_axes()
-        self.obj.sig_connect('update', self.on_update_layer)
-        self.obj.sig_connect('update::title', self.on_update_title)
+        self.obj.sig_connect('update', self.update)
+        self.obj.sig_connect('update::title', self.update_title)
 
     def init_axes(self):
         return self.parent.figure.add_subplot('111')
 
-    def paint(self):
-        self.on_update_layer(self.obj._checks.keys())
 
-
-    def on_update_title(self, sender, new_title):
-        print "UPDATING TITLE"
-        print "UPDATE ITSELF SHOULD QUEUE THE REDRAW"
+    def update_title(self, sender, new_title):
         # title
         title = new_title
         self.axes.set_title(title or '')
 
 
-    def on_update_layer(self, sender, *keys):
+    def update(self, sender, keys):
 
         # plot_painter := backend
         layer, plot_painter = self.obj, self.parent
@@ -244,77 +250,91 @@ class LayerPainter(Painter):
                 p.paint()
             
         # TODO: maybe queue a redraw somehow?
-        self.parent.canvas.draw()
+        self.get_backend().canvas.draw()
 
 
             
 
 class LinePainter(Painter):
 
-    def paint(self):
+    def update(self, sender, keys):
+        
         line, layer_painter = self.obj, self.parent
         layer = layer_painter.obj
         axes, backend = layer_painter.axes, layer_painter.parent
 
-        #:line.visible
-        if line.visible is False:
-            if line in axes.lines:
-                axes.lines.remove(line)
+        # visible
+        if 'visible' in keys:
+            if line.visible is False:
+                if layer_painter.line_cache.has_key(line):
+                    obj = layer_painter.line_cache.pop(line)
+                    if obj in axes.lines:
+                        axes.lines.remove(obj)
+                self.get_backend().canvas.draw() # TODO: queue redraw
+                return
                                
-        # data 
-        ds = backend.get_line_source(line)
-        cx, cy = backend.get_column_indices(line)
-        try:
-            xdata, ydata = backend.get_dataset_data(ds, cx, cy)
-        except backend.BackendError, msg:            
-            raise
+        # data
+        if 'cx' in keys or 'cy' in keys or 'source' in keys:
+            ds = backend.get_line_source(line)
+            cx, cy = backend.get_column_indices(line)
+            try:
+                xdata, ydata = backend.get_dataset_data(ds, cx, cy)
+            except backend.BackendError, msg:            
+                raise
 
-        # row_first, row_last
-        start, end = line.row_first, line.row_last        
-        try:
-            xdata = backend.limit_data(xdata, start, end)
-            ydata = backend.limit_data(ydata, start, end)
-        except BackendError, msg:
-            riase
+            # row_first, row_last
+            start, end = line.row_first, line.row_last        
+            try:
+                xdata = backend.limit_data(xdata, start, end)
+                ydata = backend.limit_data(ydata, start, end)
+            except BackendError, msg:
+                riase
 
         index = layer.lines.index(line)
 
         # style, layer.group_style
-        style = layer.group_style.get(line, index, override=line.style or Undefined)
-
-        global linestyle_mappings
-        try: style = linestyle_mappings[style]
-        except KeyError: style = linestyle_mappings.values()[1]
+        if 'style' in keys:
+            style = layer.group_style.get(line, index, override=line.style or Undefined)
+            global linestyle_mappings
+            try:
+                style = linestyle_mappings[style]
+            except KeyError:
+                style = linestyle_mappings.values()[1]
 
         #:line.marker
         #:layer.group_marker
-        marker = layer.group_marker.get(line, index, override=line.marker or Undefined)
-
-        global linemarker_mappings
-        try: marker = linemarker_mappings[marker]
-        except KeyError: marker = linemarker_mappings.values()[0]
+        if 'marker' in keys:
+            marker = layer.group_marker.get(line, index, override=line.marker or Undefined)
+            global linemarker_mappings
+            try:
+                marker = linemarker_mappings[marker]
+            except KeyError:
+                marker = linemarker_mappings.values()[0]
         
         #:line.width
         #:layer.group_width
-        width = layer.group_width.get(line, index, override=line.width or Undefined)
+        if 'width' in keys:
+            width = layer.group_width.get(line, index, override=line.width or Undefined)
         
         #:line.color
         #:layer.group_color
-        color = layer.group_color.get(line, index, override=line.color or Undefined)
+        if 'color' in keys:
+            color = layer.group_color.get(line, index, override=line.color or Undefined)
 
         #:line.marker_color
-        marker_color = layer.group_marker_color.get(line, index, override=line.marker_color or Undefined)
+        if 'marker_color' in keys:
+            marker_color = layer.group_marker_color.get(line, index, override=line.marker_color or Undefined)
 
-        #:line.marker_siize
-        marker_size = line.marker_size or 1
+        #:line.marker_size
+        if 'marker_size' in keys:
+            marker_size = line.marker_size or 1
 
-
-        # remove line if it already exists
+        # When repainting the line, we need to remove the corresponding
+        # matplotlib Line object (if it already exists).
         if layer_painter.line_cache.has_key(line):
             obj = layer_painter.line_cache.pop(line)
             if obj in axes.lines:
                 axes.lines.remove(obj)
-
             
         # plot line!
         try:
@@ -333,8 +353,9 @@ class LinePainter(Painter):
         # label
         label = self.get_line_label(line, dataset=ds, cy=cy)
         if label is not None:
-            l.set_label(label)
+            l.set_label(label)            
 
+        self.get_backend().canvas.draw() # TODO: queue redraw
 
     def get_line_label(self, line, dataset=None, cy=None):
         label = line.label

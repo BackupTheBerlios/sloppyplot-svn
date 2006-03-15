@@ -3,7 +3,7 @@ import gtk
 from Sloppy.Gtk import toolbox, uihelper, options_dialog
 from Sloppy.Base import globals, error
 
-class LinesTool(toolbox.BackendTool):
+class LinesTool(toolbox.LayerTool):
 
     name = "Lines"
     stock_id = gtk.STOCK_PROPERTIES
@@ -53,34 +53,6 @@ class LinesTool(toolbox.BackendTool):
         self.box = box
 
 
-            
-    def on_update_active_backend(self, sender, backend):
-        if backend == self.backend:
-            return
-
-        for signal in self.backend_signals:
-            signal.disconnect()
-        if backend is not None:
-            s1 = backend.sig_connect('update::active_layer', self.on_update_active_layer)
-            backend_signals = [s1]            
-            
-        self.backend = backend
-        try:
-            layer = self.backend.active_layer
-        except:
-            layer = None
-        self.update_active_layer(layer)
-
-    def on_update_active_layer(self, painter, layer):
-        self.update_active_layer(layer)                       
-
-    def on_update_lines(self, sender, updateinfo):
-        self.update_lines(updateinfo)
-
-    def on_update_active_line(self, sender, line):
-        self.update_active_line(line)
-
-
     def update_active_layer(self, layer):
         if layer == self.layer:
             return       
@@ -104,6 +76,13 @@ class LinesTool(toolbox.BackendTool):
 
         self.layer = layer
         self.update_lines()
+           
+
+    def on_update_lines(self, sender, updateinfo):
+        self.update_lines(updateinfo)
+
+    def on_update_active_line(self, sender, line):
+        self.update_active_line(line)
         
 
     def update_lines(self, updateinfo=None):

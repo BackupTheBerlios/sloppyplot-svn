@@ -154,14 +154,44 @@ class BackendTool(Tool):
         globals.app.sig_connect('update::active_backend', self.on_update_active_backend)
         
         self.init()
+       
+    def on_update_active_backend(self, sender, backend):
+        self.update_active_backend(backend)
 
     def update_active_backend(self, backend):
+        # Rewrite this in children of BackendTool
         if backend == self.backend:
             return
         self.backend = backend
         
-    def on_update_active_backend(self, sender, backend):
-        self.update_active_backend(backend)
-        
     
 
+
+class LayerTool(BackendTool):
+
+    def on_update_active_backend(self, sender, backend):
+        if backend == self.backend:
+            return
+
+        for signal in self.backend_signals:
+            signal.disconnect()
+        if backend is not None:
+            s1 = backend.sig_connect('update::active_layer', self.on_update_active_layer)
+            backend_signals = [s1]            
+            
+        self.backend = backend
+        try:
+            layer = self.backend.active_layer
+        except:
+            layer = None
+        self.update_active_layer(layer)
+
+    def on_update_active_layer(self, painter, layer):
+        self.update_active_layer(layer)                       
+
+
+    def update_active_layer(self, layer):
+        # Rewrite this in children of LayerTool
+        if layer == self.layer:
+            return
+        self.layer = layer

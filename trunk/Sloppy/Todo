@@ -16,6 +16,21 @@
 
 - open the first available plot for testing
 
+- minimum size for sidepane
+
+- synchronize tools with backend -- if backend closes, they should discard
+  their data as well
+
+- allow to refer to a layer's active line
+
+- queue redraw by emitting a signal
+
+    'queue-redraw', backend
+
+  backend can be determined by a Painter method
+
+    get_backend()
+
 
 SMALL CLEANUPS TO DO:
 =====================

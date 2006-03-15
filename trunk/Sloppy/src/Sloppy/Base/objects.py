@@ -109,7 +109,7 @@ class SPObject(HasChecks, HasSignals):
         # trigger Signals on attribute update
         def on_update(sender, key, value):
             self.sig_emit('update::%s'%key, value)           
-            self.sig_emit('update', key)
+            self.sig_emit('update', [key])
         self.on_update = on_update
 
 
@@ -147,7 +147,7 @@ class SPObject(HasChecks, HasSignals):
             changeset[key] = self._values[key]
             checks[key].set(self, key, value) # TODO: maybe catch exceptions?
 
-        self.sig_emit('update', *changeset.keys())
+        self.sig_emit('update', changeset.keys())
         return changeset
 
 
