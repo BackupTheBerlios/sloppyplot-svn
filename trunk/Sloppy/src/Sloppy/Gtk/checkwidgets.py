@@ -47,7 +47,7 @@ class DisplayFactory:
 
 
     def __init__(self, klass):
-        self.klass = klass
+        self.klass = as_class(klass)
         self.keys = [] 
         self.obj = None
         self.original_obj = None
@@ -199,6 +199,8 @@ class DisplayFactory:
         else:
             v = Display_Anything_As_Entry
 
+        print "NEW DISPLAY = ", v
+        
         return v(klass, key)
     
     new_display = staticmethod(new_display)    

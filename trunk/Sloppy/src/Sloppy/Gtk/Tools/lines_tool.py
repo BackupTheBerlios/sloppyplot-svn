@@ -1,7 +1,7 @@
 
 import gtk
 from Sloppy.Gtk import toolbox, uihelper, options_dialog
-from Sloppy.Base import globals
+from Sloppy.Base import globals, error
 
 class LinesTool(toolbox.BackendTool):
 
