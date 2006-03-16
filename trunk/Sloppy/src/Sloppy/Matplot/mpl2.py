@@ -84,6 +84,8 @@ class Backend(backend.Backend):
     
     def init(self):
         self.painters = {} # == layers
+        self.sig_register('redraw')
+        self.sig_connect('redraw', lambda sender: self.redraw())
 
     def connect(self):
         self.figure = Figure(dpi=100, facecolor="white")
@@ -114,7 +116,8 @@ class Backend(backend.Backend):
         for layer in self.plot.layers:
             painter = self.get_painter(layer, LayerPainter)
             painter.paint()
-        self.canvas.draw()            
+        self.canvas.draw()
+        self._redraw = False        
 
     def on_update_layers(self, sender, updateinfo):
         # TODO!!!!
@@ -189,9 +192,14 @@ class LayerPainter(Painter):
         self.obj.sig_connect('update', self.update)
         self.obj.sig_connect('update::title', self.update_title)
 
+        # updating the axis with start/end = None does not work
+        # right now. Somehow the axis is not redrawn at all.
+        # Therefore this is a work-around: we simply redraw the
+        # complete layer!
+
         # TODO: can the axis change?
-        self.obj.xaxis.sig_connect('update', self.update_axis)
-        self.obj.yaxis.sig_connect('update', self.update_axis)
+        self.obj.xaxis.sig_connect('update', lambda sender, keys: self.paint())
+        self.obj.yaxis.sig_connect('update', lambda sender, keys: self.paint())
         
 
     def init_axes(self):
@@ -247,13 +255,14 @@ class LayerPainter(Painter):
         self.get_backend().queue_redraw()
 
     def update_axis(self, sender, keys):
+        
         layer = self.obj
         axes = self.axes
         for (key, axis) in layer.axes.iteritems():
             print "SETTING RANGE"
             #:axis.label, :axis.scale, :axis.start,:axis.end
             label, scale, start, end = axis.label, axis.scale, axis.start, axis.end
-            logger.debug("start = %s; end = %s" % (start, end))
+            logger.debug("::: start = %s; end = %s" % (start, end))
 
             if key == 'x':
                 set_label = axes.set_xlabel
@@ -270,14 +279,19 @@ class LayerPainter(Painter):
 
             if label is not None: set_label(label)
             if scale is not None: set_scale(scale)
-            if start is not None: set_start(start)
-            if end is not None: set_end(end)
+
+            set_start(start)
+            set_end(end)
 
         self.get_backend().queue_redraw()
             
 
 class LinePainter(Painter):
 
+
+    def init(self):
+        self.obj.sig_connect('update', self.update)
+        
     def update(self, sender, keys):
         
         line, layer_painter = self.obj, self.parent
@@ -295,60 +309,53 @@ class LinePainter(Painter):
                 return
                                
         # data
-        if 'cx' in keys or 'cy' in keys or 'source' in keys:
-            ds = backend.get_line_source(line)
-            cx, cy = backend.get_column_indices(line)
-            try:
-                xdata, ydata = backend.get_dataset_data(ds, cx, cy)
-            except backend.BackendError, msg:            
-                raise
+        ds = backend.get_line_source(line)
+        cx, cy = backend.get_column_indices(line)
+        try:
+            xdata, ydata = backend.get_dataset_data(ds, cx, cy)
+        except backend.BackendError, msg:            
+            raise
 
-            # row_first, row_last
-            start, end = line.row_first, line.row_last        
-            try:
-                xdata = backend.limit_data(xdata, start, end)
-                ydata = backend.limit_data(ydata, start, end)
-            except BackendError, msg:
-                riase
+        # row_first, row_last
+        start, end = line.row_first, line.row_last        
+        try:
+            xdata = backend.limit_data(xdata, start, end)
+            ydata = backend.limit_data(ydata, start, end)
+        except BackendError, msg:
+            raise
 
         index = layer.lines.index(line)
 
         # style, layer.group_style
-        if 'style' in keys:
-            style = layer.group_style.get(line, index, override=line.style or Undefined)
-            global linestyle_mappings
-            try:
-                style = linestyle_mappings[style]
-            except KeyError:
-                style = linestyle_mappings.values()[1]
+        style = layer.group_style.get(line, index, override=line.style or Undefined)
+        global linestyle_mappings
+        try:
+            style = linestyle_mappings[style]
+        except KeyError:
+            style = linestyle_mappings.values()[1]
 
         #:line.marker
         #:layer.group_marker
-        if 'marker' in keys:
-            marker = layer.group_marker.get(line, index, override=line.marker or Undefined)
-            global linemarker_mappings
-            try:
-                marker = linemarker_mappings[marker]
-            except KeyError:
-                marker = linemarker_mappings.values()[0]
+        marker = layer.group_marker.get(line, index, override=line.marker or Undefined)
+        global linemarker_mappings
+        try:
+            marker = linemarker_mappings[marker]
+        except KeyError:
+            marker = linemarker_mappings.values()[0]
         
         #:line.width
         #:layer.group_width
-        if 'width' in keys:
-            width = layer.group_width.get(line, index, override=line.width or Undefined)
+        width = layer.group_width.get(line, index, override=line.width or Undefined)
         
         #:line.color
         #:layer.group_color
-        if 'color' in keys:
-            color = layer.group_color.get(line, index, override=line.color or Undefined)
+        color = layer.group_color.get(line, index, override=line.color or Undefined)
 
         #:line.marker_color
-        if 'marker_color' in keys:
-            marker_color = layer.group_marker_color.get(line, index, override=line.marker_color or Undefined)
+        marker_color = layer.group_marker_color.get(line, index, override=line.marker_color or Undefined)
 
         #:line.marker_size
-        if 'marker_size' in keys:
-            marker_size = line.marker_size or 1
+        marker_size = line.marker_size or 1
 
         # When repainting the line, we need to remove the corresponding
         # matplotlib Line object (if it already exists).

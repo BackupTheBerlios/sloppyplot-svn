@@ -1,7 +1,9 @@
 
 import gtk
 from Sloppy.Gtk import toolbox, uihelper, options_dialog
-from Sloppy.Base import globals, error
+from Sloppy.Base import globals, error, uwrap
+from Sloppy.Lib.Undo import UndoList
+
 
 class LinesTool(toolbox.LayerTool):
 
@@ -149,7 +151,11 @@ class LinesTool(toolbox.LayerTool):
         try:           
             response = dialog.run()
             if response == gtk.RESPONSE_ACCEPT:
-                dialog.check_out()
+                ul = UndoList("Edit Line")                                
+                dialog.check_out(undolist=ul)
+                uwrap.emit_last(self.backend, 'redraw', undolist=ul)
+                globals.app.project.journal.append(ul)
+                
                 return dialog.owner
             else:
                 raise error.UserCancel

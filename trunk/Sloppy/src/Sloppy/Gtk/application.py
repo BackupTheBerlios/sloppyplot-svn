@@ -781,7 +781,7 @@ class GtkApplication(application.Application):
         
     def _cb_undo(self, widget):
         pj = self._check_project()
-        pj.undo()
+        pj.undo()        
         
     def _cb_redo(self, widget):
         pj = self._check_project()

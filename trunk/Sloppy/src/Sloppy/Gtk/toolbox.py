@@ -26,7 +26,7 @@ from Sloppy.Base import uwrap, error, globals
 from Sloppy.Lib.Check import Instance
 from Sloppy.Lib.Undo import ulist, UndoList
 from Sloppy.Lib.ElementTree.ElementTree import Element, SubElement
-from Sloppy.Gtk import uihelper, dock, options_dialog, checkwidgets
+from Sloppy.Gtk import uihelper, dock, checkwidgets
 
 
 import logging
@@ -169,15 +169,22 @@ class BackendTool(Tool):
 
 class LayerTool(BackendTool):
 
+    def __init__(self):
+        BackendTool.__init__(self)
+        self.layer = None
+        self.layer_signals = []
+        
     def on_update_active_backend(self, sender, backend):
         if backend == self.backend:
             return
 
         for signal in self.backend_signals:
             signal.disconnect()
-        if backend is not None:
-            s1 = backend.sig_connect('update::active_layer', self.on_update_active_layer)
-            backend_signals = [s1]            
+        if backend is not None:            
+            self.backend_signals.append(\
+                backend.sig_connect('update::active_layer',
+                                    self.on_update_active_layer)
+                )
             
         self.backend = backend
         try:

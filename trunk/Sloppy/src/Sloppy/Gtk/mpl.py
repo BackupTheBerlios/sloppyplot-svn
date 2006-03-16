@@ -301,24 +301,13 @@ class MatplotlibWidget(gtk.VBox):
             axis.start = _start
             axis.end = _end            
 
-        # TODO:
-        # This emits a signal update::start and update::end
-        # for each manipulated axis. We might need an AxisPainter,
-        # then the notification makes sense. However, since we
-        # don't want to force two redraws, we might be able to
-        # block one of the signals and force a complete redraw
-        # of the axis.
-        # TODO: block signals update::xxx for layer
         set_axis(layer.xaxis, x0, x1)
         set_axis(layer.yaxis, y0, y1)
 
-        print "REDRAW ?????????????"
-        self.backend.redraw()
-        ## TODO: queue redraw
-        ##layer.sig_emit('update', '__all__', None)
-
-        ui = UndoInfo(self.zoom_to_region, layer, old_region).describe("Zoom Region")
-        undolist.append(ui)
+        ul = UndoList("Zoom Region")
+        ul.append(UndoInfo(self.zoom_to_region, layer, old_region))
+        uwrap.emit_last(self.backend, 'redraw', undolist=ul)        
+        undolist.append(ul)
 
     def axes_from_xy(self, x, y):
         " x,y should be plot coordinates, not screen coordinates. "

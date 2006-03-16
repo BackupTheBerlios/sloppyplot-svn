@@ -1,6 +1,14 @@
 (for 0.5.3):
 ============
 
+- this is getting too complicated:
+  If the line is redrawn, then the range is scaled automatically (argh),
+  therefore we would have to reset the axis after each line draw...
+  Obviously we need to have a way to distinguish between: 
+  (1) just a minor change, which is worth of updating just a single object
+  (2) redraw everything
+
+
 - fix dragging of dockables
 
 - bugfix for data cursor: if mpl handles the left/right, then don't let
