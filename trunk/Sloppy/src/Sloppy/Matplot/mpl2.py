@@ -131,6 +131,17 @@ class Backend(backend.Backend):
         return self.active_layer
 
 
+    def queue_redraw(self):
+        self._redraw = True
+
+    def redraw(self, force=False):
+        """ redraw, unlike draw, only redisplays the existing canvas. """
+        if self._redraw or force is True:
+            print "REDRAW"
+            self.canvas.draw()
+        self._redraw = False
+        
+
 #------------------------------------------------------------------------------
 
 class Painter(SPObject):
@@ -178,6 +189,11 @@ class LayerPainter(Painter):
         self.obj.sig_connect('update', self.update)
         self.obj.sig_connect('update::title', self.update_title)
 
+        # TODO: can the axis change?
+        self.obj.xaxis.sig_connect('update', self.update_axis)
+        self.obj.yaxis.sig_connect('update', self.update_axis)
+        
+
     def init_axes(self):
         return self.parent.figure.add_subplot('111')
 
@@ -213,28 +229,7 @@ class LayerPainter(Painter):
         # This needs to be after lines, because painting the
         # lines would reset the start and end.
         if 'xaxis' in keys or 'yaxis' in keys:
-            for (key, axis) in layer.axes.iteritems():
-                #:axis.label, :axis.scale, :axis.start,:axis.end
-                label, scale, start, end = axis.label, axis.scale, axis.start, axis.end
-                logger.debug("start = %s; end = %s" % (start, end))
-
-                if key == 'x':
-                    set_label = axes.set_xlabel
-                    set_scale = axes.set_xscale
-                    set_start = (lambda l: axes.set_xlim(xmin=l))
-                    set_end = (lambda l: axes.set_xlim(xmax=l))
-                elif key == 'y':
-                    set_label = axes.set_ylabel
-                    set_scale = axes.set_yscale
-                    set_start = (lambda l: axes.set_ylim(ymin=l))
-                    set_end = (lambda l: axes.set_ylim(ymax=l))
-                else:
-                    raise RuntimeError("Invalid axis key '%s'" % key)
-
-                if label is not None: set_label(label)
-                if scale is not None: set_scale(scale)
-                if start is not None: set_start(start)
-                if end is not None: set_end(end)
+            self.update_axis(None, [])
 
         # legend
         # Since the legend labels are constructed from the matplotlib
@@ -249,10 +244,36 @@ class LayerPainter(Painter):
                 p = self.get_painter(legend, LegendPainter)
                 p.paint()
             
-        # TODO: maybe queue a redraw somehow?
-        self.get_backend().canvas.draw()
+        self.get_backend().queue_redraw()
 
+    def update_axis(self, sender, keys):
+        layer = self.obj
+        axes = self.axes
+        for (key, axis) in layer.axes.iteritems():
+            print "SETTING RANGE"
+            #:axis.label, :axis.scale, :axis.start,:axis.end
+            label, scale, start, end = axis.label, axis.scale, axis.start, axis.end
+            logger.debug("start = %s; end = %s" % (start, end))
 
+            if key == 'x':
+                set_label = axes.set_xlabel
+                set_scale = axes.set_xscale
+                set_start = (lambda l: axes.set_xlim(xmin=l))
+                set_end = (lambda l: axes.set_xlim(xmax=l))
+            elif key == 'y':
+                set_label = axes.set_ylabel
+                set_scale = axes.set_yscale
+                set_start = (lambda l: axes.set_ylim(ymin=l))
+                set_end = (lambda l: axes.set_ylim(ymax=l))
+            else:
+                raise RuntimeError("Invalid axis key '%s'" % key)
+
+            if label is not None: set_label(label)
+            if scale is not None: set_scale(scale)
+            if start is not None: set_start(start)
+            if end is not None: set_end(end)
+
+        self.get_backend().queue_redraw()
             
 
 class LinePainter(Painter):
@@ -270,7 +291,7 @@ class LinePainter(Painter):
                     obj = layer_painter.line_cache.pop(line)
                     if obj in axes.lines:
                         axes.lines.remove(obj)
-                self.get_backend().canvas.draw() # TODO: queue redraw
+                self.get_backend().queue_redraw()
                 return
                                
         # data
@@ -355,7 +376,8 @@ class LinePainter(Painter):
         if label is not None:
             l.set_label(label)            
 
-        self.get_backend().canvas.draw() # TODO: queue redraw
+        self.get_backend().queue_redraw()
+        
 
     def get_line_label(self, line, dataset=None, cy=None):
         label = line.label

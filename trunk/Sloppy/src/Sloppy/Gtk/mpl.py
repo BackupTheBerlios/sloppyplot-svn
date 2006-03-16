@@ -311,7 +311,11 @@ class MatplotlibWidget(gtk.VBox):
         # TODO: block signals update::xxx for layer
         set_axis(layer.xaxis, x0, x1)
         set_axis(layer.yaxis, y0, y1)
-        layer.sig_emit('update', '__all__', None)
+
+        print "REDRAW ?????????????"
+        self.backend.redraw()
+        ## TODO: queue redraw
+        ##layer.sig_emit('update', '__all__', None)
 
         ui = UndoInfo(self.zoom_to_region, layer, old_region).describe("Zoom Region")
         undolist.append(ui)

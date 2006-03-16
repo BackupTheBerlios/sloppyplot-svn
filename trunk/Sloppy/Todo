@@ -31,6 +31,31 @@
 
     get_backend()
 
+  MAYBE SIMPLER: get_backend().queue_redraw()
+
+
+  When should we redraw?
+
+  (1) Whenever an action is finished, we can check if a redraw was requested.
+  (2) Whenever a certain time has elapsed, we might want to check if
+      a redraw is required.
+
+  Consequently, for calculations that take longer time and manipulate the
+  plot or the dataset, we must be able to block signals, so that their
+  execution is not slowed down by periodical updates.
+
+
+- update_axis => if start/end is None, then no range is set!!!!
+  What should we do? BTW, we could really move te axis into a new painter,
+  since we also want each axis to have a bounding box (clicking on it)
+
+- allow manipulation of existing lines, i.e.
+  -- if I set visible=False, update it accordingly
+  -- if I set other style properties, update them as well
+  -- what about the line source? This requires a custom widget -- so write it!
+  -- 
+
+
 
 SMALL CLEANUPS TO DO:
 =====================
