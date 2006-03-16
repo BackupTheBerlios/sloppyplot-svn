@@ -8,6 +8,17 @@
   (1) just a minor change, which is worth of updating just a single object
   (2) redraw everything
 
+  E.g. if we update a line, then the legend should reflect it, thus the
+  legend needs to be updated. 
+
+  change line ---> update line-painter ---> update legend ---> redraw canvas
+
+  However, if we change a lot of settings, then we don't want the drawing
+  methods to be so smart.
+
+  One way to achieve this is to block the signal that emits 'update legend'.
+
+
 
 - fix dragging of dockables
 
