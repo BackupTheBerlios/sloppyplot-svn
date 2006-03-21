@@ -274,7 +274,7 @@ class LinePainter(Painter):
 
 class LayerPainter(Painter):
 
-    active_line = Instance(objects.Line, init=None)
+    active_line_painter = Instance(LinePainter, init=None)
     line_cache = Dict(keys=Instance(Line))
     
     def init(self):
@@ -374,13 +374,25 @@ class LayerPainter(Painter):
             set_end(end)
 
         self.get_backend().queue_redraw()
-            
+
+
+    def request_active_line(self):
+        """ Return the active line or if it is None, try to set it first. """
+        if self.active_line_painter is None:
+            if len(self.obj.lines) > 0:
+                self.active_line_painter = self.get_painter(self.obj.lines[0], LinePainter)
+        return self.active_line_painter.obj
+
+    def set_active_line(self, line):
+        """ Set the active_line_painter object to an existing or new
+        painter for 'line'."""    
+        self.active_line_painter = self.get_painter(line, LinePainter)
 
 #------------------------------------------------------------------------------
 
 class Backend(backend.Backend):
 
-    active_layer = Instance(objects.Layer, init=None)
+    active_layer_painter = Instance(LayerPainter, init=None)
     
     def init(self):
         self.painters = {} # == layers
@@ -429,10 +441,10 @@ class Backend(backend.Backend):
 
     def request_active_layer(self):
         """ Return the active layer or if it is None, try to set it first. """
-        if self.active_layer is None:
+        if self.active_layer_painter is None:
             if len(self.plot.layers) > 0:
-                self.active_layer = self.plot.layers[0]
-        return self.active_layer.obj
+                self.active_layer_painter = self.get_painter(self.plot.layers[0])
+        return self.active_layer_painter.obj
 
 
     def queue_redraw(self):

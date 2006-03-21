@@ -5,17 +5,16 @@ from Sloppy.Base import globals, error, uwrap
 from Sloppy.Lib.Undo import UndoList
 
 
-class LinesTool(toolbox.LayerTool):
+class LinesTool(toolbox.Tool):
 
     name = "Lines"
     stock_id = gtk.STOCK_PROPERTIES
 
 
-    def init(self):
-        self.layer = None
-        self.layer_signals = []
-        self.line = None
-        self.line_signals = []
+    def __init__(self):
+        toolbox.Tool.__init__(self)
+
+        self.depends_on(globals.app, 'active_backend', 'active_layer_painter', 'active_line_painter')
 
         # GUI: treeview with buttons below
         
@@ -55,70 +54,33 @@ class LinesTool(toolbox.LayerTool):
         self.box = box
 
 
-    def update_active_layer(self, layer):
-        if layer == self.layer:
-            return       
-
-        try:
-            painter = self.backend.get_painter(layer)
-        except:
-            painter = None
-            
-        for signal in self.layer_signals:
-            signal.disconnect()
-            #layer = self.painter.active_layer
-            #if layer is not None:
-            #    layer.sig_disconnect('update::lines', self.on_update_lines)
-        if painter is not None:
-            s1 = painter.sig_connect('update::active_line', self.on_update_active_line)
-            layer_signals = [s1]
-            #layer = painter.active_layer
-            #if layer is not None:
-            #    layer.sig_connect('update::lines', self.on_update_lines)            
-
-        self.layer = layer
+    def autoupdate_active_layer_painter(self, sender, painter):
         self.update_lines()
-           
-
-    def on_update_lines(self, sender, updateinfo):
-        self.update_lines(updateinfo)
-
-    def on_update_active_line(self, sender, line):
-        self.update_active_line(line)
-        
 
     def update_lines(self, updateinfo=None):
         # TODO: partial redraw
         model = self.treeview.get_model()
         model.clear()
 
-        if self.layer is None:
+        if self.active_layer_painter is None:
             self.treeview.set_sensitive(False)
         else:
             self.treeview.set_sensitive(True)
-            for line in self.layer.lines:
+            layer = self.active_layer_painter.obj
+            for line in layer.lines:
                 model.append((line,))
 
-        try:
-            line = self.backend.get_painter(self.layer).active_line
-        except:
-            line = None
+        line = self.active_layer_painter.request_active_line()
 
-        if line is None and self.layer is not None and len(self.layer.lines) > 0:
-            self.backend.get_painter(self.layer).active_line = self.layer.lines[0]
-        else:
-            self.update_active_line(line)
 
-    def update_active_line(self, line):
-        if line == self.line:
-            return
-        
-        # mark active layer
+    def autoupdate_active_line_painter(self, sender, painter):
+       
+        # mark active line
         model = self.treeview.get_model()
         iter = model.get_iter_first()
         while iter is not None:
             value = model.get_value(iter, 0)
-            if value == line:
+            if value == painter.obj:
                 self.treeview.get_selection().select_iter(iter)
                 break
             iter = model.iter_next(iter)
@@ -132,18 +94,15 @@ class LinesTool(toolbox.LayerTool):
         model, iter = treeview.get_selection().get_selected()
         line = model.get_value(iter,0)
         if line is not None:
-            try:
-                painter = self.backend.get_painter(self.layer)
-            except:
-                pass
-            else:
-                painter.active_line = line
+            self.active_layer_painter.set_active_line(line)
 
     def on_row_activated(self, treeview, *udata):
         model, iter = treeview.get_selection().get_selected()
         line = model.get_value(iter, 0)
         self.edit(line)        
         # TODO: edit line  (maybe put this function somewhere else?)
+
+
 
     ########
     def edit(self, line):

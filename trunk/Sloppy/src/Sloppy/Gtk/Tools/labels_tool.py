@@ -3,7 +3,7 @@ import gtk
 from Sloppy.Gtk import toolbox
 from Sloppy.Base import globals
 
-class LabelsTool(toolbox.LayerTool):
+class LabelsTool(toolbox.Tool):
 
     name = "Labels"
     stock_id = gtk.STOCK_EDIT

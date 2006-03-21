@@ -143,62 +143,51 @@ class Tool(dock.Dockable):
             dock.Dockable.close_button_clicked(self, sender)
 
 
-
-class BackendTool(Tool):
-
-    def __init__(self):
-        dock.Dockable.__init__(self)
-
-        self.backend = None
-        self.backend_signals = []
-        globals.app.sig_connect('update::active_backend', self.on_update_active_backend)
+    def depends_on(self, obj, *vars):
+        # for generic_on_update
+        self.signalmap = {}        
+        self.dependency_chain = list(vars)
         
-        self.init()
-       
-    def on_update_active_backend(self, sender, backend):
-        self.update_active_backend(backend)
-
-    def update_active_backend(self, backend):
-        # Rewrite this in children of BackendTool
-        if backend == self.backend:
-            return
-        self.backend = backend
+        for var in self.dependency_chain:
+            setattr(self, var, None)
+        obj.sig_connect('update::%s'%vars[0],
+          lambda sender, value: self.generic_on_update(vars[0], sender, value))
         
-    
 
+    def generic_on_update(self, var, sender, value):
+        print "GENERIC UPDATE FOR VAR ", var
+        print "%s = %s" % (sender, value)
 
-class LayerTool(BackendTool):
-
-    def __init__(self):
-        BackendTool.__init__(self)
-        self.layer = None
-        self.layer_signals = []
-        
-    def on_update_active_backend(self, sender, backend):
-        if backend == self.backend:
+        old_value = getattr(self, var)
+        if value == old_value:
             return
 
-        for signal in self.backend_signals:
-            signal.disconnect()
-        if backend is not None:            
-            self.backend_signals.append(\
-                backend.sig_connect('update::active_layer',
-                                    self.on_update_active_layer)
-                )
-            
-        self.backend = backend
-        try:
-            layer = self.backend.active_layer
-        except:
-            layer = None
-        self.update_active_layer(layer)
+        if self.signalmap.has_key(sender):
+            signal = self.signalmap.pop(sender)
+            # propagate None value before disconnecting
+            if value is None and old_value is not None:
+                signal(old_value, None)
+            signal.disconnect()                
 
-    def on_update_active_layer(self, painter, layer):
-        self.update_active_layer(layer)                       
+        setattr(self, var, value)                
+        if value is not None:
+            obj = value # assume this is a Painter/Backend object
+
+            # notify if object has changed
+            cbname = 'autoupdate_%s'%var
+            if hasattr(self, cbname):
+                getattr(self, cbname)(sender, value)
+
+            # Connect to the update mechanism of the next dependency.
+            # If this is already the last dependency, then we call
+            # on_update_object, which then can use the object.
+            try:
+                next_var = self.dependency_chain[self.dependency_chain.index(var)+1]
+            except IndexError:
+                pass
+            else:
+                new_signal = obj.sig_connect('update::%s'%next_var,
+                  lambda sender,value: self.generic_on_update(next_var, sender, value))
+                self.signalmap[sender] = new_signal            
 
 
-    def update_active_layer(self, layer):
-        # Rewrite this in children of LayerTool
-        if layer == self.layer:
-            return
-        self.layer = layer
