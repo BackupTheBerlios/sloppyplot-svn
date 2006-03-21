@@ -151,7 +151,7 @@ class Tool(dock.Dockable):
         for var in self.dependency_chain:
             setattr(self, var, None)
         obj.sig_connect('update::%s'%vars[0],
-          lambda sender, value: self.generic_on_update(vars[0], sender, value))
+          lambda sender, value: self.generic_on_update(vars[0], sender, value))        
         
 
     def generic_on_update(self, var, sender, value):
@@ -173,11 +173,6 @@ class Tool(dock.Dockable):
         if value is not None:
             obj = value # assume this is a Painter/Backend object
 
-            # notify if object has changed
-            cbname = 'autoupdate_%s'%var
-            if hasattr(self, cbname):
-                getattr(self, cbname)(sender, value)
-
             # Connect to the update mechanism of the next dependency.
             # If this is already the last dependency, then we call
             # on_update_object, which then can use the object.
@@ -190,4 +185,19 @@ class Tool(dock.Dockable):
                   lambda sender,value: self.generic_on_update(next_var, sender, value))
                 self.signalmap[sender] = new_signal            
 
+        # notify if object has changed
+        cbname = 'autoupdate_%s'%var
+        if hasattr(self, cbname):
+            getattr(self, cbname)(sender, value)
 
+
+
+    def track(self, key, obj, var):
+        " track('backend', globals.app, 'active_backend') "
+        if self.tracks.has_key(key):
+            signal = self.tracks[key]
+            signal.disconnect()
+            setattr(self, key) = None
+
+        self.tracks[key] = new_signal
+        

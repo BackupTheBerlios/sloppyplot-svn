@@ -54,9 +54,6 @@ class LinesTool(toolbox.Tool):
         self.box = box
 
 
-    def autoupdate_active_layer_painter(self, sender, painter):
-        self.update_lines()
-
     def update_lines(self, updateinfo=None):
         # TODO: partial redraw
         model = self.treeview.get_model()
@@ -73,8 +70,16 @@ class LinesTool(toolbox.Tool):
         line = self.active_layer_painter.request_active_line()
 
 
-    def autoupdate_active_line_painter(self, sender, painter):
-       
+    def autoupdate_active_backend(self, sender, backend):
+        if backend is not None:
+            backend.request_active_layer()
+        
+    def autoupdate_active_layer_painter(self, sender, painter):
+        if painter is not None:
+            painter.request_active_line()
+        self.update_lines()
+
+    def autoupdate_active_line_painter(self, sender, painter):       
         # mark active line
         model = self.treeview.get_model()
         iter = model.get_iter_first()

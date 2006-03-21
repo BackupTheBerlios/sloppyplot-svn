@@ -38,9 +38,11 @@ class LayersTool(toolbox.Tool):
         self.add(treeview)        
         self.treeview = treeview
 
+        self.update_layers()
 
     def autoupdate_active_backend(self, sender, backend):
-        self.update_layers()      
+        self.update_layers()
+        
 
     def autoupdate_active_layer_painter(self, sender, painter):
         # mark active layer
@@ -68,7 +70,8 @@ class LayersTool(toolbox.Tool):
             for layer in self.active_backend.plot.layers:
                 model.append((layer,))
 
-        layer = self.active_backend.request_active_layer()
+        if self.active_backend is not None:
+            layer = self.active_backend.request_active_layer()
 
 
     ########

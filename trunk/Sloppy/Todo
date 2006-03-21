@@ -4,6 +4,21 @@
   Sinnvoller wäre es vielleicht, direkt den Index zu übergeben,
   wenn generic_on_update aufgesetzt wird.
 
+- Ergebnisse des PeakFinders evtl. in ein Dataset übergeben und dieses
+  dann anzeigen lassen?
+
+- Zuordnung Peaks -> Symbol
+
+- Peaks als solche der Zeichnung hinzufügen
+
+- Peaks abspeichern (evtl. Log?)
+
+- layer logarithmisch machen funktioniert nicht
+
+- wenn backend ausgewählt wird, aktualisiert sich die Layer nicht selbst...
+
+
+
 
 (for 0.5.3):
 ============
@@ -24,8 +39,6 @@
   methods to be so smart.
 
   One way to achieve this is to block the signal that emits 'update legend'.
-
-
 
 - fix dragging of dockables
 

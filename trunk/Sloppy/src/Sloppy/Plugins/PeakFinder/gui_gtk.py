@@ -93,6 +93,14 @@ class PeakFinder(toolbox.Tool):
         
         self.add(vbox)
 
+    def autoupdate_active_backend(self, sender, backend):
+        if backend is not None:
+            backend.request_active_layer()
+        
+    def autoupdate_active_layer_painter(self, sender, painter):
+        if painter is not None:
+            painter.request_active_line()
+    
     def autoupdate_active_line_painter(self, sender, painter):
         self.label.set_text(self.get_label_text())
 
@@ -105,7 +113,7 @@ class PeakFinder(toolbox.Tool):
         if line is None:
             return ""
         else:
-            return "%2d:%s" % (layer.lines.index(line), line.label or "")
+            return "%02d:%s" % (layer.lines.index(line), line.label or "")
 
 
     def on_btn_find_clicked(self, sender):
@@ -119,6 +127,7 @@ class PeakFinder(toolbox.Tool):
        
         peaklist = find_peaks(line.get_x(), line.get_y(), threshold, accuracy)
 
+        # copy peak list to treeview model
         model = self.treeview.get_model()
         model.clear()
         for x,y in peaklist:
