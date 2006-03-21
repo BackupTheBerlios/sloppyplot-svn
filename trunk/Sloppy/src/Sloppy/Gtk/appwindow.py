@@ -476,7 +476,7 @@ class AppWindow( gtk.Window, HasSignals ):
         ('Preferences', gtk.STOCK_PREFERENCES, '_Preferences...', '<control>P', "Modify Preferences", 'on_action_Preferences'),
         ('NewMenu', None, '_New'),
         #
-        ('ToolConfiguration', None, 'Toolbox Configuration')
+        ('AddTool', None, 'Add Tool...')
         ]
 
     actions_appwin = [                

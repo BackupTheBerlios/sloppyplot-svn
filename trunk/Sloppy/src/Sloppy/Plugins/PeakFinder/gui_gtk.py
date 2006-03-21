@@ -19,8 +19,8 @@ class Settings(objects.SPObject):
     
 class PeakFinder(toolbox.Tool):
 
-    name = "PeakFinder"
-    stock_id = gtk.STOCK_EDIT
+    label = "PeakFinder"
+    icon_id = gtk.STOCK_EDIT
 
 
     def __init__(self):
@@ -32,7 +32,7 @@ class PeakFinder(toolbox.Tool):
         #
         # info label (displaying the active line)
         #
-        self.label = label = gtk.Label()
+        self.line_label = label = gtk.Label()
         label.set_text("Test")
 
         #
@@ -102,7 +102,7 @@ class PeakFinder(toolbox.Tool):
             painter.request_active_line()
     
     def autoupdate_active_line_painter(self, sender, painter):
-        self.label.set_text(self.get_label_text())
+        self.line_label.set_text(self.get_label_text())
 
     def get_label_text(self):
         try:

@@ -5,8 +5,8 @@ from Sloppy.Base import globals
 
 class LabelsTool(toolbox.Tool):
 
-    name = "Labels"
-    stock_id = gtk.STOCK_EDIT
+    label = "Labels"
+    icon_id = gtk.STOCK_EDIT
 
 
 

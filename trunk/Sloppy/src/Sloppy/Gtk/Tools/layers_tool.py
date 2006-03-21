@@ -5,8 +5,8 @@ from Sloppy.Base import globals
 
 class LayersTool(toolbox.Tool):
 
-    name = "Layers"
-    stock_id = gtk.STOCK_EDIT
+    label = "Layers"
+    icon_id = gtk.STOCK_EDIT
     
     def __init__(self):
         toolbox.Tool.__init__(self)

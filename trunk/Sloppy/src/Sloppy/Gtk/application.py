@@ -94,27 +94,37 @@ class GtkApplication(application.Application):
         # to get that information ;-)
         #
         def add_tool(sender, toolklass):
-            print "toolklass is ", toolklass
-            print "and the sender is ", sender
             new_tool = toolklass()
             tool = globals.app.popup_info
-            print "popped up by ", tool
             book = tool.dockbook
             book.add(new_tool)
             index = book.get_children().index(new_tool)
             book.set_current_page(index)
 
+        def close_tool(sender):
+            tool = globals.app.popup_info
+            book = tool.dockbook
+            book.remove(tool)
+
+        # Create Actiongroup 
         ag = gtk.ActionGroup("ToolConfig")
         for key, toolklass in toolbox.ToolRegistry.iteritems():
-            aw = uihelper.ActionWrapper(key, toolklass.name, stock_id=toolklass.stock_id)
+            aw = uihelper.ActionWrapper(key, toolklass.label, stock_id=toolklass.icon_id)
             aw.connect(add_tool, toolklass)
             ag.add_action(aw.action)
+
+        aw = uihelper.ActionWrapper('CloseTool', 'Close Tool', gtk.STOCK_CLOSE)
+        aw.connect(close_tool)
+        ag.add_action(aw.action)
+        
         self.window.uimanager.insert_action_group(ag, -1)
 
         ui = '<popup name="popup_toolconfig">'
-        ui += '  <menuitem action="ToolConfiguration"/><separator/>'
+        ui += '  <menu action="AddTool">'
         for key, tool in toolbox.ToolRegistry.iteritems():
             ui += '<menuitem action="%s"/>' % key
+        ui += '  </menu>'
+        ui += '  <menuitem action="CloseTool"/>'
         ui += '</popup>'
                         
         # merge plugin ui

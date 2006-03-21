@@ -41,7 +41,8 @@ class ProjectTool(toolbox.Tool):
         ('RenameItem', 'sloppy-rename', 'Rename', 'F2', 'Rename', 'action_RenameItem')
         ]
 
-    name = "Project"
+    label = "Project"
+    icon_id = gtk.STOCK_PREFERENCES
 
     def __init__(self):
         toolbox.Tool.__init__(self)

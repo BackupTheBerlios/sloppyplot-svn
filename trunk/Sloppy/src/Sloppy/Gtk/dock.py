@@ -42,8 +42,8 @@ class Dockable( gtk.VBox ):
     TARGET_TYPE_TEXT = 80
     dnd_from_label = [ ("text/plain", gtk.TARGET_SAME_APP, TARGET_TYPE_TEXT) ]
 
-    #name =
-    #stock_id =
+    label = "<Dockable>"
+    icon_id = gtk.STOCK_INFO
     
     def __init__(self):
         gtk.VBox.__init__(self)
@@ -54,46 +54,41 @@ class Dockable( gtk.VBox ):
         menu_button.unset_flags(gtk.CAN_FOCUS)
         menu_button.set_relief(gtk.RELIEF_NONE)
         menu_button.connect('clicked', self.on_menu_button_clicked)
-        menu_button.show()
+        
+        #image = gtk.image_new_from_stock(gtk.STOCK_ADD, gtk.ICON_SIZE_SMALL_TOOLBAR)
+        #menu_button.add(image)        
 
-#         image = gtk.image_new_from_stock(gtk.STOCK_MEDIA_PREVIOUS, gtk.ICON_SIZE_MENU)
-#         menu_button.add(image)
-#         image.show()
+        #close_button = gtk.Button()
+        #close_button.unset_flags(gtk.CAN_FOCUS)
+        #close_button.set_relief(gtk.RELIEF_NONE)
+        #close_button.connect("clicked", self.close_button_clicked)
 
-        close_button = gtk.Button()
-        close_button.unset_flags(gtk.CAN_FOCUS)
-        close_button.set_relief(gtk.RELIEF_NONE)
-        close_button.show()
-        close_button.connect("clicked", self.close_button_clicked)
+        #close_icon = gtk.image_new_from_stock(gtk.STOCK_CLOSE, gtk.ICON_SIZE_SMALL_TOOLBAR)
+        #close_button.add(close_icon)
 
-        image = gtk.image_new_from_stock(gtk.STOCK_CLOSE, gtk.ICON_SIZE_MENU)
-        close_button.add(image)
-        image.show()
-
-        title_label = gtk.Label(self.name)
+        title_label = gtk.Label(self.label)
         title_label.unset_flags(gtk.CAN_FOCUS)
-        title_label.show()
+        title_label.set_alignment(0,0.5)
 
-        title_box = gtk.HBox()
-        title_box.pack_start( title_label, True, True )
-        title_box.pack_end( close_button, False, True )
-        title_box.pack_end( menu_button, False, True )                
-        title_box.show()
+        title_box = gtk.HBox(spacing=5)
+        title_box.pack_start(title_label, True, True)
+        #title_box.pack_end(close_button, False, True)
+        title_box.pack_end(menu_button, False, True)                
 
         event_box = gtk.EventBox()
         event_box.add(title_box)
         event_box.set_border_width(2)
         event_box.set_data("dockable", self)
-        event_box.show()
         
         self.pack_start(event_box, False)
-
+        event_box.show_all()
+        
         # set up dnd for title_label
         event_box.drag_source_set(gtk.gdk.BUTTON1_MASK|gtk.gdk.BUTTON2_MASK,
                                     self.dnd_from_label,
                                     gtk.gdk.ACTION_MOVE)
         #event_box.drag_source_set_icon_pixbuf(self.get_drag_pixbuf())
-        event_box.drag_source_set_icon_stock(self.stock_id)
+        event_box.drag_source_set_icon_stock(self.icon_id)
 
         self.drag_dest_set( gtk.DEST_DEFAULT_ALL,
                             self.dnd_from_label,
@@ -101,7 +96,7 @@ class Dockable( gtk.VBox ):
         self.connect("drag-drop", self.dnd_drag_drop)
         self.set_data("dockable", self)
 
-        self.event_box = event_box
+        self.event_box = event_box        
         
 
     def add(self, widget,expand=True,fill=True):
@@ -110,35 +105,37 @@ class Dockable( gtk.VBox ):
         else:
             raise RuntimeError("Can't add more than one non-internal object to a Dockable.")
         
-
         
     def get_menu_widget(self):
-        image = gtk.image_new_from_stock(self.stock_id, gtk.ICON_SIZE_MENU)
-        image.show()
-        label = gtk.Label(self.name)
-        label.show()
 
+        title_icon = gtk.image_new_from_stock(self.icon_id, gtk.ICON_SIZE_MENU)
+        title_label = gtk.Label(self.label)
+        
         hbox = gtk.HBox()
-        hbox.pack_start(image,False,True)
-        hbox.pack_start(label,True,True)
-        hbox.show()
-
+        hbox.pack_start(title_icon, False, True)
+        hbox.pack_start(title_label, True, True)
+        hbox.show_all()
         return hbox
 
 
     def get_tab_widget(self):
-        image = gtk.image_new_from_stock(self.stock_id, gtk.ICON_SIZE_MENU)
-        image.show()
-       
+        title_icon = gtk.image_new_from_stock(self.icon_id, gtk.ICON_SIZE_MENU)
+        title_label = gtk.Label(self.label)
+        title_label.unset_flags(gtk.CAN_FOCUS)
+
+        hbox = gtk.HBox()
+        hbox.pack_start(title_icon, False, True)
+        hbox.pack_start(title_label, True, True)
+        
         event_box = gtk.EventBox()
-        event_box.add(image)
+        event_box.add(hbox)
         event_box.set_data("dockable", self)
-        event_box.show()
+        event_box.show_all()
 
         event_box.drag_source_set(gtk.gdk.BUTTON1_MASK,
                               self.dnd_from_label,
                               gtk.gdk.ACTION_MOVE)
-        event_box.drag_source_set_icon_stock(self.stock_id)
+        event_box.drag_source_set_icon_stock(self.icon_id)
     
         return event_box
 

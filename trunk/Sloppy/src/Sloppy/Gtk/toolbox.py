@@ -124,8 +124,8 @@ class Tool(dock.Dockable):
 
     """ Dockable base class for any tool that edits part of a Plot. """
 
-    name = "Unnamed Tool"
-    stock_id = gtk.STOCK_EDIT
+    label = "Unnamed Tool"
+    icon_id = gtk.STOCK_EDIT
     
     def __init__(self):
         dock.Dockable.__init__(self)
@@ -147,6 +147,7 @@ class Tool(dock.Dockable):
         # for generic_on_update
         self.signalmap = {}        
         self.dependency_chain = list(vars)
+        self.main_obj = obj
         
         for var in self.dependency_chain:
             setattr(self, var, None)
@@ -191,13 +192,22 @@ class Tool(dock.Dockable):
             getattr(self, cbname)(sender, value)
 
 
+    def auto_init(self):
+        first_attr = self.dependency_chain[0]
+        initial_value = getattr(self.main_obj, first_attr)
+
+        # fake notification event to init value
+        cbname = 'autoupdate_%s'%first_attr
+        if hasattr(self, cbname):
+            getattr(self, cbname)(self.main_obj, initial_value)      
+
 
     def track(self, key, obj, var):
         " track('backend', globals.app, 'active_backend') "
         if self.tracks.has_key(key):
             signal = self.tracks[key]
             signal.disconnect()
-            setattr(self, key) = None
+            setattr(self, key, None)
 
         self.tracks[key] = new_signal
         

@@ -7,8 +7,8 @@ from Sloppy.Lib.Undo import UndoList
 
 class LinesTool(toolbox.Tool):
 
-    name = "Lines"
-    stock_id = gtk.STOCK_PROPERTIES
+    label = "Lines"
+    icon_id = gtk.STOCK_PROPERTIES
 
 
     def __init__(self):
@@ -53,6 +53,7 @@ class LinesTool(toolbox.Tool):
         self.buttonbox = buttonbox
         self.box = box
 
+        self.auto_init()
 
     def update_lines(self, updateinfo=None):
         # TODO: partial redraw
@@ -72,7 +73,7 @@ class LinesTool(toolbox.Tool):
 
     def autoupdate_active_backend(self, sender, backend):
         if backend is not None:
-            backend.request_active_layer()
+            backend.request_active_layer()            
         
     def autoupdate_active_layer_painter(self, sender, painter):
         if painter is not None:
