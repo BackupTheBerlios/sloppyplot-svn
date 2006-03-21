@@ -49,6 +49,7 @@ from Sloppy.Gnuplot.terminal import PostscriptTerminal
 
 from Sloppy.Lib.ElementTree.ElementTree import Element, SubElement
 from Sloppy.Lib.Check import Instance, List, values_as_dict, AnyValue
+from Sloppy.Lib.Undo import *
 
 
 #------------------------------------------------------------------------------
@@ -424,6 +425,30 @@ class GtkApplication(application.Application):
         win = LayerWindow(plot, layer, current_page=current_page)
         win.set_modal(True)
         win.present()
+
+    def edit_line(self, line):
+        dialog = OptionsDialog(line)
+        try:           
+            response = dialog.run()
+            if response == gtk.RESPONSE_ACCEPT:
+                ul = UndoList("Edit Line")                                
+                dialog.check_out(undolist=ul)
+                #uwrap.emit_last(self.backend, 'redraw', undolist=ul)
+                self.project.journal.append(ul)
+                
+                return dialog.owner
+            else:
+                raise error.UserCancel
+
+        finally:
+            dialog.destroy()
+
+        #         win = gtk.Window()
+        #         self.factory = checkwidgets.DisplayFactory(line)
+        #         self.factory.add_keys(line._checks.keys())
+        #         table = self.factory.create_table()
+        #         frame = uihelper.new_section("Line", table)
+        #         self.factory.check_in(line)
         
     
     #----------------------------------------------------------------------

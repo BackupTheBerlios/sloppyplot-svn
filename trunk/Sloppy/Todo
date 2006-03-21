@@ -1,4 +1,12 @@
 
+
+
+- block_redraw ? unblock_redraw ? Verallgemeinerung auf Signale?
+
+- vernünftiger LineDialog, da er wichtig ist.
+  ODER: einfach unterhalb des LineTools als create_table
+  mit direkten Änderungen (Achtung: Undo!)  
+
 - Tools.depends_on  und generic_on_update handhaben doppelte
   Namen nicht richtig, da der Index über den Namen gesucht wird.
   Sinnvoller wäre es vielleicht, direkt den Index zu übergeben,
@@ -18,6 +26,12 @@
 - wenn backend ausgewählt wird, aktualisiert sich die Layer nicht selbst...
 
 
+
+GROBES KONZEPT:
+
+- Ein TreeView mit allen Objekten,
+  darunter eine dynamisch erzeugte Tabelle mit den entsprechenden 
+  Feldern für das aktuell ausgewählte Objekt.
 
 
 (for 0.5.3):

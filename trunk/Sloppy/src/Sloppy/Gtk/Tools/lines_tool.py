@@ -105,35 +105,8 @@ class LinesTool(toolbox.Tool):
     def on_row_activated(self, treeview, *udata):
         model, iter = treeview.get_selection().get_selected()
         line = model.get_value(iter, 0)
-        self.edit(line)        
-        # TODO: edit line  (maybe put this function somewhere else?)
+        globals.app.edit_line(line)        
 
-
-
-    ########
-    def edit(self, line):
-        dialog = options_dialog.OptionsDialog(line)
-        try:           
-            response = dialog.run()
-            if response == gtk.RESPONSE_ACCEPT:
-                ul = UndoList("Edit Line")                                
-                dialog.check_out(undolist=ul)
-                uwrap.emit_last(self.backend, 'redraw', undolist=ul)
-                globals.app.project.journal.append(ul)
-                
-                return dialog.owner
-            else:
-                raise error.UserCancel
-
-        finally:
-            dialog.destroy()
-
-#         win = gtk.Window()
-#         self.factory = checkwidgets.DisplayFactory(line)
-#         self.factory.add_keys(line._checks.keys())
-#         table = self.factory.create_table()
-#         frame = uihelper.new_section("Line", table)
-#         self.factory.check_in(line)
 
 
 #------------------------------------------------------------------------------

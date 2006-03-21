@@ -76,6 +76,7 @@ linemarker_mappings = \
  }
 
 
+
 #------------------------------------------------------------------------------
 
 class Painter(SPObject):
@@ -301,7 +302,7 @@ class LayerPainter(Painter):
         title = new_title
         self.axes.set_title(title or '')
 
-
+            
     def update(self, sender, keys):
 
         # plot_painter := backend
@@ -396,6 +397,10 @@ class Backend(backend.Backend):
     
     def init(self):
         self.painters = {} # == layers
+
+        self._redraw = False
+        self._block_redraw = 0
+        
         self.sig_register('redraw')
         self.sig_connect('redraw', lambda sender: self.redraw())
 
@@ -447,12 +452,20 @@ class Backend(backend.Backend):
         return self.active_layer_painter.obj
 
 
+
+    def block_redraw(self, count=1):
+        self._block_redraw += count
+
+    def unblock_redraw(self, count=1):
+        self._block_redraw = max(0, self._block_redraw-count)        
+        
     def queue_redraw(self):
         self._redraw = True
+        self.redraw()
 
     def redraw(self, force=False):
         """ redraw, unlike draw, only redisplays the existing canvas. """
-        if self._redraw or force is True:
+        if force is True or (self._redraw is True and self._block_redraw==0):
             print "REDRAW"
             self.canvas.draw()
         self._redraw = False

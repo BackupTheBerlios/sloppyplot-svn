@@ -21,9 +21,12 @@
 
 import gtk, gobject
 from matplotlib.backends.backend_gtk import FileChooserDialog
+import matplotlib
+
+import numpy
 
 import uihelper, mpl_selector
-from Sloppy.Base import uwrap, globals
+from Sloppy.Base import uwrap, globals, objects
 from Sloppy.Lib.Undo import UndoList, NullUndo, ulist, UndoInfo
 
 
@@ -176,6 +179,9 @@ class MatplotlibWidget(gtk.VBox):
             # minium canvas size
             canvas_width, canvas_height = 320,240
             backend.canvas.set_size_request(canvas_width, canvas_height)
+
+            # set up object picking
+            backend.canvas.mpl_connect('button_press_event', self.button_press_event)
 
             # [NV] I disabled rulers again to get ready for the next release.
             if False:
@@ -351,7 +357,7 @@ class MatplotlibWidget(gtk.VBox):
         def finish_zooming(sender):
             self.statusbar.pop(self.statusbar.get_context_id('action-zoom'))
             ul = UndoList().describe("Zoom Region")
-            layer = self.backend.active_layer
+            layer = self.backend.request_active_layer()
             self.zoom_to_region(layer, sender.region, undolist=ul)
             self.project.journal.add_undo(ul)
 
@@ -390,7 +396,7 @@ class MatplotlibWidget(gtk.VBox):
 
         def finish_moving(sender):
             ul = UndoList().describe("Move Graph")
-            layer = self.backend.active_layer#axes_to_layer[sender.axes]
+            layer = self.backend.request_active_layer()
             self.zoom_to_region(layer, sender.region, undolist=ul)
             self.project.journal.add_undo(ul)           
 
@@ -447,7 +453,7 @@ class MatplotlibWidget(gtk.VBox):
 
         def finish_moving(sender):
             ul = UndoList().describe("Zoom Axes")
-            layer = self.backend.active_layer#axes_to_layer[sender.axes]
+            layer = self.backend.request_active_layer()
             self.zoom_to_region(layer, sender.region, undolist=ul)
             self.project.journal.add_undo(ul)           
 
@@ -510,47 +516,90 @@ class MatplotlibWidget(gtk.VBox):
 
 
 
+    def button_press_event(self, event):
+        canvas = event.canvas
+        width = canvas.figure.bbox.width()
+        height = canvas.figure.bbox.height()
 
-    #
-    # TESTING
-    #
-    def on_action_PeakFinder(self, action):
-        self.abort_selection()
+        hits = self.pick(event.canvas, event.x, event.y, epsilon=20)
 
-        # we will simply take the first line available.
-        layer = self.request_active_layer()
-        line = layer.lines[0]
+        # we only use the first hit right now
+        if len(hits) > 0:
+            hit = hits[0]
+            self.select_mpl_object(hit)
 
-        print "USING LINE ", line
 
-        p = globals.app.plugins['PeakFinder']
-        data = line.source.get_data()
+    def pick(self, canvas, x, y, epsilon=5):
+        # Taken from matplotlib example library: object_picker.py
+        
+        """
+        Return the artist at location x,y with an error tolerance epsilon
+        (in pixels)
+        """
 
-        print
-        print "Peak Search:"
-        peaks = p.find_peaks(data[line.cx], data[line.cy], 600, 5)
-        for x, y in peaks:
-            print "  %f : %f" % (x,y)
-        print
+        clickBBox = matplotlib.transforms.lbwh_to_bbox(x-epsilon/2, y-epsilon/2, epsilon, epsilon)
+        matplotlib.patches.draw_bbox(clickBBox, canvas._renderer)
 
-        p = globals.app.plugins['PeakFinder::GTK::DialogBuilder']
-        dialog = p.new_dialog()
-        dialog.run()
+        def over_text(t):
+            bbox = t.get_window_extent(canvas._renderer)
+            return clickBBox.overlaps(bbox)
 
-        # a dialog should ask for the following:
+        def over_line(line):
+            # can't use the line bbox because it covers the entire extent
+            # of the line
+            trans = line.get_transform()
+            xdata, ydata = trans.numerix_x_y(line.get_xdata(valid_only = True),
+                                             line.get_ydata(valid_only = True))
+            distances = numpy.sqrt((x-xdata)**2 + (y-ydata)**2)
+            return numpy.lib.mlab.min(distances)<epsilon
 
-        # Line (=> cx and cy will be automatically determined)
-        # threshold
-        # accuracy
-        # max. nr. of points before aborting.
+        hits = []
+        
+        for ax in canvas.figure.axes:
 
-        # It should then have a list view with the list of points
-        # and some options, e.g. 'add as label'.
+            for line in ax.get_lines():
+                if over_line(line):
+                    hits.append(line)
 
-        # In the next step, we will have a SIMS isotope library in
-        # the SIMS plugin.  The SIMS plugin can then utilize the find_peak
-        # method, look up the isotopes and determine the possible isotopes
-        # from that!
+            text = ax.get_xticklabels()
+            text.extend( ax.get_yticklabels() )
+
+            for t in text:
+                if over_text(t):
+                    hits.append(t)
+                    print "TEXT", hits
+
+        return hits
+
+    def select_mpl_object(self, obj):
+
+        def find_object(obj):
+
+            for layer_painter in self.backend.painters.itervalues():
+
+                # is it a line ? => Line
+                for line, mpl_line in layer_painter.line_cache.iteritems():
+                    if obj == mpl_line:
+                        return line
+
+                # is it an axis ? => Layer
+                if obj in layer_painter.axes.get_xticklabels():
+                    return layer_painter.obj
+                if obj in layer_painter.axes.get_yticklabels():
+                    return layer_painter.obj
+
+            return None
+
+                
+        sloppy_object = find_object(obj)
+        if sloppy_object is not None:
+            if isinstance(sloppy_object, objects.Line):
+                globals.app.edit_line(sloppy_object)
+            elif isinstance(sloppy_object, objects.Layer):
+                globals.app.edit_layer(self.backend.plot, sloppy_object)
+
+                
+
 
 
 #==============================================================================
