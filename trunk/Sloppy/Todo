@@ -1,24 +1,8 @@
 
-- generic_on_update (PeakFinder) funktioniert nicht, da die Updates
-  irgendwie inkonsistent sind:
-
-  - app.active_backend
-  - ACHTUNG: backend.active_layer
-  - ACHTUNG: layer.active_line
-
-  Entweder nur Painter Objekte, oder nur echte Objekte!
-
-  Wenn ich nur echte Objekte nehme, dann hieße es nicht active_backend,
-  sondern active_plot.  Außerdem müsste generic_on_update den entsprechenden
-  Painter für das Objekt finden:
-
-    painter = self.active_backend.get_painter(value)
-
-  Das Backend ist im Model-View Verständnis die View für den Plot.
-  Daher würde es eigentlich Sinn machen, wenn sich die Tools auf dieses
-  Backend beziehen, und nicht auf den Plot.  Warum also nicht auch
-  die active_layer und active_line ersetzen durch die entsprechenden
-  Painter ?
+- Tools.depends_on  und generic_on_update handhaben doppelte
+  Namen nicht richtig, da der Index über den Namen gesucht wird.
+  Sinnvoller wäre es vielleicht, direkt den Index zu übergeben,
+  wenn generic_on_update aufgesetzt wird.
 
 
 (for 0.5.3):

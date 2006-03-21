@@ -202,7 +202,22 @@ class Line(SPObject):
 
     source = Instance(Dataset)
 
+    def get_source(self):
+        if self.source is None:
+            raise RuntimeError("No data available")
+        self.source.get_array() # ensure that data is loaded               
+        return self.source
 
+    def get_x(self):
+        return self.get_source().get_column(self.cx)
+    
+    def get_y(self):
+        return self.get_source().get_column(self.cy)
+
+    def get_xy(self):
+        s = self.get_source()
+        return (s.get_column(self.cx), s.get_column(self.cy))
+    
 
 class Legend(SPObject):
     " Plot legend. "

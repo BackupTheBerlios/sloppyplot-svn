@@ -76,9 +76,9 @@ class MatplotlibWidget(gtk.VBox):
         'Display':
         [
         ('DisplayMenu', None, '_Display'),
-        ('ZoomIn', gtk.STOCK_ZOOM_IN, '_Zoom In', 'plus', 'Zoom', 'on_action_ZoomIn'),
-        ('ZoomOut', gtk.STOCK_ZOOM_OUT, '_Zoom Out', 'minus', 'Zoom', 'on_action_ZoomOut'),
-        ('ZoomFit', gtk.STOCK_ZOOM_FIT, '_Zoom Fit', '0', 'Zoom', 'on_action_ZoomFit'),
+        ('ZoomIn', gtk.STOCK_ZOOM_IN, '_Zoom In', '<control>plus', 'Zoom', 'on_action_ZoomIn'),
+        ('ZoomOut', gtk.STOCK_ZOOM_OUT, '_Zoom Out', '<control>minus', 'Zoom', 'on_action_ZoomOut'),
+        ('ZoomFit', gtk.STOCK_ZOOM_FIT, '_Zoom Fit', '<control>0', 'Zoom', 'on_action_ZoomFit'),
         ('ZoomRect', gtk.STOCK_ZOOM_FIT, '_Zoom Rectangle', 'r', 'Zoom', 'on_action_ZoomRect'),
         ('MoveAxes', None, 'Move Plot', 'm', '', 'on_action_MoveAxes'),
         ('DataCursor', None, 'Data Cursor', 'c', '', 'on_action_DataCursor'),
