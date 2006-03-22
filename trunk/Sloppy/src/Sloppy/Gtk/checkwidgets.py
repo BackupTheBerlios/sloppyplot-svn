@@ -198,8 +198,6 @@ class DisplayFactory:
             v = Display_Mapping_As_Combobox
         else:
             v = Display_Anything_As_Entry
-
-        print "NEW DISPLAY = ", v
         
         return v(klass, key)
     
@@ -278,10 +276,9 @@ class Display:
         self.widget = widget
         self.prepare_widget(widget)
 
-    def on_update(self, sender):
+    def set_value(self, obj, key, value):
         # this can be used as a hook for undo
-        pass
-        #print "on update of ", sender.key, "=", self.obj.get(sender.key)
+        obj.set(key, value)
 
 
 
@@ -297,26 +294,26 @@ class As_Entry:
         self.widget.connect("focus-out-event", self.on_focus_out_event)
         
     def on_focus_out_event(self, widget, event):
-        value = self.get_widget_data()
-        obj_value = self.obj.get(self.key)
-
-        if unicode(value) == unicode(obj_value):
-            return False
-        
-        if self.check.required is False and value == "":
-            value = None
-
         try:
-            value = self.check(value)
-        except ValueError, msg:
-            print "Value Error", msg
-            self.set_widget_data(obj_value)
-        else:
-            ##self.set_widget_data(value)
-            self.obj.set(self.key, value)
-            self.on_update(self)
+            value = self.get_widget_data()
+            obj_value = self.obj.get(self.key)
 
-        return False
+            if unicode(value) == unicode(obj_value):
+                return False
+
+            if self.check.required is False and value == "":
+                value = None
+
+            try:
+                value = self.check(value)
+            except ValueError, msg:
+                print "Value Error", msg
+                self.set_widget_data(obj_value)
+            else:
+                ##self.set_widget_data(value)
+                self.set_value(self.obj, self.key, value)
+        finally:
+            return False
 
       
 
@@ -360,8 +357,7 @@ class As_Combobox:
             print "Value Error", msg
             self.set_widget_data(obj_value)
         else:
-            self.obj.set(self.key, value)
-            self.on_update(self)
+            self.set_value(self.obj, self.key, value)
 
         return False
             
@@ -403,22 +399,22 @@ class As_Spinbutton:
         self.widget.connect("focus-out-event", self.on_focus_out_event)
 
     def on_focus_out_event(self, widget, event):
-        self.widget.update()
-        value = self.get_widget_data()
-        obj_value = self.obj.get(self.key)
-        if value == obj_value:
-            return False
-        
         try:
-            value = self.check(value)
-        except ValueError, msg:
-            print "Value Error", msg
-            self.set_widget_data(obj_value)
-        else:
-            self.obj.set(self.key, value)
-            self.on_update(self)
+            self.widget.update()
+            value = self.get_widget_data()
+            obj_value = self.obj.get(self.key)
+            if value == obj_value:
+                return False
 
-        return False
+            try:
+                value = self.check(value)
+            except ValueError, msg:
+                print "Value Error", msg
+                self.set_widget_data(obj_value)
+            else:
+                self.set_value(self.obj, self.key, value)
+        finally:
+            return False
 
 
 class As_Colorbutton:
@@ -444,8 +440,7 @@ class As_Colorbutton:
             print "Value Error", msg
             self.set_widget_data(obj_value)
         else:
-            self.obj.set(self.key, value)
-            self.on_update(self)
+            self.set_value(self.obj, self.key, value)
 
         return False
 

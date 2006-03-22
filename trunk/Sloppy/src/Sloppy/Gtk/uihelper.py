@@ -220,7 +220,6 @@ def add_scrollbars(widget, viewport=False, show=True):
     sw = gtk.ScrolledWindow()
     sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
     if viewport is True:
-        print "Adding with viewport"
         sw.add_with_viewport(widget)
     else:
         sw.add(widget)
