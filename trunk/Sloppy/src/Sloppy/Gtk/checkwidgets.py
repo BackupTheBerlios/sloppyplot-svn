@@ -19,35 +19,29 @@
 # $Id$
  
 
-import gtk, sys, inspect
+import gtk, sys
 
 from Sloppy.Lib.Check import *
 from Sloppy.Lib.Signals import *
 from Sloppy.Lib.Undo import UndoList, UndoInfo
-from Sloppy.Base import uwrap
+from Sloppy.Base import uwrap, utils
+from Sloppy.Gtk import uihelper
+
 
 import logging
 logger = logging.getLogger('gtk.checkwidgets')
 
+#------------------------------------------------------------------------------
 
-# TODO: For testing
-import uihelper
-
-
-
-def as_class(obj):
-    if inspect.isclass(obj):
-        return obj
-    else:
-        return obj.__class__
+# Text to use if the None value is offered in a ComboBox
+COMBO_DEFAULT = ""
 
 
-               
 class DisplayFactory:
 
 
     def __init__(self, klass):
-        self.klass = as_class(klass)
+        self.klass = utils.as_class(klass)
         self.keys = [] 
         self.obj = None
         self.original_obj = None
@@ -238,7 +232,7 @@ class Display:
         self.key = None
         self.check = None
         self.key = key
-        self.klass = as_class(klass)
+        self.klass = utils.as_class(klass)
         self.check = getattr(self.klass, key)
         self.cb = None
         self.obj = None
@@ -260,6 +254,7 @@ class Display:
 
         self.obj = obj
         if obj is not None:
+            self.widget.set_sensitive(True)
             self.set_widget_data(obj.get(self.key))
             on_update_lambda = lambda sender, value: self.set_widget_data(value)        
             obj.signals['update::%s'%self.key].connect(on_update_lambda)
@@ -324,6 +319,7 @@ class As_Combobox:
         return gtk.ComboBox()
 
     def prepare_widget(self, cb):
+        global COMBO_DEFAULT
         model = gtk.ListStore(str, object)
         cb.set_model(model)
         cell = gtk.CellRendererText()
@@ -334,7 +330,7 @@ class As_Combobox:
 
         if hasattr(self, 'alist'):
             for value in self.alist:
-                model.append((unicode(value), value))
+                model.append((unicode(value or COMBO_DEFAULT), value))
                 self.values.append(value)
         elif hasattr(self, 'adict'):
             for key, value in self.adict.iteritems():
@@ -449,9 +445,10 @@ class As_Colorbutton:
 
 class Display_Bool_As_Combobox(As_Combobox, Display):
     def init(self):
+        global COMBO_DEFAULT
         adict = {'True': True, 'False': False}
         if self.check.required is False:
-            adict.update({'None': None})
+            adict.update({COMBO_DEFAULT: None})
         self.adict = adict
        
 

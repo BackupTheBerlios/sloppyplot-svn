@@ -23,6 +23,8 @@
 
 
 import os.path
+import inspect
+
 
 # ----------------------------------------------------------------------
 
@@ -106,6 +108,13 @@ def unique_names(names, old_names):
             j+=1
         rv.append(name)
     return rv
+
+
+def as_class(obj):
+    if inspect.isclass(obj):
+        return obj
+    else:
+        return obj.__class__
 
 
 if __name__ == "__main__":

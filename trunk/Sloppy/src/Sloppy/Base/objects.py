@@ -45,7 +45,7 @@ PV = {
                         'upper center', 'lower center',
                         'outside', 'at position'],
     'axis.scale': ['linear','log'],
-    'line.style' : ["solid","dashed","dash-dot","dotted","steps","None"],
+    'line.style' : ["solid","dashed","dash-dot","dotted","steps", "None"],
     'layer.type' : ['line2d', 'contour'],
 
     'line.color' : ['black', 'blue', 'red', 'green', 'cyan', 'magenta', 'yellow'],
@@ -180,7 +180,7 @@ class Axis(SPObject):
 class Line(SPObject):
     " A single line or collection of points in a Plot. "
     label = Unicode()
-    visible = Boolean(init=True)
+    visible = Boolean(init=True, required=True)
     
     style = Choice([None] + PV['line.style'])
     width = Float(min=0, max=10, init=None)
@@ -234,8 +234,8 @@ class Layer(SPObject):
     type = Choice(PV['layer.type'])
     title = Unicode(init=None, blurb="Title")
     lines = List(Instance(Line), blurb="Lines")
-    grid = Boolean(init=False, blurb="Grid", doc="Display a grid")
-    visible = Boolean(init=True, blurb="Visible")
+    grid = Boolean(init=False, required=True, blurb="Grid", doc="Display a grid")
+    visible = Boolean(init=True, required=True, blurb="Visible")
     legend = Instance(Legend, on_init=lambda o,k: Legend())
 
     x = Float(min=0.0, max=1.0, init=0.11)

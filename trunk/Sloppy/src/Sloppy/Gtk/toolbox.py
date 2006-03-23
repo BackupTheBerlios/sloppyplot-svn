@@ -89,9 +89,9 @@ class ToolBox(dock.Dock):
                     book.add(tool)
                     # TODO: size information is not used                    
                 except Exception, msg:
-                    logger.error("Could not init tool dock '%s': %s" % (eDockable.text, msg))
+                    logger.error("Could not init Tool '%s': %s (%s)" % (eDockable.text, str(Exception), msg))
                 else:
-                    print ">>> Tool added", eDockable.text
+                    logger.debug("Added Tool '%s'" % eDockable.text)
 
         self.show_all()
 
@@ -156,9 +156,6 @@ class Tool(dock.Dockable):
         
 
     def generic_on_update(self, var, sender, value):
-        print "GENERIC UPDATE FOR VAR ", var
-        print "%s = %s" % (sender, value)
-
         old_value = getattr(self, var)
         if value == old_value:
             return

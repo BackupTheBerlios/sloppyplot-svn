@@ -30,30 +30,7 @@ from Sloppy.Base import uwrap, globals, objects
 from Sloppy.Lib.Undo import UndoList, NullUndo, ulist, UndoInfo
 
 
-#     def disable_interaction(self, widget):
-#         " Disable most user interaction. "        
-#         actiongroups = self.uimanager.get_action_groups()
-#         for actiongroup in actiongroups:
-#             if actiongroup.get_name() in ['ViewMenu']:
-#                 continue
-#             if actiongroup.get_sensitive() is True:
-#                 actiongroup.set_sensitive(False)
-#                 self.disabled_groups.append(actiongroup)               
-
-#     def enable_interaction(self, widget):
-#         " Re-enable all interaction disabled by disable_interaction. "
-#         for actiongroup in self.disabled_groups:
-#             actiongroup.set_sensitive(True)
-#         self.disabled_groups = list()
-
-# To enable mplwidget ui:
-#  add actiongroups to uimanager
-#  merge ui string
-
-# To disable mplwidget ui
-#  remove actiongroups
-#  unmerge ui via merge id
-
+#------------------------------------------------------------------------------
 
 
 class MatplotlibWidget(gtk.VBox):
@@ -82,11 +59,11 @@ class MatplotlibWidget(gtk.VBox):
         ('ZoomIn', gtk.STOCK_ZOOM_IN, '_Zoom In', '<control>plus', 'Zoom', 'on_action_ZoomIn'),
         ('ZoomOut', gtk.STOCK_ZOOM_OUT, '_Zoom Out', '<control>minus', 'Zoom', 'on_action_ZoomOut'),
         ('ZoomFit', gtk.STOCK_ZOOM_FIT, '_Zoom Fit', '<control>0', 'Zoom', 'on_action_ZoomFit'),
-        ('ZoomRect', gtk.STOCK_ZOOM_FIT, '_Zoom Rectangle', 'r', 'Zoom', 'on_action_ZoomRect'),
-        ('MoveAxes', None, 'Move Plot', 'm', '', 'on_action_MoveAxes'),
-        ('DataCursor', None, 'Data Cursor', 'c', '', 'on_action_DataCursor'),
-        ('SelectLine', None, 'Select Line', 's', '', 'on_action_SelectLine'),
-        ('ZoomAxes', None, 'Zoom Axes', 'z', '', 'on_action_ZoomAxes')
+        ('ZoomRect', gtk.STOCK_ZOOM_FIT, '_Zoom Rectangle', '<control>r', 'Zoom', 'on_action_ZoomRect'),
+        ('MoveAxes', None, 'Move Plot', '<control>m', '', 'on_action_MoveAxes'),
+        ('DataCursor', None, 'Data Cursor', '<control>c', '', 'on_action_DataCursor'),
+        ('SelectLine', None, 'Select Line', None, '', 'on_action_SelectLine'),
+        ('ZoomAxes', None, 'Zoom Axes', None, '', 'on_action_ZoomAxes')
         ]
         }
 

@@ -125,7 +125,6 @@ class LegendPainter(Painter):
         border = kwargs.pop('border')
         visible = kwargs.pop('visible')
         handles, labels = kwargs.pop('handles'), kwargs.pop('labels')
-        print "labels", labels
         _legend = layer_painter.axes.legend(handles, labels, **kwargs)        
         _legend.draw_frame(border)
         _legend.set_visible(visible)
@@ -350,10 +349,9 @@ class LayerPainter(Painter):
         layer = self.obj
         axes = self.axes
         for (key, axis) in layer.axes.iteritems():
-            print "SETTING RANGE"
             #:axis.label, :axis.scale, :axis.start,:axis.end
             label, scale, start, end = axis.label, axis.scale, axis.start, axis.end
-            logger.debug("::: start = %s; end = %s" % (start, end))
+            logger.debug("Setting range of layer '%s' to [%s:%s], scale is %s" % (label, start, end, scale))            
 
             if key == 'x':
                 set_label = axes.set_xlabel
@@ -466,7 +464,7 @@ class Backend(backend.Backend):
     def redraw(self, force=False):
         """ redraw, unlike draw, only redisplays the existing canvas. """
         if force is True or (self._redraw is True and self._block_redraw==0):
-            print "REDRAW"
+            logger.debug("Redraw.")
             self.canvas.draw()
         self._redraw = False
         

@@ -1,15 +1,24 @@
 
-import gtk
-from Sloppy.Gtk import toolbox, uihelper, checkwidgets
-from Sloppy.Base import globals, objects, uwrap
-
-
 """
 All-including Tool :-) that lists all objects of a Plot.
 """
 
 
-KLASS_KEYS = {objects.Layer: ['title', 'visible', 'grid', 'x', 'y', 'width', 'height', 'type']}
+import gtk
+from Sloppy.Gtk import toolbox, uihelper, checkwidgets
+from Sloppy.Base import globals, objects, uwrap, utils
+from Sloppy.Lib.Check import List, Dict
+
+import logging
+logger = logging.getLogger('Tools.omni_tool')
+
+#------------------------------------------------------------------------------
+
+KLASS_KEYS = {
+    objects.Layer: ['title', 'visible', 'grid', 'x', 'y', 'width', 'height'],
+    objects.Line: ['label', 'visible', 'style', 'color', 'width', 'marker', 'marker_color', 'marker_size', 'cx', 'cy', 'row_first', 'row_last']
+
+    }
 
 
 class OmniTool(toolbox.Tool):
@@ -49,11 +58,20 @@ class OmniTool(toolbox.Tool):
         treeview.connect("cursor-changed", self.on_cursor_changed)
         treeview.show()    
 
-        #
-        # Edit Area
-        #
-        self.edit_area = None
-        self.obj = None # no active object to begin with
+        # The edit_cache is a dict where the keys are the classes
+        # of the objects that can be edited and the values are
+        # tuples (widget, factory), which are the edit widget for this
+        # class and the corresponding DisplayFactory object to make 
+        # the connection to actual objects. The factory may be None.
+        self.edit_cache = {}
+
+        # The currently edited object. Use edit_cache[self.obj.__class__]
+        # to get the currently active widget and its factory
+        self.obj = None
+
+        # A simple informative label if None is edited.
+        self.add_to_cache(None, gtk.Label("--None--"), None)
+        self.edit(None)
 
         #
         # Both the treeview and the table are stuffed into
@@ -84,11 +102,75 @@ class OmniTool(toolbox.Tool):
             self.treeview.set_sensitive(False)
         else:
             self.treeview.set_sensitive(True)
-            for layer in backend.plot.layers:
-                model.append(None, (layer,))
+            self.add_list(None, backend.plot, 'layers')
+
+        self.treeview.expand_all()
                 
         self.backend = backend
 
+
+    def add_list(self, parent_node, obj, listkey):
+        """ Add items of a List attribute to the model as subnode. """
+        model = self.treeview.get_model()
+        for item in obj.get(listkey):
+            node = model.append(parent_node, (item,))
+            # how do we figure out which are the subnodes ?
+            # iterate over all checks of the list object,
+            for key, check in item._checks.iteritems():
+                if isinstance(check, List):
+                    self.add_list(node, item, key)
+            
+
+    def edit(self, obj):
+        logger.debug("%d edit widgets in cache" % len(self.edit_cache))
+        
+        # 
+        if self.edit_cache.has_key(obj.__class__) is False:
+            # create factory
+            factory = checkwidgets.DisplayFactory(obj)
+            try:
+                keys = KLASS_KEYS[obj.__class__]
+            except KeyError:
+                keys = [key for key, check in obj._checks.iteritems() if not isinstance(check, (List,Dict))]                
+            factory.add_keys(keys)
+
+            # create widget and add it to the edit area
+            tbl = factory.create_table()
+            widget = uihelper.add_scrollbars(tbl, viewport=True)
+            self.vbox.add(widget)
+
+            # set up undo hooks (needs to be after creation of table, because
+            # otherwise there are no displays!)
+            for display in factory.displays.itervalues():
+                display.set_value = self.set_attribute_value
+
+            self.add_to_cache(obj, widget, factory)           
+
+        # hide last active widget
+        if self.edit_cache.has_key(self.obj.__class__):
+            widget, factory = self.edit_cache[self.obj.__class__]
+            if factory is not None:
+                factory.connect(None)
+            widget.hide()
+
+        # show new widget        
+        widget, factory = self.edit_cache[obj.__class__]
+        if factory is not None:
+            factory.connect(obj)            
+        widget.show_all()
+        self.obj = obj        
+
+
+    def add_to_cache(self, klass, widget, factory):
+        """ Add the given widget and factory to the edit cache.
+        The given 'klass', which acts as key for the edit cache,
+        is automatically converted to a class, if it is an object
+        instance. The 'factory' may be None if the edit widget
+        is not created by the checkwidgets facility.
+        """
+        klass = utils.as_class(klass)
+        self.edit_cache[klass] = (widget, factory)
+        
 
     def on_cursor_changed(self, sender):
         # if the cursor changes, then we need to refresh
@@ -101,41 +183,14 @@ class OmniTool(toolbox.Tool):
 
         if obj == self.obj:
             return
-        
-        # TODO: if the object is different, but the class is the
-        # TODO: same, then we don't rebuild the table, but simply
-        # TODO: connect the new object.
-        
-        # remove any existing edit area
-        if self.edit_area is not None:
-            self.vbox.remove(self.attr_table)
-
-        print "OBJECT IS ", obj
-        
-        # create new widget
-        if obj is not None:            
-            df = checkwidgets.DisplayFactory(obj)
-            try:
-                keys = KLASS_KEYS[obj.__class__]
-            except KeyError:
-                key = obj._checks.keys()
-            df.add_keys(keys)
-            tbl = df.create_table()
-            # undo hooks
-            for display in df.displays.itervalues():
-                display.set_value = self.set_attribute_value
-            df.connect(obj)                        
-            widget = uihelper.add_scrollbars(tbl, viewport=True)
-            widget.show_all()            
-            self.vbox.add(widget)
-        else:
-            widget = None
-
-        self.edit_area = widget
-        self.obj = obj
+                                                
+        self.edit(obj)
 
 
     def set_attribute_value(self, obj, key, value):
+        print
+        print "UNDO HOOK"
+        print
         # this is used as a hook for undo
         uwrap.set(obj, key, value, undolist=globals.app.project.journal)
         

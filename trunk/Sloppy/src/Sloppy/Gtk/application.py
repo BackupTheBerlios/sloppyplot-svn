@@ -159,7 +159,6 @@ class GtkApplication(application.Application):
     def init_plugins(self):
         for plugin in self.plugins.itervalues():
             if hasattr(plugin, 'gtk_init'):
-                print "GTK init the plugin."
                 plugin.gtk_init(self)
 
     def register_actions(self, action_wrappers):
@@ -933,7 +932,6 @@ def main(filename=None):
 
         ## FOR TESTING
         # TODO: maybe as command line option?
-        print "ADDING EXPERIMENTAL PLOT"
         app.core.add_experimental_plot(spj)
         spj.journal.clear()
         app.window.sidepane.show()

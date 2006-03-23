@@ -1,11 +1,31 @@
 
 
+- what about the line source? This requires a custom widget -- so write it!
+
+- allow the addition of additional elements to OmniWidgets.
+  There might be a button 'set source' in the Line widget that allows a clever
+  selection of the line source.
+
+- The tools have a problem: Close the omni tool, leave SloppyPlot.
+  Restart SloppyPlot, open the omni tool, then select the first plot.
+  The Omni Tool will not be updated, I guess this is because the active
+  backend hasn't changed but was already set.
+
+- Migrate Plot window to some kind of Tool (would allow reordering). 
+  - Make Plot active when you click in the explorer.
+  - Allow closing a Plot (Maybe we could simply add a button in the notebook tab)
+  - close a plot as a menu point
+ 
+- Clicking on a line should not open a line dialog, but should highlight the corresponding
+  entry in the OmniTool.
+
+- Adding/removing items
+
+- OmniTool: Axes
 
 - block_redraw ? unblock_redraw ? Verallgemeinerung auf Signale?
 
-- vernünftiger LineDialog, da er wichtig ist.
-  ODER: einfach unterhalb des LineTools als create_table
-  mit direkten Änderungen (Achtung: Undo!)  
+
 
 - Tools.depends_on  und generic_on_update handhaben doppelte
   Namen nicht richtig, da der Index über den Namen gesucht wird.
@@ -24,18 +44,6 @@
 - layer logarithmisch machen funktioniert nicht
 
 - wenn backend ausgewählt wird, aktualisiert sich die Layer nicht selbst...
-
-
-
-GROBES KONZEPT:
-
-- Ein TreeView mit allen Objekten,
-  darunter eine dynamisch erzeugte Tabelle mit den entsprechenden 
-  Feldern für das aktuell ausgewählte Objekt.
-
-
-(for 0.5.3):
-============
 
 - this is getting too complicated:
   If the line is redrawn, then the range is scaled automatically (argh),
@@ -102,11 +110,7 @@ GROBES KONZEPT:
   What should we do? BTW, we could really move te axis into a new painter,
   since we also want each axis to have a bounding box (clicking on it)
 
-- allow manipulation of existing lines, i.e.
-  -- if I set visible=False, update it accordingly
-  -- if I set other style properties, update them as well
-  -- what about the line source? This requires a custom widget -- so write it!
-  -- 
+
 
 
 

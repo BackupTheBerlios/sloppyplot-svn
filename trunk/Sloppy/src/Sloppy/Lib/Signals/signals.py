@@ -11,6 +11,8 @@ import inspect
 
 import logging
 logger = logging.getLogger('Lib.Signals')
+#------------------------------------------------------------------------------
+
 
 class Signal:
     """
@@ -113,7 +115,7 @@ class HasSignals:
 
     def sig_emit(self, name, *args, **kwargs):
         signal = self.signals[name]        
-        print "Signal %s emitted. %d slots available." % (name, len(signal.slots))
+        logger.debug("Emit %s (%d slots)" % (name, len(signal.slots)))
         signal(self, *args, **kwargs)
 
     def sig_connect(self, name, func):
