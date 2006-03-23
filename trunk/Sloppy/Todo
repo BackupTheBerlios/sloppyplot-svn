@@ -1,4 +1,6 @@
 
+- queue_redraw is nice, but we somehow need a way to ensure that the 
+  canvas really _is_ redrawn.
 
 - what about the line source? This requires a custom widget -- so write it!
 

@@ -281,8 +281,9 @@ class MatplotlibWidget(gtk.VBox):
             else:
                 _start, _end = start, end
 
-            axis.start = _start
-            axis.end = _end            
+            print "-------"
+            axis.set(start=_start, end=_end)
+            print "-------"            
 
         set_axis(layer.xaxis, x0, x1)
         set_axis(layer.yaxis, y0, y1)

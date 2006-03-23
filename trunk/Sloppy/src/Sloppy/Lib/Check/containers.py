@@ -63,7 +63,11 @@ class TypedList:
     def __repr__(self): return repr(self.data)
     def __lt__(self, other): return self.data <  self.__cast(other)
     def __le__(self, other): return self.data <= self.__cast(other)    
-    def __eq__(self, other): return self.data == self.__cast(other)
+    def __eq__(self, other):
+        try:
+            return self.data == self.__cast(other)
+        except:
+            return False
     def __ne__(self, other): return self.data != self.__cast(other)
     def __gt__(self, other): return self.data >  self.__cast(other)
     def __ge__(self, other): return self.data >= self.__cast(other)

@@ -11,13 +11,14 @@ from Sloppy.Lib.Check import List, Dict
 
 import logging
 logger = logging.getLogger('Tools.omni_tool')
-
 #------------------------------------------------------------------------------
 
+
+
 KLASS_KEYS = {
+    objects.Plot: ['key', 'title', 'comment'],
     objects.Layer: ['title', 'visible', 'grid', 'x', 'y', 'width', 'height'],
     objects.Line: ['label', 'visible', 'style', 'color', 'width', 'marker', 'marker_color', 'marker_size', 'cx', 'cy', 'row_first', 'row_last']
-
     }
 
 
@@ -36,7 +37,7 @@ class OmniTool(toolbox.Tool):
         #
         
         # model (object)
-        model = gtk.TreeStore(object)
+        model = gtk.TreeStore(object, str)
 
         self.treeview = treeview = gtk.TreeView(model)
         treeview.set_headers_visible(False)
@@ -46,10 +47,19 @@ class OmniTool(toolbox.Tool):
 
         def render_label(column, cell, model, iter):
             obj = model.get_value(iter, 0)
-            if hasattr(obj, 'label') and obj.label is not None:
-                label = obj.label
+            key = model.get_value(iter, 1)
+
+            label = None
+            if key is not None:
+                label = key
             else:
+                for attr in ['label', 'title', 'key']:
+                    if hasattr(obj, attr):
+                        label = getattr(obj, attr)
+
+            if label is None:
                 label = "<%s>" % obj.__class__.__name__
+            
             cell.set_property('text', label)
         column.set_cell_data_func(cell, render_label)
 
@@ -69,18 +79,18 @@ class OmniTool(toolbox.Tool):
         # to get the currently active widget and its factory
         self.obj = None
 
-        # A simple informative label if None is edited.
-        self.add_to_cache(None, gtk.Label("--None--"), None)
-        self.edit(None)
-
         #
         # Both the treeview and the table are stuffed into
         # a vbox; but there is no no table to begin with.
         # It is created in the on_cursor_changed event.
         #
-        self.vbox = vbox = gtk.VBox()
-        vbox.add(uihelper.add_scrollbars(treeview))
-        self.add(vbox)
+        self.paned = gtk.VPaned()
+        self.paned.pack1(uihelper.add_scrollbars(treeview))
+        self.add(self.paned)
+               
+        #self.vbox = vbox = gtk.VBox()
+        #vbox.add(uihelper.add_scrollbars(treeview))
+        #self.add(vbox)
         
         # Connect to Backend.
         self.backend = -1
@@ -102,42 +112,35 @@ class OmniTool(toolbox.Tool):
             self.treeview.set_sensitive(False)
         else:
             self.treeview.set_sensitive(True)
-            self.add_list(None, backend.plot, 'layers')
+            self.refresh(backend.plot)
 
         self.treeview.expand_all()
                 
         self.backend = backend
 
-
-    def add_list(self, parent_node, obj, listkey=None):
-        """ Add items of a List attribute to the model as subnode. """
-        # TODO:
-        # + plot
-        #  + layer 1
-        #    + lines
-        #       line 1
-        #       line 2
-        #    + labels
-        #       label 1
-        #       label 2
-        #  + layer 2
-        #
-        # What we need is a generator traverse_tree for spobject.
-        
+    def refresh(self, obj):
         model = self.treeview.get_model()
-        for item in obj.get(listkey):
-            node = model.append(parent_node, (item,))
-            # how do we figure out which are the subnodes ?
-            # iterate over all checks of the list object,
-            for key, check in item._checks.iteritems():
+
+        def add_list(obj, parent_iter=None, key=None):
+            iter = model.append(parent_iter, (obj,key))
+            for item in obj:
+                if isinstance(item, objects.SPObject):
+                    add_spobject(item, iter, key=None)
+
+        def add_spobject(obj, parent_iter=None, key=None):
+            iter = model.append(parent_iter, (obj,key))
+            for key, check in obj._checks.iteritems():
                 if isinstance(check, List):
-                    self.add_list(node, item, key)
+                    add_list(obj.get(key), iter, key)
+
+        add_spobject(obj, key=None)
+        
             
 
     def edit(self, obj):
         logger.debug("%d edit widgets in cache" % len(self.edit_cache))
-        
-        # 
+
+        # create new widget (unless we don't have a SPObject, e.g. a List)
         if self.edit_cache.has_key(obj.__class__) is False:
             # create factory
             factory = checkwidgets.DisplayFactory(obj)
@@ -150,7 +153,7 @@ class OmniTool(toolbox.Tool):
             # create widget and add it to the edit area
             tbl = factory.create_table()
             widget = uihelper.add_scrollbars(tbl, viewport=True)
-            self.vbox.add(widget)
+            self.paned.pack2(widget)
 
             # set up undo hooks (needs to be after creation of table, because
             # otherwise there are no displays!)
@@ -160,18 +163,16 @@ class OmniTool(toolbox.Tool):
 
             self.add_to_cache(obj, widget, factory)           
 
-        # hide last active widget
-        if self.edit_cache.has_key(self.obj.__class__):
-            widget, factory = self.edit_cache[self.obj.__class__]
-            if factory is not None:
-                factory.connect(None)
-            widget.hide()
-
-        # show new widget        
+        # show widget
         widget, factory = self.edit_cache[obj.__class__]
         if factory is not None:
-            factory.connect(obj)            
+            factory.connect(obj)
+        child = self.paned.get_child2()
+        if child is not None and child is not widget:
+            self.paned.remove(child)
+            self.paned.pack2(widget)
         widget.show_all()
+
         self.obj = obj        
 
 
@@ -195,10 +196,21 @@ class OmniTool(toolbox.Tool):
         model, iter = self.treeview.get_selection().get_selected()
         obj = model.get_value(iter,0)
 
-        if obj == self.obj:
-            return
-                                                
-        self.edit(obj)
+
+        def set_sensitive(sensitive):
+            child2 = self.paned.get_child2()
+            if child2 is not None:
+                child2.set_sensitive(sensitive)
+
+        if isinstance(obj, objects.SPObject):            
+            #if obj == self.obj:
+            #    return                                                
+            self.edit(obj)
+
+        set_sensitive(isinstance(obj, objects.SPObject))
+
+                
+
         
         
 #------------------------------------------------------------------------------

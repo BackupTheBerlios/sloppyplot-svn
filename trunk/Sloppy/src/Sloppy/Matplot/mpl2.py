@@ -459,7 +459,7 @@ class Backend(backend.Backend):
         
     def queue_redraw(self):
         self._redraw = True
-        self.redraw()
+        #self.redraw()
 
     def redraw(self, force=False):
         """ redraw, unlike draw, only redisplays the existing canvas. """
