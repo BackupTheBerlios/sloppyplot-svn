@@ -158,7 +158,8 @@ class MatplotlibWidget(gtk.VBox):
             backend.canvas.set_size_request(canvas_width, canvas_height)
 
             # set up object picking
-            backend.canvas.mpl_connect('button_press_event', self.button_press_event)
+            # DISABLED
+            #backend.canvas.mpl_connect('button_press_event', self.button_press_event)
 
             # [NV] I disabled rulers again to get ready for the next release.
             if False:
@@ -285,12 +286,13 @@ class MatplotlibWidget(gtk.VBox):
             axis.set(start=_start, end=_end)
             print "-------"            
 
+        self.backend.block_redraw()
         set_axis(layer.xaxis, x0, x1)
         set_axis(layer.yaxis, y0, y1)
+        self.backend.unblock_redraw()
 
-        ul = UndoList("Zoom Region")
+        ul = UndoList("Zoom Region")        
         ul.append(UndoInfo(self.zoom_to_region, layer, old_region))
-        uwrap.emit_last(self.backend, 'redraw', undolist=ul)        
         undolist.append(ul)
 
     def axes_from_xy(self, x, y):

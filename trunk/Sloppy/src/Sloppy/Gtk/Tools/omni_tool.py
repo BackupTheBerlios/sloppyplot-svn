@@ -85,7 +85,7 @@ class OmniTool(toolbox.Tool):
         # It is created in the on_cursor_changed event.
         #
         self.paned = gtk.VPaned()
-        self.paned.pack1(uihelper.add_scrollbars(treeview))
+        self.paned.pack1(uihelper.add_scrollbars(treeview),True,True)
         self.add(self.paned)
                
         #self.vbox = vbox = gtk.VBox()

@@ -455,18 +455,20 @@ class Backend(backend.Backend):
         self._block_redraw += count
 
     def unblock_redraw(self, count=1):
-        self._block_redraw = max(0, self._block_redraw-count)        
+        self._block_redraw = max(0, self._block_redraw-count)
+        self.redraw()
         
     def queue_redraw(self):
         self._redraw = True
-        #self.redraw()
+        self.redraw()
 
     def redraw(self, force=False):
         """ redraw, unlike draw, only redisplays the existing canvas. """
         if force is True or (self._redraw is True and self._block_redraw==0):
             logger.debug("Redraw.")
             self.canvas.draw()
-        self._redraw = False
+            self._redraw = False
+            self._block_redraw = 0
         
         
 #------------------------------------------------------------------------------    
