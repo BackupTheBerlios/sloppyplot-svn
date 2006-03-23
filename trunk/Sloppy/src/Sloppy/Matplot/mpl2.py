@@ -326,8 +326,9 @@ class LayerPainter(Painter):
         # axes
         # This needs to be after lines, because painting the
         # lines would reset the start and end.
-        if 'xaxis' in keys or 'yaxis' in keys:
-            self.update_axis(None, [])
+
+#        if 'xaxis' in keys or 'yaxis' in keys:
+        self.update_axis(None, [])
 
         # legend
         # Since the legend labels are constructed from the matplotlib

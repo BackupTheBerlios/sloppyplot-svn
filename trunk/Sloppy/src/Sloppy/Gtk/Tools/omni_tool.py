@@ -7,7 +7,7 @@ All-including Tool :-) that lists all objects of a Plot.
 import gtk
 from Sloppy.Gtk import toolbox, uihelper, checkwidgets
 from Sloppy.Base import globals, objects, uwrap, utils
-from Sloppy.Lib.Check import List, Dict
+from Sloppy.Lib.Check import List, Dict, Instance
 
 import logging
 logger = logging.getLogger('Tools.omni_tool')
@@ -18,7 +18,8 @@ logger = logging.getLogger('Tools.omni_tool')
 KLASS_KEYS = {
     objects.Plot: ['key', 'title', 'comment'],
     objects.Layer: ['title', 'visible', 'grid', 'x', 'y', 'width', 'height'],
-    objects.Line: ['label', 'visible', 'style', 'color', 'width', 'marker', 'marker_color', 'marker_size', 'cx', 'cy', 'row_first', 'row_last']
+    objects.Line: ['label', 'visible', 'style', 'color', 'width', 'marker', 'marker_color', 'marker_size', 'cx', 'cy', 'row_first', 'row_last'],
+    objects.Axis: ['label', 'start', 'end', 'scale']
     }
 
 
@@ -120,18 +121,27 @@ class OmniTool(toolbox.Tool):
 
     def refresh(self, obj):
         model = self.treeview.get_model()
-
+            
+                                
         def add_list(obj, parent_iter=None, key=None):
             iter = model.append(parent_iter, (obj,key))
             for item in obj:
                 if isinstance(item, objects.SPObject):
                     add_spobject(item, iter, key=None)
 
+        def add_dict(obj, parent_iter=None, key=None):
+            iter = model.append(parent_iter, (obj,key))
+            for subkey, item in obj.iteritems():
+                if isinstance(item, objects.SPObject):
+                    add_spobject(item, iter, key=subkey)
+            
         def add_spobject(obj, parent_iter=None, key=None):
             iter = model.append(parent_iter, (obj,key))
             for key, check in obj._checks.iteritems():
                 if isinstance(check, List):
                     add_list(obj.get(key), iter, key)
+                elif isinstance(check, Dict):
+                    add_dict(obj.get(key), iter, key)
 
         add_spobject(obj, key=None)
         

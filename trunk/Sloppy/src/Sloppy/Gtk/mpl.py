@@ -246,7 +246,7 @@ class MatplotlibWidget(gtk.VBox):
         
     #----------------------------------------------------------------------
     def on_action_Replot(self, action):
-        self.backend.draw()
+        self.backend.redraw(force=True)
         
     #----------------------------------------------------------------------
 

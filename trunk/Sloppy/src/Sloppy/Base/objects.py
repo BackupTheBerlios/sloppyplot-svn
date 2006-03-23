@@ -271,12 +271,21 @@ class Layer(SPObject):
     labels = List(Instance(TextLabel))
 
     # axes
-    xaxis = Instance(Axis, on_init=lambda o,k: Axis())
-    yaxis = Instance(Axis, on_init=lambda o,k: Axis())
+    #xaxis = Instance(Axis, on_init=lambda o,k: Axis())
+    #yaxis = Instance(Axis, on_init=lambda o,k: Axis())
     
-    def get_axes(self):
-        return {'x':self.xaxis, 'y':self.yaxis}
-    axes = property(get_axes)
+    #def get_axes(self):
+    #    return {'x':self.xaxis, 'y':self.yaxis}
+    #axes = property(get_axes)
+
+    axes = Dict(Axis, on_init=lambda o,k: {'x':Axis(), 'y':Axis()})
+
+    def get_xaxis(self): return self.axes['x']
+    def get_yaxis(self): return self.axes['y']
+    def set_xaxis(self, axis): self.axes['x'] = axis
+    def set_yaxis(self, axis): self.axes['y'] = axis    
+    xaxis = property(get_xaxis, set_xaxis)
+    yaxis = property(get_yaxis, set_yaxis)
 
         
 
