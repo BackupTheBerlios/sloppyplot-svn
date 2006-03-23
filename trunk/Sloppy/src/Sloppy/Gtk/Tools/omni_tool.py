@@ -109,8 +109,21 @@ class OmniTool(toolbox.Tool):
         self.backend = backend
 
 
-    def add_list(self, parent_node, obj, listkey):
+    def add_list(self, parent_node, obj, listkey=None):
         """ Add items of a List attribute to the model as subnode. """
+        # TODO:
+        # + plot
+        #  + layer 1
+        #    + lines
+        #       line 1
+        #       line 2
+        #    + labels
+        #       label 1
+        #       label 2
+        #  + layer 2
+        #
+        # What we need is a generator traverse_tree for spobject.
+        
         model = self.treeview.get_model()
         for item in obj.get(listkey):
             node = model.append(parent_node, (item,))
@@ -141,8 +154,9 @@ class OmniTool(toolbox.Tool):
 
             # set up undo hooks (needs to be after creation of table, because
             # otherwise there are no displays!)
+            undo_hook = lambda obj, key, value: uwrap.set(obj, key, value, undolist=globals.app.project.journal)
             for display in factory.displays.itervalues():
-                display.set_value = self.set_attribute_value
+                display.set_value = undo_hook
 
             self.add_to_cache(obj, widget, factory)           
 
@@ -185,14 +199,7 @@ class OmniTool(toolbox.Tool):
             return
                                                 
         self.edit(obj)
-
-
-    def set_attribute_value(self, obj, key, value):
-        print
-        print "UNDO HOOK"
-        print
-        # this is used as a hook for undo
-        uwrap.set(obj, key, value, undolist=globals.app.project.journal)
+        
         
 #------------------------------------------------------------------------------
 toolbox.register_tool(OmniTool)
