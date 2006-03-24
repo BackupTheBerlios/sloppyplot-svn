@@ -1,6 +1,27 @@
 
-- queue_redraw is nice, but we somehow need a way to ensure that the 
-  canvas really _is_ redrawn.
+OmniTool
+========
+
+- Legend is an instance, therefore it is not displayed in the Omni-Tool.
+  But if we allow all instances, then we would suddenly also have 
+  line.source ?
+  Also, we wouldn't need to have axes as list, but could keep the old
+  way with x-axis and y-axis.
+  Hmmm....
+  
+- Add icons to OmniTool, otherwise it sucks.
+
+- Clicking on a part of the graph should send out a signal
+   'user-pick'
+  from the backend, which the OmniTool should catch and move the
+  treeview cursor to that element.
+
+- allow popup menu in Omni Treeview, so that you can add/remove elements
+  in the view, e.g. Lines.
+  
+
+Others
+======
 
 - what about the line source? This requires a custom widget -- so write it!
 
@@ -18,16 +39,7 @@
   - Allow closing a Plot (Maybe we could simply add a button in the notebook tab)
   - close a plot as a menu point
  
-- Clicking on a line should not open a line dialog, but should highlight the corresponding
-  entry in the OmniTool.
-
 - Adding/removing items
-
-- OmniTool: Axes
-
-- block_redraw ? unblock_redraw ? Verallgemeinerung auf Signale?
-
-
 
 - Tools.depends_on  und generic_on_update handhaben doppelte
   Namen nicht richtig, da der Index über den Namen gesucht wird.
@@ -46,23 +58,6 @@
 - layer logarithmisch machen funktioniert nicht
 
 - wenn backend ausgewählt wird, aktualisiert sich die Layer nicht selbst...
-
-- this is getting too complicated:
-  If the line is redrawn, then the range is scaled automatically (argh),
-  therefore we would have to reset the axis after each line draw...
-  Obviously we need to have a way to distinguish between: 
-  (1) just a minor change, which is worth of updating just a single object
-  (2) redraw everything
-
-  E.g. if we update a line, then the legend should reflect it, thus the
-  legend needs to be updated. 
-
-  change line ---> update line-painter ---> update legend ---> redraw canvas
-
-  However, if we change a lot of settings, then we don't want the drawing
-  methods to be so smart.
-
-  One way to achieve this is to block the signal that emits 'update legend'.
 
 - fix dragging of dockables
 
@@ -85,35 +80,6 @@
   their data as well
 
 - allow to refer to a layer's active line
-
-- queue redraw by emitting a signal
-
-    'queue-redraw', backend
-
-  backend can be determined by a Painter method
-
-    get_backend()
-
-  MAYBE SIMPLER: get_backend().queue_redraw()
-
-
-  When should we redraw?
-
-  (1) Whenever an action is finished, we can check if a redraw was requested.
-  (2) Whenever a certain time has elapsed, we might want to check if
-      a redraw is required.
-
-  Consequently, for calculations that take longer time and manipulate the
-  plot or the dataset, we must be able to block signals, so that their
-  execution is not slowed down by periodical updates.
-
-
-- update_axis => if start/end is None, then no range is set!!!!
-  What should we do? BTW, we could really move te axis into a new painter,
-  since we also want each axis to have a bounding box (clicking on it)
-
-
-
 
 
 SMALL CLEANUPS TO DO:
