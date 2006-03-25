@@ -25,20 +25,6 @@ logger = logging.getLogger('Backends.mpl2')
 #------------------------------------------------------------------------------
 
 
-# Problems with this implementation:
-#  What if an object changes?
-
-#  So obviously each painter needs to connect to its object somehow
-#  and realize if it changes/if it is removed/if there's a new item.
-#  This _should_ be done with the 'update' and the 'update:obj' 
-#  signals, where the second version is for altering lists and dicts.
-#  I should try this with the lines.
-
-# Another thing:
-#  Should the line be painted single or total ?
-
-#------------------------------------------------------------------------------
-
 linestyle_mappings = \
 {'None'               : "None",
  "solid"              : "-",
@@ -118,7 +104,11 @@ class Painter(SPObject):
 
 class LegendPainter(Painter):
 
-    def paint(self):
+    def init(self):
+        self.obj.sig_connect('update', self.update)
+        
+    def paint(self, keys=[]):
+        
         legend, layer_painter = self.obj, self.parent
 
         kwargs = self.get_kwargs()
@@ -128,7 +118,16 @@ class LegendPainter(Painter):
         _legend = layer_painter.axes.legend(handles, labels, **kwargs)        
         _legend.draw_frame(border)
         _legend.set_visible(visible)
-                
+
+    def update(self, sender, keys):
+        backend = self.get_backend()
+        try:
+            backend.block_redraw()
+            self.paint(keys=keys)
+        finally:
+            backend.unblock_redraw()
+            backend.queue_redraw()
+        
 
     def get_kwargs(self):
         legend, layer_painter = self.obj, self.parent
@@ -164,6 +163,9 @@ class LinePainter(Painter):
 
     def init(self):
         self.obj.sig_connect('update', self.update)
+        # TODO: Find smarter way to notify legend that it needs to be redrawn!
+        self.obj.sig_connect('update', self.parent.get_painter(self.parent.obj.legend, LegendPainter).update)
+        
         
     def update(self, sender, keys):
         
@@ -215,19 +217,11 @@ class LinePainter(Painter):
             marker = linemarker_mappings[marker]
         except KeyError:
             marker = linemarker_mappings.values()[0]
-        
-        #:line.width
-        #:layer.group_width
+
+        # width, color, marker_color, marker_size
         width = layer.group_width.get(line, index, override=line.width or Undefined)
-        
-        #:line.color
-        #:layer.group_color
         color = layer.group_color.get(line, index, override=line.color or Undefined)
-
-        #:line.marker_color
         marker_color = layer.group_marker_color.get(line, index, override=line.marker_color or Undefined)
-
-        #:line.marker_size
         marker_size = line.marker_size or 1
 
         # When repainting the line, we need to remove the corresponding
@@ -303,47 +297,52 @@ class LayerPainter(Painter):
 
             
     def update(self, sender, keys):
-
-        # plot_painter := backend
-        layer, plot_painter = self.obj, self.parent
-        axes = self.axes
-        
-        # title
-        if 'title' in keys:
-            title = layer.title
-            axes.set_title(title or '') # matplotlib doesn't like None as title
-
-        # grid
-        if 'grid' in keys:
-            axes.grid(layer.grid)
-
-        
-        # lines -- these should be updated by update::lines !!!
-        for line in layer.lines:
-            painter = self.get_painter(line, LinePainter)
-            painter.paint()
-
-        # axes
-        # This needs to be after lines, because painting the
-        # lines would reset the start and end.
-
-#        if 'xaxis' in keys or 'yaxis' in keys:
-        self.update_axis(None, [])
-
-        # legend
-        # Since the legend labels are constructed from the matplotlib
-        # line objects, it is necessary to construct the legend after
-        # the lines are plotted
-        if 'legend' in keys:
-            legend = layer.legend        
-            if legend is None:
-                # remove any existing legend painter if obsolete
-                pass
-            else:
-                p = self.get_painter(legend, LegendPainter)
-                p.paint()
+        backend = self.get_backend()
+        try:
+            backend.block_redraw()
             
-        self.get_backend().queue_redraw()
+            # plot_painter := backend
+            layer, plot_painter = self.obj, self.parent
+            axes = self.axes
+
+            # title
+            if 'title' in keys:
+                title = layer.title
+                axes.set_title(title or '') # matplotlib doesn't like None as title
+
+            # grid
+            if 'grid' in keys:
+                axes.grid(layer.grid)
+
+
+            # lines -- these should be updated by update::lines !!!
+            for line in layer.lines:
+                painter = self.get_painter(line, LinePainter)
+                painter.paint()
+
+            # axes
+            # This needs to be after lines, because painting the
+            # lines would reset the start and end.
+
+    #        if 'xaxis' in keys or 'yaxis' in keys:
+            self.update_axis(None, [])
+
+            # legend
+            # Since the legend labels are constructed from the matplotlib
+            # line objects, it is necessary to construct the legend after
+            # the lines are plotted
+            if 'legend' in keys:
+                legend = layer.legend        
+                if legend is None:
+                    # remove any existing legend painter if obsolete
+                    pass
+                else:
+                    p = self.get_painter(legend, LegendPainter)
+                    p.paint()
+
+        finally:
+            backend.unblock_redraw()
+            backend.queue_redraw()
 
     def update_axis(self, sender, keys):
         

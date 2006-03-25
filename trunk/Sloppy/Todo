@@ -1,4 +1,7 @@
 
+- Add icons to OmniTool, otherwise it sucks.
+  => sloppy-.... lowercase!
+
 OmniTool
 ========
 
@@ -9,7 +12,11 @@ OmniTool
   way with x-axis and y-axis.
   Hmmm....
   
-- Add icons to OmniTool, otherwise it sucks.
+  How about extending the current EDIT_KEYS (or whatever it is called) approach:
+
+  {lines.Plot: {'sub-nodes': 'legend', 'layers',
+                'attributes': '...', '...'}}
+
 
 - Clicking on a part of the graph should send out a signal
    'user-pick'
@@ -23,6 +30,13 @@ OmniTool
 Others
 ======
 
+- PeakFinder: ComboBox of available lines instead of using the active line.
+
+- Mpl backend:
+
+  'paint' can be called from other methods and shouldn't queue a redraw.
+  Only on_update methods should!
+ 
 - what about the line source? This requires a custom widget -- so write it!
 
 - allow the addition of additional elements to OmniWidgets.

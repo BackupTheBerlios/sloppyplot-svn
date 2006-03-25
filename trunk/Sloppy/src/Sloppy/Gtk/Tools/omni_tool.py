@@ -22,6 +22,30 @@ KLASS_KEYS = {
     objects.Axis: ['label', 'start', 'end', 'scale']
     }
 
+KLASS_DESCR = {
+    objects.Plot:
+      {'nodes': ['layers'],
+       'attrs': ['key', 'title', 'comment'],
+       'label': 'Plot %(key)s'},
+    objects.Layer:
+      {'nodes': ['axes', 'lines', 'legend'],
+       'attrs': ['title', 'visible', 'grid', 'x', 'y', 'width', 'height'],
+       'label': 'Layer'},
+    objects.Line:
+      {'nodes': [],
+       'attrs': ['label', 'visible', 'style', 'color', 'width', 'marker', 'marker_color', 'marker_size', 'cx', 'cy'],
+       'label': 'Line %(key)s'},
+    objects.Axis:
+      {'nodes': [],
+       'attrs': ['label', 'start', 'end', 'scale'],
+       'label': '%(key)s-Axis'},
+    objects.Legend:
+      {'nodes': [],
+       'attrs': ['visible', 'position', 'x', 'y', 'border'],
+       'label': 'Legend'}
+    }
+
+       
 
 class OmniTool(toolbox.Tool):
 
@@ -43,13 +67,36 @@ class OmniTool(toolbox.Tool):
         self.treeview = treeview = gtk.TreeView(model)
         treeview.set_headers_visible(False)
 
-        cell = gtk.CellRendererText()
-        column = gtk.TreeViewColumn('label', cell)
+        column = gtk.TreeViewColumn('label')
 
+        cell = gtk.CellRendererPixbuf()                        
+        column.pack_start(cell,expand=False)
+        def render_icon(column, cell, model, iter):
+            obj = model.get_value(iter, 0)
+            key = model.get_value(iter, 1)
+            if key is not None:
+                stock_id = 'sloppy-%s'%key.lower()
+            else:
+                stock_id = 'sloppy-%s'%obj.__class__.__name__.lower()
+            cell.set_property('stock_id', stock_id)        
+        column.set_cell_data_func(cell, render_icon)
+        treeview.append_column(column)
+        
+        cell = gtk.CellRendererText()
+        column.pack_start(cell)
         def render_label(column, cell, model, iter):
             obj = model.get_value(iter, 0)
             key = model.get_value(iter, 1)
 
+            if key is None:
+                for attr in ['label', 'title', 'key']:
+                    if hasattr(obj, attr):
+                        key = getattr(obj, attr)
+
+            label = key
+            cell.set_property('text', label)
+
+            
             label = None
             if key is not None:
                 label = key
@@ -57,14 +104,12 @@ class OmniTool(toolbox.Tool):
                 for attr in ['label', 'title', 'key']:
                     if hasattr(obj, attr):
                         label = getattr(obj, attr)
-
             if label is None:
-                label = "<%s>" % obj.__class__.__name__
-            
+                label = "<%s>" % obj.__class__.__name__            
             cell.set_property('text', label)
         column.set_cell_data_func(cell, render_label)
-
         treeview.append_column(column)
+
         #treeview.connect("row-activated", self.on_row_activated)
         treeview.connect("cursor-changed", self.on_cursor_changed)
         treeview.show()    
@@ -134,28 +179,37 @@ class OmniTool(toolbox.Tool):
             for subkey, item in obj.iteritems():
                 if isinstance(item, objects.SPObject):
                     add_spobject(item, iter, key=subkey)
-            
-        def add_spobject(obj, parent_iter=None, key=None):
+
+        def add_spobject(obj, parent_iter=None, key=None):              
             iter = model.append(parent_iter, (obj,key))
-            for key, check in obj._checks.iteritems():
+            
+            try:
+                nodes = KLASS_DESCR[obj.__class__]['nodes']
+            except KeyError:
+                nodes = obj._checks.keys()
+                
+            for key in nodes:
+                check = obj._checks[key]
                 if isinstance(check, List):
                     add_list(obj.get(key), iter, key)
                 elif isinstance(check, Dict):
                     add_dict(obj.get(key), iter, key)
+                elif isinstance(check, Instance):
+                    add_spobject(obj.get(key), iter, key)
 
         add_spobject(obj, key=None)
         
             
 
     def edit(self, obj):
-        logger.debug("%d edit widgets in cache" % len(self.edit_cache))
 
         # create new widget (unless we don't have a SPObject, e.g. a List)
         if self.edit_cache.has_key(obj.__class__) is False:
             # create factory
             factory = checkwidgets.DisplayFactory(obj)
             try:
-                keys = KLASS_KEYS[obj.__class__]
+                #keys = KLASS_KEYS[obj.__class__]
+                keys = KLASS_DESCR[obj.__class__]['attrs']
             except KeyError:
                 keys = [key for key, check in obj._checks.iteritems() if not isinstance(check, (List,Dict))]                
             factory.add_keys(keys)
