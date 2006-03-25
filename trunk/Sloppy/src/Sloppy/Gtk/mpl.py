@@ -149,20 +149,25 @@ class MatplotlibWidget(gtk.VBox):
 
         if plot is not None:
             backend = self.project.request_backend('matplotlib', plot=plot)
-
+            
             # TODO: set canvas size depending on outer settings, on dpi
             # TODO: and zoom level
 
             # minium canvas size
-            canvas_width, canvas_height = 320,240
-            backend.canvas.set_size_request(canvas_width, canvas_height)
-
+            canvas_width, canvas_height = 800,600
+            zoom = 0.5
+            canvas_width *= zoom
+            canvas_height *= zoom
+            # TODO: set_size_request only sets a minimum size
+            # TODO: maybe have a look in dpi and figsize arguments
+            # TODO: to matplotlib backend.
+            backend.canvas.set_size_request(canvas_width, canvas_height)            
+            
             # set up object picking
             # DISABLED
             #backend.canvas.mpl_connect('button_press_event', self.button_press_event)
 
-            # [NV] I disabled rulers again to get ready for the next release.
-            if False:
+            if True:
                 # add rulers
                 hruler = gtk.HRuler()
                 hruler.set_metric(gtk.PIXELS)
@@ -194,7 +199,7 @@ class MatplotlibWidget(gtk.VBox):
             
             # add scrollbar
             #sw = uihelper.add_scrollbars(backend.canvas, viewport=True)
-            #sw.show()            
+            #sw.show_all()            
             #self.vbox.pack_start(sw)
         else:
             backend = None
