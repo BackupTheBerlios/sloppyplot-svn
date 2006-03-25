@@ -8,7 +8,6 @@
   <separator/>
   <menuitem action='Edit'/>
   <menuitem action='RenameItem'/>
-  <menuitem action='ViewMetadata'/>        
   <separator/>        
   <menuitem action='Delete'/>
   <separator/>
@@ -20,7 +19,6 @@
 <popup name="popup_dataset">
   <menuitem action='Edit'/>
   <menuitem action='RenameItem'/>
-  <menuitem action='ViewMetadata'/>
   <separator/>      
   <menuitem action='DatasetToPlot'/>
   <menuitem action='DatasetAddToPlot'/>

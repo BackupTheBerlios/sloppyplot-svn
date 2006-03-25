@@ -1,3 +1,8 @@
+
+#
+# THIS FILE IS NOT USED RIGHT NOW
+#
+
 # This file is part of SloppyPlot, a scientific plotting tool.
 # Copyright (C) 2005 Niklas Volbers
 #

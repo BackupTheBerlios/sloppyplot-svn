@@ -38,7 +38,7 @@ class TypedList:
 
     def check(self, item):
         try:
-            return self._check.check(item)
+            return self._check(item)
         except ValueError, msg:
             raise ValueError("Item for list is invalid: %s" % msg)
     
@@ -49,7 +49,7 @@ class TypedList:
         if isinstance(alist, (list,tuple)):
             newlist = []
             for item in alist:
-                newlist.append(self._check.check(item))
+                newlist.append(self._check(item))
             return newlist
         else:
             raise TypeError("List required, got %s instead." % type(alist))
@@ -194,12 +194,12 @@ class TypedDict:
 
     def check(self, key, value):
         try:
-            key = self.key_check.check(key)
+            key = self.key_check(key)
         except ValueError, msg:
             raise ValueError("Key (%s) for dict item is invalid, it %s" % (key, msg))
 
         try:
-            value = self.value_check.check(value)
+            value = self.value_check(value)
         except ValueError, msg:
             raise ValueError("Value (%s) for dict item is invalid, it %s" % (value, msg))
         
@@ -221,7 +221,7 @@ class TypedDict:
 
     #------------------------------------------------------------------------------
     # All functions below are implementations of methods from UserDict.
-    # Any new key/item must be checked via self.key_check.check/self.value_check.check,
+    # Any new key/item must be checked via self.key_check.__call__/self.value_check.__call__,
     # any new dict of items via self.check_dict.
                     
 

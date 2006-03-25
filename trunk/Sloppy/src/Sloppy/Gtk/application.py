@@ -33,7 +33,6 @@ from Sloppy.Gtk.datawin import DatasetWindow
 from Sloppy.Gtk.gnuplot_window import GnuplotWindow
 from Sloppy.Gtk.appwindow import AppWindow
 from Sloppy.Gtk.layerwin import LayerWindow
-from Sloppy.Gtk.property_browser import PropertyBrowserDialog
 from Sloppy.Gtk.options_dialog import OptionsDialog, NoOptionsError
 from Sloppy.Gtk import toolbox, dock
 from Sloppy.Gtk.Tools import *
@@ -835,22 +834,7 @@ class GtkApplication(application.Application):
             dlg.run()
         finally:
             dlg.destroy()
-
-
-    def on_action_ViewMetadata(self, action):
-        objects = self.selected_plots + self.selected_datasets
-        if len(objects) == 1:
-            obj = objects[0]
-            # distinguish between old-style object
-            # and new-style node.
-            if isinstance(obj, Dataset):
-                obj = obj.node_info
-            dlg = PropertyBrowserDialog(obj)
-            try:
-                dlg.run()
-            finally:
-                dlg.destroy()
-            
+           
 
     #----------------------------------------------------------------------
     # Simple user I/O, inherited from Base.Application
