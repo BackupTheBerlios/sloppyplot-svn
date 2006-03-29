@@ -1,11 +1,13 @@
+  
+QuickEdit Tool
+==============
 
-- Add icons to OmniTool, otherwise it sucks.
-  => sloppy-.... lowercase!
+- Rename OmniTool to one of 
+   QuickEditTool 
+   PropertyEditor
+   
 
-OmniTool
-========
-
-- Legend is an instance, therefore it is not displayed in the Omni-Tool.
+- Legend is an instance, therefore it is not displayed in the QE-Tool.
   But if we allow all instances, then we would suddenly also have 
   line.source ?
   Also, we wouldn't need to have axes as list, but could keep the old
@@ -17,7 +19,6 @@ OmniTool
   {lines.Plot: {'sub-nodes': 'legend', 'layers',
                 'attributes': '...', '...'}}
 
-
 - Clicking on a part of the graph should send out a signal
    'user-pick'
   from the backend, which the OmniTool should catch and move the
@@ -25,40 +26,14 @@ OmniTool
 
 - allow popup menu in Omni Treeview, so that you can add/remove elements
   in the view, e.g. Lines.
+
+- react on addition/removal of items by updating the tree
   
 
-Others
-======
+PeakFinder Tool
+===============
 
-- PeakFinder: ComboBox of available lines instead of using the active line.
-
-- Mpl backend:
-
-  'paint' can be called from other methods and shouldn't queue a redraw.
-  Only on_update methods should!
- 
-- what about the line source? This requires a custom widget -- so write it!
-
-- allow the addition of additional elements to OmniWidgets.
-  There might be a button 'set source' in the Line widget that allows a clever
-  selection of the line source.
-
-- The tools have a problem: Close the omni tool, leave SloppyPlot.
-  Restart SloppyPlot, open the omni tool, then select the first plot.
-  The Omni Tool will not be updated, I guess this is because the active
-  backend hasn't changed but was already set.
-
-- Migrate Plot window to some kind of Tool (would allow reordering). 
-  - Make Plot active when you click in the explorer.
-  - Allow closing a Plot (Maybe we could simply add a button in the notebook tab)
-  - close a plot as a menu point
- 
-- Adding/removing items
-
-- Tools.depends_on  und generic_on_update handhaben doppelte
-  Namen nicht richtig, da der Index über den Namen gesucht wird.
-  Sinnvoller wäre es vielleicht, direkt den Index zu übergeben,
-  wenn generic_on_update aufgesetzt wird.
+- ComboBox of available lines instead of using the active line.
 
 - Ergebnisse des PeakFinders evtl. in ein Dataset übergeben und dieses
   dann anzeigen lassen?
@@ -69,21 +44,46 @@ Others
 
 - Peaks abspeichern (evtl. Log?)
 
-- layer logarithmisch machen funktioniert nicht
 
-- wenn backend ausgewählt wird, aktualisiert sich die Layer nicht selbst...
+MPL Backend
+===========
 
-- fix dragging of dockables
+- 'paint' can be called from other methods and shouldn't queue a redraw.
+  Only on_update methods should!
+ 
 
-- bugfix for data cursor: if mpl handles the left/right, then don't let
-  gtk handle it!
 
-- add cursor position in status bar and let all widgets call the status-
-  bar of the app (maybe via a signal: 'push-status', context, msg and
-  for the special case of coordinates: 'push-coordinates', x, y)
+Checkwidgets
+============
+
+- what about the line source? This requires a custom widget -- so write it!
+
+
+Docks/Tools in General
+======================
+
+- The tools have a problem: Close the omni tool, leave SloppyPlot.
+  Restart SloppyPlot, open the omni tool, then select the first plot.
+  The Omni Tool will not be updated, I guess this is because the active
+  backend hasn't changed but was already set.
+
+- Migrate Plot window to some kind of Tool (would allow reordering). 
+  - Make Plot active when you click in the explorer.
+  - Allow closing a Plot (Maybe we could simply add a button in the notebook tab)
+  - close a plot as a menu point
+
+- fix dragging of dockables (when moving to the bottom separator, the tool
+  is not moved to the end) 
 
 - put Dataset into notebooks as well.  This will unify the undo.
 
+- Plot and Dataset are descendants of DockableView
+  (uistring, actions, title).
+
+- allow detaching tools into separate windows (problem: saving)
+
+- not every toolbox allows every tool!
+  
 - remember heights of the dockbooks
 
 - open the first available plot for testing
@@ -92,15 +92,31 @@ Others
 
 - synchronize tools with backend -- if backend closes, they should discard
   their data as well
+  
 
-- allow to refer to a layer's active line
+MISC BUGS
+=========
+
+- layer logarithmisch machen funktioniert nicht immer
+
+- wenn backend ausgewählt wird, aktualisiert sich die Layer nicht selbst...
+
+- bugfix for data cursor: if mpl handles the left/right, then don't let
+  gtk handle it!
+
+- add cursor position in status bar and let all widgets call the status-
+  bar of the app (maybe via a signal: 'push-status', context, msg and
+  for the special case of coordinates: 'push-coordinates', x, y)
 
 
-SMALL CLEANUPS TO DO:
-=====================
+
+SMALL CLEANUPS TO DO BEFORE RELEASING
+======================================
 
 - change headers (copyright)
+
 - set svn props properly
+
 - maybe move the importers and templates into the app, so we can
   deprecate 'globals' and replace it by the app. OR simply rename
   application to app, the app instance to app.instance and have

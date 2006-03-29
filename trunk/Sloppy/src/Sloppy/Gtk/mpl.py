@@ -161,7 +161,10 @@ class MatplotlibWidget(gtk.VBox):
             # TODO: set_size_request only sets a minimum size
             # TODO: maybe have a look in dpi and figsize arguments
             # TODO: to matplotlib backend.
-            backend.canvas.set_size_request(canvas_width, canvas_height)            
+            backend.canvas.resize(canvas_width, canvas_height)
+            #backend.canvas.set_size_request(canvas_width, canvas_height)
+            backend.figure.set_figsize_inches( 2,3 )
+            backend.figure.set_dpi(100)
             
             # set up object picking
             # DISABLED
