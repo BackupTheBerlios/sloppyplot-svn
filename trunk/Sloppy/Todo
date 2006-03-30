@@ -1,19 +1,25 @@
 
 - ComboBox of available lines instead of using the active line.
-
+  => connect to any change of any layer's lines ???
   
-QuickEdit Tool
-==============
-
-- Clicking on a part of the graph should send out a signal
-   'user-pick'
-  from the backend, which the OmniTool should catch and move the
-  treeview cursor to that element.
+To test this notification I should next implement the addition of new lines
+in the PropertyEditor.
 
 - allow popup menu in PropertyEditor, so that you can add/remove elements
   in the view, e.g. Lines.
 
 - react on addition/removal of items by updating the tree
+
+##############################################################################
+
+  
+Property Editor
+================
+
+- Clicking on a part of the graph should send out a signal
+   'user-pick'
+  from the backend, which the OmniTool should catch and move the
+  treeview cursor to that element.
   
 
 PeakFinder Tool

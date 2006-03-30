@@ -9,51 +9,80 @@ from Sloppy.Base import globals, backend, objects
 
 #----------------------------------------------------------------------
 
-# we need to specify a x column and a y column
-
 
 class Settings(objects.SPObject):
     threshold = Float(init=1.0)
     accuracy = Float(init=1.0)
-    line = Instance(objects.Line)
+    line = Instance(objects.Line, init=None)
 
 
 class DisplayLine(checkwidgets.Display):
 
+    def __init__(self):
+        checkwidgets.Display.__init__(self)
+        self.backend = None
+        self.values = []
+        self.cblist = []
+        
     def _create(self):
         return gtk.ComboBox()
 
     def _prepare(self, cb):
-        model = gtk.ListStore(object)
+        # model = (line, layer)
+        model = gtk.ListStore(object, object)
         cb.set_model(model)
         cell = gtk.CellRendererText()
         cb.pack_start(cell, True)
 
         def render_linename(column, cell, model, iter):
             line = model.get_value(iter, 0)
-            cell.set_property('text', 'a line')            
+            if line is None:
+                line_descr = "NONE"
+            else:
+                line_descr = line.get_description()
+
+            layer = model.get_value(iter, 1)
+            if layer is None:
+                layer_descr = "NONE"
+            else:
+                layer_descr = layer.get_description()
+                
+            cell.set_property('text', '%s: %s' % (layer_descr, line_descr))
         cb.set_cell_data_func(cell, render_linename)
-
-        self.update_model(model)
-
-    def update_model(self, model):
-        model.clear()
-        model.append((None,))
-        return
-
-        # TODO
-        # TODO: sync with active backend's layer. HOW?
-        model.clear()
-        for line in self.layer.lines:
-            model.append((line,))
+        cb.connect("changed", self.on_changed)
         
+        self.update_model()
+
+    def update_model(self):
+        # first disconnect all old signals
+        for cb in self.cblist:
+            cb.disconnect()
+        self.cblist = []
+
+        # now repopulate the treeview and add callbacks
+        model = self.widget.get_model()
+        model.clear()
+        self.values = []        
+        if self.backend is not None:
+            for layer in self.backend.plot.layers:
+                cb = layer.sig_connect('update::lines', lambda sender, updateinfo: self.update_model())
+                self.cblist.append(cb)
+                for line in layer.lines:
+                    model.append((line, layer))
+                    self.values.append(line)
+
+    def set_backend(self, backend):
+        if backend is not self.backend:
+            self.backend = backend
+            self.update_model()
         
 
     def get_widget_data(self):
-        index = self.widget.get_active()
+        index = self.widget.get_active()      
         if index < 0:
             return Undefined
         else:
+            model = self.widget.get_model()        
             return self.values[index]
 
     def set_widget_data(self, data):
@@ -62,6 +91,22 @@ class DisplayLine(checkwidgets.Display):
         except:
             index = -1
         self.widget.set_active(index)
+
+    def on_changed(self, widget):
+        value = self.get_widget_data()
+        obj_value = self.obj.get(self.key)
+        if value == obj_value:
+            return False
+        
+        try:
+            value = self.check(value)
+        except ValueError, msg:
+            print "Value Error", msg
+            self.set_widget_data(obj_value)
+        else:
+            self.set_value(self.obj, self.key, value)
+
+        return False
         
     
 class PeakFinder(toolbox.Tool):
@@ -74,7 +119,7 @@ class PeakFinder(toolbox.Tool):
         toolbox.Tool.__init__(self)
         self.settings = settings = Settings()
         
-        self.depends_on(globals.app, 'active_backend', 'active_layer_painter', 'active_line_painter')
+        self.depends_on(globals.app, 'active_backend')
 
         #
         # find button
@@ -86,7 +131,8 @@ class PeakFinder(toolbox.Tool):
         # Settings
         #
         df = checkwidgets.DisplayFactory(Settings)
-        df.add_keys(self.settings._checks.keys(), line=DisplayLine())
+        self.display_line = DisplayLine()
+        df.add_keys(self.settings._checks.keys(), line=self.display_line)
         self.table = table = df.create_sections(['Settings', 'line','threshold','accuracy'])
         df.connect(self.settings)
             
@@ -136,35 +182,17 @@ class PeakFinder(toolbox.Tool):
         self.add(vbox)
 
     def autoupdate_active_backend(self, sender, backend):
-        if backend is not None:
-            backend.request_active_layer()
-        
-    def autoupdate_active_layer_painter(self, sender, painter):
-        if painter is not None:
-            painter.request_active_line()
-    
-    def autoupdate_active_line_painter(self, sender, painter):
-        pass
-        #self.line_label.set_text(self.get_label_text())
+        print
+        print "-- updating backend --"
 
-    def get_label_text(self):
-        try:
-            layer, line = self.active_layer_painter.obj, self.active_line_painter.obj
-        except AttributeError:
-            return "---"
+        self.display_line.set_backend(backend)
         
-        if line is None:
-            return ""
-        else:
-            return "%02d:%s" % (layer.lines.index(line), line.label or "")
+        print
+        
 
 
     def on_btn_find_clicked(self, sender):
-        try:
-            layer, line = self.active_layer_painter.obj, self.active_line_painter.obj
-        except AttributeError:
-            return
-
+        line = self.settings.line
         threshold = self.settings.threshold
         accuracy = self.settings.accuracy
        

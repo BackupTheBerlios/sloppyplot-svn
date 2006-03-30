@@ -217,7 +217,10 @@ class Line(SPObject):
     def get_xy(self):
         s = self.get_source()
         return (s.get_column(self.cx), s.get_column(self.cy))
-    
+
+    def get_description(self):
+        return self.label or "<line>"
+
 
 class Legend(SPObject):
     " Plot legend. "
@@ -286,6 +289,10 @@ class Layer(SPObject):
     def set_yaxis(self, axis): self.axes['y'] = axis    
     xaxis = property(get_xaxis, set_xaxis)
     yaxis = property(get_yaxis, set_yaxis)
+
+
+    def get_description(self):
+        return self.title or "<layer>"
 
         
 
