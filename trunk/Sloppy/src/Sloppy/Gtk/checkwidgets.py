@@ -61,9 +61,22 @@ class DisplayFactory:
             self.displays[key] = value
 
 
-    def _create_displays(self):
-        for key in self.keys:
-            display = DisplayFactory.new_display(self.klass, key)
+    def _create_displays(self, keys):
+
+        """ Create Display instances for the given keys. The Display
+        instances are initialized and their widgets are created. """
+        
+        for key in keys:
+            if self.displays.has_key(key) is False:
+                display = DisplayFactory.new_display(self.klass, key)
+            else:
+                # You can either pass a Display instance or a class
+                # in add_keys. If a class was passed, then it needs
+                # to be initialized.
+                display = self.displays[key]
+                if not isinstance(display, Display):
+                    display = display()
+            display.init_class(self.klass, key)
             display.create_widget()
             self.displays[key] = display
 
@@ -100,24 +113,15 @@ class DisplayFactory:
 
     
     def create_sections(self, *layout):
-
+        
         if not isinstance(layout, (list,tuple)):
             raise RuntimeError("Must be a list or tuple.")
 
         vbox = gtk.VBox()
         
         for section in layout:
-            name = section[0]
-            keys = section[1:]
-
-            for key in keys:
-                if self.displays.has_key(key) is True:
-                    continue # don't create Display twice                  
-                
-                display = DisplayFactory.new_display(self.klass, key)
-                display.create_widget()
-                self.displays[key] = display
-
+            name, keys = section[0], section[1:]
+            self._create_displays(keys)
             w = uihelper.new_section(name, self._create_table_from_keys(keys))
             vbox.pack_start(w, False, True)
 
@@ -125,7 +129,7 @@ class DisplayFactory:
 
             
     def create_vbox(self):
-        self._create_displays()
+        self._create_displays(self.keys)
         vbox = gtk.VBox()
         for d in self.displays.itervalues():
             vbox.add(d.widget)
@@ -133,7 +137,7 @@ class DisplayFactory:
 
 
     def create_table(self):
-        self._create_displays()
+        self._create_displays(self.keys)
         
         table = gtk.Table(rows=len(self.keys), columns=2)
         tooltips = gtk.Tooltips()
@@ -177,6 +181,11 @@ class DisplayFactory:
             
     
     def new_display(klass, key):
+
+        """ Return a Display instance that is suitable for the given
+        class attr. You still need to call init_class and create_widget
+        on that instance before you can use the Display. """
+        
         check = getattr(klass, key)
         if isinstance(check, Bool):
             v = Display_Bool_As_Combobox
@@ -192,8 +201,8 @@ class DisplayFactory:
             v = Display_Mapping_As_Combobox
         else:
             v = Display_Anything_As_Entry
-        
-        return v(klass, key)
+
+        return v()
     
     new_display = staticmethod(new_display)    
 
@@ -227,23 +236,17 @@ class DisplayFactory:
     
 class Display:
     
-    def __init__(self, klass, key):
+    def __init__(self):
         self.obj = None
         self.key = None
+        self.klass = None
         self.check = None
+        self.cb = None
+       
+    def init_class(self, klass, key):
         self.key = key
         self.klass = utils.as_class(klass)
-        self.check = getattr(self.klass, key)
-        self.cb = None
-        self.obj = None
-
-        self.init()
-        
-        self.widget = self.create_widget()
-        self.prepare_widget(self.widget)
-
-    def init(self):
-        pass
+        self.check = getattr(self.klass, key)        
     
     def connect(self, obj):
         if self.obj is not None:
@@ -261,16 +264,16 @@ class Display:
         else:
             self.widget.set_sensitive(False)
 
-
-
     def disconnect(self):
         self.connect(None)
 
-
     def use_widget(self, widget):
         self.widget = widget
-        self.prepare_widget(widget)
+        self._prepare(widget)
 
+    def create_widget(self):
+        self.use_widget(self._create())
+        
     def set_value(self, obj, key, value):
         # this can be used as a hook for undo
         obj.set(key, value)
@@ -279,10 +282,10 @@ class Display:
 
 class As_Entry:
 
-    def create_widget(self):                      
+    def _create(self):                      
         return gtk.Entry()
 
-    def prepare_widget(self, entry):
+    def _prepare(self, entry):
         entry.connect("focus-in-event", self.on_focus_in_event)
 
     def on_focus_in_event(self, widget, event):
@@ -315,31 +318,25 @@ class As_Entry:
 
 class As_Combobox:
 
-    def create_widget(self):
+    def _create(self):
         return gtk.ComboBox()
 
-    def prepare_widget(self, cb):
+    def _prepare(self, cb):
         global COMBO_DEFAULT
         model = gtk.ListStore(str, object)
         cb.set_model(model)
         cell = gtk.CellRendererText()
         cb.pack_start(cell, True)
         cb.add_attribute(cell, 'text', 0)
-        model.clear()
         self.values = []
-
-        if hasattr(self, 'alist'):
-            for value in self.alist:
-                model.append((unicode(value or COMBO_DEFAULT), value))
-                self.values.append(value)
-        elif hasattr(self, 'adict'):
-            for key, value in self.adict.iteritems():
-                model.append((unicode(key), key))
-                self.values.append(value)
-        else:
-            raise RuntimeError("Combobox Display needs either alist or adict.")
-
+        self._fill_model(model)
         cb.connect("changed", self.on_changed)
+
+        
+    def _fill_model(self):
+        " Append values to model. Don't forget to add the values to self.values. "
+        pass
+
 
     def on_changed(self, widget):
         value = self.get_widget_data()
@@ -373,10 +370,10 @@ class As_Combobox:
 
 class As_Spinbutton:
 
-    def create_widget(self):
+    def _create(self):
         return gtk.SpinButton()
 
-    def prepare_widget(self, spinbutton):
+    def _prepare(self, spinbutton):
         spinbutton.set_numeric(False)
         # should be customizable        
         spinbutton.set_increments(1, 1)
@@ -415,10 +412,10 @@ class As_Spinbutton:
 
 class As_Colorbutton:
     
-    def create_widget(self):
+    def _create(self):
         return gtk.ColorButton()
 
-    def prepare_widget(self, colorbutton):
+    def _prepare(self, colorbutton):
         colorbutton.set_use_alpha(False)
         colorbutton.set_title(self.check.blurb or "Select Color")
 
@@ -444,24 +441,34 @@ class As_Colorbutton:
     
 
 class Display_Bool_As_Combobox(As_Combobox, Display):
-    def init(self):
-        global COMBO_DEFAULT
+
+    def _fill_model(self, model):
+        global COMBO_DEFAULT        
         adict = {'True': True, 'False': False}
         if self.check.required is False:
             adict.update({COMBO_DEFAULT: None})
-        self.adict = adict
-       
+
+        model.clear()            
+        for key, value in adict.iteritems():
+            model.append((unicode(key), key))
+            self.values.append(value)
+            
 
 class Display_Choice_As_Combobox(As_Combobox, Display):
-    def init(self):
-        self.alist = self.check.choices
+
+    def _fill_model(self, model):
+        model.clear()
+        for value in self.check.choices:
+            model.append((unicode(value or COMBO_DEFAULT), value))
+            self.values.append(value)
 
 class Display_Mapping_As_Combobox(As_Combobox, Display):
-    def init(self):
-        self.adict = self.check.mapping
-
-
-            
+    def _fill_model(self, model):
+        model.clear()
+        for key, value in self.check.mapping.iteritems():
+            model.append((unicode(key), key))
+            self.values.append(value)
+                
 
 class Display_Anything_As_Entry(As_Entry, Display):
 
@@ -500,8 +507,8 @@ class Display_Number_As_Spinbutton(As_Spinbutton, Display):
 
 class Display_Integer_As_Spinbutton(Display_Number_As_Spinbutton):
 
-    def prepare_widget(self, spinbutton):
-        Display_Number_As_Spinbutton.prepare_widget(self, spinbutton)
+    def _prepare(self, spinbutton):
+        Display_Number_As_Spinbutton._prepare(self, spinbutton)
         spinbutton.set_digits(0)
         
         

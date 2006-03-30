@@ -90,6 +90,7 @@ class ToolBox(dock.Dock):
                     # TODO: size information is not used                    
                 except Exception, msg:
                     logger.error("Could not init Tool '%s': %s (%s)" % (eDockable.text, str(Exception), msg))
+                    raise
                 else:
                     logger.debug("Added Tool '%s'" % eDockable.text)
 

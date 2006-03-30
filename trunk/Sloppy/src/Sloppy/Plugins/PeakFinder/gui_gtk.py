@@ -15,7 +15,54 @@ from Sloppy.Base import globals, backend, objects
 class Settings(objects.SPObject):
     threshold = Float(init=1.0)
     accuracy = Float(init=1.0)
-    
+    line = Instance(objects.Line)
+
+
+class DisplayLine(checkwidgets.Display):
+
+    def _create(self):
+        return gtk.ComboBox()
+
+    def _prepare(self, cb):
+        model = gtk.ListStore(object)
+        cb.set_model(model)
+        cell = gtk.CellRendererText()
+        cb.pack_start(cell, True)
+
+        def render_linename(column, cell, model, iter):
+            line = model.get_value(iter, 0)
+            cell.set_property('text', 'a line')            
+        cb.set_cell_data_func(cell, render_linename)
+
+        self.update_model(model)
+
+    def update_model(self, model):
+        model.clear()
+        model.append((None,))
+        return
+
+        # TODO
+        # TODO: sync with active backend's layer. HOW?
+        model.clear()
+        for line in self.layer.lines:
+            model.append((line,))
+        
+        
+
+    def get_widget_data(self):
+        index = self.widget.get_active()
+        if index < 0:
+            return Undefined
+        else:
+            return self.values[index]
+
+    def set_widget_data(self, data):
+        try:
+            index = self.values.index(data)
+        except:
+            index = -1
+        self.widget.set_active(index)
+        
     
 class PeakFinder(toolbox.Tool):
 
@@ -30,12 +77,6 @@ class PeakFinder(toolbox.Tool):
         self.depends_on(globals.app, 'active_backend', 'active_layer_painter', 'active_line_painter')
 
         #
-        # info label (displaying the active line)
-        #
-        self.line_label = label = gtk.Label()
-        label.set_text("Test")
-
-        #
         # find button
         #
         self.btn_find = btn_find = gtk.Button('Find')
@@ -45,8 +86,8 @@ class PeakFinder(toolbox.Tool):
         # Settings
         #
         df = checkwidgets.DisplayFactory(Settings)
-        df.add_keys(self.settings._checks.keys())
-        self.table = table = df.create_table()
+        df.add_keys(self.settings._checks.keys(), line=DisplayLine())
+        self.table = table = df.create_sections(['Settings', 'line','threshold','accuracy'])
         df.connect(self.settings)
             
         #
@@ -78,14 +119,15 @@ class PeakFinder(toolbox.Tool):
 
         #treeview.connect("row-activated", self.on_row_activated)
         #treeview.connect("cursor-changed", self.on_cursor_changed)
-        treeview.show()
+
+        # results is the section containing the treeview
+        results = uihelper.new_section('Results:', uihelper.add_scrollbars(treeview))
 
         #
         # pack everything in a vbox
         #
         vbox = gtk.VBox()
-        vbox.pack_start(label, False, True)
-        vbox.pack_start(uihelper.add_scrollbars(treeview), True, True)
+        vbox.pack_start(results, True, True)
         vbox.pack_start(table, False, False)
         vbox.pack_start(btn_find, False, True)
         
@@ -102,7 +144,8 @@ class PeakFinder(toolbox.Tool):
             painter.request_active_line()
     
     def autoupdate_active_line_painter(self, sender, painter):
-        self.line_label.set_text(self.get_label_text())
+        pass
+        #self.line_label.set_text(self.get_label_text())
 
     def get_label_text(self):
         try:

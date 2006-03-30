@@ -1,26 +1,16 @@
+
+- ComboBox of available lines instead of using the active line.
+
   
 QuickEdit Tool
 ==============
-
-
-- Legend is an instance, therefore it is not displayed in the QE-Tool.
-  But if we allow all instances, then we would suddenly also have 
-  line.source ?
-  Also, we wouldn't need to have axes as list, but could keep the old
-  way with x-axis and y-axis.
-  Hmmm....
-  
-  How about extending the current EDIT_KEYS (or whatever it is called) approach:
-
-  {lines.Plot: {'sub-nodes': 'legend', 'layers',
-                'attributes': '...', '...'}}
 
 - Clicking on a part of the graph should send out a signal
    'user-pick'
   from the backend, which the OmniTool should catch and move the
   treeview cursor to that element.
 
-- allow popup menu in Omni Treeview, so that you can add/remove elements
+- allow popup menu in PropertyEditor, so that you can add/remove elements
   in the view, e.g. Lines.
 
 - react on addition/removal of items by updating the tree
@@ -28,8 +18,6 @@ QuickEdit Tool
 
 PeakFinder Tool
 ===============
-
-- ComboBox of available lines instead of using the active line.
 
 - Ergebnisse des PeakFinders evtl. in ein Dataset übergeben und dieses
   dann anzeigen lassen?
@@ -48,12 +36,11 @@ MPL Backend
   Only on_update methods should!
  
 
-
 Checkwidgets
 ============
 
 - what about the line source? This requires a custom widget -- so write it!
-
+  => this DisplayLineSource should be very similar to the DisplayLine widget.
 
 Docks/Tools in General
 ======================
@@ -104,6 +91,9 @@ MISC BUGS
   bar of the app (maybe via a signal: 'push-status', context, msg and
   for the special case of coordinates: 'push-coordinates', x, y)
 
+- Adding Tools does not always work. I guess the passing of the popuinfo
+  is somehow not in sync, i.e. the popupinfo is not yet passed when the tool
+  is added.
 
 
 SMALL CLEANUPS TO DO BEFORE RELEASING
