@@ -31,11 +31,11 @@ from Sloppy.Base import globals
 from Sloppy.Lib.Props.main import PropertyError
 
 import logging
-logger = logging.getLogger('Gtk.Tool.project_tool')
+logger = logging.getLogger('Gtk.Tools.project_explorer')
 #------------------------------------------------------------------------------
 
 
-class ProjectTool(toolbox.Tool):
+class ProjectExplorer(toolbox.Tool):
 
     actions = [
         ('RenameItem', 'sloppy-rename', 'Rename', 'F2', 'Rename', 'action_RenameItem')
@@ -460,4 +460,4 @@ class ProjectTreeView( gtk.TreeView ):
 
 
 #------------------------------------------------------------------------------
-toolbox.register_tool(ProjectTool)
+toolbox.register_tool(ProjectExplorer)

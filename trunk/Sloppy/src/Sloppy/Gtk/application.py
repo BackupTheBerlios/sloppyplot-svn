@@ -131,7 +131,7 @@ class GtkApplication(application.Application):
         merge_id = self.window.uimanager.add_ui_from_string(ui)
 
         self.window.sidepane.read_config(globals.app.eConfig,                                         
-          default=['ProjectTool', 'LayersTool','LabelsTool'])
+          default=['ProjectExplorer', 'PropertyEditor'])
 
     def register_stock(self):
         """

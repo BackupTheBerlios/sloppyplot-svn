@@ -2,10 +2,6 @@
 QuickEdit Tool
 ==============
 
-- Rename OmniTool to one of 
-   QuickEditTool 
-   PropertyEditor
-   
 
 - Legend is an instance, therefore it is not displayed in the QE-Tool.
   But if we allow all instances, then we would suddenly also have 

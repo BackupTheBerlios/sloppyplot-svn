@@ -10,7 +10,7 @@ from Sloppy.Base import globals, objects, uwrap, utils
 from Sloppy.Lib.Check import List, Dict, Instance
 
 import logging
-logger = logging.getLogger('Tools.omni_tool')
+logger = logging.getLogger('Gtk.Tools.property_editor')
 #------------------------------------------------------------------------------
 
 
@@ -47,9 +47,9 @@ KLASS_DESCR = {
 
        
 
-class OmniTool(toolbox.Tool):
+class PropertyEditor(toolbox.Tool):
 
-    label = "Omni"
+    label = "PropertyEditor"
     icon_id = gtk.STOCK_PREFERENCES
 
     def __init__(self):
@@ -278,4 +278,4 @@ class OmniTool(toolbox.Tool):
         
         
 #------------------------------------------------------------------------------
-toolbox.register_tool(OmniTool)
+toolbox.register_tool(PropertyEditor)
