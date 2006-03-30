@@ -72,7 +72,7 @@ class ProjectExplorer(toolbox.Tool):
         # create actions for ui manager
         uimanager = globals.app.window.uimanager
         uihelper.add_actions(uimanager, "ProjectView", self.actions, self)
-        uimanager.add_ui_from_string(globals.app.get_uistring('project-view'))
+        uimanager.add_ui_from_string(globals.app.get_uistring('project_explorer'))
         
 ##        globals.app.window.add_accel_group(self.uimanager.get_accel_group())
 

@@ -426,7 +426,7 @@ class AppWindow( gtk.Window, HasSignals ):
         #dialog.set_artists(["Artists"])
         #dialog.set_translator_credits("Whoever translated")
         #dialog.set_log_icon_name("SloppyPlot")
-        path = os.path.join(globals.app.path.icon_dir, "Plot.png")
+        path = os.path.join(globals.app.path.icon_dir, "logo.png")
         logo = gtk.gdk.pixbuf_new_from_file(path)
         dialog.set_logo(logo)
 

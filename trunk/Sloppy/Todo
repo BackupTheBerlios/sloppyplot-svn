@@ -7,6 +7,13 @@ in the PropertyEditor.
 
 - allow popup menu in PropertyEditor, so that you can add/remove elements
   in the view, e.g. Lines.
+  
+  Where should I register the actions?
+  Maybe request a popup by the class name, e.g. 
+    'popup_property_editor_line'
+    'popup_property_editor_legend'
+  and if no such popup exist, then uimanager.get_widget will return None.
+
 
 - react on addition/removal of items by updating the tree
 

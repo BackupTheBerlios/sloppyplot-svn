@@ -1,0 +1,8 @@
+<popup name="popup_property_editor">
+  <menuitem action='Delete'/>
+</popup>
+
+<popup name="popup_property_editor_line">
+  <menuitem action='DeleteLine'/>
+</popup>
+

@@ -52,6 +52,11 @@ class PropertyEditor(toolbox.Tool):
     label = "PropertyEditor"
     icon_id = gtk.STOCK_PREFERENCES
 
+    actions = [
+        ('DeleteItem', gtk.STOCK_DELETE, 'Delete', '<delete>', 'Delete', 'action_DeleteItem')
+        ]
+
+
     def __init__(self):
         toolbox.Tool.__init__(self)
 
@@ -66,7 +71,8 @@ class PropertyEditor(toolbox.Tool):
 
         self.treeview = treeview = gtk.TreeView(model)
         treeview.set_headers_visible(False)
-
+        treeview.get_selection().set_mode(gtk.SELECTION_MULTIPLE)
+        
         column = gtk.TreeViewColumn('label')
 
         cell = gtk.CellRendererPixbuf()                        
@@ -110,8 +116,9 @@ class PropertyEditor(toolbox.Tool):
         column.set_cell_data_func(cell, render_label)
         treeview.append_column(column)
 
-        #treeview.connect("row-activated", self.on_row_activated)
+        treeview.connect("button-press-event", self.on_button_press_event)
         treeview.connect("cursor-changed", self.on_cursor_changed)
+        treeview.connect("popup-menu", self.on_popup_menu, 3, 0)
         treeview.show()    
 
         # The edit_cache is a dict where the keys are the classes
@@ -145,6 +152,10 @@ class PropertyEditor(toolbox.Tool):
         sender.sig_connect('update::active_backend', self.on_update_backend)
         self.on_update_backend(sender, sender.active_backend)
 
+        # ui manager
+        uimanager = globals.app.window.uimanager        
+        uihelper.add_actions(uimanager, "PropertyEditor", self.actions, self)
+        uimanager.add_ui_from_string(globals.app.get_uistring('property_editor'))              
 
 
     def on_update_backend(self, sender, backend):
@@ -257,9 +268,19 @@ class PropertyEditor(toolbox.Tool):
         global KLASS_KEYS
 
         # retrieve selected object
-        model, iter = self.treeview.get_selection().get_selected()
-        obj = model.get_value(iter,0)
+        model, pathlist = self.treeview.get_selection().get_selected_rows()
 
+        # If we have multiple objects selected, then we currently gray
+        # out the displays. The goal is an implementation where fields
+        # common to all controls can be set, e.g. if you have three lines
+        # selected, then you should be able to set the widht to 3.0 for
+        # all of the lines.
+        if len(pathlist) == 0:
+            obj = None
+        elif len(pathlist) == 1:
+            obj = model.get_value(model.get_iter(pathlist[0]), 0)
+        else:
+            obj = None
 
         def set_sensitive(sensitive):
             child2 = self.paned.get_child2()
@@ -273,6 +294,65 @@ class PropertyEditor(toolbox.Tool):
 
         set_sensitive(isinstance(obj, objects.SPObject))
 
+    def on_button_press_event(self, widget, event):
+        " RMB: Display popup menu. "
+        if event.button != 3:
+            return False
+
+        # RMB has been clicked -> popup menu
+
+        # Different cases are possible
+        # - The user has not yet selected anything.
+        #   In this case, we select the row on which the cursor
+        #   resides.
+        # - The user has made a selection.
+        #   In this case, we will leave it as it is.
+
+        # get mouse coords and corresponding path
+        x = int(event.x)
+        y = int(event.y)
+        time = event.time
+        try:
+            path, col, cellx, celly = widget.get_path_at_pos(x, y)
+        except TypeError:
+            # => user clicked on empty space -> offer creation of objects
+            pass                
+        else:
+            # If user clicked on a row, then select it.
+            selection = widget.get_selection()
+            if selection.count_selected_rows() == 0:              
+                widget.grab_focus()
+                widget.set_cursor( path, col, 0)
+
+        return self.on_popup_menu(widget,event.button,event.time)            
+
+    def on_popup_menu(self, widget, button, time):
+        " Returns True if a popup has been popped up. "
+
+        uim = globals.app.window.uimanager
+        
+        # create popup menu according to object type
+        model, pathlist = self.treeview.get_selection().get_selected_rows()
+        if len(pathlist) == 0:
+            popup = None
+        elif len(pathlist) == 1:
+            object = model.get_value(model.get_iter(pathlist[0]), 0)
+            print "OBJECT IS ", object
+            popup = uim.get_widget('/popup_property_editor')
+        else:
+            # selection of more than one object is currently not supported.
+            popup = None
+
+        if popup is not None:
+            popup.popup(None,None,None,button,time)
+            return True
+        else:
+            return False
+
+
+    def action_DeleteItem(self, action):
+        print "--- DELETE ---"
+        pass
                 
 
         
