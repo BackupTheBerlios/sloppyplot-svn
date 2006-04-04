@@ -259,7 +259,7 @@ class Display:
         if obj is not None:
             self.widget.set_sensitive(True)
             self.set_widget_data(obj.get(self.key))
-            on_update_lambda = lambda sender, value: self.set_widget_data(value)        
+            on_update_lambda = lambda sender, key, value: self.set_widget_data(value)
             obj.signals['update::%s'%self.key].connect(on_update_lambda)
         else:
             self.widget.set_sensitive(False)

@@ -1,7 +1,6 @@
 
-"""
-All-including Tool :-) that lists all objects of a Plot.
-"""
+""" The Property Editor allows you to edit any attribute of the Plot
+objects on-the-fly. """
 
 
 import gtk
@@ -53,7 +52,8 @@ class PropertyEditor(toolbox.Tool):
     icon_id = gtk.STOCK_PREFERENCES
 
     actions = [
-        ('DeleteItem', gtk.STOCK_DELETE, 'Delete', '<delete>', 'Delete', 'action_DeleteItem')
+        ('PE_DeleteLine', gtk.STOCK_DELETE, 'Delete Line', None, 'Delete', 'action_DeleteLine'),
+        ('PE_AddLine', gtk.STOCK_ADD, 'Add Line', None, 'Add', 'action_AddLine')        
         ]
 
 
@@ -61,7 +61,8 @@ class PropertyEditor(toolbox.Tool):
         toolbox.Tool.__init__(self)
 
         self.depends_on(globals.app, 'active_backend')
-
+        self.popup_info = None
+        
         #
         # Treeview
         #
@@ -150,7 +151,7 @@ class PropertyEditor(toolbox.Tool):
         #self.dock.connect('backend', ...)
         sender = globals.app
         sender.sig_connect('update::active_backend', self.on_update_backend)
-        self.on_update_backend(sender, sender.active_backend)
+        self.on_update_backend(sender, 'backend', sender.active_backend)
 
         # ui manager
         uimanager = globals.app.window.uimanager        
@@ -158,7 +159,7 @@ class PropertyEditor(toolbox.Tool):
         uimanager.add_ui_from_string(globals.app.get_uistring('property_editor'))              
 
 
-    def on_update_backend(self, sender, backend):
+    def on_update_backend(self, sender, key, backend):
         if backend == self.backend:
             return
 
@@ -175,10 +176,63 @@ class PropertyEditor(toolbox.Tool):
                 
         self.backend = backend
 
+    def on_update_list(self, sender, key, updateinfo):
+        logger.debug("on update list: %s, %s, %s" % (sender, key, updateinfo))
+
+        # find the corresponding sender
+        model = self.treeview.get_model()
+
+        def find_obj(iter, obj):
+            item = model.get_value(iter, 0)
+            if item is obj:
+                return iter
+
+            child = model.iter_children(iter)
+            while child is not None:
+                result = find_obj(child, obj)
+                if result is not None:
+                    return result
+                child = model.iter_next(child)
+
+            return None
+
+        iter = find_obj(model.get_iter_first(), sender.get(key))
+        if iter is None:
+            return # TODO: then maybe disconnect by returning False?
+
+        #
+        # Analyze updateinfo
+        #
+
+        if updateinfo.has_key('removed'):
+            first_index = updateinfo['removed'][0]
+            count = updateinfo['removed'][1]
+            indices = range(first_index, first_index+count)            
+            indices.reverse()
+            for index in indices:
+                child = model.iter_nth_child(iter, index)
+                print "child = ", child
+                model.remove(child)
+
+        if updateinfo.has_key('added'):
+            index = updateinfo['added'][0] - 1
+            new_items = updateinfo['added'][2]
+            sibling = model.iter_nth_child(iter, index)
+            for item in new_items:
+                print "iter, sibling =" , iter, sibling
+                sibling = model.insert_after(iter, sibling, (item, None))
+
+        if updateinfo.has_key('reordered'):
+            raise RuntimeError("Reordering of lists is too complicated for me")          
+
+        
+
+    
+            
     def refresh(self, obj):
         model = self.treeview.get_model()
-            
-                                
+
+                               
         def add_list(obj, parent_iter=None, key=None):
             iter = model.append(parent_iter, (obj,key))
             for item in obj:
@@ -203,6 +257,7 @@ class PropertyEditor(toolbox.Tool):
                 check = obj._checks[key]
                 if isinstance(check, List):
                     add_list(obj.get(key), iter, key)
+                    obj.sig_connect('update::%s'%key, self.on_update_list)
                 elif isinstance(check, Dict):
                     add_dict(obj.get(key), iter, key)
                 elif isinstance(check, Instance):
@@ -329,6 +384,7 @@ class PropertyEditor(toolbox.Tool):
     def on_popup_menu(self, widget, button, time):
         " Returns True if a popup has been popped up. "
 
+        self.popup_info = None # holds the model and the pathlist
         uim = globals.app.window.uimanager
         
         # create popup menu according to object type
@@ -336,9 +392,22 @@ class PropertyEditor(toolbox.Tool):
         if len(pathlist) == 0:
             popup = None
         elif len(pathlist) == 1:
-            object = model.get_value(model.get_iter(pathlist[0]), 0)
-            print "OBJECT IS ", object
-            popup = uim.get_widget('/popup_property_editor')
+            # The popup name is (in lowercase) popup_property_editor_xxx,
+            # where xxx is either the object's class, e.g. 'line'
+            # or 'layer', or in case of List and Dict objects (which
+            # have a key given in the treemodel), it is formed from
+            # their parent's class and their key, e.g. 'layer_lines'
+            # or 'plot_labels'
+            path = pathlist[0]
+            object, key = model.get(model.get_iter(path), 0, 1)                                    
+            if key is None:
+                key = object.__class__.__name__
+            else:
+                parent = model.get_value(model.get_iter(path[:-1]), 0)
+                key = "%s_%s" %( parent.__class__.__name__, key)
+            key = key.lower()
+            popup = uim.get_widget('/popup_property_editor_%s'%key)
+            self.popup_info = (model, pathlist)
         else:
             # selection of more than one object is currently not supported.
             popup = None
@@ -349,13 +418,48 @@ class PropertyEditor(toolbox.Tool):
         else:
             return False
 
-
-    def action_DeleteItem(self, action):
-        print "--- DELETE ---"
-        pass
-                
-
         
+    def find_parent(self, model, path, parent_class):
+        """ Find the parent object to the object given by 'path'
+        in the treeview, where the parent is an instance of
+        'parent_class'. """            
+        while 1:
+            path = path[:-1]            
+            obj = model.get_value(model.get_iter(path), 0)
+            if isinstance(obj, objects.Layer):
+                return obj
+        return None
+
+    def action_DeleteLine(self, action):
+        logger.debug("action: DeleteLine")
+
+        model, pathlist = self.popup_info
+        for path in pathlist:
+            line = model.get_value(model.get_iter(path), 0)            
+            layer = self.find_parent(model, path, objects.Layer)
+            layer.lines.remove(line)
+            print "REMOVED LINE ", line, line.get_description()
+            
+            
+        
+    def action_AddLine(self, action):
+        logger.debug("action: AddLine")
+
+        model, pathlist = self.popup_info
+        for path in pathlist:
+            obj, key = model.get(model.get_iter(path), 0, 1)
+            layer = self.find_parent(model, path, objects.Layer)            
+            if isinstance(obj, objects.Line):
+                index = layer.lines.index(obj)+1
+                line = objects.Line(label="fresh line", color="red",
+                                source=obj.source, cx=obj.cy, cy=obj.cx)                
+            else:
+                index = 0
+                line = objects.Line(label="fresh line", color="red")
+                
+                
+            layer.lines.insert(index, line)
+                
         
 #------------------------------------------------------------------------------
 toolbox.register_tool(PropertyEditor)

@@ -190,7 +190,7 @@ class ProjectTreeView( gtk.TreeView ):
         # keep project current
         self.project = None
         globals.app.sig_connect('update::project',\
-          lambda sender, value: self.set_project(value))
+          lambda sender, key, value: self.set_project(value))
         self.set_project(project)        
         
         
@@ -266,7 +266,7 @@ class ProjectTreeView( gtk.TreeView ):
         # connect update signals with update mechanism
         if project is not None:
             self.set_property('sensitive',True)            
-            def on_update(sender, updateinfo):
+            def on_update(sender, key, updateinfo):
                 self.populate_treeview()
             project.sig_connect("update::datasets", on_update)
             project.sig_connect("update::plots", on_update)

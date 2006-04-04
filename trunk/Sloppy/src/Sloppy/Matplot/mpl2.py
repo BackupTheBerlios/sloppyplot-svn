@@ -16,6 +16,7 @@ else:
     from matplotlib.backends.backend_gtk import FigureCanvasGTK as FigureCanvas
 
 from Sloppy.Base import backend, objects, utils, globals
+from Sloppy.Base.backend import BackendError
 from Sloppy.Base.objects import SPObject, Line
 from Sloppy.Base.dataset import Dataset
 from Sloppy.Lib.Check import Instance, Undefined, Dict, AnyValue
@@ -185,10 +186,13 @@ class LinePainter(Painter):
                                
         # data
         ds = backend.get_line_source(line)
+        if ds in (None, Undefined):
+            return
+        
         cx, cy = backend.get_column_indices(line)
         try:
             xdata, ydata = backend.get_dataset_data(ds, cx, cy)
-        except backend.BackendError, msg:            
+        except BackendError, msg:
             raise
 
         # row_first, row_last
@@ -262,8 +266,7 @@ class LinePainter(Painter):
             else:
                 label = line.label
         return label
-
-
+    
 
 
 class LayerPainter(Painter):
@@ -274,7 +277,7 @@ class LayerPainter(Painter):
     def init(self):
         self.axes = self.init_axes()
         self.obj.sig_connect('update', self.update)
-        self.obj.sig_connect('update::title', self.update_title)
+        #self.obj.sig_connect('update::title', self.update_title)
 
         # updating the axis with start/end = None does not work
         # right now. Somehow the axis is not redrawn at all.
@@ -284,17 +287,44 @@ class LayerPainter(Painter):
         # TODO: can the axis change?
         self.obj.xaxis.sig_connect('update', lambda sender, keys: self.paint())
         self.obj.yaxis.sig_connect('update', lambda sender, keys: self.paint())
-        
+
+        self.obj.sig_connect('update::lines', self.on_update_lines)
+
 
     def init_axes(self):
         return self.parent.figure.add_subplot('111')
 
 
-    def update_title(self, sender, new_title):
+    def update_title(self, sender, key, new_title):
         # title
         title = new_title
         self.axes.set_title(title or '')
 
+    def on_update_lines(self, sender, key, updateinfo):
+        # since we have group properties, we need to redraw the whole
+        # thing and can't just redraw all added or removed lines...
+        backend = self.get_backend()
+        layer = self.obj
+        try:
+            backend.block_redraw()
+
+            # remove obsolete line painters
+            if updateinfo.has_key('removed'):
+                items = updateinfo['removed'][2]
+                for item in items:
+                    _id = id(item)
+                    if self.painters.has_key(_id):
+                        logger.debug("Removing obsolete LinePainter")
+                        p = self.painters.pop(_id)
+
+
+            for line in layer.lines:
+                painter = self.get_painter(line, LinePainter)
+                painter.paint()
+        finally:
+            backend.unblock_redraw()
+            backend.queue_redraw()
+        
             
     def update(self, sender, keys):
         backend = self.get_backend()
@@ -434,11 +464,11 @@ class Backend(backend.Backend):
         self.canvas.draw()
         self._redraw = False        
 
-    def on_update_layers(self, sender, updateinfo):
-        # TODO!!!!
+
+    def on_update_layers(self, sender, key, updateinfo):
+        # TODO!!!! NOT USED CURRENTLY
         # check if active layer is still active
         removed = updateinfo.get('removed', [])
-
         #if self.active_layer in removed:
         #    self.set_active_layer(None)
 
@@ -464,7 +494,12 @@ class Backend(backend.Backend):
 
     def redraw(self, force=False):
         """ redraw, unlike draw, only redisplays the existing canvas. """
-        if force is True or (self._redraw is True and self._block_redraw==0):
+        if force is True:
+            logger.debug("Complete Redraw.")
+            self.draw()
+            self._redraw = False
+            self._block_redraw = 0            
+        elif (self._redraw is True and self._block_redraw==0):
             logger.debug("Redraw.")
             self.canvas.draw()
             self._redraw = False

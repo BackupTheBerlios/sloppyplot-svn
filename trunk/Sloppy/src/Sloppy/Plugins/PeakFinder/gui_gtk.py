@@ -65,7 +65,7 @@ class DisplayLine(checkwidgets.Display):
         self.values = []        
         if self.backend is not None:
             for layer in self.backend.plot.layers:
-                cb = layer.sig_connect('update::lines', lambda sender, updateinfo: self.update_model())
+                cb = layer.sig_connect('update::lines', lambda sender, key, updateinfo: self.update_model())
                 self.cblist.append(cb)
                 for line in layer.lines:
                     model.append((line, layer))

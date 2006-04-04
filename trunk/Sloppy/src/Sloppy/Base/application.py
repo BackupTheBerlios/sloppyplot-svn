@@ -224,7 +224,7 @@ class Application(SPObject):
             project.sig_connect('close', detach_project)
 
         if has_changed is True:
-            self.sig_emit('update::project', self._project)        
+            self.sig_emit('update::project', 'project', self._project)        
 
         return self._project
 

@@ -1,8 +1,9 @@
-<popup name="popup_property_editor">
-  <menuitem action='Delete'/>
+<popup name="popup_property_editor_line">
+  <menuitem action='PE_DeleteLine'/>
+  <menuitem action='PE_AddLine'/>
 </popup>
 
-<popup name="popup_property_editor_line">
-  <menuitem action='DeleteLine'/>
+<popup name="popup_property_editor_layer_lines">
+  <menuitem action='PE_AddLine'/>
 </popup>
 

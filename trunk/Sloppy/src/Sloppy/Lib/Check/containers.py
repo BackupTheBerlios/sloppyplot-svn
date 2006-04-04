@@ -21,6 +21,19 @@
 from defs import Undefined
 
 
+"""
+updateinfo contains these entries:
+- removed
+- updated
+
+Removed and updated may be together in one updateinfo.
+
+Lists have an additonal key 'reordered', which I am not sure about
+yet. Its arg is set to -1 for a reversal.
+
+Dicts have an additional key 'updated'.
+"""
+
 class TypedList:
 
     def __init__(self, check, _list=None):
@@ -235,7 +248,7 @@ class TypedDict:
         key, item = self.check(key, item)
         if self.data.has_key(key):
             self.data[key] = item
-            self.on_update(self, {'update': {key:item}})
+            self.on_update(self, {'updated': {key:item}})
         else:
             self.data[key] = item
             self.on_update(self, {'added': {key:item}})
@@ -269,7 +282,7 @@ class TypedDict:
             adict.update(self.check_dict(kwargs))
             
         self.data.update(adict)
-        self.on_update(self, {'update': adict})
+        self.on_update(self, {'updated': adict})
             
     def get(self, key, failobj=None):
         if not self.has_key(key):

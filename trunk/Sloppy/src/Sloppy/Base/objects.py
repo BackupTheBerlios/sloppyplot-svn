@@ -99,7 +99,7 @@ class SPObject(HasChecks, HasSignals):
         # every List/Dict object would emit the same signal.        
         
         def new_lambda(key):
-            return lambda sender, updateinfo: self.sig_emit('update::%s'%key, updateinfo)        
+            return lambda sender, updateinfo: self.sig_emit('update::%s'%key, key, updateinfo)
 
         for key, check in self._checks.iteritems():
             self.signals['update::%s'%key] = Signal()            
@@ -108,7 +108,7 @@ class SPObject(HasChecks, HasSignals):
 
         # trigger Signals on attribute update
         def on_update(sender, key, value):
-            self.sig_emit('update::%s'%key, value)           
+            self.sig_emit('update::%s'%key, key, value)           
             self.sig_emit('update', [key])
         self.on_update = on_update
 

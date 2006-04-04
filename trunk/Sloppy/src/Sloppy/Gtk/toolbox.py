@@ -152,12 +152,11 @@ class Tool(dock.Dockable):
         
         for var in self.dependency_chain:
             setattr(self, var, None)
-        obj.sig_connect('update::%s'%vars[0],
-          lambda sender, value: self.generic_on_update(vars[0], sender, value))        
+        obj.sig_connect('update::%s'%vars[0], self.generic_on_update)
         
 
-    def generic_on_update(self, var, sender, value):
-        old_value = getattr(self, var)
+    def generic_on_update(self, sender, key, value):
+        old_value = getattr(self, key)
         if value == old_value:
             return
 
@@ -168,7 +167,7 @@ class Tool(dock.Dockable):
                 signal(old_value, None)
             signal.disconnect()                
 
-        setattr(self, var, value)                
+        setattr(self, key, value)                
         if value is not None:
             obj = value # assume this is a Painter/Backend object
 
@@ -176,16 +175,15 @@ class Tool(dock.Dockable):
             # If this is already the last dependency, then we call
             # on_update_object, which then can use the object.
             try:
-                next_var = self.dependency_chain[self.dependency_chain.index(var)+1]
+                next_key = self.dependency_chain[self.dependency_chain.index(key)+1]
             except IndexError:
                 pass
             else:
-                new_signal = obj.sig_connect('update::%s'%next_var,
-                  lambda sender,value: self.generic_on_update(next_var, sender, value))
+                new_signal = obj.sig_connect('update::%s'%next_key, self.generic_on_update)
                 self.signalmap[sender] = new_signal            
 
         # notify if object has changed
-        cbname = 'autoupdate_%s'%var
+        cbname = 'autoupdate_%s'%key
         if hasattr(self, cbname):
             getattr(self, cbname)(sender, value)
 
