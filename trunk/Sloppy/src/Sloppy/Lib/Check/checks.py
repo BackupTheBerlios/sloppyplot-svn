@@ -341,8 +341,9 @@ class HasChecks(object):
         for klass in klasslist:
             for key, item in klass.__dict__.iteritems():
                 if isinstance(item, Check):
-                    if checks.has_key(key):
-                        raise KeyError("%s defines Check '%s', which has already been defined by a base class!" % (klass,key))
+                    # TESTING: It is possible to redefine checks defined by base classes
+                    ##if checks.has_key(key):
+                    ##    raise KeyError("%s defines Check '%s', which has already been defined by a base class!" % (klass,key))
                     checks[key] = item
 
                     if kwargs.has_key(key):

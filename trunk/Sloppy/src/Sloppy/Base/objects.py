@@ -32,6 +32,7 @@ from Sloppy.Lib.Check import *
 
 from groups import Group, MODE_CONSTANT, MODE_CYCLE
 
+from Sloppy.Base.baseobj import BaseObject as SPObject
 
 
 
@@ -82,75 +83,6 @@ PV = {
 
 
 
-class SPObject(HasChecks, HasSignals):
-       
-    def __init__(self, **kwargs):
-        HasChecks.__init__(self, **kwargs)
-        HasSignals.__init__(self)
-        
-        # set up available Signals       
-        self.signals['update'] = Signal()
-
-        # The update::key signals are different for normal attributes
-        # and for List/Dict attributes, which have their own on_update
-        # method. It is necessary to use new_lambda, because in case of
-        #  self._values[key].on_update = lambda ....
-        # the lambda would be redefined with each iteration and
-        # every List/Dict object would emit the same signal.        
-        
-        def new_lambda(key):
-            return lambda sender, updateinfo: self.sig_emit('update::%s'%key, key, updateinfo)
-
-        for key, check in self._checks.iteritems():
-            self.signals['update::%s'%key] = Signal()            
-            if isinstance(check, (List,Dict)):
-                self._values[key].on_update = new_lambda(key)                 
-
-        # trigger Signals on attribute update
-        def on_update(sender, key, value):
-            self.sig_emit('update::%s'%key, key, value)           
-            self.sig_emit('update', [key])
-        self.on_update = on_update
-
-
-    def set(self, *args, **kw):
-        """ Set the given attribute(s) to specified value(s).
-
-        You may pass an even number of arguments, where one
-        argument is the attribute name and the next one the
-        attribute value. You may also pass this as keyword
-        argument, i.e. use the key=value notation.
-
-        Returns a dictionary of changed keys with their old values.
-        """
-        checks = self._checks
-        changes = {}
-
-        # Make sure that all the given keys are valid
-        for arg in args:
-            arglist = list(args)
-            while len(arglist) > 1:
-                key = arglist.pop(0)
-                value = arglist.pop(0)
-                if checks.has_key(key) is False:
-                    raise KeyError(key)
-                changes[key] = value
-                            
-        for key, value in kw.iteritems():
-            if checks.has_key(key) is False:
-                    raise KeyError(key)
-            changes[key] = value
-
-        # assign changes to object; old values are saved 
-        changeset = {}
-        for key, value in changes.iteritems():
-            changeset[key] = self._values[key]
-            checks[key].set(self, key, value) # TODO: maybe catch exceptions?
-
-        self.sig_emit('update', changeset.keys())
-        return changeset
-
-
 
         
 #------------------------------------------------------------------------------
@@ -191,7 +123,7 @@ class Line(SPObject):
     marker_size = Float(min=0,max=None,init=1)        
     
     # source stuff (soon deprecated)
-    cx = Integer(min=0,mqax=None, init=0, blurb="x")
+    cx = Integer(min=0,max=None, init=0, blurb="x")
     cy = Integer(min=0,max=None, init=1, blurb="y")
     row_first = Integer(min=0,max=None,init=None, blurb="first row")
     row_last = Integer(min=0,max=None,init=None, blurb="last row")
@@ -219,7 +151,11 @@ class Line(SPObject):
         return (s.get_column(self.cx), s.get_column(self.cy))
 
     def get_description(self):
-        return self.label or "<line>"
+        if isinstance(self.source, Dataset):
+            source = "[%s - %s:%s]" % (self.source.key, self.cx, self.cy)
+        else:
+            source = "[-]"
+        return "%s %s" % (self.label or "Line", source)
 
 
 class Legend(SPObject):
@@ -291,8 +227,8 @@ class Layer(SPObject):
     yaxis = property(get_yaxis, set_yaxis)
 
 
-    def get_description(self):
-        return self.title or "<layer>"
+    def get_description(self):        
+        return "Layer %s" % (self.title or "")
 
         
 

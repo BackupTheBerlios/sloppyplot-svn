@@ -165,7 +165,7 @@ class LinePainter(Painter):
     def init(self):
         self.obj.sig_connect('update', self.update)
         # TODO: Find smarter way to notify legend that it needs to be redrawn!
-        self.obj.sig_connect('update', self.parent.get_painter(self.parent.obj.legend, LegendPainter).update)
+        #self.obj.sig_connect('update', self.parent.get_painter(self.parent.obj.legend, LegendPainter).update)
         
         
     def update(self, sender, keys):
@@ -303,19 +303,24 @@ class LayerPainter(Painter):
     def on_update_lines(self, sender, key, updateinfo):
         # since we have group properties, we need to redraw the whole
         # thing and can't just redraw all added or removed lines...
-        backend = self.get_backend()
+        backend = self.get_backend()        
         layer = self.obj
         try:
             backend.block_redraw()
 
-            # remove obsolete line painters
+            # remove obsolete line painters / mpl line objects
             if updateinfo.has_key('removed'):
-                items = updateinfo['removed'][2]
-                for item in items:
-                    _id = id(item)
+                for line in updateinfo['removed'][2]:
+                    _id = id(line)
                     if self.painters.has_key(_id):
                         logger.debug("Removing obsolete LinePainter")
                         p = self.painters.pop(_id)
+
+                    # remove obsolete mpl line from line cache
+                    if self.line_cache.has_key(line):
+                        obj = self.line_cache.pop(line)
+                        if obj in self.axes.lines:
+                            self.axes.lines.remove(obj)
 
 
             for line in layer.lines:

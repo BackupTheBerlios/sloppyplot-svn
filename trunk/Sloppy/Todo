@@ -1,21 +1,8 @@
 
-- ComboBox of available lines instead of using the active line.
-  => connect to any change of any layer's lines ???
-  
-To test this notification I should next implement the addition of new lines
-in the PropertyEditor.
 
-- allow popup menu in PropertyEditor, so that you can add/remove elements
-  in the view, e.g. Lines.
-  
-  Where should I register the actions?
-  Maybe request a popup by the class name, e.g. 
-    'popup_property_editor_line'
-    'popup_property_editor_legend'
-  and if no such popup exist, then uimanager.get_widget will return None.
+- removal of Lines doesn't work
+  (the mpl line is not removed...)
 
-
-- react on addition/removal of items by updating the tree
 
 ##############################################################################
 
@@ -93,7 +80,8 @@ Docks/Tools in General
 MISC BUGS
 =========
 
-- layer logarithmisch machen funktioniert nicht immer
+- layer logarithmisch machen funktioniert nicht immer: Bei negativen Achsen-
+  werten läuft Matplotlib expose_event in eine üble Exception-Reihe.
 
 - wenn backend ausgewählt wird, aktualisiert sich die Layer nicht selbst...
 
@@ -108,9 +96,15 @@ MISC BUGS
   is somehow not in sync, i.e. the popupinfo is not yet passed when the tool
   is added.
 
+- Dataset window hat jetzt viele Fehler
+
+- ctrl-r doppelt belegt (redraw und zoom rectangle)
+
 
 SMALL CLEANUPS TO DO BEFORE RELEASING
 ======================================
+
+- uihelper.new_section => new_framebox (more descriptive)
 
 - change headers (copyright)
 

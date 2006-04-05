@@ -6,6 +6,7 @@ objects on-the-fly. """
 import gtk
 from Sloppy.Gtk import toolbox, uihelper, checkwidgets
 from Sloppy.Base import globals, objects, uwrap, utils
+from Sloppy.Lib.Undo import UndoList, ulist
 from Sloppy.Lib.Check import List, Dict, Instance
 
 import logging
@@ -108,12 +109,18 @@ class PropertyEditor(toolbox.Tool):
             if key is not None:
                 label = key
             else:
-                for attr in ['label', 'title', 'key']:
-                    if hasattr(obj, attr):
-                        label = getattr(obj, attr)
-            if label is None:
-                label = "<%s>" % obj.__class__.__name__            
+                try:
+                    label = obj.get_description()
+                except:
+                    for attr in ['label', 'title', 'key']:
+                        if hasattr(obj, attr):
+                            label = getattr(obj, attr)
+                            break
+                    else:
+                        label = "<%s>" % obj.__class__.__name__                        
+
             cell.set_property('text', label)
+            
         column.set_cell_data_func(cell, render_label)
         treeview.append_column(column)
 
@@ -350,37 +357,54 @@ class PropertyEditor(toolbox.Tool):
         set_sensitive(isinstance(obj, objects.SPObject))
 
     def on_button_press_event(self, widget, event):
-        " RMB: Display popup menu. "
-        if event.button != 3:
-            return False
+        """
+          RMB: Display popup menu.
+          LMB, double-click: expand/collapse item.
+        """
+      
+        # LMB and double click -> expand/collapse item
+        if event.button == 1 and event.type == gtk.gdk._2BUTTON_PRESS:
+            try:
+                path, col, cellx, celly = widget.get_path_at_pos(int(event.x), int(event.y))
+            except TypeError:
+                return False # double-click on empty space causes no action
+            else:
+                if widget.row_expanded(path) is False:
+                    widget.expand_row(path, open_all=False)
+                    widget.queue_draw()
+                else:
+                    widget.collapse_row(path)
+                    widget.queue_draw()
+                return True
 
+        
         # RMB has been clicked -> popup menu
+        if event.button == 3:
+            # Different cases are possible
+            # - The user has not yet selected anything.
+            #   In this case, we select the row on which the cursor
+            #   resides.
+            # - The user has made a selection.
+            #   In this case, we will leave it as it is.
 
-        # Different cases are possible
-        # - The user has not yet selected anything.
-        #   In this case, we select the row on which the cursor
-        #   resides.
-        # - The user has made a selection.
-        #   In this case, we will leave it as it is.
+            # get mouse coords and corresponding path
+            try:
+                path, col, cellx, celly = widget.get_path_at_pos(int(event.x), int(event.y))
+            except TypeError:
+                # => user clicked on empty space -> offer creation of objects
+                pass                
+            else:
+                # If user clicked on a row, then select it.
+                selection = widget.get_selection()
+                if selection.count_selected_rows() == 0:              
+                    widget.grab_focus()
+                    widget.set_cursor( path, col, 0)
 
-        # get mouse coords and corresponding path
-        x = int(event.x)
-        y = int(event.y)
-        time = event.time
-        try:
-            path, col, cellx, celly = widget.get_path_at_pos(x, y)
-        except TypeError:
-            # => user clicked on empty space -> offer creation of objects
-            pass                
-        else:
-            # If user clicked on a row, then select it.
-            selection = widget.get_selection()
-            if selection.count_selected_rows() == 0:              
-                widget.grab_focus()
-                widget.set_cursor( path, col, 0)
+            return self.on_popup_menu(widget,event.button,event.time)            
 
-        return self.on_popup_menu(widget,event.button,event.time)            
+        return False
 
+    
     def on_popup_menu(self, widget, button, time):
         " Returns True if a popup has been popped up. "
 
@@ -437,9 +461,10 @@ class PropertyEditor(toolbox.Tool):
         for path in pathlist:
             line = model.get_value(model.get_iter(path), 0)            
             layer = self.find_parent(model, path, objects.Layer)
-            layer.lines.remove(line)
-            print "REMOVED LINE ", line, line.get_description()
-            
+
+            ul = UndoList("Remove Line")
+            ulist.remove(layer.lines, line, undolist=ul)
+            globals.app.project.journal.append(ul)            
             
         
     def action_AddLine(self, action):
@@ -457,8 +482,10 @@ class PropertyEditor(toolbox.Tool):
                 index = 0
                 line = objects.Line(label="fresh line", color="red")
                 
-                
-            layer.lines.insert(index, line)
+
+            ul = UndoList("Insert Line")
+            ulist.insert(layer.lines, index, line, undolist=ul)
+            globals.app.project.journal.append(ul)            
                 
         
 #------------------------------------------------------------------------------

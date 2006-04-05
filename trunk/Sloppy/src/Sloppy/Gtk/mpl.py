@@ -410,12 +410,12 @@ class MatplotlibWidget(gtk.VBox):
             xvalue, yvalue = sender.point
 
         def update_position(sender, line, index, point):
-            # Note that 'line' is a Line2d instance from matplotlib!
+            # Note that 'line' is a Line2d instance from matplotlib!           
             x, y = point
             context_id = self.statusbar.get_context_id("data_cursor")            
             self.statusbar.pop(context_id)
-            self.statusbar.push(context_id, "X: %f, Y: %f (value #%s)" %
-                                (x, y, index))
+            self.statusbar.push(context_id, "X: %f, Y: %f ('%s', value #%s)" %
+                                (x, y, line.get_label(), index))
 
         context_id = self.statusbar.get_context_id("data_cursor")
         s.sig_connect("update-position", update_position)

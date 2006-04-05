@@ -23,6 +23,8 @@ import logging
 logger = logging.getLogger("Base.dataset")
 
 from Sloppy.Base import tree, utils
+from Sloppy.Base.baseobj import BaseObject
+
 
 from Sloppy.Lib.Signals import HasSignals
 from Sloppy.Lib.Undo import UndoInfo, UndoList, NullUndo, Journal
@@ -322,7 +324,7 @@ class Table(Dataset):
     about it.
     """
 
-    class Info(HasChecks, HasSignals):
+    class Info(BaseObject):
         label = Unicode(init="")       
         designation = Choice(['X','Y','XERR', 'YERR', 'LABEL', None])
         query = String()

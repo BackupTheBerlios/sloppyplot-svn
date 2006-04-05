@@ -120,7 +120,10 @@ class TypedList:
         self.on_update(self, {'removed': (i, j-1, items)})
 
     def __add__(self, other):
-        return self.__class__(self.check, self.data + self.check_list(other))
+        # x = self + other => we don't need to check other!
+        if isinstance(other, TypedList):
+            other = other.data        
+        return self.__class__(lambda i: i, self.data + other)
     
     def __radd__(self, other):
         return self.__class__(self.check, self.check_list(other) + self.data)

@@ -174,7 +174,7 @@ class ColumnView(gtk.TreeView):
         model.clear()
         for name in self.dataset.names:
             info = self.dataset.get_info(name)
-            model.append( (name, info.copy(), name) )
+            model.append((name, info.__class__(**info._values), name))
 
 
     def check_out(self, undolist=[]):
@@ -222,7 +222,7 @@ class ColumnView(gtk.TreeView):
         
     def render_column_prop(self, column, cell, model, iter, propkey):
         info = model.get_value(iter, 1)
-        cell.set_property('text', info.get_value(propkey) or "")
+        cell.set_property('text', info.get(propkey) or "")
 
 
 
