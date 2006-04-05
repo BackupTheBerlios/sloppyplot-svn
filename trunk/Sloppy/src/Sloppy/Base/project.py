@@ -31,7 +31,8 @@ from Sloppy.Lib.Undo import Journal, UndoInfo, NullUndo, UndoList, ulist
 from Sloppy.Lib.Signals import HasSignals
 from Sloppy.Lib.Check import *
 
-from Sloppy.Base.objects import Plot, Axis, Line, Layer, SPObject
+from Sloppy.Base.objects import Plot, Axis, Line, Layer
+from Sloppy.Base.baseobj import BaseObject
 from Sloppy.Base.dataset import Dataset, Table
 from Sloppy.Base.backend import Backend
 
@@ -63,7 +64,7 @@ SloppyPlot, you can extract the file from this archive by hand.
 }
 
 
-class Project(SPObject):
+class Project(BaseObject):
 
     """
     A Project contains the plots, datasets and all other information
@@ -79,7 +80,7 @@ class Project(SPObject):
     active_object = AnyValue(required=False, init=None)
     
     def __init__(self,*args,**kwargs):
-        SPObject.__init__(self, **kwargs)
+        BaseObject.__init__(self, **kwargs)
         self.sig_register('close')
         
         self.journal = Journal()

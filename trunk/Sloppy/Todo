@@ -3,8 +3,20 @@ Checkwidgets
 ============
 
 - what about the line source? This requires a custom widget -- so write it!
+
   => this DisplayLineSource should be very similar to the DisplayLine widget
      in Plugins/PeakFinder/gui_gtk.py
+     It should display the name of the Dataset.
+
+     Of course, this assumes that the name (well, the 'key' attribute actually)
+     is either stored in the Dataset itself, or that we need to look it up
+     in the list of datasets by the project.
+
+     Do we really need unique keys? Yes, (1) for scripting, (2) for the 
+     XML output file.
+
+     IF THE PROJECT.DATASETS WERE A DICT, then we would still need to iterate
+     over all items, because it would be a value lookup...
 
 
  
@@ -16,7 +28,12 @@ Property Editor
   from the backend, which the OmniTool should catch and move the
   treeview cursor to that element.
 
+  This would require a conversion from the matplotlib element to
+  the logical element.
+
+
 - Add nice icons to the TreeView elements
+
   
 
 PeakFinder Tool

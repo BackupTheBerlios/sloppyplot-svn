@@ -9,13 +9,6 @@ from Sloppy.Base import globals, backend, objects
 
 #----------------------------------------------------------------------
 
-
-class Settings(objects.SPObject):
-    threshold = Float(init=1.0)
-    accuracy = Float(init=1.0)
-    line = Instance(objects.Line, init=None)
-
-
 class DisplayLine(checkwidgets.Display):
 
     def __init__(self):
@@ -60,7 +53,14 @@ class DisplayLine(checkwidgets.Display):
         self.cblist = []
 
         # now repopulate the treeview and add callbacks
-        model = self.widget.get_model()
+        # If the old selection still exists, make sure it stays selected.
+        model = self.widget.get_model()         
+        iter = self.widget.get_active_iter()
+        if iter is not None:
+            old_value = model.get_value(iter, 0)
+        else:
+            old_value = None
+
         model.clear()
         self.values = []        
         if self.backend is not None:
@@ -68,8 +68,11 @@ class DisplayLine(checkwidgets.Display):
                 cb = layer.sig_connect('update::lines', lambda sender, key, updateinfo: self.update_model())
                 self.cblist.append(cb)
                 for line in layer.lines:
-                    model.append((line, layer))
+                    iter = model.append((line, layer))
                     self.values.append(line)
+                    if line is old_value:
+                        self.widget.set_active_iter(iter)
+                        
 
     def set_backend(self, backend):
         if backend is not self.backend:
@@ -93,6 +96,7 @@ class DisplayLine(checkwidgets.Display):
         self.widget.set_active(index)
 
     def on_changed(self, widget):
+        print "ON CHANGED"
         value = self.get_widget_data()
         obj_value = self.obj.get(self.key)
         if value == obj_value:
@@ -107,7 +111,15 @@ class DisplayLine(checkwidgets.Display):
             self.set_value(self.obj, self.key, value)
 
         return False
-        
+
+
+#----------------------------------------------------------------------
+class Settings(objects.SPObject):
+    threshold = Float(init=1.0)
+    accuracy = Float(init=1.0)
+    line = Instance(objects.Line, init=None)
+
+       
     
 class PeakFinder(toolbox.Tool):
 
