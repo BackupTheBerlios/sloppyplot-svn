@@ -1,12 +1,13 @@
 
+Checkwidgets
+============
 
-- removal of Lines doesn't work
-  (the mpl line is not removed...)
+- what about the line source? This requires a custom widget -- so write it!
+  => this DisplayLineSource should be very similar to the DisplayLine widget
+     in Plugins/PeakFinder/gui_gtk.py
 
 
-##############################################################################
-
-  
+ 
 Property Editor
 ================
 
@@ -14,6 +15,8 @@ Property Editor
    'user-pick'
   from the backend, which the OmniTool should catch and move the
   treeview cursor to that element.
+
+- Add nice icons to the TreeView elements
   
 
 PeakFinder Tool
@@ -35,12 +38,6 @@ MPL Backend
 - 'paint' can be called from other methods and shouldn't queue a redraw.
   Only on_update methods should!
  
-
-Checkwidgets
-============
-
-- what about the line source? This requires a custom widget -- so write it!
-  => this DisplayLineSource should be very similar to the DisplayLine widget.
 
 Docks/Tools in General
 ======================
@@ -97,6 +94,8 @@ MISC BUGS
   is added.
 
 - Dataset window hat jetzt viele Fehler
+  Editing a column (click on the column header), checks in the change, but
+  the columns are not updated.
 
 - ctrl-r doppelt belegt (redraw und zoom rectangle)
 

@@ -36,12 +36,14 @@ class Signal:
         self.funchost = []
 
     def __call__(self, *args, **kwargs):
+        deleted = 0
         for i in range(len(self.slots)):
-            slot = self.slots[i]
+            slot = self.slots[i - deleted]
             if slot != None:
                 slot(*args, **kwargs)
-            else:
+            else:               
                 del self.slots[i]
+                deleted += 1
                 
     def call(self, *args, **kwargs):
         self.__call__(*args, **kwargs)
