@@ -128,6 +128,9 @@ MISC BUGS
 
 - ctrl-r doppelt belegt (redraw und zoom rectangle)
 
+- changing a line property will replot the line. Unfortunately, this will
+  destroy the scale! I think this is kind of an mpl problem.
+
 
 SMALL CLEANUPS TO DO BEFORE RELEASING
 ======================================
