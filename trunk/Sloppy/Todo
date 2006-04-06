@@ -17,6 +17,14 @@ Checkwidgets
 
      IF THE PROJECT.DATASETS WERE A DICT, then we would still need to iterate
      over all items, because it would be a value lookup...
+   
+     Another question: Is it really sensible to have dataset.source be a
+     real object. If it were a string, then we could also have formulas
+     and the like. Of course, I would have the rename problem... It would
+     be very easy, on the other hand, to add an additional pseudo dataset,
+     the 'custom function' dataset, which would mean that dataset.source is
+     set to 'None' and we look at the field dataset.source_func instead
+     (being the equivalent to gnuplots '=...' syntax).
 
 
  
@@ -34,6 +42,10 @@ Property Editor
 
 - Add nice icons to the TreeView elements
 
+- Selecting more than one item should gray out the object editor
+
+- Right-clicking should preserve the selection and display e.g. the popup
+  for a Line, if only Line objects are selected.
   
 
 PeakFinder Tool
