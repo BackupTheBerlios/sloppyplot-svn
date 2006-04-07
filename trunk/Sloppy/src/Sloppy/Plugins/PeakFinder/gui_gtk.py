@@ -1,7 +1,8 @@
 
-from main import find_peaks
+from main import find_peaks, match_patterns
 
 import gtk
+import numpy
 
 from Sloppy.Lib.Check import *
 from Sloppy.Gtk import toolbox, checkwidgets, uihelper
@@ -216,6 +217,20 @@ class PeakFinder(toolbox.Tool):
         for x,y in peaklist:
             model.append((x,y,""))
 
+        # TESTING: find patterns as well!
+        # The match_patterns function should interpret values that are
+        # too high as o.k.
+        patterns = {
+            'Li': [(7.0, 1)],
+            'Zn': [(63.9291466, 0.4863),
+                   (65.9260368, 0.2790),
+                   (66.9271309, 0.0410),
+                   (67.9248476, 0.1875)]
+            }
+
+
+        a = numpy.array(peaklist)
+        match_patterns(a[:,0], a[:,1], patterns)
         
 
 def gtk_init(app):

@@ -415,7 +415,7 @@ class MatplotlibWidget(gtk.VBox):
             context_id = self.statusbar.get_context_id("data_cursor")            
             self.statusbar.pop(context_id)
             self.statusbar.push(context_id, "X: %f, Y: %f ('%s', value #%s)" %
-                                (x, y, line.get_label(), index))
+                                (x, y, line.get_label(), index+1))
 
         context_id = self.statusbar.get_context_id("data_cursor")
         s.sig_connect("update-position", update_position)

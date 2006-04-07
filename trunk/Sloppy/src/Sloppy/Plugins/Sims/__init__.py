@@ -29,4 +29,14 @@ blurb = "Functions for SIMS Spectroscopy"
 version = "0.1"
 
 
+import logging
+logger = logging.getLogger('plugin.sims')
+
 from sims import *
+
+try:
+    import gtk    
+except ImportError:
+    logger.info("No pygtk found. SIMS GTK GUI skipped.")
+else:
+    from gui_gtk import *

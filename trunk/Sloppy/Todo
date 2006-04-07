@@ -1,4 +1,15 @@
 
+- PatternFinder as part of the PeakFinder or as a separate Tool?
+
+- PatternFinder: if values are too high, it might be a superposition.
+  What then?
+
+  Then it might be useful to first match all x-values, so we would
+  have all potential peaks. And then we could mark all those peaks,
+  whose percentages match well.
+
+
+
 Checkwidgets
 ============
 

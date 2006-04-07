@@ -374,8 +374,8 @@ class DatasetWindow( gtk.Window ):
         ('RowMenu', None, '_Rows'),
         #
         ('RowInsert', gtk.STOCK_ADD, 'Insert New Row', None, 'Insert a new row before the current position', 'on_action_RowInsert'),
-        ('RowAppend', gtk.STOCK_ADD, 'Append New Row', 'Insert', 'Insert a new row after the current position', 'on_action_RowAppend'),
-        ('RowRemove', gtk.STOCK_REMOVE, 'Remove Selected Row(s)', 'Delete', 'Remove row at the current position', 'on_action_RowRemove'),
+        ('RowAppend', gtk.STOCK_ADD, 'Append New Row', '<ctrl>Insert', 'Insert a new row after the current position', 'on_action_RowAppend'),
+        ('RowRemove', gtk.STOCK_REMOVE, 'Remove Selected Row(s)', '<ctrl>Delete', 'Remove row at the current position', 'on_action_RowRemove'),
         #
         ('ColumnInfo', None, 'Edit Column...', None, 'Edit column properties...', 'on_action_ColumnInfo'),
         ('ColumnCalculator', None, 'Calculate Column Values...', None, 'Calculate column data...', 'on_action_ColumnCalculator'),
