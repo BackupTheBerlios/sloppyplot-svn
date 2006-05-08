@@ -43,7 +43,7 @@ class Dockable( gtk.VBox ):
     dnd_from_label = [ ("text/plain", gtk.TARGET_SAME_APP, TARGET_TYPE_TEXT) ]
 
     label = "<Dockable>"
-    icon_id = gtk.STOCK_INFO
+    icon_id = gtk.STOCK_EDIT
     
     def __init__(self):
         gtk.VBox.__init__(self)

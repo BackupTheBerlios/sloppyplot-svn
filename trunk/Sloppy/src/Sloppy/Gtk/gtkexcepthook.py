@@ -40,17 +40,15 @@ from cStringIO import *
 import traceback
 from gettext import gettext as _
 
-
 from Sloppy.Base import error, globals
+
 
 
 def _info(type, value, tb):
 
-
     # Check for Sloppy-specific errors.  These indicate that
     # a certain kind of error message is requested.  All other
     # errors should display a generic error dialog.
-
 
     if isinstance(value, error.SloppyError):
         msg = "<big><b>SloppyPlot Error:</b></big>\n\n"

@@ -116,8 +116,14 @@ class LegendPainter(Painter):
         border = kwargs.pop('border')
         visible = kwargs.pop('visible')
         handles, labels = kwargs.pop('handles'), kwargs.pop('labels')
-        _legend = layer_painter.axes.legend(handles, labels, **kwargs)        
+
+        print "PAINT LEGEND 1"        
+        _legend = layer_painter.axes.legend(handles, labels, **kwargs)
+
+        print "PAINT LEGEND 2"        
         _legend.draw_frame(border)
+
+        print "PAINT LEGEND 3"        
         _legend.set_visible(visible)
 
     def update(self, sender, keys):
@@ -402,11 +408,19 @@ class LayerPainter(Painter):
                 raise RuntimeError("Invalid axis key '%s'" % key)
 
             if label is not None: set_label(label)
-            if scale is not None: set_scale(scale)
+            
+#             if scale == 'log':
+#                 if start <= 0:
+#                     start = None
+#                 if end <= 0:
+#                     end = None
 
             set_start(start)
             set_end(end)
 
+            print "SET SCALE ", key, " TO ", scale
+            if scale is not None: set_scale(scale)
+            
         self.get_backend().queue_redraw()
 
 
