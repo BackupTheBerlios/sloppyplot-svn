@@ -29,11 +29,12 @@ import uihelper, mpl_selector
 from Sloppy.Base import uwrap, globals, objects
 from Sloppy.Lib.Undo import UndoList, NullUndo, ulist, UndoInfo
 
+from Sloppy.Gtk import basewidget
 
 #------------------------------------------------------------------------------
 
 
-class MatplotlibWidget(gtk.VBox):
+class MatplotlibWidget(basewidget.BaseWidget):
 
     __gsignals__ = {
         'edit-mode-started' : (gobject.SIGNAL_RUN_FIRST , gobject.TYPE_NONE, ()),
@@ -42,6 +43,10 @@ class MatplotlibWidget(gtk.VBox):
 
     
     actions_dict = {
+        'File':
+        [
+        ('CloseTab', None, 'Close Tab', None, '', 'on_action_CloseTab')
+        ],
         'Plot':
         [
         ('PlotMenu', None, '_Plot'),
@@ -69,36 +74,21 @@ class MatplotlibWidget(gtk.VBox):
 
 
     def __init__(self, project, plot):
-        gtk.VBox.__init__(self)
+
+        basewidget.BaseWidget.__init__(self, project)
 
         self._current_selector = None
-
-        # construct action groups
-        actiongroups = list()
-        for key, actions in self.actions_dict.iteritems():
-            ag = gtk.ActionGroup(key)
-            ag.add_actions( uihelper.map_actions(actions, self) )
-            actiongroups.append(ag)
-        self.actiongroups = actiongroups
         
-        ### statusbar
-        self.statusbar = globals.app.window.statusbar
-        ##self.statusbar = gtk.Statusbar()
-        ##self.statusbar.show()
-
         # coords
         self.coords = gtk.Label()
         self.coords.show()
-        
-        self.context_id = self.statusbar.get_context_id("coordinates")
-        #self.statusbar.push(self.context_id, "X: 10, Y: 20")
-        #self.statusbar.pop(self.context_id)
+
+        self.context_id = self.get_statusbar().get_context_id("coordinates")
         
         vbox = self.vbox = gtk.VBox()
         hbox = gtk.HBox()
         ##hbox.pack_start(self.btn_cancel, False, padding=4)
         hbox.pack_start(self.coords, False, padding=4)
-        ##hbox.pack_start(self.statusbar, padding=4)
         hbox.show()
         vbox.pack_end(hbox, False, True)
         vbox.show()
@@ -122,19 +112,10 @@ class MatplotlibWidget(gtk.VBox):
         # TODO: such a method in the shell frontend as well.
         self.fileselect = FileChooserDialog(title='Save the figure', parent=None)
 
-        # set active_object on focus        
-        self.connect('focus-in-event', self.on_focus_in_event)
-
-
-    def on_focus_in_event(self, event):
-        if self.plot is not None:
-            self.project.active_object = self.plot
-        
-    def get_actiongroups(self):
-        return self.actiongroups
 
     def get_uistring(self):
         return globals.app.get_uistring('plot-widget')
+        
     
     #----------------------------------------------------------------------
     def set_coords(self, x, y):
@@ -343,7 +324,8 @@ class MatplotlibWidget(gtk.VBox):
     def on_action_ZoomRect(self, action):
 
         def finish_zooming(sender):
-            self.statusbar.pop(self.statusbar.get_context_id('action-zoom'))
+            sb = self.get_statusbar()
+            sb.pop(sb.get_context_id('action-zoom'))
             ul = UndoList().describe("Zoom Region")
             layer = self.backend.request_active_layer()
             self.zoom_to_region(layer, sender.region, undolist=ul)
@@ -353,8 +335,10 @@ class MatplotlibWidget(gtk.VBox):
         axes = self.backend.get_painter(layer).axes
         s = mpl_selector.SelectRegion(self.backend.figure, axes=axes)
         s.sig_connect('finished', finish_zooming)
-        self.statusbar.push(self.statusbar.get_context_id('action-zoom'),
-                            "Use the left mouse button to zoom.")
+
+        sb = self.get_statusbar()
+        sb.push(sb.get_context_id('action-zoom'),
+                "Use the left mouse button to zoom.")
         self.select(s)
 
     def on_action_ZoomFit(self, action):
@@ -401,23 +385,26 @@ class MatplotlibWidget(gtk.VBox):
         s = mpl_selector.DataCursor(self.backend.figure, axes)
 
         def abort_selector(sender):
-            context_id = self.statusbar.get_context_id("data_cursor")            
-            self.statusbar.pop(context_id)
+            sb = self.get_statusbar()
+            context_id = sb.get_context_id("data_cursor")            
+            sb.pop(context_id)
             
         def finish_selector(sender):
-            context_id = self.statusbar.get_context_id("data_cursor")            
-            self.statusbar.pop(context_id)
+            self.get_statusbar()
+            context_id = sb.get_context_id("data_cursor")            
+            sb.pop(context_id)
             xvalue, yvalue = sender.point
 
         def update_position(sender, line, index, point):
             # Note that 'line' is a Line2d instance from matplotlib!           
             x, y = point
-            context_id = self.statusbar.get_context_id("data_cursor")            
-            self.statusbar.pop(context_id)
-            self.statusbar.push(context_id, "X: %f, Y: %f ('%s', value #%s)" %
-                                (x, y, line.get_label(), index+1))
+            sb = self.get_statusbar()
+            context_id = sb.get_context_id("data_cursor")            
+            sb.pop(context_id)
+            sb.push(context_id, "X: %f, Y: %f ('%s', value #%s)" %
+                    (x, y, line.get_label(), index+1))
 
-        context_id = self.statusbar.get_context_id("data_cursor")
+        context_id = self.get_statusbar().get_context_id("data_cursor")
         s.sig_connect("update-position", update_position)
         s.sig_connect("finished", finish_selector)
         s.sig_connect("aborted", abort_selector)             
@@ -450,7 +437,11 @@ class MatplotlibWidget(gtk.VBox):
         s = mpl_selector.ZoomAxes(self.backend.figure, axes)
         s.sig_connect("finished", finish_moving)
         self.select(s)
-        
+
+
+    def on_action_CloseTab(self, action):
+        self.deactivate()
+        self.destroy()        
         
     #----------------------------------------------------------------------
     def abort_selection(self):

@@ -119,6 +119,28 @@ class AppWindow( gtk.Window, HasSignals ):
         self.plotbook  = gtk.Notebook()
         self.plotbook.show()
 
+        def callback(notebook, page, page_num):
+            # Activate the current page either if it is the first page
+            # or if it is a newly selected one. The old page gets
+            # of course deactivated.
+            print "SWITCH"
+            current_page = notebook.get_nth_page(notebook.get_current_page())
+            new_page = notebook.get_nth_page(page_num)
+            if notebook.get_n_pages() == 1 or current_page is not new_page:
+                print "A CHANGE"
+                current_page.deactivate()               
+                new_page.activate()
+
+                notebook.set_tab_label_text(new_page, new_page.get_title())
+
+                if isinstance(new_page, mpl.MatplotlibWidget):
+                    print "NEW BACKEND IS ", new_page.backend
+                    globals.app.project.active_backend = new_page.backend
+                
+        self.plotbook.connect('switch-page', callback)
+
+        
+
         plot_area = gtk.VBox()
         plot_area.pack_start(self.plotbook, True, True)
         ##plot_area.pack_start(self.progressbar, False, False)
@@ -385,18 +407,19 @@ class AppWindow( gtk.Window, HasSignals ):
     #### BASEWIDGET SUPPORT (generic widget class for both plots and datasets)
 
     def add_basewidget(self, widget):
+        """ Add the given basewidget to the plotbook.
+        Assume that we want to make this the current tab.
+        """
+        
         n = self.plotbook.append_page(widget)
-        self.plotbook.set_tab_label_text(widget, "basewidget")
+        self.plotbook.set_tab_label_text(widget, widget.get_title())
+        self.plotbook.set_current_page(n)
+        return widget
 
-        for ag in widget.get_actiongroups():
-            self.uimanager.insert_action_group(ag, 0)
-
-        self.add_accel_group(self.uimanager.get_accel_group())
-        self.uimanager.add_ui_from_string(widget.get_uistring())
-
+        
     def detach_basewidget(self, widget):
         self.plotbook.remove(widget)
-        #self.uimanager.remove_ui
+        widget.deactivate()
         
 
     

@@ -97,7 +97,7 @@ class DisplayLine(checkwidgets.Display):
         self.widget.set_active(index)
 
     def on_changed(self, widget):
-        print "ON CHANGED"
+        #print "ON CHANGED"
         value = self.get_widget_data()
         obj_value = self.obj.get(self.key)
         if value == obj_value:
@@ -144,8 +144,9 @@ class PeakFinder(toolbox.Tool):
         # Settings
         #
         df = checkwidgets.DisplayFactory(Settings)
-        self.display_line = DisplayLine()
-        df.add_keys(self.settings._checks.keys(), line=self.display_line)
+        ##self.display_line = DisplayLine()
+        ##df.add_keys(self.settings._checks.keys(), line=self.display_line)
+        df.add_keys(self.settings._checks.keys())
         self.table = table = df.create_sections(['Settings', 'line','threshold','accuracy'])
         df.connect(self.settings)
             
@@ -198,7 +199,7 @@ class PeakFinder(toolbox.Tool):
         print
         print "-- updating backend --"
 
-        self.display_line.set_backend(backend)
+        ##self.display_line.set_backend(backend)
         
         print
         

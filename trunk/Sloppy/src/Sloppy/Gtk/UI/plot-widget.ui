@@ -1,5 +1,8 @@
 <ui>    
   <menubar name='MainMenu'>
+    <menu action='FileMenu'>
+      <menuitem action='CloseTab'/>
+    </menu>
     <placeholder name='PlotMenu'>
       <menu action='PlotMenu'>
         <menuitem action='Replot'/>

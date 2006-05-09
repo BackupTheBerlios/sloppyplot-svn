@@ -28,8 +28,8 @@ logger = logging.getLogger('gtk.application')
 import glob, os, sys
 import gtk, gobject, pango
 
-from Sloppy.Gtk import uihelper, gtkexcepthook, import_dialog, preferences, mpl
-from Sloppy.Gtk.datawin import DatasetWindow
+from Sloppy.Gtk import uihelper, gtkexcepthook, import_dialog, preferences, \
+     mpl,datawin
 from Sloppy.Gtk.gnuplot_window import GnuplotWindow
 from Sloppy.Gtk.appwindow import AppWindow
 from Sloppy.Gtk.layerwin import LayerWindow
@@ -397,12 +397,15 @@ class GtkApplication(application.Application):
     def edit_dataset(self, ds, undolist=[]):
         assert( isinstance(ds, Dataset) )
 
-        # reuse old DatasetWindow or create new one
-        window = self.window.subwindow_match(
-            (lambda win: isinstance(win, DatasetWindow) and (win.dataset == ds))) \
-            or \
-            self.window.subwindow_add( DatasetWindow(self._project, ds) )
-	window.present()
+        #widget = self.window.find_basewidget(project=self.project,
+        #                                     object=ds)
+        widget = None
+        
+        if widget is None:
+            widget = datawin.DatasetWidget(project=self.project, dataset=ds)
+            self.window.add_basewidget(widget)
+            widget.show()
+
 
 
     def edit_layer(self, plot, layer=None, current_page=None):
@@ -479,7 +482,7 @@ class GtkApplication(application.Application):
         elif backend_name == 'matplotlib':
 
             # as widget
-            widget = self.window.find_plotwidget(project=self.project,plot=plot)
+            widget = self.window.find_plotwidget(project=self.project, plot=plot)
             if widget is None:
                 widget = mpl.MatplotlibWidget(project=self.project, plot=plot)
                 self.window.add_basewidget(widget)

@@ -167,6 +167,7 @@ class PropertyEditor(toolbox.Tool):
 
 
     def on_update_backend(self, sender, key, backend):
+        print "UPDATE THE BACKEND"
         if backend == self.backend:
             return
 
