@@ -482,7 +482,7 @@ class GtkApplication(application.Application):
             widget = self.window.find_plotwidget(project=self.project,plot=plot)
             if widget is None:
                 widget = mpl.MatplotlibWidget(project=self.project, plot=plot)
-                self.window.add_plotwidget(widget)
+                self.window.add_basewidget(widget)
             widget.show()
 
             backend = widget.backend

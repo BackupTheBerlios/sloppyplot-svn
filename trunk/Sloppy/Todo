@@ -1,12 +1,32 @@
 
-- PatternFinder as part of the PeakFinder or as a separate Tool?
 
-- PatternFinder: if values are too high, it might be a superposition.
-  What then?
+THREE GOALS FOR THE NEXT RELEASE
+================================
 
-  Then it might be useful to first match all x-values, so we would
-  have all potential peaks. And then we could mark all those peaks,
-  whose percentages match well.
+(1) 3ll windows come into tabs (plots _and_ datasets) and their menus
+    Integrate dynamically into the main menu. It should be possible to
+    close windows and windows should activate themselves on demand.
+
+
+(2) Adding/Removing lines must be possible, including their source.
+
+
+(3) The canvas size must be adjustable, i.e. allow a canvas that is smaller
+    or larger than its container widget and add scrollbars. The same applies
+    for the matplotlib export: It must be possible to specify the orientation
+    and size.
+
+
+WHAT I DON'T NECESSARILY NEED TO DO
+===================================
+
+- Plugins
+- Gnuplot (yes, we can do that in 0.5.5)
+- make plots and datasets some kind of tools -- maybe this is technical overkill.
+
+
+##############################################################################
+
 
 
 
@@ -59,19 +79,6 @@ Property Editor
   for a Line, if only Line objects are selected.
   
 
-PeakFinder Tool
-===============
-
-- Ergebnisse des PeakFinders evtl. in ein Dataset übergeben und dieses
-  dann anzeigen lassen?
-
-- Zuordnung Peaks -> Symbol
-
-- Peaks als solche der Zeichnung hinzufügen
-
-- Peaks abspeichern (evtl. Log?)
-
-
 MPL Backend
 ===========
 
@@ -119,15 +126,20 @@ MISC BUGS
 
 - layer logarithmisch machen funktioniert nicht immer: Bei negativen Achsen-
   werten läuft Matplotlib expose_event in eine üble Exception-Reihe.
+  => schon geklärt, wird hoffentlich o.k. sein in der nächsten matplotlib
+     version
 
 - wenn backend ausgewählt wird, aktualisiert sich die Layer nicht selbst...
+
 
 - bugfix for data cursor: if mpl handles the left/right, then don't let
   gtk handle it!
 
+
 - add cursor position in status bar and let all widgets call the status-
   bar of the app (maybe via a signal: 'push-status', context, msg and
   for the special case of coordinates: 'push-coordinates', x, y)
+
 
 - Adding Tools does not always work. I guess the passing of the popuinfo
   is somehow not in sync, i.e. the popupinfo is not yet passed when the tool
@@ -139,8 +151,12 @@ MISC BUGS
 
 - ctrl-r doppelt belegt (redraw und zoom rectangle)
 
+- entf in PropertyEditor funktioniert nicht, weil es andersweitig belegt ist.
+
+
 - changing a line property will replot the line. Unfortunately, this will
   destroy the scale! I think this is kind of an mpl problem.
+
 
 
 SMALL CLEANUPS TO DO BEFORE RELEASING
@@ -158,3 +174,25 @@ SMALL CLEANUPS TO DO BEFORE RELEASING
   all vars that were in globals into app (app.templates, etc.)
 
 
+
+PeakFinder Tool
+===============
+
+
+- PatternFinder as part of the PeakFinder or as a separate Tool?
+
+- PatternFinder: if values are too high, it might be a superposition.
+  What then?
+
+  Then it might be useful to first match all x-values, so we would
+  have all potential peaks. And then we could mark all those peaks,
+  whose percentages match well.
+
+- Ergebnisse des PeakFinders evtl. in ein Dataset übergeben und dieses
+  dann anzeigen lassen?
+
+- Zuordnung Peaks -> Symbol
+
+- Peaks als solche der Zeichnung hinzufügen
+
+- Peaks abspeichern (evtl. Log?)

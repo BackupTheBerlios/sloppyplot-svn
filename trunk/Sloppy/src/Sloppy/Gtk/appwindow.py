@@ -380,23 +380,24 @@ class AppWindow( gtk.Window, HasSignals ):
         except IndexError:
             return None
         
-    def add_plotwidget(self, widget):
-        n = self.plotbook.append_page(widget)
-        self.plotbook.set_tab_label_text(widget, "Plot")
 
-        ### TODO: this signal should be a gobject signal
-        ### TODO: Does this actually work?
-        ##widget.connect("closed", self.detach_plotwidget)       
+
+    #### BASEWIDGET SUPPORT (generic widget class for both plots and datasets)
+
+    def add_basewidget(self, widget):
+        n = self.plotbook.append_page(widget)
+        self.plotbook.set_tab_label_text(widget, "basewidget")
 
         for ag in widget.get_actiongroups():
-            self.uimanager.insert_action_group(ag,0)            
+            self.uimanager.insert_action_group(ag, 0)
+
         self.add_accel_group(self.uimanager.get_accel_group())
         self.uimanager.add_ui_from_string(widget.get_uistring())
 
-
-    def detach_plotwidget(self, widget):
+    def detach_basewidget(self, widget):
         self.plotbook.remove(widget)
         #self.uimanager.remove_ui
+        
 
     
     # ----------------------------------------------------------------------
