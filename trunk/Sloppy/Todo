@@ -3,9 +3,29 @@
 THREE GOALS FOR THE NEXT RELEASE
 ================================
 
-(1) 3ll windows come into tabs (plots _and_ datasets) and their menus
+(1) All windows come into tabs (plots _and_ datasets) and their menus
     Integrate dynamically into the main menu. It should be possible to
     close windows and windows should activate themselves on demand.
+
+    => BaseWidget
+    
+    They should provide:
+    - menu integration (almost done)
+    - toolbar integration
+    - statusbar integration (almost done)
+    - dynamic tab labels (maybe need to make some gtk property from it)
+    - activation on demand (_who_ should activate _what_)
+    - close tab menu item (almost done, need to place it properly)
+
+    Maybe it would simplify things if the container that holds them
+    is derived from some BaseContainer class ?
+
+    BaseContainer --> BaseNotebook
+                  --> BaseWindow
+
+    and put it all into basewidget.py for now.
+
+    Oh, and replace the 'project' by the more appropriate 'document'/'doc'.
 
 
 (2) Adding/Removing lines must be possible, including their source.
