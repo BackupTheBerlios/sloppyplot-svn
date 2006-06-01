@@ -115,6 +115,13 @@ class MatplotlibWidget(basewidget.BaseWidget):
 
     def get_uistring(self):
         return globals.app.get_uistring('plot-widget')
+
+
+    def get_title(self):
+        if self.plot is None:
+            return "(no plot)"
+        else:
+            return "P: %s" % self.plot.key
         
     
     #----------------------------------------------------------------------

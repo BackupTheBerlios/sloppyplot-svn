@@ -21,7 +21,7 @@
 
 import os, gtk
 
-from Sloppy.Gtk import uihelper, logwin, toolbox, mpl, dock
+from Sloppy.Gtk import uihelper, logwin, toolbox, mpl, dock, datawin
 from Sloppy.Lib.ElementTree.ElementTree import Element, SubElement
 from Sloppy.Base import utils, error, version, config, globals
 from Sloppy.Base.objects import Plot
@@ -367,32 +367,39 @@ class AppWindow( gtk.Window, HasSignals ):
 
 
                 
-            
-    #--- SUBWINDOW HANDLING -------------------------------------------------------
+
+# TODO: I think the following code is not needed anymore
+
+#     #--- SUBWINDOW HANDLING -------------------------------------------------------
     
-    def _cb_subwindow_present(self, widget, window):
-        self.subwindow_present(window)
+#     def _cb_subwindow_present(self, widget, window):
+#         self.subwindow_present(window)
        
-    def subwindow_add(self, window):
-        window.connect("destroy", self.subwindow_detach)
-        self._windows.append(window)
-        return window
+#     def subwindow_add(self, window):
+#         window.connect("destroy", self.subwindow_detach)
+#         self._windows.append(window)
+#         return window
 
-    def subwindow_detach(self, window):
-        self._windows.remove(window)
-    def subwindow_present(self, window):
-        window.present()
+#     def subwindow_detach(self, window):
+#         self._windows.remove(window)
+#     def subwindow_present(self, window):
+#         window.present()
 
-    def subwindow_match(self, condition):
-        try:
-            return [win for win in self._windows if condition(win)][0]                
-        except IndexError:
-            return None
+#     def subwindow_match(self, condition):
+#         try:
+#             return [win for win in self._windows if condition(win)][0]                
+#         except IndexError:
+#             return None
+
+
+####
+# TODO: The plotwindow should be a subclass, and should not have
+# TODO: its method in the appwindow!
 
     #----------------------------------------------------------------------
     # PLOTWINDOW HANDLING
 
-    def find_plotwidget(self, project, plot):
+    def find_plot_widget(self, project, plot):
         try:
             widgets = self.plotbook.get_children()
             return [widget for widget in widgets \
@@ -401,7 +408,17 @@ class AppWindow( gtk.Window, HasSignals ):
                     and widget.plot == plot][0]
         except IndexError:
             return None
-        
+
+    def find_dataset_widget(self, project, dataset):
+        try:
+            widgets = self.plotbook.get_children()
+            return [widget for widget in widgets \
+                    if isinstance(widget, datawin.DatasetWidget) \
+                    and widget.project == project \
+                    and widget.dataset == dataset][0]
+        except IndexError:
+            return None
+
 
 
     #### BASEWIDGET SUPPORT (generic widget class for both plots and datasets)
@@ -420,7 +437,8 @@ class AppWindow( gtk.Window, HasSignals ):
     def detach_basewidget(self, widget):
         self.plotbook.remove(widget)
         widget.deactivate()
-        
+
+####        
 
     
     # ----------------------------------------------------------------------

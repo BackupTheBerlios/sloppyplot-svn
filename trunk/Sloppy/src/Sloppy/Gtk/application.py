@@ -395,14 +395,9 @@ class GtkApplication(application.Application):
     # --- VIEW ---------------------------------------------------------------------
                 
     def edit_dataset(self, ds, undolist=[]):
-        assert( isinstance(ds, Dataset) )
-
-        #widget = self.window.find_basewidget(project=self.project,
-        #                                     object=ds)
-        widget = None
-        
+        widget = self.window.find_dataset_widget(self.project, ds)       
         if widget is None:
-            widget = datawin.DatasetWidget(project=self.project, dataset=ds)
+            widget = datawin.DatasetWidget(self.project, ds)
             self.window.add_basewidget(widget)
             widget.show()
 
@@ -482,7 +477,7 @@ class GtkApplication(application.Application):
         elif backend_name == 'matplotlib':
 
             # as widget
-            widget = self.window.find_plotwidget(project=self.project, plot=plot)
+            widget = self.window.find_plot_widget(project=self.project, plot=plot)
             if widget is None:
                 widget = mpl.MatplotlibWidget(project=self.project, plot=plot)
                 self.window.add_basewidget(widget)

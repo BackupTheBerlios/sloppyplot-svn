@@ -148,7 +148,7 @@ class DatasetWidget(basewidget.BaseWidget):
         if self.dataset is None:
             return "(no dataset)"
         else:
-            return "Dataset: %s" % self.dataset.key
+            return "D: %s" % self.dataset.key
         
     #----------------------------------------------------------------------
     # Dataset Handling
