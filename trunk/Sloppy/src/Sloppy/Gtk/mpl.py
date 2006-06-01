@@ -45,7 +45,7 @@ class MatplotlibWidget(basewidget.BaseWidget):
     actions_dict = {
         'File':
         [
-        ('CloseTab', None, 'Close Tab', None, '', 'on_action_CloseTab')
+        ('CloseTab', gtk.STOCK_CLOSE, 'Close Tab', None, '', 'on_action_CloseTab')
         ],
         'Plot':
         [

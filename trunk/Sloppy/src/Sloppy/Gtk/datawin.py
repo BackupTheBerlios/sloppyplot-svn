@@ -41,11 +41,14 @@ class DatasetWidget(basewidget.BaseWidget):
     """ High-level window for the manipulation of a Dataset. """
 
     actions_dict = {
+        'File':
+        [
+        ('CloseTab', gtk.STOCK_CLOSE, 'Close Tab', 'q', 'Close Dataset Tab.', 'on_action_CloseTab')
+        ],
         'All':
         [
         ('DatasetMenu', None, '_Dataset'),
         ('EditInfos', gtk.STOCK_EDIT, 'Edit Structure...', '<control>E', '', 'on_action_EditInfos'),        
-        ('Close', gtk.STOCK_CLOSE, 'Close This Window', 'q', 'Close this window.', '_cb_close'),       
         #
         ('ColumnMenu', None, '_Columns'),
         ('RowMenu', None, '_Rows'),
@@ -119,8 +122,9 @@ class DatasetWidget(basewidget.BaseWidget):
         return globals.app.get_uistring('datawin')
 
 
-    def _cb_close(self, action):
-        self.destroy()
+    def on_action_CloseTab(self, action):
+        self.deactivate()
+        self.destroy()        
 
 
     #----------------------------------------------------------------------

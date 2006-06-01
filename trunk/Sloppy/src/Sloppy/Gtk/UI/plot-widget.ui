@@ -1,7 +1,9 @@
 <ui>    
   <menubar name='MainMenu'>
     <menu action='FileMenu'>
-      <menuitem action='CloseTab'/>
+      <placeholder name='TabActions'>
+        <menuitem action='CloseTab'/>
+      </placeholder>
     </menu>
     <placeholder name='PlotMenu'>
       <menu action='PlotMenu'>

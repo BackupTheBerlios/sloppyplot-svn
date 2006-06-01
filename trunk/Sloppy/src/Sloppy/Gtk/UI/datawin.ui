@@ -1,9 +1,14 @@
  <ui>
    <menubar name='MainMenu'>
+    <menu action='FileMenu'>
+      <placeholder name='TabActions'>
+        <menuitem action='CloseTab'/>
+      </placeholder>
+    </menu>
      <menu action='DatasetMenu'>
        <menuitem action='EditInfos'/>
        <separator/>
-       <menuitem action='Close'/>
+       <menuitem action='CloseTab'/>
      </menu>
      <menu action='AnalysisMenu'>
      </menu>
