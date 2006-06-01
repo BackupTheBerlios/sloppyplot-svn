@@ -5,32 +5,31 @@
         <menuitem action='CloseTab'/>
       </placeholder>
     </menu>
-    <placeholder name='PlotMenu'>
-      <menu action='PlotMenu'>
-        <menuitem action='Replot'/>
-        <separator/>
-        <menuitem action='ExportViaMPL'/>
-        <menuitem action='ExportViaGnuplot'/>
-      </menu>                
-    </placeholder>
 
-    <placeholder name='AnalysisMenu'>    
-    <menu action='AnalysisMenu'>
-      <menuitem action='DataCursor'/>
-    </menu>
-    </placeholder>
-    <placeholder name='DisplayMenu'>    
-    <menu action='DisplayMenu'>
-      <menuitem action='ZoomRect'/>
-      <menuitem action='ZoomIn'/>
-      <menuitem action='ZoomOut'/>
-      <menuitem action='ZoomFit'/>
-      <menuitem action='ZoomAxes'/>          
-      <separator/>
-      <menuitem action='MoveAxes'/>
-      <menuitem action='SelectLine'/>
-    </menu>
-    </placeholder>
+    <placeholder name="BaseWidgetMenu">
+       <menu action='PlotMenu'>
+         <menuitem action='Replot'/>
+         <separator/>
+         <menuitem action='ExportViaMPL'/>
+         <menuitem action='ExportViaGnuplot'/>
+       </menu>                
+
+       <menu action='AnalysisMenu'>
+         <menuitem action='DataCursor'/>
+       </menu>
+   
+       <menu action='DisplayMenu'>
+         <menuitem action='ZoomRect'/>
+         <menuitem action='ZoomIn'/>
+         <menuitem action='ZoomOut'/>
+         <menuitem action='ZoomFit'/>
+         <menuitem action='ZoomAxes'/>          
+         <separator/>
+         <menuitem action='MoveAxes'/>
+         <menuitem action='SelectLine'/>
+       </menu>
+     </placeholder>
+
   </menubar>      
 
   <toolbar name='MainToolbar'>

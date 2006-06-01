@@ -25,15 +25,16 @@
       <separator/>
       <menuitem action='Preferences'/>
     </menu>
-    <placeholder name='PlotMenu'/>
-    <placeholder name='AnalysisMenu'/>    
-    <placeholder name='DisplayMenu'/>        
+
+    <placeholder name="BaseWidgetMenu"/>
+
     <menu action='ViewMenu'>
       <menuitem action='ToggleLogwindow'/>
       <menuitem action='ToggleSidepane'/>          
       <separator/>
       <menuitem action='ToggleFullscreen'/>
-    </menu>
+    </menu>    
+
     <menu action='HelpMenu'>
       <menuitem action='About'/>
     </menu>
