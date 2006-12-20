@@ -5,7 +5,7 @@
 === Overview
 
 nvlib is a python library that provides an undo mechanism, validating
-attributes, a simple signal/slot mechanism and a few higher level
+properties, a simple signal/slot mechanism and a few higher level
 objects combining some of these features.
 
 
@@ -19,13 +19,15 @@ objects combining some of these features.
 
 === Credits
 
-nvlib has been mainly written by Niklas Volbers.  
-
-There are parts of code which have been taken from other sources from
-the net; credits have been given in the corresponding source files and
-the licenses (which are all GPL-compatible) have been included.
+nvlib has been written by Niklas Volbers.  
 
 Any other contributors are listed in the CONTRIBUTORS file.
+
+There might be parts of code which have been taken from other sources
+from the net; credits have been given in the corresponding source
+files and the licenses (which are all GPL-compatible) have been
+included. The names of the authors will be included in the CONTRIBUTORS
+file as well.
 
 
 === License
