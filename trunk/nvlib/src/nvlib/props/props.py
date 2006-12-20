@@ -1,4 +1,4 @@
-# This file is part of splib.
+# This file is part of nvlib.
 # Copyright (C) 2005-2006 Niklas Volbers
 #
 # This program is free software; you can redistribute it and/or modify
@@ -24,6 +24,10 @@
 
 from defs import Undefined
 
+
+__all__ = ['Property', 'ValidatingProperty', 'vprop',
+           'MetaHasProperties', 'HasProperties']
+           
 
 
 class Property:

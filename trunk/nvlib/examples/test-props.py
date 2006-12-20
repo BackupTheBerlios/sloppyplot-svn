@@ -1,6 +1,5 @@
 
-from nvlib.props.props import HasProperties, vprop
-from nvlib.props import validators
+from nvlib.props import HasProperties, vprop, validators
 
 
 class Recipe(HasProperties):
