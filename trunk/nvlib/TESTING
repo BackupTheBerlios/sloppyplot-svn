@@ -1,0 +1,9 @@
+== Testing nvlib
+
+If you would like to test nvlib without installing it, then run
+adjustpath.sh in your shell before running the python program
+that imports nvlib.
+
+$ source adjuspath.sh
+
+The script will adjust your pythonpath variable.
